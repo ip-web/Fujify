@@ -78,9 +78,10 @@ This app could not have been made without the incredible work of:
 ## License
 
 This project is licensed under the GNU General Public License v3.0. See the [LICENSE](LICENSE) file for details.
-ExifTool is licenced under the Perl Artistic Licence
-DNGLab is licensed under LGPL2.1
-LibRaw is licensed under LGPL2
+
+- ExifTool is licenced under the Perl Artistic Licence
+- DNGLab is licensed under LGPL2.1
+- LibRaw is licensed under LGPL2
 
 ## Donations
 
