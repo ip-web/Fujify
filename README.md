@@ -66,6 +66,7 @@ LibRaw is licensed under LGPL2
 ## Contributing
 
 Contributions are welcome! I'm more of a Web Developer myself and I'm sure a lot can be improved, feel free to submit your proposals with some explanation (remember I'm relatively new to C# and .NET).
+I'm also taking feature requests and will try implementing them as much as time and skills allow me to.
 
 ## Credits
 
