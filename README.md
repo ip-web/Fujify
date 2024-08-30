@@ -79,6 +79,7 @@ This app could not have been made without the incredible work of:
 ## Donations
 
 I made this project on my own and spent a considerable amount of time doing so, I provide it for free and open source for anyone to use, so if you find this app helpful, consider supporting my work. As a freelance developer donations are greatly appreciated and help me continue to improve and maintain the app.
-[PayPal](https://www.paypal.com/donate/?hosted_button_id=7UJ9B3LBLTN4J)
-USDT (BSC): 0xac487782e8a66d21d1fd099dda1872ee23376f6e
+
+- [**PayPal**](https://www.paypal.com/donate/?hosted_button_id=7UJ9B3LBLTN4J)
+- USDT (BSC): 0xac487782e8a66d21d1fd099dda1872ee23376f6e
 
