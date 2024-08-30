@@ -9,7 +9,7 @@ Unlock the Fujifilm Film Simulations for any camera's RAW files in Lightroom. Th
 - **Convert RAW to DNG**: Supports various RAW file formats and converts them to DNG to enable film simulations.
 - **Uses Powerful Tools**: Built using ExifTool, LibRaw, and DNGLab for reliable and efficient conversion.
 - **Easy to Use**: Drag and drop files or folders, or use the context menu and toolbar options to add files.
-- **Windows Only**: Currently available for Windows users.
+- **Platform**: Currently available for Windows only.
 
 ## How to Use
 
