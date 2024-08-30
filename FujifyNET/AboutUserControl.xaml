@@ -22,7 +22,7 @@
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:local="clr-namespace:FujifyNET"
              
-             Width="400" Height="400">
+             Width="400" Height="450">
     
     
     <Grid>

@@ -18,19 +18,13 @@
  */
 
 using MaterialDesignThemes.Wpf;
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
 using System.Drawing.Printing;
-using System.Globalization;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -40,9 +34,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
 using System.Windows.Threading;
-using static MaterialDesignThemes.Wpf.Theme;
 
 namespace FujifyNET
 {
@@ -66,7 +58,7 @@ namespace FujifyNET
         private bool isTextBlockHidden = false; // Track visibility state
         private bool isDialogOpen = false;
 
-        private GridViewColumnHeader _lastHeaderClicked;
+        private GridViewColumnHeader? _lastHeaderClicked = null; 
         private ListSortDirection _lastDirection = ListSortDirection.Ascending;
 
         public MainWindow()
@@ -97,6 +89,7 @@ namespace FujifyNET
         {
             DwmDropShadow.DropShadowToWindow(this);
         }
+
         public static class DwmDropShadow
         {
             [DllImport("dwmapi.dll", PreserveSig = true)]
@@ -109,28 +102,28 @@ namespace FujifyNET
             {
                 if (!DropShadow(window))
                 {
-                    window.SourceInitialized += new EventHandler(window_SourceInitialized);
+                    window.SourceInitialized += new EventHandler(Window_SourceInitialized);
                 }
             }
 
-            private static void window_SourceInitialized(object sender, EventArgs e)
+            private static void Window_SourceInitialized(object? sender, EventArgs e)
             {
-                Window window = (Window)sender;
+                if (sender is not Window window) return;
                 DropShadow(window);
-                window.SourceInitialized -= new EventHandler(window_SourceInitialized);
+                window.SourceInitialized -= Window_SourceInitialized;
             }
 
             private static bool DropShadow(Window window)
             {
                 try
                 {
-                    WindowInteropHelper helper = new WindowInteropHelper(window);
+                    WindowInteropHelper helper = new(window);
                     int val = 2;
                     int ret1 = DwmSetWindowAttribute(helper.Handle, 2, ref val, 4);
 
                     if (ret1 == 0)
                     {
-                        Margins m = new Margins { Bottom = 0, Left = 0, Right = 0, Top = 0 };
+                        Margins m = new() { Bottom = 0, Left = 0, Right = 0, Top = 0 };
                         int ret2 = DwmExtendFrameIntoClientArea(helper.Handle, ref m);
                         return ret2 == 0;
                     }
@@ -139,7 +132,7 @@ namespace FujifyNET
                         return false;
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Handle exceptions here, e.g., log or notify the user
                     return false;
@@ -341,7 +334,7 @@ namespace FujifyNET
                             }
                             else
                             {
-                                Dispatcher.Invoke(() => ShowCustomMessageBox("Unsupported File Format", $"The file format {extension} is not supported."));
+                                Dispatcher.Invoke(() => ShowCustomMessageBox("Unsupported File Format", $"The file format {extension} is not supported. The file was not added"));
                             }
                         }
                     }
@@ -1034,8 +1027,7 @@ namespace FujifyNET
 
         private void Sort(GridViewColumnHeader header)
         {
-            var column = header.Column as GridViewColumn;
-            if (column == null) return;
+            if (header.Column is not GridViewColumn column) return;
 
             // Determine the sort direction
             var direction = ListSortDirection.Ascending;
@@ -1051,7 +1043,7 @@ namespace FujifyNET
             _lastDirection = direction;
 
             // Get the sort by property name from the column's binding
-            string sortBy = null;
+            string? sortBy = null;
             if (column.DisplayMemberBinding is System.Windows.Data.Binding wpfBinding)
             {
                 sortBy = wpfBinding.Path.Path;
@@ -1081,18 +1073,35 @@ namespace FujifyNET
             // Enable or disable the MenuItem based on whether a ListViewItem is selected
             bool hasSelectedItem = listView.SelectedItem != null;
 
-            foreach (MenuItem menuItem in listView.ContextMenu.Items)
+            foreach (var item in listView.ContextMenu.Items)
             {
-                // Enable or disable based on the presence of a selected item
-                menuItem.IsEnabled = hasSelectedItem;
+                // Check if the item is a MenuItem and not a Separator
+                if (item is MenuItem menuItem)
+                {
+                    if (menuItem.Header.ToString() == "Add Pictures" || menuItem.Header.ToString() == "Add Folder")
+                    {
+                        menuItem.IsEnabled = true;
+                    }
+                    else
+                    {
+                        menuItem.IsEnabled = hasSelectedItem;
+                    }
+                }
             }
         }
         private void DeleteMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            if (listView.SelectedItem is FileItem selectedFile)
+            // Get all selected items
+            var selectedItems = listView.SelectedItems.Cast<FileItem>().ToList();
+
+            // If no items are selected, do nothing
+            if (selectedItems.Count == 0)
+                return;
+
+            // Fade out each selected item
+            foreach (var selectedFile in selectedItems)
             {
                 // Find the ListViewItem corresponding to the selectedFile
-
                 if (listView.ItemContainerGenerator.ContainerFromItem(selectedFile) is System.Windows.Controls.ListViewItem listViewItem)
                 {
                     // Find the fade-out storyboard
@@ -1105,12 +1114,16 @@ namespace FujifyNET
                     // Remove the selected file after the animation completes
                     storyboard.Completed += (s, args) =>
                     {
+                        // Safely remove the item from the Files collection
                         Files.Remove(selectedFile);
-                        listView.UpdateLayout();
-                        UpdateButtonState();
 
-                        // Optionally, delete the file from the filesystem
-                        // File.Delete(selectedFile.FilePath);
+                        // Check if there are more items to remove
+                        if (Files.Count == 0 || listView.Items.Count == 0)
+                        {
+                            listView.UpdateLayout();
+                            UpdateButtonState();
+                            UpdateTextBlockVisibility();
+                        }
                     };
 
                     // Start the storyboard
@@ -1118,18 +1131,27 @@ namespace FujifyNET
                 }
                 else
                 {
-                    // If the ListViewItem is not found (e.g., it may not be realized yet), remove the file immediately
+                    // If the ListViewItem is not found, remove the file immediately
                     Files.Remove(selectedFile);
-                    listView.UpdateLayout();
-                    UpdateButtonState();
-                    UpdateTextBlockVisibility();
                 }
             }
+
+            // Refresh the ListView and update button states
+            listView.UpdateLayout();
+            UpdateButtonState();
+            UpdateTextBlockVisibility();
         }
 
         private void OpenFile_Click(object sender, RoutedEventArgs e)
         {
-            if (listView.SelectedItem is FileItem selectedItem) // Replace 'YourFileItemType' with your actual item type
+            // Get all selected items
+            var selectedItems = listView.SelectedItems.Cast<FileItem>().ToList();
+
+            // If no items are selected, do nothing
+            if (selectedItems.Count == 0)
+                return;
+
+            foreach (var selectedItem in selectedItems)
             {
                 try
                 {
@@ -1139,22 +1161,27 @@ namespace FujifyNET
                 }
                 catch (Exception ex)
                 {
-                    System.Windows.MessageBox.Show($"Failed to open file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    // Show an error message if a file fails to open
+                    System.Windows.MessageBox.Show($"Failed to open file '{selectedItem.FilePath}': {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }
         private void OpenFolder_Click(object sender, RoutedEventArgs e)
         {
-            if (listView.SelectedItem is FileItem selectedItem) // Replace 'YourFileItemType' with your actual item type
+            var selectedItems = listView.SelectedItems.OfType<FileItem>().ToList();
+            var openedFolders = new HashSet<string>();
+
+            foreach (var selectedItem in selectedItems)
             {
                 try
                 {
                     // Use the file path associated with the selected item
                     string filePath = selectedItem.FilePath;
-                    string ?folderPath = System.IO.Path.GetDirectoryName(filePath);
+                    string? folderPath = System.IO.Path.GetDirectoryName(filePath);
 
-                    if (folderPath != null)
+                    if (!string.IsNullOrEmpty(folderPath) && !openedFolders.Contains(folderPath))
                     {
+                        openedFolders.Add(folderPath);
                         Process.Start(new ProcessStartInfo("explorer.exe", folderPath) { UseShellExecute = true });
                     }
                 }
@@ -1211,7 +1238,7 @@ namespace FujifyNET
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = "https://ipweb.dev/",
+                FileName = "https://github.com/ip-web/Fujify",
                 UseShellExecute = true
             });
         }
@@ -1220,7 +1247,7 @@ namespace FujifyNET
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = "https://your-update-link.com",
+                FileName = "https://github.com/ip-web/Fujify/releases",
                 UseShellExecute = true
             });
         }
@@ -1229,7 +1256,7 @@ namespace FujifyNET
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = "mailto:contact@ipweb.dev",
+                FileName = "https://github.com/ip-web/Fujify/issues",
                 UseShellExecute = true
             });
         }
@@ -1473,7 +1500,7 @@ namespace FujifyNET
         // Command to resize the window
         private void Resize_Click(object sender, RoutedEventArgs e)
         {
-            WindowInteropHelper helper = new WindowInteropHelper(this);
+            WindowInteropHelper helper = new(this);
             SendMessage(helper.Handle, WM_SYSCOMMAND, (IntPtr)SC_SIZE, IntPtr.Zero); // Triggers window resizing
         }
 
@@ -1628,7 +1655,7 @@ namespace FujifyNET
             // Add text and hyperlinks
             AddInline(paragraph, "FUJIFY ", null);
             AddNewLine(paragraph);
-            AddInline(paragraph, "Version 1.0.0 Beta 1", null);
+            AddInline(paragraph, "Version 1.0.0 Beta 3", null);
             AddNewLine(paragraph);
             AddNewLine(paragraph);
             AddInline(paragraph, "Developed by: Isidore Paulin", null);
@@ -1662,10 +1689,16 @@ namespace FujifyNET
             AddNewLine(paragraph);
             AddInline(paragraph, "USDT (BSC): 0xac487782e8a66d21d1fd099dda1872ee23376f6e", null);
 
+            AddNewLine(paragraph);
+            AddNewLine(paragraph);
+            AddInline(paragraph, "Copyright(C) 2024 Isidore Paulin", null);
+            AddNewLine(paragraph);
+            AddInline(paragraph, "Licensed under GNU General Public License v3.0", null);
+
             flowDocument.Blocks.Add(paragraph);
             return flowDocument;
         }
-
+        
 #nullable enable
         private static void AddInline(Paragraph paragraph, string text, System.Windows.Media.Brush? color)
         {
