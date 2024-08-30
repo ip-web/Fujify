@@ -89,3 +89,5 @@ I made this project on my own and spent a considerable amount of time doing so, 
 - [**PayPal**](https://www.paypal.com/donate/?hosted_button_id=7UJ9B3LBLTN4J)
 - USDT (BSC): 0xac487782e8a66d21d1fd099dda1872ee23376f6e
 
+Alternatively, if you don't want to make some financial contribution you can show some love to my [Instagram page](https://www.instagram.com/isi.do.re/) 
+
