@@ -1,0 +1,49 @@
+﻿<UserControl x:Class="FujifyNET.AboutUserControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:local="clr-namespace:FujifyNET"
+             
+             Width="400" Height="400">
+    
+    
+    <Grid>
+        <Border Background="{DynamicResource MaterialDesign.Brush.Background}"
+                CornerRadius="20"
+                Padding="10">
+            <Grid>
+                <!-- Define Row Definitions -->
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Title TextBlock -->
+                <TextBlock Text="{Binding Title}" 
+                           FontWeight="Bold" 
+                           FontSize="16"
+                           Margin="0,0,0,10" 
+                           TextAlignment="Center"
+                           Grid.Row="0"/>
+
+                <!-- RichTextBox for displaying the message -->
+                <RichTextBox x:Name="richTextBox" 
+                             IsReadOnly="True"
+                             IsDocumentEnabled="True"
+                             VerticalScrollBarVisibility="Auto"
+                             Grid.Row="1"/>
+
+                <!-- OK Button -->
+                <Button Content="OK" 
+                        Command="{Binding OkCommand}" 
+                        Style="{StaticResource MaterialDesignFlatButton}"
+                        Foreground="White"
+                        IsDefault="True"
+                        HorizontalAlignment="Center"
+                        Margin="0,10,0,0"
+                        Grid.Row="2"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
