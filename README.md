@@ -54,6 +54,16 @@ Contributions are welcome! I'm more of Web Developer myslef and I'm sure a lot o
 
 Found a bug? Please report it [here](#) with as much detail as possible.
 
+
+## Credits
+
+This app could not have been made without the incredible work of:
+
+- **Phil Harvey**, creator of ExifTool
+- **Iliah Borg**, creator of LibRaw
+- **The DNGRaw Project**
+- All the contributors to these projects
+
 ## Donations
 
 I made this project on my own and spent a considerable amount of time doing it, I provide it for free and completely open source so if you find this app helpful, consider supporting my work. Donations are greatly appreciated and help me continue to improve and maintain the app.
