@@ -5,6 +5,7 @@ Unlock the Fujifilm Film Simulations for any camera's RAW files in Lightroom. Th
 
 ## Features
 
+- **Unlock Fujifilm Film simulation in Lightroom**: Unlock all the film simulations of the Fujifilm X-T5 (currently have the most simulations available) for any camera.
 - **Convert RAW to DNG**: Supports various RAW file formats and converts them to DNG to enable film simulations.
 - **Uses Powerful Tools**: Built using ExifTool, LibRaw, and DNGLab for reliable and efficient conversion.
 - **Easy to Use**: Drag and drop files or folders, or use the context menu and toolbar options to add files.
@@ -16,6 +17,7 @@ Unlock the Fujifilm Film Simulations for any camera's RAW files in Lightroom. Th
 2. **Choose Destination Folder**: Select a folder where the processed files will be saved. If no folder is selected, the processed files will be saved in the same location as the originals.
    - Note: If the "Backup Original" option is not selected and no destination folder is set, the original DNG files will be overwritten.
 3. **Start Processing**: Click the "Process" button to begin processing your files.
+4. **Import the processed files to Lightroom**: After importing the new generated files you can select the film simulation from the profile tab of Lightroom just like you would do with Fujifilm RAF files.
    
 ## Bug Reports
 
@@ -41,6 +43,9 @@ See the [Release](https://github.com/delasalle-sio-paulin-i/Fujify/releases) pag
 **Q: What RAW files are currently supported?**  
 **A:** Here is a list of currently supproted RAW files for direct use in Fujifier "ARI, CR3, CR2, CRW, ERF, RAF, 3FR, KDC, DCS, DCR, IIQ, MOS, MEF, MRW, NEF, NRW, ORF, RW2, PEF, IIQ, SRW, ARW, SRF, SR2" any RAW file converted to DNG should be compatible. For a list of supported camera you can refere to [DNGLab supported camera list](https://github.com/dnglab/dnglab/blob/main/SUPPORTED_CAMERAS.md)
 
+**Q: Can I use this on Fujifilm RAF file?**  
+**A:** Yes it should work on Fujifilm files and will unlock newer simulations on older Fujifilm bodies, but better techniques exist to achieve this without modifying your original RAF files.
+
 **Q: The conversion of my RAW file failed.**  
 **A:** The conversion might fail if the RAW file has been altered in any way, or if your camera is not supported by the program, which can happen with newly released models. If any problem arises during conversion, please try converting to DNG beforehand using software that supports your camera.
 
@@ -56,13 +61,6 @@ See the [Release](https://github.com/delasalle-sio-paulin-i/Fujify/releases) pag
 **Q: Will I get the same result as shooting with a Fujifilm camera?**  
 **A:** The profiles are the same that are used on the Fujifilm camera in Lightroom, but keep in mind that these profile are tuned for Fujifilm sensors and color science, the result seems pretty accurate in my experience with Sony A7RII files, but I was not able to do any direct comparison. The experience of shooting Fujifilm also goes much further than just the film simulations with their unique layout and handling and that's something no software trickery can achieve. I highly recommend anyone that have the opportunity to try it out as it's been a real pleasure to shoot with Fuji for many years and I can't wait to get back at it.
 
-## License
-
-This project is licensed under the GNU General Public License v3.0. See the [LICENSE](LICENSE) file for details.
-ExifTool is licenced under the Perl Artistic Licence
-DNGLab is licensed under LGPL2.1
-LibRaw is licensed under LGPL2
-
 ## Contributing
 
 Contributions are welcome! I'm more of a Web Developer myself and I'm sure a lot can be improved, feel free to submit your proposals with some explanation (remember I'm relatively new to C# and .NET).
@@ -76,6 +74,13 @@ This app could not have been made without the incredible work of:
 - **Iliah Borg**, creator of [LibRaw](https://www.libraw.org/)
 - [**DNGLab**](https://github.com/dnglab/dnglab/tree/main)
 - All the contributors to these projects
+  
+## License
+
+This project is licensed under the GNU General Public License v3.0. See the [LICENSE](LICENSE) file for details.
+ExifTool is licenced under the Perl Artistic Licence
+DNGLab is licensed under LGPL2.1
+LibRaw is licensed under LGPL2
 
 ## Donations
 
