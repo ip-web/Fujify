@@ -1,4 +1,23 @@
-﻿using MaterialDesignThemes.Wpf;
+﻿/*
+ * This file is part of Fujify.
+ *
+ * Copyright (C) 2024 Isidore Paulin contact@ipweb.dev
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+using MaterialDesignThemes.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -1639,7 +1658,7 @@ namespace FujifyNET
             AddInline(paragraph, "Buy me a coffee: ", null);
             AddNewLine(paragraph);
 
-            AddHyperlink(paragraph, "PayPal", new Uri("https://paypal.me/isidorepaulin1?country.x=FR&locale.x=fr_FR"), defaultLinkColor, hoverLinkColor);
+            AddHyperlink(paragraph, "PayPal", new Uri("https://www.paypal.com/donate/?hosted_button_id=7UJ9B3LBLTN4J"), defaultLinkColor, hoverLinkColor);
             AddNewLine(paragraph);
             AddInline(paragraph, "USDT (BSC): 0xac487782e8a66d21d1fd099dda1872ee23376f6e", null);
 

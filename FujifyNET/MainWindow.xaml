@@ -1,4 +1,22 @@
-﻿<Window x:Class="FujifyNET.MainWindow"
+﻿<!--
+  This file is part of Fujify.
+ 
+  Copyright (C) 2024 Isidore Paulin contact@ipweb.dev
+ 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+ 
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
+ 
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+-->
+    <Window x:Class="FujifyNET.MainWindow"
         Style="{StaticResource MaterialDesignWindow}"
         xmlns:local="clr-namespace:FujifyNET"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -502,14 +520,15 @@
                         <RowDefinition Height="Auto" MinHeight="72"/>
                         <!-- For the Card -->
                         <RowDefinition Height="Auto" MinHeight="31"/>
-                        <!-- For the TextBlock "Drag and drop" -->
+                        <!-- For the TextBlock "DNG" -->
                         <RowDefinition />
                         <!-- For the ListView and ProgressBar -->
                         <RowDefinition Height="Auto" MinHeight="29"/>
-                        <RowDefinition Height="50" />
-
+                        <!-- For the ListView and ProgressBar -->
                         <RowDefinition Height="50" />
                         <!-- For the Buttons and ToggleButton -->
+                        <RowDefinition Height="50" />
+                        
                     </Grid.RowDefinitions>
 
                     <!-- Card for description -->
@@ -556,6 +575,9 @@
                                 </ListView.Resources>
                                 <ListView.ContextMenu>
                                     <ContextMenu>
+                                        <MenuItem Header="Add Pictures" Icon="{materialDesign:PackIcon Kind=Image}" Click="OpenFileMenuItem_Click"/>
+                                        <MenuItem Header="Add Folder" Icon="{materialDesign:PackIcon Kind=Folder}" Click="OpenFolderMenuItem_Click"/>
+                                        
                                         <MenuItem Header="Open" Icon="{materialDesign:PackIcon Kind=Eye}" Click="OpenFile_Click"/>
                                         <MenuItem Header="Open Containing Folder" Icon="{materialDesign:PackIcon Kind=FolderMultipleImage}" Click="OpenFolder_Click"/>
                                         <MenuItem Header="Remove" Icon="{materialDesign:PackIcon Kind=Delete}" Click="DeleteMenuItem_Click"/>
@@ -585,7 +607,6 @@
                                                 </DataTemplate>
                                             </GridViewColumn.CellTemplate>
                                         </GridViewColumn>
-                                        <!-- New column for Camera Make and Model -->
                                         <GridViewColumn  Width="Auto" DisplayMemberBinding="{Binding CameraMakeAndModel}">
                                             <GridViewColumn.Header>
                                                 <GridViewColumnHeader Content="Camera" Click="ColumnHeader_Click"/>

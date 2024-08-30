@@ -42,4 +42,8 @@
     <Content Remove="assets\fonts\FjallaOne-Regular.otf" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="LICENCE.txt" />
+  </ItemGroup>
+
 </Project>
