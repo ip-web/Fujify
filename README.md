@@ -1,6 +1,5 @@
-Unlocker
-
-Unlock the Fujifilm Film Simulations for any camera's RAW files through Adobe Lightroom. This app allows you to convert DNG files ( or any other RAW with conversion ) from other camera brands to be compatible with Fujifilm's film simulation modes.
+# FUJIFY - Fujifilm Film Simulation Unlocker
+Unlock the Fujifilm Film Simulations for any camera's RAW files in Adobe Lightroom. This app allows you to convert DNG files ( or any other RAW with conversion ) from other camera brands to be compatible with Fujifilm's film simulation modes.
 
 ## Features
 
