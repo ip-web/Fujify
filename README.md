@@ -27,13 +27,13 @@ The app is currently in **beta stage**, so there may be bugs. You are welcome to
 - Any error messages.
 - Screenshots (if relevant).
 
-Please report it [here](https://github.com/delasalle-sio-paulin-i/Fujify/issues) with as much detail as possible.
+Please report it [here](https://github.com/ip-web/Fujify/issues) with as much detail as possible.
 
 ## Downloads
 
 - Installer (recommended)
 - Portable ZIP File
-See the [Release](https://github.com/delasalle-sio-paulin-i/Fujify/releases) page to download the latest version.
+See the [Release](https://github.com/ip-web/Fujify/releases) page to download the latest version.
 
 ## FAQ
 
