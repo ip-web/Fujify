@@ -7,8 +7,10 @@ Unlock the Fujifilm Film Simulations for any camera's RAW files in Lightroom. Th
 
 - **Unlock Fujifilm Film simulation in Lightroom**: Unlock all the film simulations of the Fujifilm X-T5 (currently have the most simulations available) for any camera.
 - **Convert RAW to DNG**: Supports various RAW file formats and converts them to DNG to enable film simulations.
-- **Uses Powerful Tools**: Built using ExifTool, LibRaw, and DNGLab for reliable and efficient conversion.
+- **Embeded original RAW to DNG**: Let you choose if you want to backup the original file inside the DNG or as file.
+- **Uses Powerful Libraries**: Built using ExifTool, LibRaw, and DNGLab for reliable and efficient conversion.
 - **Easy to Use**: Drag and drop files or folders, or use the context menu and toolbar options to add files.
+- **Light and Dark themes**: Light and Dark themes available for better accessibility.
 - **Platform**: Currently available for Windows only.
 
 ## How to Use
@@ -47,10 +49,10 @@ See the [Release](https://github.com/ip-web/Fujify/releases) page to download th
 **A:** Yes it should work on Fujifilm files and will unlock newer simulations on older Fujifilm bodies, but better techniques exist to achieve this without modifying your original RAF files.
 
 **Q: The conversion of my RAW file failed.**  
-**A:** The conversion might fail if the RAW file has been altered in any way, or if your camera is not supported by the program, which can happen with newly released models. If any problem arises during conversion, please try converting to DNG beforehand using software that supports your camera.
+**A:** The conversion might fail if the RAW file has been altered in any way, or if your camera is not supported by the program, which can happen with newly released models. If any problem arises during conversion, please try converting to DNG beforehand using software that supports your camera. Sometime the opposite might be true and some converted DNG file won't work with the program, in this case use the original RAW instead.
 
 **Q: After conversion, the DNG file looks different from the original RAW file.**  
-**A:** In most cases, the DNG and original should look identical. However, if you notice discrepancies, converting to DNG manually beforehand is advised. Additionally, when opening the processed file in Lightroom, it might automatically apply the Fujifilm Provia Standard profile, causing the image to look different from the original. To compare accurately, set both images to the same profile (e.g., Adobe Color Standard).
+**A:** In most cases, the DNG and original should look identical. However, if you notice discrepancies, converting to DNG manually beforehand is advised. I've noticed slight difference in the base exposure of dng converted to the app though adjusting it to match with lightroom created DNG did make them look identical. Additionally, when opening the processed file in Lightroom, it might automatically apply the Fujifilm Provia Standard profile or the Adobe Standard profile as the camera one isn't available anymore, causing the image to look different from the original. To compare accurately, set both images to the same profile (e.g., Adobe Color Standard).
 
 **Q: What software can I use to convert my RAW files to DNG ?**  
 **A:** I've had successful results converting my RAW file with export to DNG and advanced NR / enhanced details in Lightroom and from DxO PureRAW 3. You can try and report here with other software conversion results.
@@ -90,5 +92,5 @@ I made this project on my own and spent a considerable amount of time doing so, 
 - [**PayPal**](https://www.paypal.com/donate/?hosted_button_id=7UJ9B3LBLTN4J)
 - USDT (BSC): 0xac487782e8a66d21d1fd099dda1872ee23376f6e
 
-Alternatively, if you don't want to make some financial contribution you can show some love to my [Instagram page](https://www.instagram.com/isi.do.re/) 
+Alternatively, if you're unable or don't want to make some financial contribution you can show some love to my [Instagram page](https://www.instagram.com/isi.do.re/) 
 
