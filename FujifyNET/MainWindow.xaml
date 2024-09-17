@@ -19,6 +19,7 @@
 <Window x:Class="FujifyNET.MainWindow"
         Style="{StaticResource MaterialDesignWindow}"
         xmlns:local="clr-namespace:FujifyNET"
+        
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -562,26 +563,11 @@
                 <Grid Margin="0,10" Grid.Row="1">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
-                        <!-- For the Card -->
-                        <!-- <RowDefinition Height="Auto" MinHeight="31"/> -->
-                        <!-- For the TextBlock "DNG" -->
                         <RowDefinition Height="Auto"/>
-                        <!-- For the ProgressBar -->
                         <RowDefinition Height="50"/>
-                        <!-- For the ListView and ProgressBar -->
                         <RowDefinition Height="50"/>
-                        <!-- For the Buttons and ToggleButton -->
                     </Grid.RowDefinitions>
 
-                    <!-- Card for description
-                    <materialDesign:Card Panel.ZIndex="10" Margin="10,10,10,0" Grid.Row="0" VerticalAlignment="Top" Height="72" Padding="8" 
-                    Background="#000000"
-                    materialDesign:ElevationAssist.Elevation="Dp1"
-                    UniformCornerRadius="6" >
-                        <TextBlock TextAlignment="Center" VerticalAlignment="Center"
-                               Text="RAW files will be converted to DNG by Fujify, it is advised to do it beforehand manually for the best result and more control over the conversion."
-                               TextWrapping="Wrap"/>
-                    </materialDesign:Card> -->
                     <!-- ListView and Loading Spinner -->
                     <Grid Grid.Row="0" 
                           Margin="10,0" 

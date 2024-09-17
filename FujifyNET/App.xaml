@@ -40,7 +40,7 @@
     <Style x:Key="SubMenuItem" TargetType="MenuItem" BasedOn="{StaticResource MaterialDesignMenuItem}">
         <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
     </Style>
-
+            <SolidColorBrush x:Key="PreferencesBorderBrush" Color="#b7b7b7"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

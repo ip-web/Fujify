@@ -37,7 +37,7 @@
         >
 
     <Window.Effect>
-        <DropShadowEffect BlurRadius="15" ShadowDepth="1" Opacity="0.5" Color="Black"/>
+        <DropShadowEffect BlurRadius="20" ShadowDepth="1" Opacity="0.3" Color="Black"/>
     </Window.Effect>
     <Window.Resources>
         <!-- Fade In Storyboard -->
@@ -82,7 +82,8 @@
             </DoubleAnimationUsingKeyFrames>
         </Storyboard>
     </Window.Resources>
-    <Border CornerRadius="10" Margin="10" Background="{DynamicResource MaterialDesignPaper}">
+    <Border BorderBrush="{DynamicResource PreferencesBorderBrush}" BorderThickness="1"  CornerRadius="8" Margin="10" Background="{DynamicResource MaterialDesignPaper}">
+    
         <Grid x:Name="PrefGrid" RenderTransformOrigin="0.5,1">
         <Grid.RenderTransform>
             <ScaleTransform ScaleX="0.5" ScaleY="0.5"/>
@@ -106,11 +107,8 @@
             </Grid>
 
             <!-- Preferences content -->
-            <StackPanel Grid.Row="1" Margin="20">
-               
-
-                <TextBlock Text="Conversion Settings" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,0,0,20"/>
-
+            <StackPanel Grid.Row="1" Margin="15,15,15,0">
+                <TextBlock Text="Processing" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,0,0,20"/>
                 <Grid Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -119,7 +117,7 @@
                     <TextBlock Text="Embed Original RAW" VerticalAlignment="Center"/>
                     <ToggleButton x:Name="EmbedOriginalRawToggle" Grid.Column="1" Style="{StaticResource MaterialDesignSwitchToggleButton}"/>
                 </Grid>
-                <TextBlock Text="Theme Settings" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,20,0,20"/>
+                <TextBlock Text="Theme " Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,20,0,20"/>
 
                 <Grid Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
@@ -131,9 +129,10 @@
                    Checked="DarkThemeToggle_Checked" Unchecked="DarkThemeToggle_Unchecked"/>
                 </Grid>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,20,0,0">
-                    <Button Content="Cancel" Click="CancelButton_Click" Margin="0,0,10,0" Foreground="#fff"/>
-                    <Button Content="Save" Click="SaveButton_Click" Foreground="#fff"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,45,0,0">
+                    <Button Content="Save" Click="SaveButton_Click" Foreground="#fff" Margin="0,0,10,0" Width="80" Height="35" />
+                    <Button Content="Cancel" Click="CancelButton_Click"   Height="35" Style="{StaticResource MaterialDesignToolForegroundButton}"/>
+
                 </StackPanel>
             </StackPanel>
         </Grid>
