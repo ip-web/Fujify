@@ -26,10 +26,21 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <materialDesign:CustomColorTheme  BaseTheme="Dark" PrimaryColor="DarkGreen" SecondaryColor="Green" />
+                <materialDesign:CustomColorTheme  BaseTheme="Dark" PrimaryColor="DarkGreen" SecondaryColor="Green"  />
                 <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <FontFamily x:Key="FjallaOneFont">/assets/fonts/#FjallaOne</FontFamily>
+        <SolidColorBrush x:Key="TitleBarBackgroundBrush" Color="#212121" />
+         <!-- Style for top-level menu items -->
+    <Style x:Key="TopLevelMenuItem" TargetType="MenuItem" BasedOn="{StaticResource MaterialDesignMenuItem}">
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
+
+    <!-- Style for submenu items -->
+    <Style x:Key="SubMenuItem" TargetType="MenuItem" BasedOn="{StaticResource MaterialDesignMenuItem}">
+        <Setter Property="Foreground" Value="{DynamicResource MaterialDesignBody}"/>
+    </Style>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>

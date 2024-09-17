@@ -5,6 +5,7 @@
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
+ 
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
@@ -40,8 +41,10 @@ namespace FujifyNET
 {
     public partial class MainWindow : Window
     {
-        private const string defArgs = "-CameraProfilesMake=\"FUJIFILM\" -CameraProfilesModel=\"X-T5\" -CameraProfilesUniqueCameraModel=\"Fujifilm X-T5\" -CameraProfilesCameraRawProfile=\"True\" -UniqueCameraModel=\"Fujifilm X-T5\" -overwrite_original";
-        private const string custArgs = "-CameraProfilesMake=\"FUJIFILM\" -CameraProfilesModel=\"X-T5\" -CameraProfilesUniqueCameraModel=\"Fujifilm X-T5\" -CameraProfilesCameraRawProfile=\"True\" -UniqueCameraModel=\"Fujifilm X-T5\"";
+        private const string commonArgs = "-CameraProfilesMake=\"FUJIFILM\" -CameraProfilesModel=\"X-T5\" -CameraProfilesUniqueCameraModel=\"Fujifilm X-T5\" -CameraProfilesCameraRawProfile=\"True\" -UniqueCameraModel=\"Fujifilm X-T5\"";
+        private const string defArgs = $"{commonArgs} -overwrite_original";
+        private const string custArgs = commonArgs;
+        
         private BackgroundWorker backgroundWorker;
         public ObservableCollection<FileItem> Files { get; set; }
         private string defaultArguments = defArgs;
@@ -64,7 +67,7 @@ namespace FujifyNET
         public MainWindow()
         {
             InitializeComponent();
-            Loaded += MainWindow_Loaded;
+            this.Loaded += Window_Loaded;
             backgroundWorker = new BackgroundWorker
             {
                 WorkerReportsProgress = true,
@@ -84,12 +87,9 @@ namespace FujifyNET
             listView.SizeChanged += (s, e) => RecalculateFirstColumnWidth();
             currentArguments = customArguments;
 
-        }
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-            DwmDropShadow.DropShadowToWindow(this);
-        }
 
+        }
+        
         public static class DwmDropShadow
         {
             [DllImport("dwmapi.dll", PreserveSig = true)]
@@ -212,9 +212,11 @@ namespace FujifyNET
         }
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
+            // Remove the event handler to prevent multiple calls
+            this.Loaded -= Window_Loaded;
             // Retrieve the storyboards from XAML
             var fadeInStoryboard = (Storyboard)FindResource("FadeInStoryboardMain");
-            var scaleUpStoryboard = (Storyboard)FindResource("ScaleUpStoryboard");
+            //var scaleUpStoryboard = (Storyboard)FindResource("ScaleUpStoryboard");
 
             // Set the target for the fade-in animation
             Storyboard.SetTarget(fadeInStoryboard, this);
@@ -222,11 +224,16 @@ namespace FujifyNET
             fadeInStoryboard.Begin();
 
             // Set the target for the scale-up animation
-            Storyboard.SetTarget(scaleUpStoryboard, MainGrid); // MainGrid is the target FrameworkElement
-            scaleUpStoryboard.Begin();
+            //Storyboard.SetTarget(scaleUpStoryboard, this); // MainGrid is the target FrameworkElement
+            //scaleUpStoryboard.Begin();
             RecalculateFirstColumnWidth();
+            DwmDropShadow.DropShadowToWindow(this);
         }
-     
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            base.OnClosing(e);
+            Properties.Settings.Default.Save();
+        }
         private void MainWindow_DragEnter(object sender, System.Windows.DragEventArgs e)
         {
             if (e.Data.GetDataPresent(System.Windows.DataFormats.FileDrop))
@@ -551,10 +558,9 @@ namespace FujifyNET
 
         private static BitmapImage CreateFallbackImage()
         {
-        
-                // Create a 1x1 pixel bitmap with a solid color (e.g., transparent)
-                Bitmap bmp = new(1, 1);
-                bmp.SetPixel(0, 0, System.Drawing.Color.Transparent); // Set the pixel to transparent
+            // Create a 1x1 pixel bitmap with a solid color (e.g., transparent)
+            Bitmap bmp = new(1, 1);
+            bmp.SetPixel(0, 0, System.Drawing.Color.Transparent); // Set the pixel to transparent
 
             using var memoryStream = new MemoryStream();
             // Save the bitmap to the memory stream in PNG format
@@ -686,12 +692,12 @@ namespace FujifyNET
                 // Handle case where e.UserState is not a string
                 if (e.UserState is string errorMessage)
                 {
-                    System.Windows.MessageBox.Show($"Error: {errorMessage}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    ShowCustomMessageBox("Error on progress changed", $"Error: {errorMessage}");
                 }
                 else
                 {
                     // Handle unexpected type or null case
-                    System.Windows.MessageBox.Show("An unknown error occurred.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    ShowCustomMessageBox("Error", "An unknown error occurred. Error 100");
                 }
             }
         }
@@ -704,7 +710,7 @@ namespace FujifyNET
             }
             else if (e.Error != null)
             {
-                System.Windows.MessageBox.Show($"An error occurred: {e.Error.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                ShowCustomMessageBox("Error", $"An error occurred: {e.Error.Message}");
             }
             else
             {
@@ -737,7 +743,10 @@ namespace FujifyNET
 
             hasProcessingErrors = false; // Reset the error flag
         }
-
+        private bool GetEmbedOriginalRawPreference()
+        {
+            return Properties.Settings.Default.EmbedOriginalRaw;
+        }
 
         private string? ConvertToDng(string filePath)
         {
@@ -756,16 +765,24 @@ namespace FujifyNET
             try
             {
                 UpdateFileItem(filePath, "Converting to DNG");
+                bool embedOriginalRaw = GetEmbedOriginalRawPreference();
+
+                string arguments = $"convert";
+                if (!embedOriginalRaw)
+                {
+                    arguments += " --embed-raw false";
+                }
+                arguments += $" \"{filePath}\" \"{dngFilePath}\"";
+
                 var processInfo = new ProcessStartInfo
                 {
                     FileName = dngLabPath,
-                    Arguments = $"convert  --embed-raw false \"{filePath}\" \"{dngFilePath}\"",
+                    Arguments = arguments,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
-
                 using var process = Process.Start(processInfo);
 
                 // Ensure the process started successfully
@@ -817,72 +834,64 @@ namespace FujifyNET
                 return;
             }
 
-            // Retrieve the value of customArgumentToggle on the UI thread
-            bool isCustomArgumentsEnabled = false;
+            bool createBackup = false;
             Dispatcher.Invoke(() =>
             {
-                isCustomArgumentsEnabled = customArgumentToggle.IsChecked == true;
+                createBackup = customArgumentToggle.IsChecked == true;
             });
 
-            string? dngFilePath = filePath; // Allow dngFilePath to be nullable
-            bool isConvertedDng = filePath.EndsWith(".dng", StringComparison.OrdinalIgnoreCase);
+            string? dngFilePath = filePath;
+            bool isOriginallyDng = filePath.EndsWith(".dng", StringComparison.OrdinalIgnoreCase);
             bool hasBeenConvertedDng = false;
 
-            if (!isConvertedDng)
+            if (!isOriginallyDng)
             {
-                // Convert to DNG if it's not already a DNG
                 dngFilePath = ConvertToDng(filePath);
-
-                // Check if conversion failed
                 if (dngFilePath == null)
                 {
                     Dispatcher.Invoke(() => UpdateFileItem(filePath, "Failed to convert to DNG."));
                     hasProcessingErrors = true;
                     return;
                 }
-                else
-                {
-                    hasBeenConvertedDng = true;
-                }
+                hasBeenConvertedDng = true;
             }
 
-            string arguments;
-            if (!string.IsNullOrEmpty(outputFolderPath))
-            {
-                string outputFilePath = System.IO.Path.Combine(outputFolderPath, System.IO.Path.GetFileNameWithoutExtension(dngFilePath) + "_processed.dng");
+            string baseArguments = commonArgs;
+            string outputFilePath = "";
 
-                // Check if the output file already exists and delete it if necessary
+            bool useOutputPath = !string.IsNullOrEmpty(outputFolderPath);
+
+            if (useOutputPath)
+            {
+                outputFilePath = System.IO.Path.Combine(outputFolderPath, System.IO.Path.GetFileNameWithoutExtension(dngFilePath) + ".dng");
+
+                // Check if a file with the same name already exists in the output folder
                 if (System.IO.File.Exists(outputFilePath))
                 {
                     try
                     {
                         System.IO.File.Delete(outputFilePath);
-                        Debug.WriteLine($"Deleted existing output file: {outputFilePath}");
                     }
                     catch (Exception ex)
                     {
-                        Dispatcher.Invoke(() => UpdateFileItem(filePath, $"Failed to delete existing output file: {ex.Message}"));
+                        Dispatcher.Invoke(() => UpdateFileItem(filePath, $"Failed to delete existing file in output folder: {ex.Message}"));
                         hasProcessingErrors = true;
                         return;
                     }
                 }
 
-                arguments = $"-CameraProfilesMake=\"FUJIFILM\" -CameraProfilesModel=\"X-T5\" -CameraProfilesUniqueCameraModel=\"Fujifilm X-T5\" -CameraProfilesCameraRawProfile=\"True\" -UniqueCameraModel=\"Fujifilm X-T5\" -o \"{outputFilePath}\" \"{dngFilePath}\"";
-                Debug.WriteLine($" {arguments}");
-
+                baseArguments += $" -o \"{outputFilePath}\"";
             }
             else
             {
-                // Use default arguments if custom arguments are not enabled and no output path is set
-                if (!isCustomArgumentsEnabled && string.IsNullOrEmpty(outputFolderPath) && !hasBeenConvertedDng)
+                // Only add -overwrite_original when there's no output path and it's either not an original DNG or backup is not requested
+                if (!isOriginallyDng || !createBackup)
                 {
-                    arguments = $"{defaultArguments} \"{dngFilePath}\"";
-                }
-                else
-                {
-                    arguments = $"{currentArguments} \"{dngFilePath}\"";
+                    baseArguments += " -overwrite_original";
                 }
             }
+
+            string arguments = $"{baseArguments} \"{dngFilePath}\"";
 
             string exeDirectory = AppDomain.CurrentDomain.BaseDirectory;
             string exifToolPath = System.IO.Path.Combine(exeDirectory, "libs", "exiftool.exe");
@@ -919,34 +928,10 @@ namespace FujifyNET
                     if (output.Contains("image files updated") || output.Contains("image files created"))
                     {
                         Dispatcher.Invoke(() => UpdateFileItem(filePath, "✔"));
-                        Debug.WriteLine($"converted : {hasBeenConvertedDng} path  {outputFolderPath}");
-
-                        // Check if the file was converted to DNG and an output path is set
-                        if (hasBeenConvertedDng && !string.IsNullOrEmpty(outputFolderPath))
+                        // Clean up temporary files only if we converted a non-DNG file and no output path is specified
+                        if (hasBeenConvertedDng && !useOutputPath)
                         {
-                            // Generate the temporary file path
-                            string temporaryFilePath = System.IO.Path.ChangeExtension(dngFilePath, ".dng_original");
-
-                            // Delete the original DNG file and temporary file after processing
-                            try
-                            {
-                                if (System.IO.File.Exists(dngFilePath))
-                                {
-                                    System.IO.File.Delete(dngFilePath);
-                                    Debug.WriteLine($"Deleted original DNG file: {dngFilePath}");
-                                }
-
-                                if (System.IO.File.Exists(temporaryFilePath))
-                                {
-                                    System.IO.File.Delete(temporaryFilePath);
-                                    Debug.WriteLine($"Deleted temporary file: {temporaryFilePath}");
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                Dispatcher.Invoke(() => UpdateFileItem(filePath, $"Failed to delete files: {ex.Message}"));
-                                hasProcessingErrors = true;
-                            }
+                            CleanupTemporaryFiles(dngFilePath);
                         }
                     }
                     else
@@ -965,6 +950,26 @@ namespace FujifyNET
             {
                 Dispatcher.Invoke(() => UpdateFileItem(filePath, $"Exception: {ex.Message}"));
                 hasProcessingErrors = true;
+            }
+        }
+        private void CleanupTemporaryFiles(string dngFilePath)
+        {
+            try
+            {
+                if (System.IO.File.Exists(dngFilePath))
+                {
+                    System.IO.File.Delete(dngFilePath);
+                }
+
+                string temporaryFilePath = System.IO.Path.ChangeExtension(dngFilePath, ".dng_original");
+                if (System.IO.File.Exists(temporaryFilePath))
+                {
+                    System.IO.File.Delete(temporaryFilePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to delete temporary files: {ex.Message}");
             }
         }
 
@@ -1007,7 +1012,7 @@ namespace FujifyNET
 
             if (filePaths.Count == 0)
             {
-                System.Windows.MessageBox.Show("No files to process.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
+                ShowCustomMessageBox("Warning", "No files to process.");
                 processButton.Content = "Process";
                 UpdateButtonState();
 
@@ -1161,8 +1166,7 @@ namespace FujifyNET
                 }
                 catch (Exception ex)
                 {
-                    // Show an error message if a file fails to open
-                    System.Windows.MessageBox.Show($"Failed to open file '{selectedItem.FilePath}': {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    ShowCustomMessageBox("Error", $"Failed to open file: {ex.Message}");
                 }
             }
         }
@@ -1170,6 +1174,9 @@ namespace FujifyNET
         {
             var selectedItems = listView.SelectedItems.OfType<FileItem>().ToList();
             var openedFolders = new HashSet<string>();
+            // If no items are selected, do nothing
+            if (selectedItems.Count == 0)
+                return;
 
             foreach (var selectedItem in selectedItems)
             {
@@ -1187,7 +1194,7 @@ namespace FujifyNET
                 }
                 catch (Exception ex)
                 {
-                    System.Windows.MessageBox.Show($"Failed to open folder: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    ShowCustomMessageBox("Error", $"Failed to open folder: {ex.Message}");
                 }
             }
         }
@@ -1203,7 +1210,8 @@ namespace FujifyNET
                 }
                 catch (Exception ex)
                 {
-                    System.Windows.MessageBox.Show($"Failed to open file: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                    ShowCustomMessageBox("Error", $"Failed to open file: {ex.Message}");
                 }
             }
         }
@@ -1233,6 +1241,19 @@ namespace FujifyNET
                 AddDngFilesFromFolder(selectedPath);
             }
 
+        }
+        private void PreferencesMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            var preferencesWindow = new PreferencesWindow();
+            preferencesWindow.Owner = this;
+            bool? result = preferencesWindow.ShowDialog();
+
+            if (result == true)
+            {
+                // The user clicked Save in the PreferencesWindow
+                // Apply the new theme
+                App.ApplyTheme(Properties.Settings.Default.IsDarkTheme);
+            }
         }
         private void HelpMenuItem_Click(object sender, RoutedEventArgs e)
         {
@@ -1309,7 +1330,7 @@ namespace FujifyNET
                 }
                 HideProgressBar();
                 // Wait for the animation to complete
-                await Task.Delay(500); // Match this duration with the storyboard's duration
+                await Task.Delay(500); 
 
                 // Remove all items from the collection
                 Files.Clear();
@@ -1343,8 +1364,6 @@ namespace FujifyNET
         {
             var fadeOutStoryboard = (Storyboard)FindResource("FadeOutStoryboard2");
 
-
-
             if (DragDropTextBlock.Visibility == Visibility.Visible && !isTextBlockHidden)
             {
                 // Stop the current animation if any
@@ -1356,17 +1375,6 @@ namespace FujifyNET
                     DragDropTextBlock.Visibility = Visibility.Collapsed;
                 };
             }
-
-
-        }
-        private void ToggleButton_Checked(object sender, RoutedEventArgs e)
-        {
-            currentArguments = customArguments;
-        }
-
-        private void ToggleButton_Unchecked(object sender, RoutedEventArgs e)
-        {
-            currentArguments = defaultArguments;
         }
 
         private void ExitMenuItem_Click(object sender, RoutedEventArgs e)
@@ -1380,7 +1388,6 @@ namespace FujifyNET
             fadeOutStoryboard.Completed += (s, args) =>
             {
                 this.Close(); // Close the current window
-
                 // Ensure that the application is fully shut down after the window closes
                 System.Windows.Application.Current.Shutdown();
             };
@@ -1425,8 +1432,8 @@ namespace FujifyNET
                 else
                 {
                     // Handle unexpected result type or null result
-                    // You might want to log an error or handle this case appropriately
                     Debug.WriteLine("Unexpected result or result is null.");
+                    return;
                 }
             }
             finally
@@ -1543,24 +1550,21 @@ namespace FujifyNET
                         // Get the maximum width required for the column content
                         foreach (var item in listView.Items)
                         {
-                            // Adjust as needed to get the content for measurement
-
                             if (item is FileItem data) // Check if data is not null
                             {
                                 // Set the text for each column's data
-                                if (column == gridView.Columns[1]) // Adjust as needed
+                                if (column == gridView.Columns[1]) 
                                 {
                                     textBlock.Text = data.FileName ?? string.Empty; // Handle potential null FileName
                                 }
-                                else if (column == gridView.Columns[2]) // Adjust as needed
+                                else if (column == gridView.Columns[2])
                                 {
                                     textBlock.Text = data.CameraMakeAndModel ?? string.Empty; // Handle potential null CameraMakeAndModel
                                 }
-                                else if (column == gridView.Columns[3]) // Adjust as needed
+                                else if (column == gridView.Columns[3]) 
                                 {
                                     textBlock.Text = data.Status ?? string.Empty;
                                     textBlock.Measure(new System.Windows.Size(double.PositiveInfinity, double.PositiveInfinity));                                    
-                                    //Debug.WriteLine($"status w: {textBlock.DesiredSize.Width}; status text : {textBlock.Text}");
                                 }
 
                                 // Measure the width required by the text
@@ -1570,7 +1574,7 @@ namespace FujifyNET
                         }
                         if (column == gridView.Columns[2]) 
                         {
-                            column.Width = Math.Max(maxContentWidth + 45, minWidthForOtherColumns); // Add padding as needed, e.g., 20 pixels
+                            column.Width = Math.Max(maxContentWidth + 45, minWidthForOtherColumns); 
 
                         }
                         else  
@@ -1579,16 +1583,15 @@ namespace FujifyNET
                         }
                         
                         remainingWidth -= column.Width;
-                        //Debug.WriteLine($"Column w : {colsize} remaining : {remW}");
                     }
                 }
-                if (remainingWidth > 80)
+                if (remainingWidth > 42)
                 {
-                    gridView.Columns[1].Width += (remainingWidth / 2) - 40;
-                    gridView.Columns[2].Width += (remainingWidth / 2) - 40;
+                    gridView.Columns[1].Width += (remainingWidth / 3) - 14;
+                    gridView.Columns[2].Width += (remainingWidth / 3) - 14;
+                    gridView.Columns[3].Width += (remainingWidth / 3) - 14 ;
 
                 }
-                
             }
         }
         private void AnimateProgressBarToCompletion()
@@ -1627,8 +1630,6 @@ namespace FujifyNET
 
            
         }
-
-       
         private static void ShowAboutWindow()
         {
             var flowDocument = CreateAboutFlowDocument();
@@ -1691,9 +1692,10 @@ namespace FujifyNET
 
             AddNewLine(paragraph);
             AddNewLine(paragraph);
-            AddInline(paragraph, "Copyright(C) 2024 Isidore Paulin", null);
-            AddNewLine(paragraph);
             AddInline(paragraph, "Licensed under GNU General Public License v3.0", null);
+            AddNewLine(paragraph);
+            AddNewLine(paragraph);
+            AddInline(paragraph, "Copyright(C) 2024 Isidore Paulin", null);
 
             flowDocument.Blocks.Add(paragraph);
             return flowDocument;
@@ -1732,7 +1734,4 @@ namespace FujifyNET
         }
     }
     
-
-
-
 }

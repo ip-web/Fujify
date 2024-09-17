@@ -24,6 +24,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         Title="Fujify" Height="770" Width="700" AllowDrop="True" DragEnter="MainWindow_DragEnter" Drop="MainWindow_DragDrop"
         MinHeight="400"
+        MinWidth="420"
         Icon="assets/images/logo.ico"
         TextElement.Foreground="{DynamicResource MaterialDesign.Brush.Foreground}"
         Background="Transparent"
@@ -32,9 +33,9 @@
         FontFamily="pack://application:,,,/MaterialDesignThemes.Wpf;component/Resources/Roboto/#Roboto"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
-        Loaded="Window_Loaded"
+        Opacity="0"
+        
         >
-
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="0" ResizeBorderThickness="5" GlassFrameThickness="0"/>
     </WindowChrome.WindowChrome>
@@ -410,16 +411,15 @@
           VerticalAlignment="Stretch"
           HorizontalAlignment="Stretch"
           RenderTransformOrigin="0.5,1">
-        <Grid.RenderTransform>
-            <!-- Center the scale at the bottom center -->
+        <!--  <Grid.RenderTransform>
             <ScaleTransform x:Name="WindowScaleTransform"
                         ScaleX="0.5"
-                        ScaleY="0.5" />
+                        ScaleY="0.5" /> 
         </Grid.RenderTransform>
-
+-->
         <!-- Custom Title Bar -->
         <Grid x:Name="TitleBar"
-              Background="#212121"
+            Background="{DynamicResource TitleBarBackgroundBrush}"
               Height="44"
               VerticalAlignment="Top"
               MouseDown="TitleBar_MouseDown"
@@ -508,7 +508,7 @@
             </Grid.ContextMenu>
         </Grid>
 
-        <materialDesign:DialogHost Identifier="RootDialog" Margin="0,44,0,0">
+        <materialDesign:DialogHost Identifier="RootDialog" Margin="0,44,0,0" Background="Transparent">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="68"/>
@@ -527,18 +527,20 @@
                             <!-- For TextBlock -->
                         </Grid.ColumnDefinitions>
                         <Menu Grid.Column="0" DockPanel.Dock="Left" VerticalAlignment="Center">
-                            <MenuItem Header="File" Height="40">
-                                <MenuItem Header="Add Pictures" Icon="{materialDesign:PackIcon Kind=Image}" Click="OpenFileMenuItem_Click"/>
-                                <MenuItem Header="Add Folder" Icon="{materialDesign:PackIcon Kind=Folder}" Click="OpenFolderMenuItem_Click"/>
-                                <Separator />
-                                <MenuItem Header="Exit" Icon="{materialDesign:PackIcon Kind=ExitToApp}" Click="ExitMenuItem_Click"/>
-                            </MenuItem>
-                            <MenuItem Header="Help" Height="40">
-                                <MenuItem Header="Help" Icon="{materialDesign:PackIcon Kind=Help}" Click="HelpMenuItem_Click"/>
-                                <MenuItem Header="Update" Icon="{materialDesign:PackIcon Kind=Update}" Click="UpdateMenuItem_Click"/>
-                                <MenuItem Header="Report a Bug" Icon="{materialDesign:PackIcon Kind=Bug}" Click="ReportBugMenuItem_Click"/>
-                                <MenuItem Header="About" Icon="{materialDesign:PackIcon Kind=InformationOutline}" Click="AboutMenuItem_Click"/>
-                            </MenuItem>
+                                <MenuItem Header="File" Height="40" Style="{StaticResource TopLevelMenuItem}">
+                                    <MenuItem Header="Add Pictures" Icon="{materialDesign:PackIcon Kind=Image}" Click="OpenFileMenuItem_Click" Style="{StaticResource SubMenuItem}"/>
+                                    <MenuItem Header="Add Folder" Icon="{materialDesign:PackIcon Kind=Folder}" Click="OpenFolderMenuItem_Click" Style="{StaticResource SubMenuItem}"/>
+                                    <Separator />
+                                    <MenuItem Header="Preferences" Icon="{materialDesign:PackIcon Kind=Cog}" Click="PreferencesMenuItem_Click" Style="{StaticResource SubMenuItem}"/>
+                                    <Separator />
+                                    <MenuItem Header="Exit" Icon="{materialDesign:PackIcon Kind=ExitToApp}" Click="ExitMenuItem_Click" Style="{StaticResource SubMenuItem}"/>
+                                </MenuItem>
+                                <MenuItem Header="Help" Height="40" Style="{StaticResource TopLevelMenuItem}">
+                                    <MenuItem Header="Help" Icon="{materialDesign:PackIcon Kind=Help}" Click="HelpMenuItem_Click" Style="{StaticResource SubMenuItem}"/>
+                                    <MenuItem Header="Update" Icon="{materialDesign:PackIcon Kind=Update}" Click="UpdateMenuItem_Click" Style="{StaticResource SubMenuItem}"/>
+                                    <MenuItem Header="Report a Bug" Icon="{materialDesign:PackIcon Kind=Bug}" Click="ReportBugMenuItem_Click" Style="{StaticResource SubMenuItem}"/>
+                                    <MenuItem Header="About" Icon="{materialDesign:PackIcon Kind=InformationOutline}" Click="AboutMenuItem_Click" Style="{StaticResource SubMenuItem}"/>
+                                </MenuItem>
                         </Menu>
                         <TextBlock Grid.Column="3" 
                                    VerticalAlignment="Center" 
@@ -546,7 +548,8 @@
                                    FontSize="24" 
                                    TextAlignment="Right" 
                                    FontFamily="{StaticResource FjallaOneFont}" 
-                                   FontWeight="Bold"/>
+                                   FontWeight="Bold" Foreground="#fff"
+                                   />
                         <Image Grid.Column="4" 
                                Source="/assets/images/logoXL.png" 
                                Width="32" 
@@ -633,8 +636,8 @@
                                         </GridViewColumn>
 
                                         <GridViewColumn Width="Auto" DisplayMemberBinding="{Binding FileName}">
-                                            <GridViewColumn.Header>
-                                                <GridViewColumnHeader Content="Picture" Click="ColumnHeader_Click"/>
+                                            <GridViewColumn.Header  >
+                                                <GridViewColumnHeader Padding="7,0,0,0" Content="Picture" Click="ColumnHeader_Click"/>
                                             </GridViewColumn.Header>
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
@@ -646,7 +649,7 @@
                                         </GridViewColumn>
                                         <GridViewColumn  Width="Auto" DisplayMemberBinding="{Binding CameraMakeAndModel}">
                                             <GridViewColumn.Header>
-                                                <GridViewColumnHeader Content="Camera" Click="ColumnHeader_Click"/>
+                                                <GridViewColumnHeader Padding="7,0,0,0" Content="Camera" Click="ColumnHeader_Click"/>
                                             </GridViewColumn.Header>
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
@@ -658,11 +661,11 @@
                                         </GridViewColumn>
                                         <GridViewColumn Width="Auto" DisplayMemberBinding="{Binding Status}">
                                             <GridViewColumn.Header>
-                                                <GridViewColumnHeader Content="Status" Click="ColumnHeader_Click"/>
+                                                <GridViewColumnHeader Padding="7,0,0,0" Content="Status" Click="ColumnHeader_Click"/>
                                             </GridViewColumn.Header>
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <Grid VerticalAlignment="Center">
+                                                    <Grid >
                                                         <TextBlock Text="{Binding Status}" />
                                                     </Grid>
                                                 </DataTemplate>
@@ -719,8 +722,8 @@
                                 Height="40" 
                                 Grid.Column="0">
                             <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="Folder"/>
-                                <TextBlock Text="Export location" Margin="5,0,0,0"/>
+                                <materialDesign:PackIcon Kind="Folder" Foreground="#fff"/>
+                                <TextBlock Text="Export location" Margin="5,0,0,0" Foreground="#fff"/>
                             </StackPanel>
                         </Button>
 
@@ -741,8 +744,6 @@
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="left" Margin="10,0,0,0" Width="Auto" Grid.Row="3">
                             <ToggleButton x:Name="customArgumentToggle" 
                                           IsChecked="True" 
-                                          Checked="ToggleButton_Checked" 
-                                          Unchecked="ToggleButton_Unchecked" 
                                           HorizontalAlignment="Left"   
                                           VerticalAlignment="center" 
                                           Style="{StaticResource MaterialDesignSwitchToggleButton}"/>
@@ -757,7 +758,8 @@
                                     Width="100" 
                                     Height="40" 
                                     Click="ProcessButton_Click" 
-                                    Style="{StaticResource MaterialDesignRaisedButton}" />
+                                    Style="{StaticResource MaterialDesignRaisedButton}"
+                                    Foreground="#fff"/>
                             <Button x:Name="clearButton" 
                                     Content="Clear" 
                                     Width="88" 
