@@ -11,6 +11,7 @@ Unlock the Fujifilm Film Simulations for any camera's RAW files in Lightroom. Th
 - **Uses Powerful Libraries**: Built using ExifTool, LibRaw, and DNGLab for reliable and efficient conversion.
 - **Easy to Use**: Drag and drop files or folders, or use the context menu and toolbar options to add files.
 - **Light and Dark themes**: Light and Dark themes available for better accessibility.
+- **Installer or portable**: Available as an installer with or without .NET Framwork self-contained or as portable app.
 - **Platform**: Currently available for Windows only.
 
 ## How to Use
