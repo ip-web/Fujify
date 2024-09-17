@@ -46,7 +46,7 @@
                 <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Width="Auto" HorizontalAlignment="Center" TextAlignment="Center" VerticalAlignment="Center" Grid.Row="1" Height="Auto" Padding="5,0,5,0"/>
 
                 <!-- OK Button aligned to the bottom -->
-                <Button Content="OK" Command="{Binding OkCommand}" IsDefault="True" Style="{StaticResource MaterialDesignFlatButton}" Foreground="White" Width="80" HorizontalAlignment="Center" Grid.Row="2" />
+                <Button Content="OK" Command="{Binding OkCommand}" IsDefault="True" Style="{StaticResource MaterialDesignFlatButton}"  Width="80" HorizontalAlignment="Center" Grid.Row="2" />
             </Grid>
         </Border>
     </Grid>

@@ -1,0 +1,141 @@
+﻿<!--
+  This file is part of Fujify.
+ 
+  Copyright (C) 2024 Isidore Paulin contact@ipweb.dev
+ 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+ 
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
+ 
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
+-->
+<Window x:Class="FujifyNET.PreferencesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:local="clr-namespace:FujifyNET"
+        mc:Ignorable="d"
+        Title="Preferences" Height="350" Width="350"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        Background="Transparent"
+        TextElement.FontWeight="Medium"
+        TextElement.FontSize="14"
+        FontFamily="{materialDesign:MaterialDesignFont}"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        >
+
+    <Window.Effect>
+        <DropShadowEffect BlurRadius="15" ShadowDepth="1" Opacity="0.5" Color="Black"/>
+    </Window.Effect>
+    <Window.Resources>
+        <!-- Fade In Storyboard -->
+        <Storyboard x:Key="FadeInStoryboard">
+            <DoubleAnimation
+                Storyboard.TargetProperty="Opacity"
+                From="0" To="1" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <PowerEase EasingMode="EaseIn" />
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+
+        <!-- Fade Out Storyboard -->
+        <Storyboard x:Key="FadeOutStoryboard">
+            <DoubleAnimation
+                Storyboard.TargetProperty="Opacity"
+                From="1" To="0" Duration="0:0:0.3">
+                <DoubleAnimation.EasingFunction>
+                    <PowerEase EasingMode="EaseOut" />
+                </DoubleAnimation.EasingFunction>
+            </DoubleAnimation>
+        </Storyboard>
+
+        <!-- Scale Up Storyboard -->
+        <Storyboard x:Key="ScaleUpStoryboard">
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)">
+                <EasingDoubleKeyFrame KeyTime="0" Value="0.8"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.3" Value="1">
+                    <EasingDoubleKeyFrame.EasingFunction>
+                        <PowerEase EasingMode="EaseOut"/>
+                    </EasingDoubleKeyFrame.EasingFunction>
+                </EasingDoubleKeyFrame>
+            </DoubleAnimationUsingKeyFrames>
+            <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)">
+                <EasingDoubleKeyFrame KeyTime="0" Value="0.8"/>
+                <EasingDoubleKeyFrame KeyTime="0:0:0.3" Value="1">
+                    <EasingDoubleKeyFrame.EasingFunction>
+                        <PowerEase EasingMode="EaseOut"/>
+                    </EasingDoubleKeyFrame.EasingFunction>
+                </EasingDoubleKeyFrame>
+            </DoubleAnimationUsingKeyFrames>
+        </Storyboard>
+    </Window.Resources>
+    <Border CornerRadius="10" Margin="10" Background="{DynamicResource MaterialDesignPaper}">
+        <Grid x:Name="PrefGrid" RenderTransformOrigin="0.5,1">
+        <Grid.RenderTransform>
+            <ScaleTransform ScaleX="0.5" ScaleY="0.5"/>
+
+        </Grid.RenderTransform>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Custom title bar -->
+            <Grid x:Name="CustomTitleBar" Height="30" Background="{DynamicResource PrimaryHueDarkBrush}" MouseLeftButtonDown="TitleBar_MouseDown">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Preferences" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                <Button Grid.Column="1" Style="{StaticResource MaterialDesignFlatButton}" Height="30" Width="30" Padding="0" Click="Close_Click">
+                    <materialDesign:PackIcon Kind="Close" />
+                </Button>
+            </Grid>
+
+            <!-- Preferences content -->
+            <StackPanel Grid.Row="1" Margin="20">
+               
+
+                <TextBlock Text="Conversion Settings" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,0,0,20"/>
+
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Embed Original RAW" VerticalAlignment="Center"/>
+                    <ToggleButton x:Name="EmbedOriginalRawToggle" Grid.Column="1" Style="{StaticResource MaterialDesignSwitchToggleButton}"/>
+                </Grid>
+                <TextBlock Text="Theme Settings" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,20,0,20"/>
+
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Dark Theme" VerticalAlignment="Center"/>
+                    <ToggleButton x:Name="DarkThemeToggle" Grid.Column="1" Style="{StaticResource MaterialDesignSwitchToggleButton}" 
+                   Checked="DarkThemeToggle_Checked" Unchecked="DarkThemeToggle_Unchecked"/>
+                </Grid>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,20,0,0">
+                    <Button Content="Cancel" Click="CancelButton_Click" Margin="0,0,10,0" Foreground="#fff"/>
+                    <Button Content="Save" Click="SaveButton_Click" Foreground="#fff"/>
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>
