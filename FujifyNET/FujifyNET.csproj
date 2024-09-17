@@ -9,6 +9,9 @@
     <UseWindowsForms>True</UseWindowsForms>
     <ApplicationIcon>assets\images\logo.ico</ApplicationIcon>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	  <SatelliteResourceLanguages>en-US;en</SatelliteResourceLanguages>
+	  <ResourceLanguages>en</ResourceLanguages>
+
   </PropertyGroup>
 
   <ItemGroup>
@@ -60,5 +63,6 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
+
 
 </Project>

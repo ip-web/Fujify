@@ -57,6 +57,15 @@ namespace FujifyNET
                     isDark ? (byte)0x21 : (byte)0x00
                 )
             );
+            // Add PreferencesBorderBrush
+            System.Windows.Application.Current.Resources["PreferencesBorderBrush"] = new SolidColorBrush(
+                Color.FromRgb(
+                    isDark ? (byte)0x3F : (byte)0xB7,
+                    isDark ? (byte)0x3F : (byte)0xB7,
+                    isDark ? (byte)0x3F : (byte)0xB7
+                )
+            );
+
 
         }
 

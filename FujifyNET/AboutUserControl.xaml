@@ -56,7 +56,6 @@
                 <Button Content="OK" 
                         Command="{Binding OkCommand}" 
                         Style="{StaticResource MaterialDesignFlatButton}"
-                        Foreground="White"
                         IsDefault="True"
                         HorizontalAlignment="Center"
                         Margin="0,10,0,0"
