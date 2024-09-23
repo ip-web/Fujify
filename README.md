@@ -47,7 +47,7 @@ See the [Release](https://github.com/ip-web/Fujify/releases) page to download th
 **A:** Here is a list of currently supproted RAW files for direct use in Fujifier "ARI, CR3, CR2, CRW, ERF, RAF, 3FR, KDC, DCS, DCR, IIQ, MOS, MEF, MRW, NEF, NRW, ORF, RW2, PEF, IIQ, SRW, ARW, SRF, SR2" any RAW file converted to DNG should be compatible. For a list of supported camera you can refere to [DNGLab supported camera list](https://github.com/dnglab/dnglab/blob/main/SUPPORTED_CAMERAS.md)
 
 **Q: Can I use this on Fujifilm RAF file?**  
-**A:** Yes it should work on Fujifilm files and will unlock newer simulations on older Fujifilm bodies, but better techniques exist to achieve this without modifying your original RAF files.
+**A:** Yes it should work on Fujifilm files and will unlock newer simulations on older Fujifilm bodies, but better techniques exist to achieve this without modifying your original RAF files. I refer you to the [pal2tech video](https://www.youtube.com/watch?v=UUce-04DoSM) on how to do this.
 
 **Q: The conversion of my RAW file failed.**  
 **A:** The conversion might fail if the RAW file has been altered in any way, or if your camera is not supported by the program, which can happen with newly released models. If any problem arises during conversion, please try converting to DNG beforehand using software that supports your camera. Sometime the opposite might be true and some converted DNG file won't work with the program, in this case use the original RAW instead.
@@ -92,7 +92,6 @@ I made this project on my own and spent a considerable amount of time doing so, 
 
 - [**PayPal**](https://www.paypal.com/donate/?hosted_button_id=7UJ9B3LBLTN4J)
 - ETH: 0xac487782e8a66d21d1fd099dda1872ee23376f6e
-- BTC: 1LkaRQQXc5PL65ouN912sLkrdDBtGxxHzg
 
 Alternatively, if you're unable or don't want to make some financial contribution you can show some love to my [Instagram page](https://www.instagram.com/isi.do.re/) 
 
