@@ -16,7 +16,7 @@ use vars qw($VERSION);
 use Image::ExifTool qw(:DataAccess :Utils);
 use Image::ExifTool::GPS;
 
-$VERSION = '1.06';
+$VERSION = '1.07';
 
 # supported EXR value format types (other types are extracted as undef binary data)
 my %formatType = (
@@ -53,7 +53,7 @@ my %formatType = (
         L<http://www.openexr.com/> for the official specification.
     },
     _ver => { Name => 'EXRVersion', Notes => 'low byte of Flags word' },
-    _flags => { Name => 'Flags', 
+    _flags => { Name => 'Flags',
         PrintConv => { BITMASK => {
             9 => 'Tiled',
             10 => 'Long names',
@@ -91,6 +91,8 @@ my %formatType = (
             5 => 'PXR24',
             6 => 'B44',
             7 => 'B44A',
+            8 => 'DWAA', #github276
+            9 => 'DWAB', #github276
         },
     },
     dataWindow          => { },
@@ -339,7 +341,7 @@ information from OpenEXR images.
 
 =head1 AUTHOR
 
-Copyright 2003-2024, Phil Harvey (philharvey66 at gmail.com)
+Copyright 2003-2026, Phil Harvey (philharvey66 at gmail.com)
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

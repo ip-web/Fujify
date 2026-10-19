@@ -1,0 +1,26 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "dotrush: Build",
+            "type": "process",
+            "command": "C:\\Users\\isisk\\.dotnet\\dotnet.exe",
+            "args": [
+                "build",
+                "${workspaceFolder}\\FujifyNET\\FujifyNET.csproj",
+                "-c",
+                "Debug"
+            ],
+            "options": {
+                "env": {
+                    "DOTNET_ROOT": "C:\\Users\\isisk\\.dotnet"
+                }
+            },
+            "problemMatcher": "$msCompile",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

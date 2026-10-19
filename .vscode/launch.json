@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": ".NET Core Debugger (launch)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/FujifyNET/bin/Debug/net8.0-windows/FujifyNET.exe",
+            "cwd": "${workspaceFolder}/FujifyNET",
+            "preLaunchTask": "dotrush: Build",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": ".NET Core Debugger (attach)",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:dotrush.pickProcess}"
+        }
+    ]
+}

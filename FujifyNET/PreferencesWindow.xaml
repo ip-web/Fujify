@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   This file is part of Fujify.
  
   Copyright (C) 2024 Isidore Paulin contact@ipweb.dev
@@ -24,7 +24,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:local="clr-namespace:FujifyNET"
         mc:Ignorable="d"
-        Title="Preferences" Height="350" Width="350"
+        Title="Preferences" Height="480" Width="380"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         Background="Transparent"
         TextElement.FontWeight="Medium"
@@ -108,8 +108,8 @@
 
             <!-- Preferences content -->
             <StackPanel Grid.Row="1" Margin="15,15,15,0">
-                <TextBlock Text="Processing" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,0,0,20"/>
-                <Grid Margin="0,0,0,10">
+                <TextBlock Text="Processing" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,0,0,15"/>
+                <Grid Margin="0,0,0,12">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -117,7 +117,39 @@
                     <TextBlock Text="Embed Original RAW" VerticalAlignment="Center"/>
                     <ToggleButton x:Name="EmbedOriginalRawToggle" Grid.Column="1" Style="{StaticResource MaterialDesignSwitchToggleButton}"/>
                 </Grid>
-                <TextBlock Text="Theme " Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,20,0,20"/>
+
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Skip Thumbnail Generation" VerticalAlignment="Center"/>
+                    <ToggleButton x:Name="SkipThumbnailGenerationToggle" Grid.Column="1" Style="{StaticResource MaterialDesignSwitchToggleButton}"/>
+                </Grid>
+
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Max Concurrent Conversions" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="ConcurrencyValueText" Grid.Column="1" FontWeight="Bold" VerticalAlignment="Center" Text="12"/>
+                </Grid>
+                <Slider x:Name="ConcurrencySlider" 
+                        Minimum="1" 
+                        Maximum="24" 
+                        Value="12" 
+                        TickFrequency="1" 
+                        IsSnapToTickEnabled="True"
+                        Margin="0,0,0,4"
+                        ValueChanged="ConcurrencySlider_ValueChanged"/>
+                <TextBlock x:Name="ConcurrencyHintText" 
+                           FontSize="11" 
+                           Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                           Margin="0,0,0,12" 
+                           Text="Default: 12 (recommended for P-core / E-core balance)"/>
+
+                <TextBlock Text="Theme" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,5,0,12"/>
 
                 <Grid Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
@@ -129,7 +161,7 @@
                    Checked="DarkThemeToggle_Checked" Unchecked="DarkThemeToggle_Unchecked"/>
                 </Grid>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,45,0,0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,20,0,15">
                     <Button Content="Save" Click="SaveButton_Click" Foreground="#fff" Margin="0,0,10,0" Width="80" Height="35" />
                     <Button Content="Cancel" Click="CancelButton_Click"   Height="35" Style="{StaticResource MaterialDesignToolForegroundButton}"/>
 
