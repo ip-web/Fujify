@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType Condition="'$(TargetPlatformIdentifier)' == ''">WinExe</OutputType>
+    <OutputType Condition="'$(OutputType)' == '' and '$(TargetPlatformIdentifier)' == ''">WinExe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ApplicationManifest Condition="'$(TargetPlatformIdentifier)' == ''">app.manifest</ApplicationManifest>

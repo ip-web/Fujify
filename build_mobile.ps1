@@ -20,53 +20,74 @@ Write-Host "==========================================================" -Foregro
 Write-Host " Fujify Mobile Build Engine (Android & iOS)" -ForegroundColor Cyan
 Write-Host "==========================================================" -ForegroundColor Cyan
 
-# 1. Check .NET Workloads
-Write-Host "`n[1/4] Verifying .NET Mobile Workloads..." -ForegroundColor Yellow
+# 1. Environment & Workload Detection
+Write-Host "`n[1/4] Verifying .NET Mobile Workloads & Environment..." -ForegroundColor Yellow
 $workloads = & $dotnet workload list
 Write-Host $workloads
 
-# 2. Build Android App
+# Detect Java SDK
+if (-not $env:JAVA_HOME) {
+    $possibleJdks = @(
+        (Get-ChildItem "C:\Program Files\Microsoft\jdk-17*" -ErrorAction SilentlyContinue | Select-Object -First 1).FullName,
+        (Get-ChildItem "C:\Program Files\Eclipse Adoptium\jdk-17*" -ErrorAction SilentlyContinue | Select-Object -First 1).FullName,
+        (Get-ChildItem "C:\Program Files\Java\jdk-17*" -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
+    )
+    foreach ($j in $possibleJdks) {
+        if ($j -and (Test-Path $j)) {
+            $env:JAVA_HOME = $j
+            Write-Host "Detected JAVA_HOME: $j" -ForegroundColor Green
+            break
+        }
+    }
+}
+
+# Detect Android SDK
+if (-not $env:ANDROID_HOME) {
+    $possibleAndroid = @(
+        "$env:LOCALAPPDATA\Android\Sdk",
+        "C:\Program Files (x86)\Android\android-sdk"
+    )
+    foreach ($a in $possibleAndroid) {
+        if ($a -and (Test-Path $a)) {
+            $env:ANDROID_HOME = $a
+            Write-Host "Detected ANDROID_HOME: $a" -ForegroundColor Green
+            break
+        }
+    }
+}
+
+if ($env:JAVA_HOME -and $env:ANDROID_HOME) {
+    $env:PATH = "$env:JAVA_HOME\bin;$env:ANDROID_HOME\cmdline-tools\latest\bin;$env:ANDROID_HOME\platform-tools;$env:PATH"
+}
+
+# 2. Build Android App (ARM64 & x86_64)
 if (-not $SkipAndroid) {
     Write-Host "`n[2/4] Building Fujify for Android ($Configuration)..." -ForegroundColor Yellow
     $androidProj = Join-Path $repoRoot "Fujify.Android\Fujify.Android.csproj"
     
-    # Check if ANDROID_HOME or Android SDK is set
-    $androidHome = $env:ANDROID_HOME
-    if (-not $androidHome) {
-        $possiblePaths = @(
-            "$env:LOCALAPPDATA\Android\Sdk",
-            "C:\Program Files (x86)\Android\android-sdk"
-        )
-        foreach ($p in $possiblePaths) {
-            if (Test-Path $p) {
-                $androidHome = $p
-                $env:ANDROID_HOME = $p
-                Write-Host "Found Android SDK at: $androidHome" -ForegroundColor Green
-                break
+    $architectures = @("android-arm64", "android-x64")
+    foreach ($rid in $architectures) {
+        Write-Host "`nBuilding APK for $rid..." -ForegroundColor Cyan
+        try {
+            & $dotnet build $androidProj -c $Configuration -r $rid -p:AndroidPackageFormat=apk
+            
+            $archSuffix = if ($rid -eq "android-arm64") { "arm64" } else { "x64" }
+            $apkFolder = Join-Path $repoRoot "Fujify.Android\bin\$Configuration\net10.0-android\$rid"
+            $signedApk = Get-ChildItem -Path $apkFolder -Filter "*Signed.apk" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $signedApk) {
+                $signedApk = Get-ChildItem -Path $apkFolder -Filter "*.apk" -ErrorAction SilentlyContinue | Select-Object -First 1
             }
-        }
-    }
 
-    try {
-        Write-Host "Building Android APK..." -ForegroundColor Cyan
-        & $dotnet build $androidProj -c $Configuration -p:AndroidPackageFormat=apk
-        
-        # Locate generated APK
-        $apkFiles = Get-ChildItem -Path (Join-Path $repoRoot "Fujify.Android\bin\$Configuration") -Filter "*Signed.apk" -Recurse
-        if (-not $apkFiles) {
-            $apkFiles = Get-ChildItem -Path (Join-Path $repoRoot "Fujify.Android\bin\$Configuration") -Filter "*.apk" -Recurse
+            if ($signedApk) {
+                $targetRelease = Join-Path $releaseDir "Fujify-v2.1.0-Android-$archSuffix.apk"
+                $targetDist = Join-Path $distDir "Fujify-v2.1.0-Android-$archSuffix.apk"
+                Copy-Item -Path $signedApk.FullName -Destination $targetRelease -Force
+                Copy-Item -Path $signedApk.FullName -Destination $targetDist -Force
+                Write-Host "✔ APK generated ($archSuffix): $targetRelease ($([math]::Round($signedApk.Length / 1MB, 2)) MB)" -ForegroundColor Green
+            }
+        } catch {
+            Write-Host "⚠ Error building APK for $rid: $_" -ForegroundColor Red
         }
-        
-        if ($apkFiles) {
-            $targetApk = Join-Path $releaseDir "Fujify-v2.1.0-Android.apk"
-            Copy-Item -Path $apkFiles[0].FullName -Destination $targetApk -Force
-            Write-Host "✔ Android APK generated: $targetApk" -ForegroundColor Green
-        } else {
-            Write-Host "⚠ Android build completed, but no APK package was found." -ForegroundColor Yellow
-        }
-    } catch {
-        Write-Host "⚠ Android build notice: $_" -ForegroundColor Yellow
-        Write-Host "  (Ensure ANDROID_HOME is set to your Android SDK directory for local APK generation, or use GitHub Actions CI)" -ForegroundColor DarkGray
     }
 } else {
     Write-Host "`n[2/4] Skipping Android build (-SkipAndroid specified)." -ForegroundColor DarkGray
@@ -77,7 +98,6 @@ if (-not $SkipiOS) {
     Write-Host "`n[3/4] Building Fujify for iOS ($Configuration)..." -ForegroundColor Yellow
     $iosProj = Join-Path $repoRoot "Fujify.iOS\Fujify.iOS.csproj"
     
-    # On Windows, building iOS targets requires pairing to a Mac or building on macOS / CI
     $isWindows = [System.OperatingSystem]::IsWindows()
     if ($isWindows) {
         Write-Host "Notice: Direct local IPA packaging requires a macOS host or Xcode pairing." -ForegroundColor Yellow
