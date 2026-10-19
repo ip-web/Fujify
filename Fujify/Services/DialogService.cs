@@ -19,6 +19,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
@@ -34,6 +35,91 @@ namespace Fujify.Services
     public class DialogService : IDialogService
     {
         private readonly ISettingsService _settingsService;
+
+        public static Func<string>? PlatformStagingDirectoryResolver { get; set; }
+
+        public static string GetStagingDirectory()
+        {
+            if (PlatformStagingDirectoryResolver != null)
+            {
+                try
+                {
+                    string dir = PlatformStagingDirectoryResolver();
+                    if (!string.IsNullOrWhiteSpace(dir))
+                    {
+                        string staging = Path.Combine(dir, "Fujify_Staging");
+                        Directory.CreateDirectory(staging);
+                        return staging;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Fujify] Error resolving platform staging dir: {ex.Message}");
+                }
+            }
+
+            try
+            {
+                string baseDir = OperatingSystem.IsAndroid() || OperatingSystem.IsIOS()
+                    ? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
+                    : Path.GetTempPath();
+
+                if (string.IsNullOrWhiteSpace(baseDir) || !Directory.Exists(baseDir))
+                {
+                    baseDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                }
+
+                string stagingDir = Path.Combine(baseDir, "Fujify_Staging");
+                Directory.CreateDirectory(stagingDir);
+                return stagingDir;
+            }
+            catch
+            {
+                string fallback = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Fujify_Staging");
+                Directory.CreateDirectory(fallback);
+                return fallback;
+            }
+        }
+
+        private static string DetectRawExtension(string filePath)
+        {
+            try
+            {
+                using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                if (fs.Length < 16) return ".raw";
+                byte[] header = new byte[16];
+                int read = fs.Read(header, 0, 16);
+                if (read < 16) return ".raw";
+
+                // Fujifilm RAF: starts with FUJIFILM
+                if (header[0] == 0x46 && header[1] == 0x55 && header[2] == 0x4A && header[3] == 0x49)
+                    return ".raf";
+
+                // TIFF based (Sony ARW, Canon CR2, Nikon NEF, Adobe DNG, etc.)
+                if ((header[0] == 0x49 && header[1] == 0x49 && header[2] == 0x2A && header[3] == 0x00) ||
+                    (header[0] == 0x4D && header[1] == 0x4D && header[2] == 0x00 && header[3] == 0x2A))
+                {
+                    string? camera = RawMetadataReader.TryGetCameraMakeAndModel(filePath);
+                    if (!string.IsNullOrEmpty(camera))
+                    {
+                        if (camera.Contains("SONY", StringComparison.OrdinalIgnoreCase)) return ".arw";
+                        if (camera.Contains("CANON", StringComparison.OrdinalIgnoreCase)) return ".cr2";
+                        if (camera.Contains("NIKON", StringComparison.OrdinalIgnoreCase)) return ".nef";
+                        if (camera.Contains("FUJIFILM", StringComparison.OrdinalIgnoreCase)) return ".raf";
+                        if (camera.Contains("LEICA", StringComparison.OrdinalIgnoreCase)) return ".dng";
+                        if (camera.Contains("OLYMPUS", StringComparison.OrdinalIgnoreCase) || camera.Contains("OM Digital", StringComparison.OrdinalIgnoreCase)) return ".orf";
+                        if (camera.Contains("PANASONIC", StringComparison.OrdinalIgnoreCase)) return ".rw2";
+                    }
+                    return ".dng";
+                }
+
+                // Canon CR3 (ISO BMFF / ftypcrx)
+                if (header.Length >= 8 && header[4] == 0x66 && header[5] == 0x74 && header[6] == 0x79 && header[7] == 0x70)
+                    return ".cr3";
+            }
+            catch { }
+            return ".arw";
+        }
 
         public DialogService(ISettingsService? settingsService = null)
         {
@@ -121,13 +207,83 @@ namespace Fujify.Services
                 {
                     new("RAW & DNG files")
                     {
-                        Patterns = new[] { "*.dng", "*.cr3", "*.crw", "*.erf", "*.raf", "*.3fr", "*.kdc", "*.dcs", "*.dcr", "*.iiq", "*.mos", "*.mef", "*.mrw", "*.nef", "*.nrw", "*.orf", "*.rw2", "*.pef", "*.srw", "*.arw", "*.srf", "*.sr2", "*.*" }
+                        Patterns = new[] { "*.dng", "*.cr3", "*.crw", "*.erf", "*.raf", "*.3fr", "*.kdc", "*.dcs", "*.dcr", "*.iiq", "*.mos", "*.mef", "*.mrw", "*.nef", "*.nrw", "*.orf", "*.rw2", "*.pef", "*.srw", "*.arw", "*.srf", "*.sr2", "*.*" },
+                        MimeTypes = new[] { "image/*", "application/octet-stream", "*/*" }
                     },
-                    new("All files") { Patterns = new[] { "*.*" } }
+                    new("All files") { Patterns = new[] { "*.*" }, MimeTypes = new[] { "*/*" } }
                 }
             });
 
-            return files.Select(f => f.Path.LocalPath).ToList();
+            if (files == null || files.Count == 0) return Array.Empty<string>();
+
+            var resultPaths = new List<string>();
+            string stagingDir = GetStagingDirectory();
+
+            foreach (var file in files)
+            {
+                string? localPath = file.TryGetLocalPath();
+                if (!string.IsNullOrEmpty(localPath) && File.Exists(localPath))
+                {
+                    try
+                    {
+                        using var testStream = File.OpenRead(localPath);
+                        if (testStream.Length > 0)
+                        {
+                            resultPaths.Add(localPath);
+                            continue;
+                        }
+                    }
+                    catch
+                    {
+                        // Direct read inaccessible on this platform (e.g. Scoped Storage on Android 11+) -> stream via SAF
+                    }
+                }
+
+                // On Android SAF or iOS document pickers, files are content:// URIs or security-scoped streams.
+                // We stream the file into local staging storage so that file-based converters and metadata readers have direct access.
+                try
+                {
+                    string fileName = file.Name;
+                    if (string.IsNullOrWhiteSpace(fileName))
+                    {
+                        fileName = Path.GetFileName(file.Path.LocalPath);
+                    }
+                    if (string.IsNullOrWhiteSpace(fileName))
+                    {
+                        fileName = $"import_{Guid.NewGuid():N}.raw";
+                    }
+
+                    string destFilePath = Path.Combine(stagingDir, fileName);
+
+                    await using (var sourceStream = await file.OpenReadAsync())
+                    await using (var destStream = File.Create(destFilePath))
+                    {
+                        await sourceStream.CopyToAsync(destStream);
+                    }
+
+                    // If file has no extension (e.g. Android SAF content URI gave a name without extension),
+                    // inspect the header bytes to detect RAW format and append correct extension:
+                    if (string.IsNullOrEmpty(Path.GetExtension(destFilePath)))
+                    {
+                        string detectedExt = DetectRawExtension(destFilePath);
+                        if (!string.IsNullOrEmpty(detectedExt))
+                        {
+                            string newDestPath = Path.ChangeExtension(destFilePath, detectedExt);
+                            if (File.Exists(newDestPath)) File.Delete(newDestPath);
+                            File.Move(destFilePath, newDestPath);
+                            destFilePath = newDestPath;
+                        }
+                    }
+
+                    resultPaths.Add(destFilePath);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Fujify] Failed to stream storage file: {ex.Message}");
+                }
+            }
+
+            return resultPaths;
         }
 
         public async Task<string?> ShowFolderBrowserDialogAsync(Window? owner, string title)
@@ -141,7 +297,15 @@ namespace Fujify.Services
                 AllowMultiple = false
             });
 
-            return folders.Count > 0 ? folders[0].Path.LocalPath : null;
+            if (folders.Count == 0) return null;
+            var folder = folders[0];
+            string? localPath = folder.TryGetLocalPath();
+            if (!string.IsNullOrEmpty(localPath) && Directory.Exists(localPath))
+            {
+                return localPath;
+            }
+
+            return folder.Path.LocalPath;
         }
 
         public async Task ShowPreferencesDialogAsync(Window? owner)

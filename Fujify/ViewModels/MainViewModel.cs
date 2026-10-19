@@ -147,6 +147,7 @@ namespace Fujify.ViewModels
         }
 
         public static MainViewModel? Instance { get; set; }
+        public static Action<string>? PlatformFileCreatedCallback { get; set; }
 
         #region Properties
 
@@ -505,12 +506,18 @@ namespace Fujify.ViewModels
                                     _dialogService.ShowMessageAsync(OwnerWindow, "Error", $"Failed to access files in folder: {ex.Message}"));
                             }
                         }
-                        else if (File.Exists(path))
+                        else if (File.Exists(path) || _supportedFormats.Contains(Path.GetExtension(path)))
                         {
                             filesToAdd.Add(path);
                         }
                     }
                 });
+
+                if (filesToAdd.Count == 0 && inputList.Count > 0)
+                {
+                    Dispatcher.UIThread.Post(() =>
+                        _dialogService.ShowMessageAsync(OwnerWindow, "No Supported Photos Found", "No supported RAW or DNG photos could be loaded from the selection."));
+                }
 
                 var existingPaths = new HashSet<string>(Files.Select(f => f.FilePath), StringComparer.OrdinalIgnoreCase);
 
@@ -869,6 +876,7 @@ namespace Fujify.ViewModels
             if (metaResult.Success)
             {
                 UpdateFileStatus(filePath, "✔");
+                PlatformFileCreatedCallback?.Invoke(finalDestFilePath);
             }
             else
             {

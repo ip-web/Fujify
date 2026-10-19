@@ -11,7 +11,7 @@
         <Grid RowDefinitions="Auto,*">
 
             <!-- 1. TOP HEADER / APP BAR -->
-            <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+            <Border x:Name="HeaderBar" Grid.Row="0" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
                     BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="0,0,0,1"
                     Padding="16,10">
                 <Grid ColumnDefinitions="Auto,*,Auto">
@@ -151,7 +151,7 @@
                     </Grid>
 
                     <!-- Phone Sticky Bottom Action Bar -->
-                    <Border Grid.Row="2" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                    <Border x:Name="PhoneBottomBar" Grid.Row="2" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
                             BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="0,1,0,0"
                             Padding="16,12">
                         <StackPanel Spacing="10">
@@ -268,7 +268,7 @@
                         </Grid>
 
                         <!-- Process Bar Footer -->
-                        <Border Grid.Row="2" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                        <Border x:Name="TabletBottomBar" Grid.Row="2" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
                                 BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="0,1,1,0"
                                 Padding="16,12">
                             <Grid ColumnDefinitions="Auto,*,Auto">
@@ -399,7 +399,8 @@
             <Border Background="#99000000" PointerPressed="OnBackdropPointerPressed"/>
 
             <!-- Dialog Sheet Container -->
-            <Border HorizontalAlignment="Center"
+            <Border x:Name="ModalDialogContainer"
+                    HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Margin="16"
                     MaxWidth="520" MaxHeight="600"
