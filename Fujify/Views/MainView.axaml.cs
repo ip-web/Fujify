@@ -33,6 +33,61 @@ namespace Fujify.Views
             AddHandler(DragDrop.DropEvent, View_Drop);
         }
 
+        protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToVisualTree(e);
+            var topLevel = TopLevel.GetTopLevel(this);
+            if (topLevel?.InsetsManager != null)
+            {
+                var mgr = topLevel.InsetsManager;
+                mgr.DisplayEdgeToEdge = true;
+                ApplySafeArea(mgr.SafeAreaPadding);
+                mgr.SafeAreaChanged += (s, args) => ApplySafeArea(args.SafeAreaPadding);
+            }
+            else if (System.OperatingSystem.IsAndroid() || System.OperatingSystem.IsIOS())
+            {
+                ApplySafeArea(new Avalonia.Thickness(0, 36, 0, 20));
+            }
+        }
+
+        private void ApplySafeArea(Avalonia.Thickness insets)
+        {
+            double topInset = System.Math.Max(0, insets.Top);
+            double bottomInset = System.Math.Max(0, insets.Bottom);
+            double leftInset = System.Math.Max(0, insets.Left);
+            double rightInset = System.Math.Max(0, insets.Right);
+
+            // On mobile platforms, if system has not reported safe area yet, provide fallback
+            if ((System.OperatingSystem.IsAndroid() || System.OperatingSystem.IsIOS()) && topInset == 0)
+            {
+                topInset = 36;
+            }
+
+            var header = this.FindControl<Border>("HeaderBar");
+            if (header != null)
+            {
+                header.Padding = new Avalonia.Thickness(16 + leftInset, 10 + topInset, 16 + rightInset, 10);
+            }
+
+            var phoneBottom = this.FindControl<Border>("PhoneBottomBar");
+            if (phoneBottom != null)
+            {
+                phoneBottom.Padding = new Avalonia.Thickness(16 + leftInset, 12, 16 + rightInset, 12 + bottomInset);
+            }
+
+            var tabletBottom = this.FindControl<Border>("TabletBottomBar");
+            if (tabletBottom != null)
+            {
+                tabletBottom.Padding = new Avalonia.Thickness(16 + leftInset, 12, 16 + rightInset, 12 + bottomInset);
+            }
+
+            var modal = this.FindControl<Border>("ModalDialogContainer");
+            if (modal != null)
+            {
+                modal.Margin = new Avalonia.Thickness(16 + leftInset, 16 + topInset, 16 + rightInset, 16 + bottomInset);
+            }
+        }
+
         protected override void OnSizeChanged(SizeChangedEventArgs e)
         {
             base.OnSizeChanged(e);
