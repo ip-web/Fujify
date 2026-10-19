@@ -7,7 +7,7 @@ $repoRoot = $PSScriptRoot
 $publishDir = Join-Path $repoRoot "publish"
 $distDir = Join-Path $repoRoot "dist"
 $releaseDir = Join-Path $repoRoot "release"
-$dotnet = "C:\Users\isisk\.dotnet\dotnet.exe"
+$dotnet = "dotnet"
 
 New-Item -ItemType Directory -Force -Path $distDir | Out-Null
 New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null

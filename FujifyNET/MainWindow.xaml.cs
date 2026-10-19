@@ -354,7 +354,7 @@ namespace FujifyNET
 
             foreach (var item in lv.ContextMenu.Items)
             {
-                if (item is MenuItem menuItem)
+                if (item is System.Windows.Controls.MenuItem menuItem)
                 {
                     if (menuItem.Header.ToString() == "Add Pictures" || menuItem.Header.ToString() == "Add Folder")
                     {
