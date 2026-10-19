@@ -57,7 +57,7 @@ use vars qw($VERSION $AUTOLOAD @formatSize @formatName %formatNumber %intFormat
 use Image::ExifTool qw(:DataAccess :Utils);
 use Image::ExifTool::MakerNotes;
 
-$VERSION = '4.52';
+$VERSION = '4.65';
 
 sub ProcessExif($$$);
 sub WriteExif($$$);
@@ -158,6 +158,16 @@ $formatName[129] = 'utf8';  # (Exif 3.0)
     22 => 'D75',
     23 => 'D50',
     24 => 'ISO Studio Tungsten',
+    25 =>  'Daylight', # Exif3.1
+    26 =>  'Day White', # Exif3.1
+    27 =>  'Cool White', # Exif3.1
+    28 =>  'White', # Exif3.1
+    29 =>  'Warm White', # Exif3.1
+    30 =>  'Daylight LED',  # Exif3.1 (D 5700-7100K)
+    31 =>  'Day White LED', # Exif3.1 (N 4600-5500K)
+    32 =>  'Cool White LED',# Exif3.1 (W 3800-4500K)
+    33 =>  'White LED',     # Exif3.1 (WW 3250-3800K)
+    34 =>  'Warm White LED',# Exif3.1 (L 2600-3250K)
     255 => 'Other',
 );
 
@@ -209,11 +219,11 @@ $formatName[129] = 'utf8';  # (Exif 3.0)
     6 => 'JPEG (old-style)', #3
     7 => 'JPEG', #4
     8 => 'Adobe Deflate', #3
-    9 => 'JBIG B&W', #3
+    9 => 'JBIG B&W or VC-5', #3 / github411
     10 => 'JBIG Color', #3
     99 => 'JPEG', #16
     262 => 'Kodak 262', #16
-    32766 => 'Next', #3
+    32766 => 'NeXt or Sony ARW Compressed 2', #3/Milos
     32767 => 'Sony ARW Compressed', #16
     32769 => 'Packed RAW', #PH (used by Epson, Nikon, Samsung)
     32770 => 'Samsung SRW Compressed', #PH
@@ -246,10 +256,13 @@ $formatName[129] = 'utf8';  # (Exif 3.0)
   # 34888,34889 - ESRI reserved
     34892 => 'Lossy JPEG', # (DNG 1.4)
     34925 => 'LZMA2', #LibTiff
-    34926 => 'Zstd', #LibTiff
-    34927 => 'WebP', #LibTiff
+    34926 => 'Zstd (old)', #LibTiff
+    34927 => 'WebP (old)', #LibTiff
     34933 => 'PNG', # (TIFF mail list)
     34934 => 'JPEG XR', # (TIFF mail list)
+    50000 => 'Zstd', #LibTiff 4.7
+    50001 => 'WebP', #LibTiff 4.7
+    50002 => 'JPEG XL (old)', #LibTiff 4.7
     52546 => 'JPEG XL', # (DNG 1.7)
     65000 => 'Kodak DCR Compressed', #PH
     65535 => 'Pentax PEF Compressed', #Jens
@@ -380,6 +393,20 @@ my %opcodeInfo = (
     PrintConvInv => undef,  # (so the inverse conversion is not performed)
 );
 
+# lookups for LearningOptOutIn tag
+my %use = (
+    0 => 'All / Individual Usage Not Specified',
+    1 => 'Non-Generative AI/ML Training',
+    2 => 'Generative AI/ML Training',
+    3 => 'Data Mining',
+    4 => 'Input to Foundation Model (Trained AI/ML Model)',
+);
+my %ind = (
+    0 => 'Opt-out',
+    1 => 'Opt-in',
+    2 => 'Unspecified',
+);
+
 # main EXIF tag table
 %Image::ExifTool::Exif::Main = (
     GROUPS => { 0 => 'EXIF', 1 => 'IFD0', 2 => 'Image'},
@@ -399,7 +426,7 @@ my %opcodeInfo = (
             THM => 'THM - DCF thumbnail file',
         },
     },
-    0x2 => { #5
+    0x2 => { #5 (not in the EXIF spec)
         Name => 'InteropVersion',
         Description => 'Interoperability Version',
         Protected => 1,
@@ -1428,6 +1455,7 @@ my %opcodeInfo = (
         WriteGroup => 'IFD0',
         Mandatory => 1,
         PrintConv => {
+          # 0 - written by Adobe DNG converter 18.1 when converting from CR3
             1 => 'Centered',
             2 => 'Co-sited',
         },
@@ -1595,6 +1623,7 @@ my %opcodeInfo = (
             2 => 'Sony Compressed RAW', # (lossy, ref IB)
             3 => 'Sony Lossless Compressed RAW', #IB
             4 => 'Sony Lossless Compressed RAW 2', #JR (ILCE-1)
+            6 => 'Sony Compressed RAW 2', # ILCE-7M5
         },
     },
     # 0x7001 - int16u[1] (in SubIFD of Sony ARW images) - values: 0,1
@@ -2026,7 +2055,7 @@ my %opcodeInfo = (
         OffsetPair => -1,
     },
     0x8782 => 'T88Options', #20
-    0x87ac => 'ImageLayer',
+    0x87ac => 'ImageLayer', # Defined in the Mixed Raster Content part of RFC 2301
     0x87af => { #30
         Name => 'GeoTiffDirectory',
         Format => 'undef',
@@ -2078,7 +2107,7 @@ my %opcodeInfo = (
     0x8822 => {
         Name => 'ExposureProgram',
         Groups => { 2 => 'Camera' },
-        Notes => 'the value of 9 is not standard EXIF, but is used by the Canon EOS 7D',
+        Notes => 'the value of 9 is not standard EXIF, but is used by some Canon models',
         Writable => 'int16u',
         PrintConv => {
             0 => 'Not Defined',
@@ -2113,8 +2142,16 @@ my %opcodeInfo = (
     0x8827 => {
         Name => 'ISO',
         Notes => q{
-            called ISOSpeedRatings by EXIF 2.2, then PhotographicSensitivity by the EXIF
-            2.3 spec.
+            called ISOSpeedRatings by EXIF 2.2, then PhotographicSensitivity by EXIF
+            2.3.  This tag has a maximum value of 65535 because the brain-dead EXIF
+            specification limits it to a short integer, and while they can change the
+            name of the tag in an updated EXIF specification, they can't allow a larger
+            storage format for some reason.  For higher ISO settings, see the other
+            ISO-related tags StandardOutputSensitivity, RecommendedExposureIndex,
+            ISOSpeed, ISOSpeedLatitudeyyy and ISOSpeedLatitudezzz.  But the meanings of
+            these new tags are anyone's guess since the defining specification, ISO
+            12232, is imprisoned by the ISO organization who extort a ransom for the
+            release of this information
         },
         Writable => 'int16u',
         Count => -1,
@@ -2467,6 +2504,36 @@ my %opcodeInfo = (
         RawConvInv => 'Image::ExifTool::Exif::EncodeExifText($self,$val)',
         # SHOULD ADD SPECIAL LOGIC TO ALLOW CONDITIONAL OVERWRITE OF
         # "UNKNOWN" VALUES FILLED WITH SPACES
+    },
+    0x9287 => { #Exif3.1
+        Name => 'LearningOptOutIn',
+        Writable => 'undef',
+        Format => 'int16u',
+        Notes => 'multiple values: 0. "'.join('","',@use{0..4}).'
+                                ", 1. "'.join('","',@ind{0..2}).'"',
+        Count => -1,
+        PrintConv => sub {
+            my @a = split ' ', shift;
+            my ($i, @rtn);
+            for ($i=1; $i<@a; ++$i) {
+                push @rtn, (($i & 1) ? $use{$a[$i]} : $ind{$a[$i]}) || "Unknown($a[$i])";
+            }
+            return join('; ', @rtn);
+        },
+        PrintConvInv => sub {
+            my @a = split /; ?/, shift;
+            my ($i, @rtn);
+            for ($i=0; $i<@a; ++$i) {
+                my ($v, $multi) = Image::ExifTool::ReverseLookup($a[$i], ($i & 1) ? \%ind : \%use);
+                if (not defined $v) {
+                    $Image::ExifTool::evalWarning = qq{Can't convert "$a[$i]" (} .
+                        ($multi ? 'multiple' : 'no') . " matches)";
+                    return undef;
+                }
+                push @rtn, $v;
+            }
+            return join(' ', int(@rtn / 2), @rtn);
+        },
     },
     0x9290 => {
         Name => 'SubSecTime',
@@ -2904,7 +2971,48 @@ my %opcodeInfo = (
         },
     },
     # 0xa40d - int16u: 0 (GE E1486 TW)
+    0xa40d => { #Exif3.1
+        Name => 'DevelopmentType',
+        Writable => 'int16u',
+        ValueConv => '($val >> 8) . " " . ($val & 0xff)',
+        ValueConvInv => 'my @a=split " ",$val; (($a[0] & 0xff) << 8) + ($a[1] & 0xff)',
+        PrintConv => [{
+            1 => 'Accurate Reproduction',
+            2 => 'Small Differences',
+            4 => 'Extreme Differences',
+        },{
+            1 => 'Factory Default Settings',
+            2 => 'Not Default Settings',
+            4 => 'Unknown Settings',
+        }],
+    },
     # 0xa40e - int16u: 1 (GE E1486 TW)
+    0xa40e => { #Exif3.1
+        Name => 'DevelopmentTypeDescription',
+        Writable => 'string',
+        ValueConv => '$self->Decode($val, "UTF8")',
+        ValueConvInv => '$self->Encode($val,"UTF8")',
+    },
+    0xa40f => { #Exif3.1
+        Name => 'DistortionCorrection',
+        Writable => 'int16u',
+        PrintConv => { 0 => 'No', 1 => 'Yes' },
+    },
+    0xa410 => { #Exif3.1
+        Name => 'ChromaticAberrationCorrection',
+        Writable => 'int16u',
+        PrintConv => { 0 => 'No', 1 => 'Yes' },
+    },
+    0xa411 => { #Exif3.1
+        Name => 'ShadingCorrection',
+        Writable => 'int16u',
+        PrintConv => { 0 => 'No', 1 => 'Yes' },
+    },
+    0xa412 => { #Exif3.1
+        Name => 'NoiseReduction',
+        Writable => 'int16u',
+        PrintConv => { 0 => 'No', 1 => 'Yes' },
+    },
     0xa420 => { Name => 'ImageUniqueID', Writable => 'string' },
     0xa430 => { #24
         Name => 'OwnerName',
@@ -2931,7 +3039,7 @@ my %opcodeInfo = (
     0xa433 => { Name => 'LensMake',         Writable => 'string' }, #24
     0xa434 => { Name => 'LensModel',        Writable => 'string' }, #24
     0xa435 => { Name => 'LensSerialNumber', Writable => 'string' }, #24
-    0xa436 => { Name => 'Title',            Writable => 'string', Avoid => 1 }, #33
+    0xa436 => { Name => 'ImageTitle',       Writable => 'string' }, #33
     0xa437 => { Name => 'Photographer',     Writable => 'string' }, #33
     0xa438 => { Name => 'ImageEditor',      Writable => 'string' }, #33
     0xa439 => { Name => 'CameraFirmware',          Writable => 'string' }, #33
@@ -3587,6 +3695,7 @@ my %opcodeInfo = (
             Condition => '$$valPt =~ /^\[ae_dbg_info:/',
             MakerNotes => 1,
             Binary => 1,
+            NotIFD => 1,
             WriteGroup => 'IFD0', # (for Validate)
             SubDirectory => { TagTable => 'Image::ExifTool::DJI::Info' },
             Format => 'undef',
@@ -4206,6 +4315,8 @@ my %opcodeInfo = (
         },
     },
     # 0xc7d6 - int8u: 1 (SubIFD1 of Nikon Z6/Z7 NEF)
+    0xc7d7 => { Name => 'ZIFMetadata',    Binary => 1 },
+    0xc7d8 => { Name => 'ZIFAnnotations', Binary => 1 },
     0xc7e9 => { # DNG 1.5
         Name => 'DepthFormat',
         Writable => 'int16u',
@@ -4347,6 +4458,7 @@ my %opcodeInfo = (
         Writable => 'undef',
         WriteGroup => 'IFD0',
         Protected => 1,
+        Binary => 1,
     },
     0xcd40 => { # DNG 1.7
         Name => 'ProfileGainTableMap2',
@@ -4420,6 +4532,13 @@ my %opcodeInfo = (
         Notes => 'values range from 1=slow to 4=fast',
         Writable => 'int32u',
         WriteGroup => 'IFD0',
+    },
+    0xcea1 => {
+        Name => 'SEAL', # (writable directory!)
+        Writable => 'string',
+        WriteGroup => 'IFD0',
+        SubDirectory => { TagTable => 'Image::ExifTool::XMP::SEAL' },
+        WriteCheck => 'return "Can only delete"',  # (don't allow writing)
     },
     0xea1c => { #13
         Name => 'Padding',
@@ -4683,7 +4802,7 @@ my %subSecConv = (
         PrintConv => 'sprintf("%.1f",$val)',
     },
     FocalLength35efl => { #26/PH
-        Description => 'Focal Length',
+        Description => 'Focal Length 35mm Equiv',
         Notes => 'this value may be incorrect if the image has been resized',
         Groups => { 2 => 'Camera' },
         Require => {
@@ -5051,8 +5170,8 @@ my %subSecConv = (
             0 => 'EXIF:DateTimeOriginal',
         },
         Desire => {
-            1 => 'SubSecTimeOriginal',
-            2 => 'OffsetTimeOriginal',
+            1 => 'EXIF:SubSecTimeOriginal',
+            2 => 'EXIF:OffsetTimeOriginal',
         },
         WriteAlso => {
             'EXIF:DateTimeOriginal' => '($val and $val=~/^(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2})/) ? $1 : undef',
@@ -5070,8 +5189,8 @@ my %subSecConv = (
             0 => 'EXIF:CreateDate',
         },
         Desire => {
-            1 => 'SubSecTimeDigitized',
-            2 => 'OffsetTimeDigitized',
+            1 => 'EXIF:SubSecTimeDigitized',
+            2 => 'EXIF:OffsetTimeDigitized',
         },
         WriteAlso => {
             'EXIF:CreateDate' => '($val and $val=~/^(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2})/) ? $1 : undef',
@@ -5089,8 +5208,8 @@ my %subSecConv = (
             0 => 'EXIF:ModifyDate',
         },
         Desire => {
-            1 => 'SubSecTime',
-            2 => 'OffsetTime',
+            1 => 'EXIF:SubSecTime',
+            2 => 'EXIF:OffsetTime',
         },
         WriteAlso => {
             'EXIF:ModifyDate' => '($val and $val=~/^(\d{4}:\d{2}:\d{2} \d{2}:\d{2}:\d{2})/) ? $1 : undef',
@@ -5346,10 +5465,7 @@ sub CalcScaleFactor35efl
     # calculate Canon sensor size using a dedicated algorithm
     if ($$et{Make} eq 'Canon') {
         require Image::ExifTool::Canon;
-        my $canonDiag = Image::ExifTool::Canon::CalcSensorDiag(
-            $$et{RATIONAL}{FocalPlaneXResolution},
-            $$et{RATIONAL}{FocalPlaneYResolution},
-        );
+        my $canonDiag = Image::ExifTool::Canon::CalcSensorDiag($et);
         $diag = $canonDiag if $canonDiag;
     }
     unless ($diag and Image::ExifTool::IsFloat($diag)) {
@@ -5797,6 +5913,8 @@ sub PrintLensID($$@)
     }
     if ($$et{Make} eq 'SONY') {
         if ($lensType eq 65535) {
+            # patch for manual lens (forum17379)
+            return $$printConv{$lensType} if $$printConv{$lensType} and not $focalLength and $maxAperture == 1;
             # handle Sony E-type lenses when LensType2 isn't valid (NEX/ILCE models only)
             if ($$et{Model} =~ /NEX|ILCE/) {
                 unless (%sonyEtype) {
@@ -6155,9 +6273,7 @@ sub NextOffsetName($;$)
 
 #------------------------------------------------------------------------------
 # Process EXIF directory
-# Inputs: 0) ExifTool object reference
-#         1) Reference to directory information hash
-#         2) Pointer to tag table for this directory
+# Inputs: 0) ExifTool ref, 1) dirInfo ref, 2) tag table ref
 # Returns: 1 on success, otherwise returns 0 and sets a Warning
 sub ProcessExif($$$)
 {
@@ -6171,7 +6287,7 @@ sub ProcessExif($$$)
     my $base = $$dirInfo{Base} || 0;
     my $firstBase = $base;
     my $raf = $$dirInfo{RAF};
-    my ($verbose,$validate,$saveFormat) = @{$$et{OPTIONS}}{qw(Verbose Validate SaveFormat)};
+    my ($verbose,$validate,$saveFormat,$saveBin) = @{$$et{OPTIONS}}{qw(Verbose Validate SaveFormat SaveBin)};
     my $htmlDump = $$et{HTML_DUMP};
     my $success = 1;
     my ($tagKey, $dirSize, $makerAddr, $strEnc, %offsetInfo, $offName, $nextOffName, $doHash);
@@ -6179,10 +6295,15 @@ sub ProcessExif($$$)
     my $isExif = ($tagTablePtr eq \%Image::ExifTool::Exif::Main);
 
     # warn for incorrect maker notes in CR3 files
-    if ($$dirInfo{DirName} eq 'MakerNotes' and $$et{FileType} eq 'CR3' and
-        $$dirInfo{Parent} and $$dirInfo{Parent} eq 'ExifIFD')
-    {
-        $et->WarnOnce("MakerNotes shouldn't exist ExifIFD of CR3 image", 1);
+    if ($dirName eq 'MakerNotes') {
+        if ($$et{FileType} eq 'CR3' and $$dirInfo{Parent} and $$dirInfo{Parent} eq 'ExifIFD') {
+            $et->Warn("MakerNotes shouldn't exist ExifIFD of CR3 image", 1);
+        }
+        if ($$dirInfo{TagInfo} and $$dirInfo{TagInfo}{MakerNotes} and
+            $$et{ExifByteOrder} and $$et{ExifByteOrder} ne GetByteOrder())
+        {
+            $et->FoundTag(MakerNoteByteOrder => GetByteOrder());
+        }
     }
     # set flag to calculate image data hash if requested
     $doHash = 1 if $$et{ImageDataHash} and (($$et{FILE_TYPE} eq 'TIFF' and not $base and not $inMakerNotes) or
@@ -6269,7 +6390,7 @@ sub ProcessExif($$$)
         $dirSize = 2 + 12 * $numEntries;
         $dirEnd = $dirStart + $dirSize;
     }
-    $verbose > 0 and $et->VerboseDir($dirName, $numEntries);
+    $verbose > 0 and $et->VerboseDir($dirName, $numEntries, undef, GetByteOrder());
     my $bytesFromEnd = $dataLen - $dirEnd;
     if ($bytesFromEnd < 4) {
         unless ($bytesFromEnd==2 or $bytesFromEnd==0) {
@@ -6350,9 +6471,10 @@ sub ProcessExif($$$)
                     $et->Warn("Bad format ($format) for $dir entry $index", $inMakerNotes);
                     ++$warnCount;
                 }
-                # assume corrupted IFD if this is our first entry (except Sony ILCE-7M2 firmware 1.21)
-                return 0 unless $index or $$et{Model} eq 'ILCE-7M2';
-                next;
+                # assume corrupted IFD if this is our first entry (except Sony ILCE which have an empty first entry)
+                next if $index or $$et{Model} =~ /^ILCE/;
+                # $et->Warn(sprintf('Format code 0x%x encountered -- Possibly corrupted IFD'));
+                return 0;
             }
         }
         my $formatStr = $formatName[$format];   # get name of this format
@@ -6361,7 +6483,7 @@ sub ProcessExif($$$)
         my $valueDataLen = $dataLen;
         my $valuePtr = $entry + 8;      # pointer to value within $$dataPt
         my $tagInfo = $et->GetTagInfo($tagTablePtr, $tagID);
-        my ($origFormStr, $bad, $rational, $subOffName);
+        my ($origFormStr, $bad, $rational, $binVal, $subOffName);
         # save the EXIF format codes if requested
         $$et{SaveFormat}{$saveFormat = $formatStr} = 1 if $saveFormat;
         # hack to patch incorrect count in Kodak SubIFD3 tags
@@ -6652,12 +6774,13 @@ sub ProcessExif($$$)
             if ($count > 500 and $formatStr !~ /^(undef|string|binary)$/ and
                 (not $tagInfo or $$tagInfo{LongBinary} or $warned) and not $$et{OPTIONS}{IgnoreMinorErrors})
             {
-                $et->WarnOnce('Not decoding some large array(s). Ignore minor errors to decode', 2) unless $warned;
+                $et->Warn('Not decoding some large array(s). Ignore minor errors to decode', 2) unless $warned;
                 next if $$et{TAGS_FROM_FILE};   # don't generate bogus value when copying tags
                 $val = "(large array of $count $formatStr values)";
             } else {
                 # convert according to specified format
                 $val = ReadValue($valueDataPt,$valuePtr,$formatStr,$count,$readSize,\$rational);
+                $binVal = substr($$valueDataPt,$valuePtr,$readSize) if $saveBin;
                 # re-code if necessary
                 if (defined $val) {
                     if ($formatStr eq 'utf8') {
@@ -6692,8 +6815,9 @@ sub ProcessExif($$$)
                           "Format: $fstr\nSize: $size bytes\n";
                 if ($size > 4) {
                     my $offPt = Get32u($dataPt,$entry+8);
-                    # (test this with ../pics/{CanonEOS-1D_XMarkIII.hif,PanasonicDC-G9.rw2})
-                    my $actPt = $valuePtr + $valueDataPos + $base - ($$et{EXIF_POS} || 0) + ($$et{BASE_FUDGE} || 0);
+                    # (test this with ../pics/{CanonEOS-1D_XMarkIII.hif,PanasonicDC-G9.rw2,*.raf})
+                    my $actPt = $valuePtr + $valueDataPos + $base - ($$et{EXIF_POS} || 0) +
+                                ($$et{BASE_FUDGE} || $$et{BASE} || 0);
                     $tip .= sprintf("Value offset: 0x%.4x\n", $offPt);
                     # highlight tag name (red for bad size)
                     my $style = ($bad or not defined $tval) ? 'V' : 'H';
@@ -6724,11 +6848,14 @@ sub ProcessExif($$$)
                     } elsif ($tagInfo and Image::ExifTool::IsInt($tval)) {
                         if ($$tagInfo{IsOffset} or $$tagInfo{SubIFD}) {
                             $tval = sprintf('0x%.4x', $tval);
-                            my $actPt = $val + $base - ($$et{EXIF_POS} || 0) + ($$et{BASE_FUDGE} || 0);
+                            my $actPt = $val + $base - ($$et{EXIF_POS} || 0) + ($$et{BASE_FUDGE} || $$et{BASE} || 0);
                             if ($actPt != $val) {
                                 $tval .= sprintf("\nActual offset: 0x%.4x", $actPt);
                                 my $sign = $actPt < $val ? '-' : '';
                                 $tval .= sprintf("\nOffset base: ${sign}0x%.4x", abs($actPt - $val));
+                            }
+                            if ($$et{EXIF_POS} and not $$et{BASE_FUDGE}) {
+                                $tip .= sprintf("File offset:   0x%.4x\n", $actPt + $$et{EXIF_POS})
                             }
                         } elsif ($$tagInfo{PrintHex}) {
                             $tval = sprintf('0x%x', $tval);
@@ -7055,7 +7182,8 @@ sub ProcessExif($$$)
             # set the group 1 name for tags in specified tables
             $et->SetGroup($tagKey, $dirName) if $$tagTablePtr{SET_GROUP1};
             # save original components of rational numbers (used when copying)
-            $$et{RATIONAL}{$tagKey} = $rational if defined $rational;
+            $$et{TAG_EXTRA}{$tagKey}{Rational} = $rational if defined $rational;
+            $$et{TAG_EXTRA}{$tagKey}{BinVal} = $binVal if defined $binVal;
             $$et{TAG_EXTRA}{$tagKey}{G6} = $saveFormat if $saveFormat;
             if ($$et{MAKER_NOTE_FIXUP}) {
                 $$et{TAG_EXTRA}{$tagKey}{Fixup} = $$et{MAKER_NOTE_FIXUP};
@@ -7130,7 +7258,7 @@ EXIF and TIFF meta information.
 
 =head1 AUTHOR
 
-Copyright 2003-2024, Phil Harvey (philharvey66 at gmail.com)
+Copyright 2003-2026, Phil Harvey (philharvey66 at gmail.com)
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

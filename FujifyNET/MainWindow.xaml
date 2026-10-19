@@ -1,4 +1,4 @@
-﻿<!--
+<!--
   This file is part of Fujify.
  
   Copyright (C) 2024 Isidore Paulin contact@ipweb.dev
@@ -19,7 +19,8 @@
 <Window x:Class="FujifyNET.MainWindow"
         Style="{StaticResource MaterialDesignWindow}"
         xmlns:local="clr-namespace:FujifyNET"
-        
+        xmlns:vm="clr-namespace:FujifyNET.ViewModels"
+        xmlns:models="clr-namespace:FujifyNET.Models"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -34,13 +35,14 @@
         FontFamily="pack://application:,,,/MaterialDesignThemes.Wpf;component/Resources/Roboto/#Roboto"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
-        Opacity="0"
+        
         
         >
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="0" ResizeBorderThickness="5" GlassFrameThickness="0"/>
     </WindowChrome.WindowChrome>
     <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter"/>
 
         <!-- Define the font as a resource -->
         <FontFamily x:Key="CustomFont">/Fujifier;component/assets/fonts/#FjallaOne</FontFamily>
@@ -529,17 +531,17 @@
                         </Grid.ColumnDefinitions>
                         <Menu Grid.Column="0" DockPanel.Dock="Left" VerticalAlignment="Center">
                                 <MenuItem Header="File" Height="40" Style="{StaticResource TopLevelMenuItem}">
-                                    <MenuItem Header="Add Pictures" Icon="{materialDesign:PackIcon Kind=Image}" Click="OpenFileMenuItem_Click" Style="{StaticResource SubMenuItem}"/>
-                                    <MenuItem Header="Add Folder" Icon="{materialDesign:PackIcon Kind=Folder}" Click="OpenFolderMenuItem_Click" Style="{StaticResource SubMenuItem}"/>
+                                    <MenuItem Header="Add Pictures" Icon="{materialDesign:PackIcon Kind=Image}" Command="{Binding AddFilesCommand}" Style="{StaticResource SubMenuItem}"/>
+                                    <MenuItem Header="Add Folder" Icon="{materialDesign:PackIcon Kind=Folder}" Command="{Binding AddFolderCommand}" Style="{StaticResource SubMenuItem}"/>
                                     <Separator />
                                     <MenuItem Header="Preferences" Icon="{materialDesign:PackIcon Kind=Cog}" Click="PreferencesMenuItem_Click" Style="{StaticResource SubMenuItem}"/>
                                     <Separator />
                                     <MenuItem Header="Exit" Icon="{materialDesign:PackIcon Kind=ExitToApp}" Click="ExitMenuItem_Click" Style="{StaticResource SubMenuItem}"/>
                                 </MenuItem>
                                 <MenuItem Header="Help" Height="40" Style="{StaticResource TopLevelMenuItem}">
-                                    <MenuItem Header="Help" Icon="{materialDesign:PackIcon Kind=Help}" Click="HelpMenuItem_Click" Style="{StaticResource SubMenuItem}"/>
-                                    <MenuItem Header="Update" Icon="{materialDesign:PackIcon Kind=Update}" Click="UpdateMenuItem_Click" Style="{StaticResource SubMenuItem}"/>
-                                    <MenuItem Header="Report a Bug" Icon="{materialDesign:PackIcon Kind=Bug}" Click="ReportBugMenuItem_Click" Style="{StaticResource SubMenuItem}"/>
+                                    <MenuItem Header="Help" Icon="{materialDesign:PackIcon Kind=Help}" Command="{Binding OpenHelpCommand}" Style="{StaticResource SubMenuItem}"/>
+                                    <MenuItem Header="Update" Icon="{materialDesign:PackIcon Kind=Update}" Command="{Binding OpenUpdateCommand}" Style="{StaticResource SubMenuItem}"/>
+                                    <MenuItem Header="Report a Bug" Icon="{materialDesign:PackIcon Kind=Bug}" Command="{Binding ReportBugCommand}" Style="{StaticResource SubMenuItem}"/>
                                     <MenuItem Header="About" Icon="{materialDesign:PackIcon Kind=InformationOutline}" Click="AboutMenuItem_Click" Style="{StaticResource SubMenuItem}"/>
                                 </MenuItem>
                         </Menu>
@@ -601,8 +603,8 @@
                                 </ListView.Resources>
                                 <ListView.ContextMenu>
                                     <ContextMenu>
-                                        <MenuItem Header="Add Pictures" Icon="{materialDesign:PackIcon Kind=Image}" Click="OpenFileMenuItem_Click"/>
-                                        <MenuItem Header="Add Folder" Icon="{materialDesign:PackIcon Kind=Folder}" Click="OpenFolderMenuItem_Click"/>
+                                        <MenuItem Header="Add Pictures" Icon="{materialDesign:PackIcon Kind=Image}" Command="{Binding AddFilesCommand}"/>
+                                        <MenuItem Header="Add Folder" Icon="{materialDesign:PackIcon Kind=Folder}" Command="{Binding AddFolderCommand}"/>
                                         <Separator />
                                         <MenuItem Header="Open" Icon="{materialDesign:PackIcon Kind=Eye}" Click="OpenFile_Click"/>
                                         <MenuItem Header="Open Containing Folder" Icon="{materialDesign:PackIcon Kind=FolderMultipleImage}" Click="OpenFolder_Click"/>
@@ -676,7 +678,7 @@
                                     Value="0"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
-                                    Visibility="Collapsed" />
+                                    Visibility="{Binding IsLoading, Converter={StaticResource BoolToVisConverter}}" />
                     </Grid>
 
                     <!-- ProgressBar -->
@@ -691,9 +693,11 @@
                         <ProgressBar x:Name="progressBar"  
                                      Minimum="0" 
                                      Maximum="100" 
-                                     Value="0" 
+                                     Value="{Binding ProgressValue}" 
                                      Height="4" 
-                                     Visibility="Collapsed"/>
+                                     Background="Gray"
+                                     Foreground="#01d701"
+                                     Visibility="{Binding IsProgressVisible, Converter={StaticResource BoolToVisConverter}}" />
                     </Border>
                     <Grid VerticalAlignment="Bottom" Margin="10,0" Grid.Row="2">
                         <Grid.ColumnDefinitions>
@@ -703,7 +707,7 @@
                             <!-- TextBox -->
                         </Grid.ColumnDefinitions>
 
-                        <Button Click="BrowseFolderButton_Click" 
+                        <Button Command="{Binding BrowseFolderCommand}" 
                                 Style="{StaticResource MaterialDesignRaisedButton}" 
                                 Height="40" 
                                 Grid.Column="0">
@@ -720,7 +724,7 @@
                                  Margin="10,0,0,0" 
                                  Padding="10,0"
                                  Height="42"                             
-                                 Text="(Optional)" 
+                                 Text="{Binding FormattedOutputFolderPath, Mode=OneWay}" 
                                  FontSize="14" 
                                  IsEnabled="False"
                                  Grid.Column="1"/>  
@@ -729,7 +733,7 @@
                     <Grid Grid.Row="3" VerticalAlignment="Bottom">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="left" Margin="10,0,0,0" Width="Auto" Grid.Row="3">
                             <ToggleButton x:Name="customArgumentToggle" 
-                                          IsChecked="True" 
+                                          IsChecked="{Binding CreateBackup, Mode=TwoWay}" 
                                           HorizontalAlignment="Left"   
                                           VerticalAlignment="center" 
                                           Style="{StaticResource MaterialDesignSwitchToggleButton}"/>
@@ -740,10 +744,11 @@
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="10,0" >
                             <Button x:Name="processButton" 
-                                    Content="Process" 
+                                    Content="{Binding ProcessButtonContent}" 
                                     Width="100" 
                                     Height="40" 
-                                    Click="ProcessButton_Click" 
+                                    Command="{Binding ProcessCommand}"
+                                    IsEnabled="{Binding CanProcessOrStop}" 
                                     Style="{StaticResource MaterialDesignRaisedButton}"
                                     Foreground="#fff"/>
                             <Button x:Name="clearButton" 
@@ -752,6 +757,7 @@
                                     Height="40" 
                                     Margin="10,0,0,0"
                                     Click="ClearButton_Click" 
+                                    IsEnabled="{Binding CanClear}"
                                     Style="{StaticResource MaterialDesignToolForegroundButton}"/>
                         </StackPanel>
                     </Grid>

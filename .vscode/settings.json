@@ -1,0 +1,10 @@
+{
+    "dotrush.roslyn.dotnetSdkDirectory": "C:\\Users\\isisk\\.dotnet\\sdk\\8.0.426",
+    "dotrush.roslyn.projectOrSolutionFiles": [
+        "FujifyNET.sln"
+    ],
+    "terminal.integrated.env.windows": {
+        "PATH": "C:\\Users\\isisk\\.dotnet;${env:PATH}",
+        "DOTNET_ROOT": "C:\\Users\\isisk\\.dotnet"
+    }
+}

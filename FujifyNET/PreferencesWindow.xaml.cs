@@ -1,4 +1,4 @@
-﻿/*
+/*
  * This file is part of Fujify.
  *
  * Copyright (C) 2024 Isidore Paulin contact@ipweb.dev
@@ -25,9 +25,12 @@ namespace FujifyNET
 {
     public partial class PreferencesWindow : Window
     {
+        private readonly bool _initialIsDarkTheme;
+
         public PreferencesWindow()
         {
             InitializeComponent();
+            _initialIsDarkTheme = App.IsDarkTheme;
             LoadPreferences();
             Loaded += Window_Loaded;
         }
@@ -44,6 +47,52 @@ namespace FujifyNET
         {
             DarkThemeToggle.IsChecked = App.IsDarkTheme;
             EmbedOriginalRawToggle.IsChecked = Properties.Settings.Default.EmbedOriginalRaw;
+            SkipThumbnailGenerationToggle.IsChecked = Properties.Settings.Default.SkipThumbnailGeneration;
+
+            int totalThreads = Environment.ProcessorCount;
+            ConcurrencySlider.Maximum = totalThreads;
+
+            int defaultConcurrency = Math.Max(1, totalThreads / 2);
+            int savedConcurrency = Properties.Settings.Default.MaxConcurrentConversions;
+            if (savedConcurrency <= 0 || savedConcurrency > totalThreads)
+            {
+                savedConcurrency = defaultConcurrency;
+            }
+
+            ConcurrencySlider.Value = savedConcurrency;
+            UpdateConcurrencyUI(savedConcurrency);
+        }
+
+        private void ConcurrencySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            UpdateConcurrencyUI((int)e.NewValue);
+        }
+
+        private void UpdateConcurrencyUI(int val)
+        {
+            if (ConcurrencyValueText == null || ConcurrencyHintText == null) return;
+
+            int totalThreads = Environment.ProcessorCount;
+            int defaultConcurrency = Math.Max(1, totalThreads / 2);
+
+            ConcurrencyValueText.Text = val.ToString();
+
+            if (val == defaultConcurrency)
+            {
+                ConcurrencyHintText.Text = $"Default: {val} (Recommended for P-core / E-core balance)";
+            }
+            else if (val == totalThreads)
+            {
+                ConcurrencyHintText.Text = $"Maximum: {val} (Full saturation - may cause disk I/O bottleneck)";
+            }
+            else if (val <= 8)
+            {
+                ConcurrencyHintText.Text = $"{val} threads (Low CPU load, runs primarily on P-cores)";
+            }
+            else
+            {
+                ConcurrencyHintText.Text = $"{val} threads (Utilizes P-cores and E-cores)";
+            }
         }
 
         private void CloseWithAnimation(bool dialogResult)
@@ -63,20 +112,22 @@ namespace FujifyNET
 
             bool newEmbedSetting = EmbedOriginalRawToggle.IsChecked ?? false;
             Properties.Settings.Default.EmbedOriginalRaw = newEmbedSetting;
+            Properties.Settings.Default.SkipThumbnailGeneration = SkipThumbnailGenerationToggle.IsChecked ?? false;
+            Properties.Settings.Default.MaxConcurrentConversions = (int)ConcurrencySlider.Value;
             Properties.Settings.Default.Save();
-
-            Properties.Settings.Default.Reload();
 
             CloseWithAnimation(true);
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e)
         {
+            App.ApplyTheme(_initialIsDarkTheme);
             CloseWithAnimation(false);
         }
 
         private void Close_Click(object sender, RoutedEventArgs e)
         {
+            App.ApplyTheme(_initialIsDarkTheme);
             CloseWithAnimation(false);
         }
 

@@ -21,8 +21,9 @@ use strict;
 use vars qw($VERSION %samsungLensTypes);
 use Image::ExifTool qw(:DataAccess :Utils);
 use Image::ExifTool::Exif;
+use Image::ExifTool::JSON;
 
-$VERSION = '1.57';
+$VERSION = '1.62';
 
 sub WriteSTMN($$$);
 sub ProcessINFO($$$);
@@ -947,7 +948,7 @@ my %formatMinMax = (
 #       if necessary to differentiate tags with the same ID but different names
 %Image::ExifTool::Samsung::Trailer = (
     GROUPS => { 0 => 'MakerNotes', 2 => 'Other' },
-    VARS => { NO_ID => 1, HEX_ID => 0 },
+    VARS => { ID_FMT => 'none' },
     PROCESS_PROC => \&ProcessSamsung,
     TAG_PREFIX => 'SamsungTrailer',
     PRIORITY => 0, # (first one takes priority so DepthMapWidth/Height match first DepthMapData)
@@ -957,7 +958,7 @@ my %formatMinMax = (
         Samsung models such as the Galaxy S4 and Tab S, and from the 'sefd' atom in
         HEIC images from models such as the S10+.
     },
-    '0x0001-name' => 'EmbeddedImageName', # ("DualShot_1","DualShot_2")
+    '0x0001-name' => 'EmbeddedImageName', # ("DualShot_1","DualShot_2","SingleShot")
     '0x0001' => [
         {
             Name => 'EmbeddedImage',
@@ -970,6 +971,7 @@ my %formatMinMax = (
             Groups => { 2 => 'Preview' },
             Binary => 1,
         },
+        # (have also seen the string "BOKEH" here (SM-A226B)
     ],
     '0x0100-name' => 'EmbeddedAudioFileName', # ("SoundShot_000")
     '0x0100' => { Name => 'EmbeddedAudioFile', Groups => { 2 => 'Audio' }, Binary => 1 },
@@ -1001,7 +1003,28 @@ my %formatMinMax = (
     '0x0a20-name' => 'DualCameraImageName', # ("FlipPhoto_002")
     '0x0a20' => { Name => 'DualCameraImage', Groups => { 2 => 'Preview' }, Binary => 1 },
     '0x0a30-name' => 'EmbeddedVideoType', # ("MotionPhoto_Data")
-    '0x0a30' => { Name => 'EmbeddedVideoFile', Groups => { 2 => 'Video' }, Binary => 1 }, #forum7161
+    # Note: A duplicate of this video may be extracted as MotionPhotoVideo from
+    #       the Google trailer, but keep this copy named as EmbeddedVideoFile
+    #       for backward compatibility and to avoid confusion due to extracting
+    #       multiple tags with the same name
+    '0x0a30' => [{
+        Name => 'EmbeddedVideoOffsetSize',
+        # (have seen 12-byte data starting with "mpv2" that contains
+        #  absolute file offset and size of embedded video)
+        Condition => 'length $$valPt == 12',
+        ValueConv => 'join(" ", unpack("x4N2", $val))',
+    },{ #forum7161
+        Name => 'EmbeddedVideoFile',
+        Groups => { 2 => 'Video' },
+        Binary => 1,
+    }],
+   # 0x0a31-name - seen MotionPhoto_Version
+    '0x0a31' => 'SamsungMotionPhotoVersion', # (to distinguish from XMP-GCamera:MotionPhotoVersion)
+    '0x0a33' => { # seen MotionPhoto_AutoPlay
+        Name => 'MotionPhotoAutoPlayVideo',
+        Groups => { 2 => 'Video' },
+        Binary => 1,
+    },
    # 0x0a41-name - seen 'BackupRestore_Data' #forum16086
    # 0x0aa1-name - seen 'MCC_Data'
    # 0x0aa1 - seen '204','222','234','302','429'
@@ -1265,13 +1288,22 @@ my %formatMinMax = (
     '0x0b40' => { # (SM-N975X front camera)
         Name => 'SingleShotMeta',
         SubDirectory => { TagTable => 'Image::ExifTool::Samsung::SingleShotMeta' },
+        # (have also see the string "BOKEH_INFO" here (SM-A226B)
      },
    # 0x0b41-name - seen 'SingeShot_DepthMap_1' (Yes, "Singe") (SM-N975X front camera)
     '0x0b41' => { Name => 'SingleShotDepthMap', Binary => 1 },
    # 0x0b51-name - seen 'Intelligent_PhotoEditor_Data' #forum16086
    # 0x0b60-name - seen 'UltraWide_PhotoEditor_Data' #forum16086
    # 0x0b90-name - seen 'Document_Scan_Info' #forum16086
-   # 0x0ba1-name - seen 'Original_Path_Hash_Key', 'PhotoEditor_Re_Edit_Data', 'deco_doodle_bitmap', 'deco_sticker_bitmap', 'deco_text_bitmap'
+   # 0x0ba1-name - seen 'Original_Path_Hash_Key', 'PhotoEditor_Re_Edit_Data', 'deco_doodle_bitmap', 'deco_sticker_bitmap', 'deco_text_bitmap','PhotoEditor_Re_Edit_Data'
+    '0x0ba1' => [{
+        Name => 'ReEditData',
+        Condition => '$$self{SamsungTagName} eq "PhotoEditor_Re_Edit_Data"',
+        SubDirectory => { TagTable => 'Image::ExifTool::Samsung::ReEditData' },
+    },{
+        Name => 'OriginalPathHashKey',
+        Condition => '$$self{SamsungTagName} eq "Original_Path_Hash_Key"',
+    }],
    # 0x0ba2-name - seen 'Copy_Available_Edit_Info' #forum16086
    # 0x0bc0-name - seen 'Single_Relighting_Bokeh_Info' #forum16086
    # 0x0bd0-name - seen 'Dual_Relighting_Bokeh_Info' #forum16086
@@ -1294,12 +1326,22 @@ my %formatMinMax = (
     '0x0d91' => { #forum16086/16242
         Name => 'PEg_Info',
         Description => 'PEg Info',
-        SubDirectory => { TagTable => 'Image::ExifTool::JSON::Main' },
+        SubDirectory => { TagTable => 'Image::ExifTool::Samsung::PEgInfo' },
     },
    # 0x0da1-name - seen 'Captured_App_Info' #forum16086
    # 0xa050-name - seen 'Jpeg360_2D_Info' (Samsung Gear 360)
    # 0xa050 - seen 'Jpeg3602D' (Samsung Gear 360)
+   # 0x0c61-name - seen 'Camera_Capture_Mode_Info'
+   # 0x0c61 - seen '1'
    # 0x0c81-name - seen 'Watermark_Info'
+   # 0x0ce1-name - seen 'Gallery_DC_Data'
+   # 0x0ce1 - seen '0,109,2,19010102,4000,3000,0,0,0,0;116.284004;1.0'
+   # 0x0e41-name - seen 'Video_Edited_UTC_Offset'
+   # 0x0e41 - seen '+0800'
+    '0x0e41' => {
+        Name => 'VideoEditedTimeZone',
+        Groups => { 2 => 'Time' },
+    },
 );
 
 # DualShot Extra Info (ref PH)
@@ -1372,6 +1414,113 @@ my %formatMinMax = (
     vintageStrength     => { },
     bokehShape          => { },
     perfMode            => { },
+);
+
+%Image::ExifTool::Samsung::ReEditData = (
+    GROUPS => { 0 => 'JSON', 2 => 'Image' },
+    PROCESS_PROC => \&Image::ExifTool::JSON::ProcessJSON,
+    VARS => { LONG_TAGS => 2 },
+    originalPath        => { },
+    representativeFrameLoc => { },
+    startMotionVideo    => { },
+    endMotionVideo      => { },
+    isMotionVideoMute   => { },
+    isTrimMotionVideo   => { },
+    clipInfoValue       => { SubDirectory => { TagTable => 'Image::ExifTool::Samsung::ClipInfo' } },
+    toneValue           => { SubDirectory => { TagTable => 'Image::ExifTool::Samsung::ToneInfo' } },
+    effectValue         => { SubDirectory => { TagTable => 'Image::ExifTool::Samsung::EffectInfo' } },
+    portraitEffectValue => { SubDirectory => { TagTable => 'Image::ExifTool::Samsung::PortraitEffect' }  },
+    isBlending          => { },
+    isNotReEdit         => { },
+    sepVersion          => { Name => 'SEPVersion' },
+    ndeVersion          => { Name => 'NDEVersion' },
+    reSize              => { },
+    isScaleAI           => { },
+    rotation            => { },
+    adjustmentValue     => { },
+    isApplyShapeCorrection => { },
+    isNewReEditOnly     => { },
+    isDecoReEditOnly    => { },
+    isAIFilterReEditOnly=> { },
+);
+
+%Image::ExifTool::Samsung::ClipInfo = (
+    GROUPS => { 0 => 'JSON', 2 => 'Image' },
+    PROCESS_PROC => \&Image::ExifTool::JSON::ProcessJSON,
+    mCenterX        => { Name => 'ClipCenterX' },
+    mCenterY        => { Name => 'ClipCenterY' },
+    mWidth          => { Name => 'ClipWidth' },
+    mHeight         => { Name => 'ClipHeight' },
+    mRotation       => { Name => 'ClipRotation' },
+    mRotate         => { Name => 'ClipRotate' },
+    mHFlip          => { Name => 'ClipHFlip' },
+    mVFlip          => { Name => 'ClipVFlip' },
+    mRotationEffect => { Name => 'ClipRotationEffect' },
+    mRotateEffect   => { Name => 'ClipRotateEffect' },
+    mHFlipEffect    => { Name => 'ClipHFlipEffect' },
+    mVFlipEffect    => { Name => 'ClipVFlipEffect' },
+    mHozPerspective => { Name => 'ClipHozPerspective' },
+    mVerPerspective => { Name => 'ClipVerPerspective' },
+);
+
+%Image::ExifTool::Samsung::ToneInfo = (
+    GROUPS => { 0 => 'JSON', 2 => 'Image' },
+    PROCESS_PROC => \&Image::ExifTool::JSON::ProcessJSON,
+    brightness      => { },
+    exposure        => { },
+    contrast        => { },
+    saturation      => { },
+    hue             => { },
+    wbMode          => { Name => 'WBMode' },
+    wbTemperature   => { Name => 'WBTemperature' },
+    tint            => { },
+    shadow          => { },
+    highlight       => { },
+    lightbalance    => { },
+    sharpness       => { },
+    definition      => { },
+    isBrightnessIPE => { },
+    isExposureIPE   => { },
+    isContrastIPE   => { },
+    isSaturationIPE => { },
+);
+
+%Image::ExifTool::Samsung::EffectInfo = (
+    GROUPS => { 0 => 'JSON', 2 => 'Image' },
+    PROCESS_PROC => \&Image::ExifTool::JSON::ProcessJSON,
+    filterIndication=> { },
+    alphaValue      => { },
+    filterType      => { },
+);
+
+%Image::ExifTool::Samsung::PortraitEffect = (
+    GROUPS => { 0 => 'JSON', 2 => 'Image' },
+    PROCESS_PROC => \&Image::ExifTool::JSON::ProcessJSON,
+    VARS => { LONG_TAGS => 1 },
+    effectId        => { Name => 'PortraitEffectID' },
+    effectLevel     => { Name => 'PortraitEffectLevel' },
+    exifRotation    => { Name => 'PortraitExifRotation' },
+    lightLevel      => { Name => 'PortraitLightLevel' },
+    touchX          => { Name => 'PortraitTouchX' },
+    touchY          => { Name => 'PortraitTouchY' },
+    refocusX        => { Name => 'PortraitRefocusX' },
+    refocusY        => { Name => 'PortraitRefocusY' },
+    effectIdOriginal    => { Name => 'PortraitEffectIDOriginal' },
+    effectLevelOriginal => { Name => 'EffectLevelOriginal' },
+    lightLevelOriginal  => { Name => 'LightLevelOriginal' },
+    touchXOriginal  => { },
+    touchYOriginal  => { },
+    refocusXOriginal=> { },
+    refocusYOriginal=> { },
+    waterMarkRemoved=> { Name => 'WaterMarkRemoved' },
+    waterMarkRemovedOriginal => { Name => 'WaterMarkRemovedOriginal' },
+);
+
+%Image::ExifTool::Samsung::PEgInfo = (
+    GROUPS => { 0 => 'JSON', 2 => 'Image' },
+    PROCESS_PROC => \&Image::ExifTool::JSON::ProcessJSON,
+    genImageVersion => { },
+    connectorType   => { },
 );
 
 # Samsung composite tags
@@ -1493,7 +1642,7 @@ sub ProcessSamsungMeta($$$)
     my $pos = $$dirInfo{DirStart};
     my $end = $$dirInfo{DirLen} + $pos;
     unless ($pos + 8 <= $end and substr($$dataPt, $pos, 4) eq 'DOFS') {
-        $et->Warn("Unrecognized $dirName data");
+        $et->Warn("Unrecognized $dirName data", 1);
         return 0;
     }
     my $ver = Get32u($dataPt, $pos + 4);
@@ -1619,7 +1768,14 @@ SamBlock:
             }
             next;
         }
-        last unless $buff =~ /^SEFH/ and $len >= 12;   # validate SEFH header
+        # validate SEFH header
+        unless ($buff =~ /^SEFH/ and $len >= 12) {
+            # tolerate extra junk written by Samsung Gallery
+            last unless $buff =~ /\0\0SEFT/g;
+            $et->Warn('Trailer likely corrupted by Samsung Gallery');
+            $blockEnd += pos($buff);
+            next;
+        }
         my $dirPos = $raf->Tell() - $len;
         # my $ver = Get32u(\$buff, 0x04);  # version (=101)
         my $count = Get32u(\$buff, 0x08);
@@ -1716,7 +1872,7 @@ SamBlock:
                 $fixup->AddFixup(length($buff) - $offsetPos);
                 $fixup->AddFixup(length($buff) - $offsetPos + 4);
             }
-            $et->VPrint(0, "Writing Samsung trailer ($dirLen bytes)\n") if $verbose;
+            $et->VPrint(0, "  Writing Samsung trailer ($dirLen bytes)\n") if $verbose;
             Write($$dirInfo{OutFile}, $buff) or return -1;
             return 1;
         }
@@ -1760,7 +1916,7 @@ Samsung maker notes in EXIF information.
 
 =head1 AUTHOR
 
-Copyright 2003-2024, Phil Harvey (philharvey66 at gmail.com)
+Copyright 2003-2026, Phil Harvey (philharvey66 at gmail.com)
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.

@@ -12,7 +12,7 @@ require Exporter;
 
 use vars qw($VERSION @ISA @EXPORT_OK);
 
-$VERSION = '1.12';
+$VERSION = '1.15';
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(ReadCSV ReadJSON);
 
@@ -80,12 +80,14 @@ sub ReadCSV($$;$$)
         }
         if (@tags) {
             # save values for each tag
+            $fileInfo{_ordered_keys_} = [ ];
             for ($i=0; $i<@vals and $i<@tags; ++$i) {
                 # ignore empty entries unless missingValue is empty too
                 next unless length $vals[$i] or defined $missingValue and $missingValue eq '';
                 # delete tag (set value to undef) if value is same as missing tag
                 $fileInfo{$tags[$i]} =
                     (defined $missingValue and $vals[$i] eq $missingValue) ? undef : $vals[$i];
+                push @{$fileInfo{_ordered_keys_}}, $tags[$i];
             }
             # figure out the file name to use
             if ($fileInfo{SourceFile}) {
@@ -98,19 +100,22 @@ sub ReadCSV($$;$$)
                 # terminate at first blank tag name (eg. extra comma at end of line)
                 last unless length $_;
                 @tags or s/^\xef\xbb\xbf//; # remove UTF-8 BOM if it exists
-                /^[-\w]+(:[-\w+]+)?#?$/ or $err = "Invalid tag name '${_}'", last;
+                unless (/^([-_0-9A-Z]+:)*[-_0-9A-Z]+#?$/i) {
+                    /\0/ and $err = "Format error in $file (doesn't look like UTF-8)", last;
+                    $err = "Invalid tag name '${_}' in $file", last;
+                }
                 push(@tags, $_);
             }
             last if $err;
-            @tags or $err = 'No tags found', last;
+            @tags or $err = "No tags found in $file", last;
             # fix "SourceFile" case if necessary
             $tags[0] = 'SourceFile' if lc $tags[0] eq 'sourcefile';
         }
     }
     close CSVFILE if $openedFile;
     undef $raf;
-    $err = 'No SourceFile column' unless $found or $err;
-    return $err ? "$err in $file" : undef;
+    $err = "No SourceFile column in $file" unless $found or $err;
+    return $err || undef;
 }
 
 #------------------------------------------------------------------------------
@@ -173,7 +178,7 @@ Tok: for (;;) {
         }
         # see what type of object this is
         if ($tok eq '{') {      # object (hash)
-            $rtnVal = { } unless defined $rtnVal;
+            $rtnVal = { _ordered_keys_ => [ ] } unless defined $rtnVal;
             for (;;) {
                 # read "KEY":"VALUE" pairs
                 unless (defined $key) {
@@ -189,6 +194,7 @@ Tok: for (;;) {
                     $pos = pos $$buffPt;
                     return undef unless defined $val;
                     $$rtnVal{$key} = $val;
+                    push @{$$rtnVal{_ordered_keys_}}, $key;
                     undef $key;
                 }
                 # scan to delimiting ',' or bounding '}'
@@ -245,7 +251,7 @@ sub ReadJSON($$;$$)
 {
     local $_;
     my ($file, $database, $missingValue, $chset) = @_;
-    my ($raf, $openedFile);
+    my ($raf, $openedFile, $buff);
 
     # initialize character set for converting "\uHHHH" chars
     $charset = $chset || 'UTF8';
@@ -257,7 +263,7 @@ sub ReadJSON($$;$$)
         $file = 'JSON file';
     } elsif (ref $file eq 'SCALAR') {
         $raf = File::RandomAccess->new($file);
-        $file = 'in memory';
+        $file = 'JSON in memory';
     } else {
         open JSONFILE, $file or return "Error opening JSON file '${file}'";
         binmode JSONFILE;
@@ -267,7 +273,13 @@ sub ReadJSON($$;$$)
     my $obj = ReadJSONObject($raf);
     close JSONFILE if $openedFile;
     unless (ref $obj eq 'ARRAY') {
-        ref $obj eq 'HASH' or return "Format error in JSON file '${file}'";
+        unless (ref $obj eq 'HASH') {
+            my $err = "Format error in $file";
+            if ($raf->Seek(0,0) and $raf->Read($buff, 64) and $buff =~ /\0/) {
+                $err .= " (doesn't look like UTF-8)";
+            }
+            return $err;
+        }
         $obj = [ $obj ];
     }
     my ($info, $found);
@@ -289,7 +301,7 @@ sub ReadJSON($$;$$)
         $$database{$$info{SourceFile}} = $info;
         $found = 1;
     }
-    return $found ? undef : "No valid JSON objects in '${file}'";
+    return $found ? undef : "No valid JSON objects in $file";
 }
 
 
@@ -332,7 +344,7 @@ Read CSV or JSON file into a database hash.
 
 1) Hash reference for database object.
 
-2) Optional string used to represent an undefined (missing) tag value. 
+2) Optional string used to represent an undefined (missing) tag value.
 (Used for deleting tags.)
 
 3) For ReadCSV this gives the delimiter for CSV entries, with a default of
@@ -345,13 +357,15 @@ option for a list of valid character sets.
 These functions return an error string, or undef on success and populate the
 database hash with entries from the CSV or JSON file.  Entries are keyed
 based on the SourceFile column of the CSV or JSON information, and are
-stored as hash lookups of tag name/value for each SourceFile.
+stored as hash lookups of tag name/value for each SourceFile.  The order
+of the keys (CSV column order or order in a JSON object) is stored as an
+ARRAY reference in a special "_ordered_keys_" element of this hash.
 
 =back
 
 =head1 AUTHOR
 
-Copyright 2003-2024, Phil Harvey (philharvey66 at gmail.com)
+Copyright 2003-2026, Phil Harvey (philharvey66 at gmail.com)
 
 This library is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
