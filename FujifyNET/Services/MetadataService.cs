@@ -38,8 +38,10 @@ namespace FujifyNET.Services
 
         public string GetCameraMakeAndModel(string filePath)
         {
-            // Fast in-memory TIFF/RAF reader (<1ms vs 300ms ExifTool process)
-            string? quickInfo = RawMetadataReader.TryGetCameraMakeAndModel(filePath);
+            // Direct in-memory reader (<1ms vs 300ms ExifTool process)
+            string? quickInfo = DngMetadataEditor.ReadCameraMakeAndModel(filePath)
+                ?? RawMetadataReader.TryGetCameraMakeAndModel(filePath);
+
             if (!string.IsNullOrWhiteSpace(quickInfo))
             {
                 return quickInfo;
@@ -48,7 +50,7 @@ namespace FujifyNET.Services
             string exifToolPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "libs", "exiftool.exe");
             if (!File.Exists(exifToolPath))
             {
-                return "ExifTool not found";
+                return "Unknown Camera";
             }
 
             try
@@ -70,7 +72,7 @@ namespace FujifyNET.Services
                     return $"{cameraMake} {cameraModel}".Trim();
                 }
 
-                return !string.IsNullOrWhiteSpace(error) ? $"Error: {error}" : "Error retrieving camera info";
+                return !string.IsNullOrWhiteSpace(error) ? $"Error: {error}" : "Unknown Camera";
             }
             catch (Exception ex)
             {
@@ -80,10 +82,18 @@ namespace FujifyNET.Services
 
         public MetadataResult InjectFujifilmMetadata(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null)
         {
+            // Direct in-memory TIFF/DNG IFD0 rewriting (<2ms, 0 external processes)
+            var nativeResult = DngMetadataEditor.InjectFujifilmMetadata(dngFilePath, outputFolder, createBackup, isOriginallyDng, customOutputFilePath);
+            if (nativeResult.Success)
+            {
+                return nativeResult;
+            }
+
+            // Fallback to ExifTool CLI if native editor encountered an issue
             string exifToolPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "libs", "exiftool.exe");
             if (!File.Exists(exifToolPath))
             {
-                return new MetadataResult(false, "ExifTool executable not found.");
+                return nativeResult;
             }
 
             string baseArguments = CommonArgs;

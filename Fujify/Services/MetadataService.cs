@@ -39,8 +39,10 @@ namespace Fujify.Services
 
         public string GetCameraMakeAndModel(string filePath)
         {
-            // Fast in-memory TIFF/RAF reader (<1ms vs 300ms ExifTool process)
-            string? quickInfo = RawMetadataReader.TryGetCameraMakeAndModel(filePath);
+            // Direct in-memory reader (<1ms vs 300ms ExifTool process)
+            string? quickInfo = DngMetadataEditor.ReadCameraMakeAndModel(filePath) 
+                ?? RawMetadataReader.TryGetCameraMakeAndModel(filePath);
+
             if (!string.IsNullOrWhiteSpace(quickInfo))
             {
                 return quickInfo;
@@ -49,7 +51,7 @@ namespace Fujify.Services
             var runner = FindExifToolRunner();
             if (runner == null)
             {
-                return "ExifTool not found";
+                return "Unknown Camera";
             }
 
             try
@@ -75,7 +77,7 @@ namespace Fujify.Services
                     return $"{cameraMake} {cameraModel}".Trim();
                 }
 
-                return !string.IsNullOrWhiteSpace(error) ? $"Error: {error}" : "Error retrieving camera info";
+                return !string.IsNullOrWhiteSpace(error) ? $"Error: {error}" : "Unknown Camera";
             }
             catch (Exception ex)
             {
@@ -85,10 +87,18 @@ namespace Fujify.Services
 
         public MetadataResult InjectFujifilmMetadata(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null)
         {
+            // Direct in-memory TIFF/DNG IFD0 rewriting (<2ms, 0 external processes)
+            var nativeResult = DngMetadataEditor.InjectFujifilmMetadata(dngFilePath, outputFolder, createBackup, isOriginallyDng, customOutputFilePath);
+            if (nativeResult.Success)
+            {
+                return nativeResult;
+            }
+
+            // Fallback to ExifTool CLI if native editor encountered an issue
             var runner = FindExifToolRunner();
             if (runner == null)
             {
-                return new MetadataResult(false, "ExifTool executable not found.");
+                return nativeResult;
             }
 
             string baseArguments = CommonArgs;
@@ -163,10 +173,25 @@ namespace Fujify.Services
 
         public async Task<MetadataResult> InjectFujifilmMetadataAsync(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null, CancellationToken cancellationToken = default)
         {
+            // Direct in-memory TIFF/DNG IFD0 rewriting (<2ms, 0 external processes)
+            var nativeResult = await DngMetadataEditor.InjectFujifilmMetadataAsync(
+                dngFilePath,
+                outputFolder,
+                createBackup,
+                isOriginallyDng,
+                customOutputFilePath,
+                cancellationToken: cancellationToken);
+
+            if (nativeResult.Success)
+            {
+                return nativeResult;
+            }
+
+            // Fallback to ExifTool CLI if native editor encountered an issue
             var runner = FindExifToolRunner();
             if (runner == null)
             {
-                return new MetadataResult(false, "ExifTool executable not found.");
+                return nativeResult;
             }
 
             string baseArguments = CommonArgs;
