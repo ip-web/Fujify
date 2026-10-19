@@ -13,9 +13,21 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
     }
 
+    public static void ApplyTheme(bool isDark)
+    {
+        if (Current != null)
+        {
+            Current.RequestedThemeVariant = isDark
+                ? Avalonia.Styling.ThemeVariant.Dark
+                : Avalonia.Styling.ThemeVariant.Light;
+        }
+    }
+
     public override void OnFrameworkInitializationCompleted()
     {
         var settingsService = new Services.SettingsService();
+        ApplyTheme(settingsService.Settings.IsDarkTheme);
+
         var dialogService = new Services.DialogService(settingsService);
         var vm = new MainViewModel(dialogService: dialogService, settingsService: settingsService);
 

@@ -39,7 +39,13 @@ namespace Fujify.ViewModels
         public bool IsDarkTheme
         {
             get => _isDarkTheme;
-            set => SetProperty(ref _isDarkTheme, value);
+            set
+            {
+                if (SetProperty(ref _isDarkTheme, value))
+                {
+                    App.ApplyTheme(value);
+                }
+            }
         }
 
         public bool EmbedOriginalRaw
@@ -99,7 +105,11 @@ namespace Fujify.ViewModels
             _maxConcurrentConversions = saved;
 
             SaveCommand = new RelayCommand(Save);
-            CancelCommand = new RelayCommand(() => CloseAction?.Invoke(false));
+            CancelCommand = new RelayCommand(() =>
+            {
+                App.ApplyTheme(_settingsService.Settings.IsDarkTheme);
+                CloseAction?.Invoke(false);
+            });
         }
 
         private void Save()
@@ -110,6 +120,7 @@ namespace Fujify.ViewModels
             s.SkipThumbnailGeneration = _skipThumbnailGeneration;
             s.MaxConcurrentConversions = _maxConcurrentConversions;
             _settingsService.Save();
+            App.ApplyTheme(_isDarkTheme);
 
             CloseAction?.Invoke(true);
         }

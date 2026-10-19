@@ -32,18 +32,15 @@
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Camera Target Selector Pill (Center / Header) -->
-                    <Button Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
-                            Command="{Binding OpenCameraPickerCommand}"
-                            CornerRadius="20" Padding="14,6" Margin="10,0"
-                            Background="{DynamicResource SystemControlHighlightBaseLowBrush}"
-                            ToolTip.Tip="Tap to switch the target Fujifilm camera profile">
-                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <TextBlock Text="📷" FontSize="12"/>
-                            <TextBlock Text="{Binding ShortTargetModelName}" FontWeight="SemiBold" FontSize="12"/>
-                            <TextBlock Text="▾" FontSize="10" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                    <!-- Target Profile Badge (Fujifilm X-T5) -->
+                    <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            CornerRadius="16" Padding="12,5" Margin="10,0"
+                            Background="{DynamicResource SystemControlHighlightBaseLowBrush}">
+                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <TextBlock Text="📷" FontSize="11"/>
+                            <TextBlock Text="Fujifilm X-T5" FontWeight="SemiBold" FontSize="11"/>
                         </StackPanel>
-                    </Button>
+                    </Border>
 
                     <!-- Header Action Buttons (Preferences, About) -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
@@ -430,28 +427,6 @@
                     <!-- Sheet Dynamic Content Body -->
                     <ScrollViewer Grid.Row="1">
                         <StackPanel>
-                            <!-- A. Camera Model Picker Modal -->
-                            <StackPanel IsVisible="{Binding IsCameraPickerModal}" Spacing="8">
-                                <TextBlock Text="Select target Fujifilm camera simulation engine:" FontSize="12"
-                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" Margin="0,0,0,8"/>
-                                <ItemsControl ItemsSource="{Binding TargetCameraModels}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="x:String">
-                                            <Button Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).SelectCameraModelCommand}"
-                                                    CommandParameter="{Binding}"
-                                                    HorizontalAlignment="Stretch" Margin="0,3" Padding="12,10" CornerRadius="8"
-                                                    HorizontalContentAlignment="Left">
-                                                <Grid ColumnDefinitions="Auto,*,Auto">
-                                                    <TextBlock Grid.Column="0" Text="📷" Margin="0,0,10,0"/>
-                                                    <TextBlock Grid.Column="1" Text="{Binding}" FontWeight="SemiBold" FontSize="13"/>
-                                                    <TextBlock Grid.Column="2" Text="Select" FontSize="11"
-                                                               Foreground="{DynamicResource SystemAccentColor}"/>
-                                                </Grid>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                            </StackPanel>
 
                             <!-- B. File Conflict Modal -->
                             <StackPanel IsVisible="{Binding IsConflictModal}" Spacing="14">
