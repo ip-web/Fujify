@@ -46,16 +46,20 @@ namespace Fujify.Services
                 return quickInfo;
             }
 
-            string? exifToolPath = FindExifToolPath();
-            if (string.IsNullOrEmpty(exifToolPath) || !File.Exists(exifToolPath))
+            var runner = FindExifToolRunner();
+            if (runner == null)
             {
                 return "ExifTool not found";
             }
 
             try
             {
-                string arguments = $"-Make -Model \"{filePath}\"";
-                var (exitCode, output, error) = _processRunner.Run(exifToolPath, arguments);
+                string rawArgs = $"-Make -Model \"{filePath}\"";
+                string arguments = !string.IsNullOrEmpty(runner.Value.PrefixArgs)
+                    ? $"{runner.Value.PrefixArgs} {rawArgs}"
+                    : rawArgs;
+
+                var (exitCode, output, error) = _processRunner.Run(runner.Value.Command, arguments);
 
                 if (exitCode == 0)
                 {
@@ -81,8 +85,8 @@ namespace Fujify.Services
 
         public MetadataResult InjectFujifilmMetadata(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null)
         {
-            string? exifToolPath = FindExifToolPath();
-            if (string.IsNullOrEmpty(exifToolPath) || !File.Exists(exifToolPath))
+            var runner = FindExifToolRunner();
+            if (runner == null)
             {
                 return new MetadataResult(false, "ExifTool executable not found.");
             }
@@ -126,11 +130,14 @@ namespace Fujify.Services
                 }
             }
 
-            string arguments = $"{baseArguments} \"{dngFilePath}\"";
+            string rawArgs = $"{baseArguments} \"{dngFilePath}\"";
+            string arguments = !string.IsNullOrEmpty(runner.Value.PrefixArgs)
+                ? $"{runner.Value.PrefixArgs} {rawArgs}"
+                : rawArgs;
 
             try
             {
-                var (exitCode, output, error) = _processRunner.Run(exifToolPath, arguments);
+                var (exitCode, output, error) = _processRunner.Run(runner.Value.Command, arguments);
 
                 if (exitCode == 0)
                 {
@@ -156,8 +163,8 @@ namespace Fujify.Services
 
         public async Task<MetadataResult> InjectFujifilmMetadataAsync(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null, CancellationToken cancellationToken = default)
         {
-            string? exifToolPath = FindExifToolPath();
-            if (string.IsNullOrEmpty(exifToolPath) || !File.Exists(exifToolPath))
+            var runner = FindExifToolRunner();
+            if (runner == null)
             {
                 return new MetadataResult(false, "ExifTool executable not found.");
             }
@@ -201,11 +208,14 @@ namespace Fujify.Services
                 }
             }
 
-            string arguments = $"{baseArguments} \"{dngFilePath}\"";
+            string rawArgs = $"{baseArguments} \"{dngFilePath}\"";
+            string arguments = !string.IsNullOrEmpty(runner.Value.PrefixArgs)
+                ? $"{runner.Value.PrefixArgs} {rawArgs}"
+                : rawArgs;
 
             try
             {
-                var (exitCode, output, error) = await _processRunner.RunAsync(exifToolPath, arguments, cancellationToken);
+                var (exitCode, output, error) = await _processRunner.RunAsync(runner.Value.Command, arguments, cancellationToken);
 
                 if (exitCode == 0)
                 {
@@ -268,12 +278,14 @@ namespace Fujify.Services
             }
         }
 
-        private static string? FindExifToolPath()
+        private static (string Command, string? PrefixArgs)? FindExifToolRunner()
         {
+            // 1. Check local libs directory
             string binaryName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "exiftool.exe" : "exiftool";
             string localPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "libs", binaryName);
-            if (File.Exists(localPath)) return localPath;
+            if (File.Exists(localPath)) return (localPath, null);
 
+            // 2. Check system PATH
             var pathEnv = Environment.GetEnvironmentVariable("PATH");
             if (!string.IsNullOrEmpty(pathEnv))
             {
@@ -283,9 +295,19 @@ namespace Fujify.Services
                     try
                     {
                         string fullPath = Path.Combine(dir.Trim(), binaryName);
-                        if (File.Exists(fullPath)) return fullPath;
+                        if (File.Exists(fullPath)) return (fullPath, null);
                     }
                     catch { }
+                }
+            }
+
+            // 3. Fallback on Unix/macOS: run bundled perl script
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                string plPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "libs", "exiftool_files", "exiftool.pl");
+                if (File.Exists(plPath))
+                {
+                    return ("perl", $"\"{plPath}\"");
                 }
             }
 
