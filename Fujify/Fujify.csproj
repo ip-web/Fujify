@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType Condition="'$(OutputType)' == '' and '$(TargetPlatformIdentifier)' == ''">WinExe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ApplicationManifest Condition="'$(TargetPlatformIdentifier)' == ''">app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\images\logo.ico</ApplicationIcon>

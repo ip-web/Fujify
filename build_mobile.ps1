@@ -83,10 +83,12 @@ if (-not $SkipAndroid) {
                 $targetDist = Join-Path $distDir "Fujify-v2.1.0-Android-$archSuffix.apk"
                 Copy-Item -Path $signedApk.FullName -Destination $targetRelease -Force
                 Copy-Item -Path $signedApk.FullName -Destination $targetDist -Force
-                Write-Host "✔ APK generated ($archSuffix): $targetRelease ($([math]::Round($signedApk.Length / 1MB, 2)) MB)" -ForegroundColor Green
+                $sizeMb = [math]::Round($signedApk.Length / 1MB, 2)
+                Write-Host "APK generated ($archSuffix): $targetRelease ($sizeMb MB)" -ForegroundColor Green
             }
         } catch {
-            Write-Host "⚠ Error building APK for $rid: $_" -ForegroundColor Red
+            $err = $_.Exception.Message
+            Write-Host "Error building APK for ${rid}: $err" -ForegroundColor Red
         }
     }
 } else {
@@ -124,6 +126,7 @@ if (-not $SkipiOS) {
 Write-Host "`n[4/4] Mobile Build Workflow Summary:" -ForegroundColor Yellow
 Write-Host "Artifacts location: $releaseDir" -ForegroundColor Cyan
 Get-ChildItem -Path $releaseDir | ForEach-Object {
-    Write-Host "  - $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)" -ForegroundColor White
+    $itemMb = [math]::Round($_.Length / 1MB, 2)
+    Write-Host "  - $($_.Name) ($itemMb MB)" -ForegroundColor White
 }
 Write-Host "`nMobile build script finished." -ForegroundColor Green
