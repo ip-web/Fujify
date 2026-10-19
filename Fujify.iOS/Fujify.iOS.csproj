@@ -16,6 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Fujify\Fujify.csproj" />
+    <ProjectReference Include="..\Fujify\Fujify.csproj" Properties="OutputType=Library" />
   </ItemGroup>
 </Project>
