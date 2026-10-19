@@ -1,7 +1,23 @@
-using System.Linq;
+/*
+ * This file is part of Fujify.
+ *
+ * Copyright (C) 2024 Isidore Paulin contact@ipweb.dev
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
 using Avalonia.Controls;
-using Avalonia.Input;
-using Fujify.ViewModels;
 
 namespace Fujify.Views
 {
@@ -10,32 +26,6 @@ namespace Fujify.Views
         public MainWindow()
         {
             InitializeComponent();
-            AddHandler(DragDrop.DragOverEvent, Window_DragOver);
-            AddHandler(DragDrop.DropEvent, Window_Drop);
-        }
-
-        private void Window_DragOver(object? sender, DragEventArgs e)
-        {
-            if (e.Data.Contains(DataFormats.Files))
-            {
-                e.DragEffects = DragDropEffects.Copy;
-            }
-            else
-            {
-                e.DragEffects = DragDropEffects.None;
-            }
-        }
-
-        private async void Window_Drop(object? sender, DragEventArgs e)
-        {
-            if (e.Data.Contains(DataFormats.Files))
-            {
-                var files = e.Data.GetFiles()?.Select(f => f.Path.LocalPath).ToList();
-                if (files != null && files.Count > 0 && DataContext is MainViewModel vm)
-                {
-                    await vm.AddFilesAsync(files);
-                }
-            }
         }
     }
 }

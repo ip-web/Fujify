@@ -75,6 +75,7 @@ namespace Fujify.ViewModels
             _thumbnailService = thumbnailService ?? new ThumbnailService();
             _dialogService = dialogService ?? new DialogService();
             _settingsService = settingsService ?? new SettingsService();
+            Instance = this;
 
             Files.CollectionChanged += (s, e) =>
             {
@@ -97,9 +98,285 @@ namespace Fujify.ViewModels
             OpenHelpCommand = new RelayCommand(ExecuteOpenHelp);
             OpenUpdateCommand = new RelayCommand(ExecuteOpenUpdate);
             ReportBugCommand = new RelayCommand(ExecuteReportBug);
+
+            RemoveFileCommand = new RelayCommand<FileItem>(file =>
+            {
+                if (file != null && Files.Contains(file))
+                {
+                    Files.Remove(file);
+                    if (SelectedFile == file)
+                    {
+                        SelectedFile = Files.FirstOrDefault();
+                    }
+                }
+            });
+
+            SelectFileCommand = new RelayCommand<FileItem>(file =>
+            {
+                if (file != null)
+                {
+                    SelectedFile = file;
+                }
+            });
+
+            OpenCameraPickerCommand = new RelayCommand(() =>
+            {
+                ModalTitle = "Select Fujifilm Camera Simulation";
+                ModalType = "CameraPicker";
+                IsModalOpen = true;
+            });
+
+            SelectCameraModelCommand = new RelayCommand<string>(model =>
+            {
+                if (!string.IsNullOrEmpty(model))
+                {
+                    TargetCameraModel = model;
+                }
+                CloseModal();
+            });
+
+            CloseModalCommand = new RelayCommand(CloseModal);
+
+            ResolveConflictCommand = new RelayCommand<string>(choiceStr =>
+            {
+                if (Enum.TryParse<ConflictChoice>(choiceStr, true, out var choice))
+                {
+                    ResolveConflict(choice, ConflictApplyToAll);
+                }
+            });
         }
 
+        public static MainViewModel? Instance { get; set; }
+
         #region Properties
+
+        public ICommand RemoveFileCommand { get; }
+        public ICommand SelectFileCommand { get; }
+        public ICommand OpenCameraPickerCommand { get; }
+        public ICommand SelectCameraModelCommand { get; }
+        public ICommand CloseModalCommand { get; }
+        public ICommand ResolveConflictCommand { get; }
+
+        private FileItem? _selectedFile;
+        public FileItem? SelectedFile
+        {
+            get => _selectedFile ?? Files.FirstOrDefault();
+            set
+            {
+                if (SetProperty(ref _selectedFile, value))
+                {
+                    OnPropertyChanged(nameof(HasSelectedFile));
+                }
+            }
+        }
+
+        public bool HasSelectedFile => SelectedFile != null;
+
+        private string _targetCameraModel = "Fujifilm X-T5";
+        public string TargetCameraModel
+        {
+            get => _targetCameraModel;
+            set
+            {
+                if (SetProperty(ref _targetCameraModel, value))
+                {
+                    OnPropertyChanged(nameof(ShortTargetModelName));
+                }
+            }
+        }
+
+        public string ShortTargetModelName =>
+            _targetCameraModel.StartsWith("Fujifilm ", StringComparison.OrdinalIgnoreCase)
+                ? _targetCameraModel.Substring("Fujifilm ".Length).Trim()
+                : _targetCameraModel;
+
+        public List<string> TargetCameraModels { get; } = new()
+        {
+            "Fujifilm X-T5",
+            "Fujifilm X-H2",
+            "Fujifilm X-T4",
+            "Fujifilm X-T3",
+            "Fujifilm GFX 100S",
+            "Fujifilm X100V",
+            "Fujifilm X-Pro3"
+        };
+
+        // Adaptive Layout Support (Phone, Tablet, Desktop)
+        private bool _isPhoneLayout;
+        public bool IsPhoneLayout
+        {
+            get => _isPhoneLayout;
+            set
+            {
+                if (SetProperty(ref _isPhoneLayout, value))
+                {
+                    OnPropertyChanged(nameof(IsTabletOrDesktopLayout));
+                }
+            }
+        }
+
+        public bool IsTabletOrDesktopLayout => !_isPhoneLayout;
+
+        private bool _isTabletLayout;
+        public bool IsTabletLayout
+        {
+            get => _isTabletLayout;
+            set => SetProperty(ref _isTabletLayout, value);
+        }
+
+        public void UpdateLayoutMode(double width, double height)
+        {
+            IsPhoneLayout = width < 650;
+            IsTabletLayout = width >= 650 && width < 1050;
+            if (_selectedFile == null && Files.Count > 0)
+            {
+                SelectedFile = Files[0];
+            }
+        }
+
+        // In-App Modal / Bottom Sheet Support for Mobile & Desktop
+        private bool _isModalOpen;
+        public bool IsModalOpen
+        {
+            get => _isModalOpen;
+            set => SetProperty(ref _isModalOpen, value);
+        }
+
+        private string _modalType = "None";
+        public string ModalType
+        {
+            get => _modalType;
+            set
+            {
+                if (SetProperty(ref _modalType, value))
+                {
+                    OnPropertyChanged(nameof(IsCameraPickerModal));
+                    OnPropertyChanged(nameof(IsConflictModal));
+                    OnPropertyChanged(nameof(IsPreferencesModal));
+                    OnPropertyChanged(nameof(IsAboutModal));
+                    OnPropertyChanged(nameof(IsMessageModal));
+                }
+            }
+        }
+
+        public bool IsCameraPickerModal => _modalType == "CameraPicker";
+        public bool IsConflictModal => _modalType == "Conflict";
+        public bool IsPreferencesModal => _modalType == "Preferences";
+        public bool IsAboutModal => _modalType == "About";
+        public bool IsMessageModal => _modalType == "Message";
+
+        private string _modalTitle = string.Empty;
+        public string ModalTitle
+        {
+            get => _modalTitle;
+            set => SetProperty(ref _modalTitle, value);
+        }
+
+        private string _modalMessage = string.Empty;
+        public string ModalMessage
+        {
+            get => _modalMessage;
+            set => SetProperty(ref _modalMessage, value);
+        }
+
+        private string _conflictFilePath = string.Empty;
+        public string ConflictFilePath
+        {
+            get => _conflictFilePath;
+            set
+            {
+                if (SetProperty(ref _conflictFilePath, value))
+                {
+                    OnPropertyChanged(nameof(ConflictFileName));
+                }
+            }
+        }
+
+        public string ConflictFileName => Path.GetFileName(_conflictFilePath);
+
+        private bool _conflictApplyToAll;
+        public bool ConflictApplyToAll
+        {
+            get => _conflictApplyToAll;
+            set => SetProperty(ref _conflictApplyToAll, value);
+        }
+
+        private TaskCompletionSource<FileConflictResolution>? _conflictTcs;
+
+        private PreferencesViewModel? _preferences;
+        public PreferencesViewModel Preferences
+        {
+            get => _preferences ??= new PreferencesViewModel(_settingsService);
+            set => SetProperty(ref _preferences, value);
+        }
+
+        public void ShowMessageModal(string title, string message)
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                ModalTitle = title;
+                ModalMessage = message;
+                ModalType = "Message";
+                IsModalOpen = true;
+            });
+        }
+
+        public void ShowPreferencesModal()
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                Preferences = new PreferencesViewModel(_settingsService)
+                {
+                    CloseAction = ok => CloseModal()
+                };
+                ModalTitle = "Preferences";
+                ModalType = "Preferences";
+                IsModalOpen = true;
+            });
+        }
+
+        public void ShowAboutModal()
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                ModalTitle = "About Fujify";
+                ModalType = "About";
+                IsModalOpen = true;
+            });
+        }
+
+        public Task<FileConflictResolution> ShowConflictModalAsync(string filePath)
+        {
+            var tcs = new TaskCompletionSource<FileConflictResolution>();
+            _conflictTcs = tcs;
+
+            Dispatcher.UIThread.Post(() =>
+            {
+                ConflictFilePath = filePath;
+                ConflictApplyToAll = false;
+                ModalTitle = "File Conflict";
+                ModalType = "Conflict";
+                IsModalOpen = true;
+            });
+
+            return tcs.Task;
+        }
+
+        public void ResolveConflict(ConflictChoice choice, bool applyToAll)
+        {
+            IsModalOpen = false;
+            ModalType = "None";
+            _conflictTcs?.TrySetResult(new FileConflictResolution(choice, applyToAll));
+            _conflictTcs = null;
+        }
+
+        public void CloseModal()
+        {
+            IsModalOpen = false;
+            ModalType = "None";
+            _conflictTcs?.TrySetResult(new FileConflictResolution(ConflictChoice.Skip, false));
+            _conflictTcs = null;
+        }
 
         public string? OutputFolderPath
         {
@@ -586,7 +863,8 @@ namespace Fujify.ViewModels
                 outputFolder,
                 createBackup,
                 isOriginallyDng,
-                customOutputPath), ct);
+                customOutputPath,
+                targetUniqueCameraModel: TargetCameraModel), ct);
 
             if (metaResult.Success)
             {

@@ -21,7 +21,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
 using Fujify.Models;
 using Fujify.ViewModels;
@@ -38,8 +40,37 @@ namespace Fujify.Services
             _settingsService = settingsService ?? new SettingsService();
         }
 
+        private static bool IsMobileOrSingleView =>
+            Application.Current?.ApplicationLifetime is ISingleViewApplicationLifetime;
+
+        private static IStorageProvider? GetStorageProvider(Window? owner)
+        {
+            if (owner != null)
+            {
+                return owner.StorageProvider;
+            }
+
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            {
+                return desktop.MainWindow?.StorageProvider;
+            }
+
+            if (Application.Current?.ApplicationLifetime is ISingleViewApplicationLifetime singleView && singleView.MainView != null)
+            {
+                return TopLevel.GetTopLevel(singleView.MainView)?.StorageProvider;
+            }
+
+            return null;
+        }
+
         public async Task ShowMessageAsync(Window? owner, string title, string message)
         {
+            if (IsMobileOrSingleView || (owner == null && (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow == null))
+            {
+                MainViewModel.Instance?.ShowMessageModal(title, message);
+                return;
+            }
+
             var dialog = new MessageDialog(title, message);
             if (owner != null)
             {
@@ -53,6 +84,15 @@ namespace Fujify.Services
 
         public async Task<FileConflictResolution> PromptFileConflictAsync(Window? owner, string destinationFilePath)
         {
+            if (IsMobileOrSingleView || (owner == null && (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow == null))
+            {
+                if (MainViewModel.Instance != null)
+                {
+                    return await MainViewModel.Instance.ShowConflictModalAsync(destinationFilePath);
+                }
+                return new FileConflictResolution(ConflictChoice.Skip, false);
+            }
+
             var vm = new FileConflictDialogViewModel(destinationFilePath);
             var dialog = new FileConflictDialog(vm);
 
@@ -70,9 +110,7 @@ namespace Fujify.Services
 
         public async Task<IReadOnlyList<string>> ShowOpenFileDialogAsync(Window? owner, string title, bool allowMultiple = true)
         {
-            if (owner == null) return Array.Empty<string>();
-
-            var storage = owner.StorageProvider;
+            var storage = GetStorageProvider(owner);
             if (storage == null) return Array.Empty<string>();
 
             var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
@@ -94,9 +132,7 @@ namespace Fujify.Services
 
         public async Task<string?> ShowFolderBrowserDialogAsync(Window? owner, string title)
         {
-            if (owner == null) return null;
-
-            var storage = owner.StorageProvider;
+            var storage = GetStorageProvider(owner);
             if (storage == null) return null;
 
             var folders = await storage.OpenFolderPickerAsync(new FolderPickerOpenOptions
@@ -110,6 +146,12 @@ namespace Fujify.Services
 
         public async Task ShowPreferencesDialogAsync(Window? owner)
         {
+            if (IsMobileOrSingleView || (owner == null && (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow == null))
+            {
+                MainViewModel.Instance?.ShowPreferencesModal();
+                return;
+            }
+
             var vm = new PreferencesViewModel(_settingsService);
             var dialog = new PreferencesWindow(vm);
 
@@ -125,6 +167,12 @@ namespace Fujify.Services
 
         public async Task ShowAboutDialogAsync(Window? owner)
         {
+            if (IsMobileOrSingleView || (owner == null && (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow == null))
+            {
+                MainViewModel.Instance?.ShowAboutModal();
+                return;
+            }
+
             var dialog = new AboutWindow();
             if (owner != null)
             {
