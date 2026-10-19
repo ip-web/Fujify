@@ -1,0 +1,549 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Fujify.ViewModels"
+             xmlns:models="using:Fujify.Models"
+             x:Class="Fujify.Views.MainView"
+             x:DataType="vm:MainViewModel"
+             DragDrop.AllowDrop="True">
+
+    <Grid>
+        <!-- BASE APP INTERFACE -->
+        <Grid RowDefinitions="Auto,*">
+
+            <!-- 1. TOP HEADER / APP BAR -->
+            <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                    BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="0,0,0,1"
+                    Padding="16,10">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <!-- Brand / Title -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <Border Width="34" Height="34" CornerRadius="17" ClipToBounds="True" Background="#2A2A2E">
+                            <Image Source="/Assets/images/logos.png" Width="26" Height="26" Stretch="Uniform"/>
+                        </Border>
+                        <StackPanel VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <TextBlock Text="Fujify" FontWeight="Bold" FontSize="16"/>
+                                <Border Background="{DynamicResource SystemAccentColor}" CornerRadius="4" Padding="5,1" VerticalAlignment="Center">
+                                    <TextBlock Text="FILM SIM" FontSize="9" FontWeight="Black" Foreground="White"/>
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Text="Native Fujifilm Color Science for RAW" FontSize="11"
+                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Camera Target Selector Pill (Center / Header) -->
+                    <Button Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Command="{Binding OpenCameraPickerCommand}"
+                            CornerRadius="20" Padding="14,6" Margin="10,0"
+                            Background="{DynamicResource SystemControlHighlightBaseLowBrush}"
+                            ToolTip.Tip="Tap to switch the target Fujifilm camera profile">
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <TextBlock Text="📷" FontSize="12"/>
+                            <TextBlock Text="{Binding ShortTargetModelName}" FontWeight="SemiBold" FontSize="12"/>
+                            <TextBlock Text="▾" FontSize="10" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Header Action Buttons (Preferences, About) -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Button Content="⚙" Command="{Binding OpenPreferencesCommand}"
+                                FontSize="14" Padding="10,6" CornerRadius="8"
+                                ToolTip.Tip="Preferences"/>
+                        <Button Content="ℹ" Command="{Binding OpenAboutCommand}"
+                                FontSize="14" Padding="10,6" CornerRadius="8"
+                                ToolTip.Tip="About Fujify"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- 2. MAIN BODY (PHONE LAYOUT vs TABLET / DESKTOP 2-COLUMN LAYOUT) -->
+            <Grid Grid.Row="1">
+
+                <!-- A. PHONE LAYOUT (Single Column, Touch-First Cards, Sticky Bottom Bar) -->
+                <Grid IsVisible="{Binding IsPhoneLayout}" RowDefinitions="Auto,*,Auto">
+                    <!-- Quick Toolbar -->
+                    <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                            BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="0,0,0,1"
+                            Padding="12,8">
+                        <Grid ColumnDefinitions="*,*,Auto">
+                            <Button Grid.Column="0" Content="+ Photos" Command="{Binding AddFilesCommand}"
+                                    Classes="accent" Margin="0,0,6,0" Padding="10,8"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" CornerRadius="8"/>
+                            <Button Grid.Column="1" Content="+ Folder" Command="{Binding AddFolderCommand}"
+                                    Margin="0,0,6,0" Padding="10,8"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" CornerRadius="8"/>
+                            <Button Grid.Column="2" Content="Clear" Command="{Binding ClearCommand}"
+                                    IsEnabled="{Binding CanClear}" Padding="12,8" CornerRadius="8"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Phone File List / Empty State -->
+                    <Grid Grid.Row="1">
+                        <!-- Empty State -->
+                        <Border IsVisible="{Binding !HasFiles}" Padding="24" VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <StackPanel Spacing="16" HorizontalAlignment="Center">
+                                <Border Width="72" Height="72" CornerRadius="36"
+                                        Background="{DynamicResource SystemControlHighlightBaseLowBrush}"
+                                        HorizontalAlignment="Center">
+                                    <TextBlock Text="📸" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="Add RAW Photos to Begin" FontWeight="Bold" FontSize="17" HorizontalAlignment="Center"/>
+                                <TextBlock Text="Tap '+ Photos' above to import RAW files from your camera, SD card, or photo library."
+                                           FontSize="13" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                           TextAlignment="Center" TextWrapping="Wrap" MaxWidth="320"/>
+
+                                <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                        CornerRadius="10" Padding="12" Margin="0,8,0,0"
+                                        BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="1">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="Unlocks Film Simulations" FontWeight="SemiBold" FontSize="12" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Classic Chrome • Classic Neg • Nostalgic Neg • Velvia • Provia • Acros • Reala Ace"
+                                                   FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                   TextAlignment="Center" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Mobile Card List -->
+                        <ScrollViewer IsVisible="{Binding HasFiles}">
+                            <ItemsControl ItemsSource="{Binding Files}" Margin="12,8">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:FileItem">
+                                        <Border Margin="0,4" Padding="10" CornerRadius="12"
+                                                Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                                BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="1">
+                                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <!-- Thumbnail -->
+                                                <Border Grid.Column="0" Width="60" Height="60" CornerRadius="8"
+                                                        ClipToBounds="True" Background="#1A000000" VerticalAlignment="Center">
+                                                    <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
+                                                </Border>
+
+                                                <!-- File Info -->
+                                                <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center" Spacing="3">
+                                                    <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" FontSize="13"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Text="{Binding CameraMakeAndModel}" FontSize="11"
+                                                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                    <Border HorizontalAlignment="Left" CornerRadius="4" Padding="6,2"
+                                                            Background="{DynamicResource SystemControlHighlightBaseLowBrush}">
+                                                        <TextBlock Text="{Binding Status}" FontSize="10" FontWeight="SemiBold"/>
+                                                    </Border>
+                                                </StackPanel>
+
+                                                <!-- Remove Action -->
+                                                <Button Grid.Column="2" Content="✕"
+                                                        Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).RemoveFileCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Width="34" Height="34" CornerRadius="17"
+                                                        Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                        VerticalAlignment="Center"
+                                                        Background="Transparent"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- Phone Sticky Bottom Action Bar -->
+                    <Border Grid.Row="2" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                            BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="0,1,0,0"
+                            Padding="16,12">
+                        <StackPanel Spacing="10">
+                            <!-- Backup Switch -->
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Text="Backup Original DNG files" FontSize="12" VerticalAlignment="Center"/>
+                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateBackup}" OnContent="" OffContent=""/>
+                            </Grid>
+
+                            <!-- Progress Bar -->
+                            <ProgressBar IsVisible="{Binding IsProgressVisible}" Minimum="0" Maximum="100"
+                                         Value="{Binding ProgressValue}" Height="6" CornerRadius="3"/>
+
+                            <!-- Primary Action Button -->
+                            <Button Content="{Binding ProcessButtonContent}" Command="{Binding ProcessCommand}"
+                                    IsEnabled="{Binding CanProcessOrStop}" Classes="accent"
+                                    Height="48" CornerRadius="24" FontSize="16" FontWeight="Bold"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+
+                <!-- B. TABLET & DESKTOP 2-COLUMN LAYOUT -->
+                <Grid IsVisible="{Binding IsTabletOrDesktopLayout}" ColumnDefinitions="*,350">
+
+                    <!-- LEFT COLUMN: Action Bar + File Queue + Process Controls -->
+                    <Grid Grid.Column="0" RowDefinitions="Auto,*,Auto">
+                        <!-- Action Toolbar -->
+                        <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="0,0,1,1"
+                                Padding="16,10">
+                            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                <Button Grid.Column="0" Content="+ Add Files" Command="{Binding AddFilesCommand}"
+                                        Classes="accent" Margin="0,0,8,0" Padding="12,6" CornerRadius="6"/>
+                                <Button Grid.Column="1" Content="+ Add Folder" Command="{Binding AddFolderCommand}"
+                                        Margin="0,0,10,0" Padding="12,6" CornerRadius="6"/>
+
+                                <!-- Output Folder -->
+                                <Button Grid.Column="2" Command="{Binding BrowseFolderCommand}"
+                                        HorizontalAlignment="Stretch" Margin="0,0,10,0" Padding="10,6" CornerRadius="6"
+                                        ToolTip.Tip="Click to select destination folder">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <TextBlock Grid.Column="0" Text="📁 Output: " FontWeight="SemiBold" FontSize="12"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding FormattedOutputFolderPath}" FontSize="12"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </Grid>
+                                </Button>
+
+                                <Button Grid.Column="3" Content="Clear" Command="{Binding ClearCommand}"
+                                        IsEnabled="{Binding CanClear}" Padding="12,6" CornerRadius="6"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- File Queue Area -->
+                        <Grid Grid.Row="1" Background="Transparent">
+                            <!-- Empty State / Drop Target -->
+                            <Border IsVisible="{Binding !HasFiles}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14">
+                                    <Border Width="80" Height="80" CornerRadius="40"
+                                            Background="{DynamicResource SystemControlHighlightBaseLowBrush}"
+                                            HorizontalAlignment="Center">
+                                        <TextBlock Text="📥" FontSize="36" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock Text="Drag &amp; Drop RAW Photos or Folders Here" FontWeight="SemiBold" FontSize="16" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Supported: RAF, ARW, CR2, CR3, NEF, DNG, RW2, ORF, PEF, and more"
+                                               FontSize="12" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- DataGrid Queue -->
+                            <DataGrid IsVisible="{Binding HasFiles}" ItemsSource="{Binding Files}"
+                                      SelectedItem="{Binding SelectedFile, Mode=TwoWay}"
+                                      AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="True"
+                                      IsReadOnly="True" GridLinesVisibility="Horizontal" SelectionMode="Single">
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="Preview" Width="72">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="models:FileItem">
+                                                <Border Margin="4" CornerRadius="4" ClipToBounds="True" Background="#1A000000">
+                                                    <Image Source="{Binding Thumbnail}" Width="56" Height="56" Stretch="UniformToFill"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTextColumn Header="File Name" Binding="{Binding FileName}" Width="*" />
+                                    <DataGridTextColumn Header="Detected Camera" Binding="{Binding CameraMakeAndModel}" Width="150" />
+
+                                    <DataGridTemplateColumn Header="Status" Width="130">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="models:FileItem">
+                                                <TextBlock Text="{Binding Status}" VerticalAlignment="Center" Margin="6,0"
+                                                           FontWeight="SemiBold" FontSize="12"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <DataGridTemplateColumn Width="44">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate x:DataType="models:FileItem">
+                                                <Button Content="✕"
+                                                        Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).RemoveFileCommand}"
+                                                        CommandParameter="{Binding}"
+                                                        Background="Transparent" Padding="0" Width="28" Height="28"
+                                                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                        FontSize="12"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+
+                        <!-- Process Bar Footer -->
+                        <Border Grid.Row="2" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                                BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="0,1,1,0"
+                                Padding="16,12">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <CheckBox Grid.Column="0" Content="Backup Original DNG files"
+                                          IsChecked="{Binding CreateBackup}" VerticalAlignment="Center"/>
+
+                                <Grid Grid.Column="1" Margin="20,0" VerticalAlignment="Center" IsVisible="{Binding IsProgressVisible}">
+                                    <ProgressBar Minimum="0" Maximum="100" Value="{Binding ProgressValue}" Height="10" CornerRadius="5"/>
+                                </Grid>
+
+                                <Button Grid.Column="2" Content="{Binding ProcessButtonContent}" Command="{Binding ProcessCommand}"
+                                        IsEnabled="{Binding CanProcessOrStop}" Classes="accent"
+                                        FontSize="14" FontWeight="Bold" Padding="24,8" MinWidth="110"
+                                        CornerRadius="8" HorizontalContentAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+
+                    <!-- RIGHT COLUMN: Inspector / Detail & Film Sim Panel -->
+                    <Border Grid.Column="1" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                            BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="0,0,0,0"
+                            Padding="16">
+                        <ScrollViewer>
+                            <StackPanel Spacing="16">
+                                <!-- Inspector Title -->
+                                <TextBlock Text="PHOTO INSPECTOR" FontWeight="Bold" FontSize="11"
+                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" LetterSpacing="1"/>
+
+                                <!-- Large Selected Photo Preview -->
+                                <Border Height="180" CornerRadius="10" ClipToBounds="True" Background="#11000000"
+                                        BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="1">
+                                    <Grid>
+                                        <Image Source="{Binding SelectedFile.Thumbnail}" Stretch="Uniform"/>
+                                        <TextBlock IsVisible="{Binding !HasSelectedFile}"
+                                                   Text="No Photo Selected" FontSize="12"
+                                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- File Details Card -->
+                                <Border Background="{DynamicResource SystemControlHighlightBaseLowBrush}" CornerRadius="8" Padding="12"
+                                        IsVisible="{Binding HasSelectedFile}">
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="{Binding SelectedFile.FileName}" FontWeight="Bold" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding SelectedFile.CameraMakeAndModel}" FontSize="12"
+                                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                        <TextBlock Text="{Binding SelectedFile.FormattedFileSize}" FontSize="11"
+                                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,4,0,0">
+                                            <TextBlock Text="Status:" FontSize="11" FontWeight="SemiBold"/>
+                                            <TextBlock Text="{Binding SelectedFile.Status}" FontSize="11" FontWeight="Bold"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+
+                                <Separator Height="1" Background="{DynamicResource SystemControlHighlightBaseLowBrush}"/>
+
+                                <!-- Fujifilm Simulation Unlocked Recipes -->
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="SIMULATION PROFILE TARGET" FontWeight="Bold" FontSize="11"
+                                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" LetterSpacing="1"/>
+
+                                    <Button Command="{Binding OpenCameraPickerCommand}" HorizontalAlignment="Stretch"
+                                            Padding="12,8" CornerRadius="8">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding TargetCameraModel}" FontWeight="Bold" FontSize="13"/>
+                                                <TextBlock Text="Tap to switch target Fujifilm camera" FontSize="10"
+                                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="▾" VerticalAlignment="Center" FontSize="14"/>
+                                        </Grid>
+                                    </Button>
+
+                                    <!-- Simulation Badges -->
+                                    <TextBlock Text="Unlocked Film Simulations:" FontSize="11" FontWeight="SemiBold" Margin="0,4,0,0"/>
+                                    <WrapPanel Margin="0,4">
+                                        <Border CornerRadius="4" Background="#263A2F" Padding="6,3" Margin="2">
+                                            <TextBlock Text="Classic Chrome" FontSize="10" Foreground="#2ECC71" FontWeight="SemiBold"/>
+                                        </Border>
+                                        <Border CornerRadius="4" Background="#3A2626" Padding="6,3" Margin="2">
+                                            <TextBlock Text="Classic Neg." FontSize="10" Foreground="#E74C3C" FontWeight="SemiBold"/>
+                                        </Border>
+                                        <Border CornerRadius="4" Background="#3A3226" Padding="6,3" Margin="2">
+                                            <TextBlock Text="Nostalgic Neg." FontSize="10" Foreground="#F39C12" FontWeight="SemiBold"/>
+                                        </Border>
+                                        <Border CornerRadius="4" Background="#262E3A" Padding="6,3" Margin="2">
+                                            <TextBlock Text="Reala Ace" FontSize="10" Foreground="#3498DB" FontWeight="SemiBold"/>
+                                        </Border>
+                                        <Border CornerRadius="4" Background="#33263A" Padding="6,3" Margin="2">
+                                            <TextBlock Text="Velvia / Vivid" FontSize="10" Foreground="#9B59B6" FontWeight="SemiBold"/>
+                                        </Border>
+                                        <Border CornerRadius="4" Background="#263A38" Padding="6,3" Margin="2">
+                                            <TextBlock Text="Provia / Standard" FontSize="10" Foreground="#1ABC9C" FontWeight="SemiBold"/>
+                                        </Border>
+                                        <Border CornerRadius="4" Background="#3A2633" Padding="6,3" Margin="2">
+                                            <TextBlock Text="Astia / Soft" FontSize="10" Foreground="#E84393" FontWeight="SemiBold"/>
+                                        </Border>
+                                        <Border CornerRadius="4" Background="#2A2A2E" Padding="6,3" Margin="2">
+                                            <TextBlock Text="Acros B&amp;W" FontSize="10" Foreground="#BDC3C7" FontWeight="SemiBold"/>
+                                        </Border>
+                                        <Border CornerRadius="4" Background="#262F3A" Padding="6,3" Margin="2">
+                                            <TextBlock Text="Eterna Cinema" FontSize="10" Foreground="#74B9FF" FontWeight="SemiBold"/>
+                                        </Border>
+                                    </WrapPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- Loading Spinner Overlay -->
+            <Border Grid.Row="1" IsVisible="{Binding IsLoading}" Background="#66000000"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+                    <ProgressBar IsIndeterminate="True" Width="200"/>
+                    <TextBlock Text="Importing photos..." Foreground="White" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+
+        <!-- 3. IN-APP MODAL / BOTTOM SHEET OVERLAY (MOBILE & TABLET DIALOGS) -->
+        <Grid IsVisible="{Binding IsModalOpen}" ZIndex="9999">
+            <!-- Dim Backdrop (Click to close) -->
+            <Border Background="#99000000" PointerPressed="OnBackdropPointerPressed"/>
+
+            <!-- Dialog Sheet Container -->
+            <Border HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Margin="16"
+                    MaxWidth="520" MaxHeight="600"
+                    CornerRadius="16" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
+                    BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="1"
+                    Padding="20" BoxShadow="0 8 32 #40000000">
+
+                <Grid RowDefinitions="Auto,*">
+                    <!-- Sheet Header with Drag Handle & Close Button -->
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <StackPanel Spacing="6" HorizontalAlignment="Stretch">
+                            <!-- Drag handle for mobile touch feel -->
+                            <Border Width="40" Height="4" CornerRadius="2"
+                                    Background="{DynamicResource SystemControlHighlightBaseLowBrush}"
+                                    HorizontalAlignment="Center" Margin="0,0,0,6"/>
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0" Text="{Binding ModalTitle}" FontWeight="Bold" FontSize="17" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Content="✕" Command="{Binding CloseModalCommand}"
+                                        Width="30" Height="30" CornerRadius="15" Padding="0"
+                                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                        Background="Transparent"/>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Sheet Dynamic Content Body -->
+                    <ScrollViewer Grid.Row="1">
+                        <StackPanel>
+                            <!-- A. Camera Model Picker Modal -->
+                            <StackPanel IsVisible="{Binding IsCameraPickerModal}" Spacing="8">
+                                <TextBlock Text="Select target Fujifilm camera simulation engine:" FontSize="12"
+                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" Margin="0,0,0,8"/>
+                                <ItemsControl ItemsSource="{Binding TargetCameraModels}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="x:String">
+                                            <Button Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).SelectCameraModelCommand}"
+                                                    CommandParameter="{Binding}"
+                                                    HorizontalAlignment="Stretch" Margin="0,3" Padding="12,10" CornerRadius="8"
+                                                    HorizontalContentAlignment="Left">
+                                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                                    <TextBlock Grid.Column="0" Text="📷" Margin="0,0,10,0"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding}" FontWeight="SemiBold" FontSize="13"/>
+                                                    <TextBlock Grid.Column="2" Text="Select" FontSize="11"
+                                                               Foreground="{DynamicResource SystemAccentColor}"/>
+                                                </Grid>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+
+                            <!-- B. File Conflict Modal -->
+                            <StackPanel IsVisible="{Binding IsConflictModal}" Spacing="14">
+                                <Border Background="{DynamicResource SystemControlHighlightBaseLowBrush}" CornerRadius="8" Padding="12">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="{Binding ConflictFileName}" FontWeight="Bold" FontSize="13"/>
+                                        <TextBlock Text="{Binding ConflictFilePath}" FontSize="11"
+                                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <CheckBox Content="Apply to all remaining pictures in queue" IsChecked="{Binding ConflictApplyToAll}"/>
+
+                                <Grid ColumnDefinitions="*,*,*" Margin="0,8,0,0">
+                                    <Button Grid.Column="0" Content="Skip"
+                                            Command="{Binding ResolveConflictCommand}" CommandParameter="Skip"
+                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="0,0,4,0" CornerRadius="8"/>
+                                    <Button Grid.Column="1" Content="Keep Both"
+                                            Command="{Binding ResolveConflictCommand}" CommandParameter="UseUniqueName"
+                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="2,0" CornerRadius="8"/>
+                                    <Button Grid.Column="2" Content="Overwrite"
+                                            Command="{Binding ResolveConflictCommand}" CommandParameter="Overwrite"
+                                            Classes="accent" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Margin="4,0,0,0" CornerRadius="8"/>
+                                </Grid>
+                            </StackPanel>
+
+                            <!-- C. Preferences Modal -->
+                            <StackPanel IsVisible="{Binding IsPreferencesModal}" Spacing="14">
+                                <Border Background="{DynamicResource SystemControlHighlightBaseLowBrush}" CornerRadius="8" Padding="12">
+                                    <StackPanel Spacing="8">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0" Text="Concurrent Conversions" FontWeight="SemiBold" FontSize="13"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Preferences.MaxConcurrentConversions}" FontWeight="Bold" FontSize="13"/>
+                                        </Grid>
+                                        <Slider Minimum="1" Maximum="{Binding Preferences.TotalThreads}"
+                                                Value="{Binding Preferences.MaxConcurrentConversions}"
+                                                IsSnapToTickEnabled="True" TickFrequency="1"/>
+                                        <TextBlock Text="{Binding Preferences.ConcurrencyHint}" FontSize="11"
+                                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Background="{DynamicResource SystemControlHighlightBaseLowBrush}" CornerRadius="8" Padding="12">
+                                    <StackPanel Spacing="10">
+                                        <ToggleSwitch IsChecked="{Binding Preferences.EmbedOriginalRaw}"
+                                                      OnContent="Embed original RAW in DNG" OffContent="Embed original RAW in DNG"/>
+                                        <ToggleSwitch IsChecked="{Binding Preferences.SkipThumbnailGeneration}"
+                                                      OnContent="Skip thumbnail generation (faster)" OffContent="Skip thumbnail generation (faster)"/>
+                                        <ToggleSwitch IsChecked="{Binding Preferences.IsDarkTheme}"
+                                                      OnContent="Dark Theme" OffContent="Dark Theme"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,10,0,0">
+                                    <Button Content="Cancel" Command="{Binding Preferences.CancelCommand}" CornerRadius="6" Padding="16,8"/>
+                                    <Button Content="Save" Command="{Binding Preferences.SaveCommand}" Classes="accent" CornerRadius="6" Padding="20,8"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- D. About Modal -->
+                            <StackPanel IsVisible="{Binding IsAboutModal}" Spacing="12" HorizontalAlignment="Center">
+                                <Border Width="64" Height="64" CornerRadius="32" ClipToBounds="True" Background="#2A2A2E" HorizontalAlignment="Center">
+                                    <Image Source="/Assets/images/logos.png" Width="48" Height="48" Stretch="Uniform"/>
+                                </Border>
+                                <TextBlock Text="Fujify" FontWeight="Bold" FontSize="20" HorizontalAlignment="Center"/>
+                                <TextBlock Text="Version 2.1.0 (Multi-Platform Mobile &amp; Desktop)" FontSize="12"
+                                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" HorizontalAlignment="Center"/>
+
+                                <Border Background="{DynamicResource SystemControlHighlightBaseLowBrush}" CornerRadius="8" Padding="12" Margin="0,6">
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Fujifilm Film Simulation Profiles for All Cameras" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap"/>
+                                        <TextBlock Text="Transform RAW photos from Sony, Canon, Nikon, Leica, Panasonic and others into DNGs carrying authentic Fujifilm color matrices, allowing Adobe Lightroom and Camera Raw to render genuine Fujifilm film simulations."
+                                                   FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap"/>
+                                        <Separator Height="1" Background="{DynamicResource SystemControlHighlightBaseLowBrush}"/>
+                                        <TextBlock Text="Created by Isidore Paulin (ipweb.dev)" FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                        <TextBlock Text="Licensed under GNU General Public License v3" FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Button Content="Close" Command="{Binding CloseModalCommand}" Classes="accent"
+                                        HorizontalAlignment="Center" Padding="24,8" CornerRadius="8"/>
+                            </StackPanel>
+
+                            <!-- E. Simple Message Modal -->
+                            <StackPanel IsVisible="{Binding IsMessageModal}" Spacing="14">
+                                <TextBlock Text="{Binding ModalMessage}" FontSize="13" TextWrapping="Wrap" Margin="0,8"/>
+                                <Button Content="OK" Command="{Binding CloseModalCommand}" Classes="accent"
+                                        HorizontalAlignment="Right" Padding="20,8" CornerRadius="6"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

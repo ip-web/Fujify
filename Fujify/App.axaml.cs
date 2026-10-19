@@ -15,18 +15,26 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        var settingsService = new Services.SettingsService();
+        var dialogService = new Services.DialogService(settingsService);
+        var vm = new MainViewModel(dialogService: dialogService, settingsService: settingsService);
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var settingsService = new Services.SettingsService();
-            var dialogService = new Services.DialogService(settingsService);
-            var vm = new MainViewModel(dialogService: dialogService, settingsService: settingsService);
-
             var mainWindow = new MainWindow
             {
                 DataContext = vm,
             };
             vm.OwnerWindow = mainWindow;
             desktop.MainWindow = mainWindow;
+        }
+        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
+        {
+            var mainView = new MainView
+            {
+                DataContext = vm,
+            };
+            singleView.MainView = mainView;
         }
 
         base.OnFrameworkInitializationCompleted();

@@ -85,10 +85,17 @@ namespace Fujify.Services
             }
         }
 
-        public MetadataResult InjectFujifilmMetadata(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null)
+        public MetadataResult InjectFujifilmMetadata(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null, string targetUniqueCameraModel = "Fujifilm X-T5")
         {
             // Direct in-memory TIFF/DNG IFD0 rewriting (<2ms, 0 external processes)
-            var nativeResult = DngMetadataEditor.InjectFujifilmMetadata(dngFilePath, outputFolder, createBackup, isOriginallyDng, customOutputFilePath);
+            var nativeResult = DngMetadataEditor.InjectFujifilmMetadata(
+                dngFilePath,
+                outputFolder,
+                createBackup,
+                isOriginallyDng,
+                customOutputFilePath,
+                targetUniqueCameraModel: targetUniqueCameraModel);
+
             if (nativeResult.Success)
             {
                 return nativeResult;
@@ -171,7 +178,7 @@ namespace Fujify.Services
             }
         }
 
-        public async Task<MetadataResult> InjectFujifilmMetadataAsync(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null, CancellationToken cancellationToken = default)
+        public async Task<MetadataResult> InjectFujifilmMetadataAsync(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null, string targetUniqueCameraModel = "Fujifilm X-T5", CancellationToken cancellationToken = default)
         {
             // Direct in-memory TIFF/DNG IFD0 rewriting (<2ms, 0 external processes)
             var nativeResult = await DngMetadataEditor.InjectFujifilmMetadataAsync(
@@ -180,6 +187,7 @@ namespace Fujify.Services
                 createBackup,
                 isOriginallyDng,
                 customOutputFilePath,
+                targetUniqueCameraModel: targetUniqueCameraModel,
                 cancellationToken: cancellationToken);
 
             if (nativeResult.Success)

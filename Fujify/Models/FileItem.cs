@@ -87,6 +87,34 @@ namespace Fujify.Models
             }
         }
 
+        public string FormattedFileSize
+        {
+            get
+            {
+                try
+                {
+                    if (File.Exists(_filePath))
+                    {
+                        long bytes = new FileInfo(_filePath).Length;
+                        if (bytes > 1024 * 1024) return $"{bytes / (1024.0 * 1024.0):F1} MB";
+                        if (bytes > 1024) return $"{bytes / 1024.0:F1} KB";
+                        return $"{bytes} B";
+                    }
+                }
+                catch { }
+                return "";
+            }
+        }
+
+        public bool IsCompleted => _status.Contains("Done", System.StringComparison.OrdinalIgnoreCase) 
+            || _status.Contains("Complete", System.StringComparison.OrdinalIgnoreCase);
+
+        public bool IsError => _status.Contains("Error", System.StringComparison.OrdinalIgnoreCase) 
+            || _status.Contains("Fail", System.StringComparison.OrdinalIgnoreCase);
+
+        public bool IsActive => _status.Contains("...", System.StringComparison.OrdinalIgnoreCase) 
+            || _status.Contains("Converting", System.StringComparison.OrdinalIgnoreCase);
+
         public event PropertyChangedEventHandler? PropertyChanged;
 
         protected virtual void OnPropertyChanged(string propertyName)

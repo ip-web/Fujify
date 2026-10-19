@@ -30,5 +30,13 @@ namespace Fujify.Models
     {
         public ConflictChoice Choice { get; set; } = ConflictChoice.Skip;
         public bool ApplyToAll { get; set; } = false;
+
+        public FileConflictResolution() { }
+
+        public FileConflictResolution(ConflictChoice choice, bool applyToAll = false)
+        {
+            Choice = choice;
+            ApplyToAll = applyToAll;
+        }
     }
 }
