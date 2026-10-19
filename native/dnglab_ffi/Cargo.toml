@@ -1,0 +1,13 @@
+[package]
+name = "dnglab_ffi"
+version = "0.8.0"
+edition = "2024"
+license = "LGPL-2.1"
+description = "Native C-ABI FFI library for DNGLab / rawler converter"
+
+[lib]
+name = "dnglab_ffi"
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+rawler = { git = "https://github.com/dnglab/dnglab.git", default-features = true }
