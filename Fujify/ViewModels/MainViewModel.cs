@@ -527,41 +527,48 @@ namespace Fujify.ViewModels
 
                     foreach (var filePath in filesToAdd)
                     {
-                        if (existingPaths.Contains(filePath)) continue;
-
-                        string extension = Path.GetExtension(filePath);
-
-                        if (_supportedFormats.Contains(extension))
+                        try
                         {
-                            existingPaths.Add(filePath);
-                            bool skipThumbnails = _settingsService.Settings.SkipThumbnailGeneration;
-                            var thumbnail = skipThumbnails
-                                ? _thumbnailService.GetPlaceholderImage()
-                                : _thumbnailService.GenerateThumbnail(filePath);
-                            string cameraMakeAndModel = _metadataService.GetCameraMakeAndModel(filePath);
+                            if (existingPaths.Contains(filePath)) continue;
 
-                            batch.Add(new FileItem
-                            {
-                                FilePath = filePath,
-                                Status = "Pending",
-                                Thumbnail = thumbnail,
-                                CameraMakeAndModel = cameraMakeAndModel
-                            });
+                            string extension = Path.GetExtension(filePath);
 
-                            if (batch.Count >= 10)
+                            if (_supportedFormats.Contains(extension))
                             {
-                                var currentBatch = batch.ToList();
-                                batch.Clear();
-                                Dispatcher.UIThread.Post(() =>
+                                existingPaths.Add(filePath);
+                                bool skipThumbnails = _settingsService.Settings.SkipThumbnailGeneration;
+                                var thumbnail = skipThumbnails
+                                    ? _thumbnailService.GetPlaceholderImage()
+                                    : _thumbnailService.GenerateThumbnail(filePath);
+                                string cameraMakeAndModel = _metadataService.GetCameraMakeAndModel(filePath);
+
+                                batch.Add(new FileItem
                                 {
-                                    foreach (var item in currentBatch) Files.Add(item);
+                                    FilePath = filePath,
+                                    Status = "Pending",
+                                    Thumbnail = thumbnail,
+                                    CameraMakeAndModel = cameraMakeAndModel
                                 });
+
+                                if (batch.Count >= 10)
+                                {
+                                    var currentBatch = batch.ToList();
+                                    batch.Clear();
+                                    Dispatcher.UIThread.Post(() =>
+                                    {
+                                        foreach (var item in currentBatch) Files.Add(item);
+                                    });
+                                }
+                            }
+                            else
+                            {
+                                Dispatcher.UIThread.Post(() =>
+                                    _dialogService.ShowMessageAsync(OwnerWindow, "Unsupported File Format", $"The file format {extension} is not supported."));
                             }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            Dispatcher.UIThread.Post(() =>
-                                _dialogService.ShowMessageAsync(OwnerWindow, "Unsupported File Format", $"The file format {extension} is not supported."));
+                            System.Diagnostics.Debug.WriteLine($"[Fujify] Error processing {filePath}: {ex.Message}");
                         }
                     }
 
@@ -574,6 +581,12 @@ namespace Fujify.ViewModels
                         });
                     }
                 });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Fujify] Exception in AddFilesAsync: {ex}");
+                Dispatcher.UIThread.Post(() =>
+                    _dialogService.ShowMessageAsync(OwnerWindow, "Import Error", $"Could not import photos: {ex.Message}"));
             }
             finally
             {
@@ -918,10 +931,18 @@ namespace Fujify.ViewModels
 
         private async Task ExecuteAddFilesAsync()
         {
-            var selectedFiles = await _dialogService.ShowOpenFileDialogAsync(OwnerWindow, "Select RAW & DNG files", allowMultiple: true);
-            if (selectedFiles != null && selectedFiles.Count > 0)
+            try
             {
-                await AddFilesAsync(selectedFiles);
+                var selectedFiles = await _dialogService.ShowOpenFileDialogAsync(OwnerWindow, "Select RAW & DNG files", allowMultiple: true);
+                if (selectedFiles != null && selectedFiles.Count > 0)
+                {
+                    await AddFilesAsync(selectedFiles);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Fujify] Error in ExecuteAddFilesAsync: {ex}");
+                await _dialogService.ShowMessageAsync(OwnerWindow, "Import Error", $"Failed to select files: {ex.Message}");
             }
         }
 

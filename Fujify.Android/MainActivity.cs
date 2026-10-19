@@ -15,12 +15,32 @@ namespace Fujify.Android;
     Theme = "@style/MyTheme.NoActionBar",
     Icon = "@drawable/icon",
     MainLauncher = true,
-    ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode)]
+    ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize)]
 public class MainActivity : AvaloniaMainActivity<App>
 {
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
+
+        // Crash interceptor
+        global::Android.Runtime.AndroidEnvironment.UnhandledExceptionRaiser += (sender, args) =>
+        {
+            var ex = args.Exception;
+            global::Android.Util.Log.Error("FujifyCrash", $"[Fujify Crash Interceptor]: {ex}");
+            try
+            {
+                string logPath = Path.Combine(CacheDir?.AbsolutePath ?? "", "crash.log");
+                File.WriteAllText(logPath, ex.ToString());
+            }
+            catch { }
+            args.Handled = true;
+        };
+
+        AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
+        {
+            var ex = args.ExceptionObject as Exception;
+            global::Android.Util.Log.Error("FujifyCrash", $"[Fujify AppDomain Interceptor]: {ex}");
+        };
 
         // Configure persistent writable staging directory for Android
         DialogService.PlatformStagingDirectoryResolver = () =>

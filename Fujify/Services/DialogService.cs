@@ -196,94 +196,111 @@ namespace Fujify.Services
 
         public async Task<IReadOnlyList<string>> ShowOpenFileDialogAsync(Window? owner, string title, bool allowMultiple = true)
         {
-            var storage = GetStorageProvider(owner);
-            if (storage == null) return Array.Empty<string>();
-
-            var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
+            try
             {
-                Title = title,
-                AllowMultiple = allowMultiple,
-                FileTypeFilter = new List<FilePickerFileType>
+                var storage = GetStorageProvider(owner);
+                if (storage == null) return Array.Empty<string>();
+
+                var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
                 {
-                    new("RAW & DNG files")
+                    Title = title,
+                    AllowMultiple = allowMultiple,
+                    FileTypeFilter = new List<FilePickerFileType>
                     {
-                        Patterns = new[] { "*.dng", "*.cr3", "*.crw", "*.erf", "*.raf", "*.3fr", "*.kdc", "*.dcs", "*.dcr", "*.iiq", "*.mos", "*.mef", "*.mrw", "*.nef", "*.nrw", "*.orf", "*.rw2", "*.pef", "*.srw", "*.arw", "*.srf", "*.sr2", "*.*" },
-                        MimeTypes = new[] { "image/*", "application/octet-stream", "*/*" }
-                    },
-                    new("All files") { Patterns = new[] { "*.*" }, MimeTypes = new[] { "*/*" } }
-                }
-            });
+                        new("All Supported RAW & Photos")
+                        {
+                            Patterns = new[] { "*.dng", "*.cr3", "*.crw", "*.erf", "*.raf", "*.3fr", "*.kdc", "*.dcs", "*.dcr", "*.iiq", "*.mos", "*.mef", "*.mrw", "*.nef", "*.nrw", "*.orf", "*.rw2", "*.pef", "*.srw", "*.arw", "*.srf", "*.sr2", "*.*" },
+                            MimeTypes = new[] { "image/*", "application/octet-stream", "*/*" }
+                        },
+                        new("All Files (*.*)") { Patterns = new[] { "*.*" }, MimeTypes = new[] { "*/*" } }
+                    }
+                });
 
-            if (files == null || files.Count == 0) return Array.Empty<string>();
+                if (files == null || files.Count == 0) return Array.Empty<string>();
 
-            var resultPaths = new List<string>();
-            string stagingDir = GetStagingDirectory();
+                var resultPaths = new List<string>();
+                string stagingDir = GetStagingDirectory();
 
-            foreach (var file in files)
-            {
-                string? localPath = file.TryGetLocalPath();
-                if (!string.IsNullOrEmpty(localPath) && File.Exists(localPath))
+                foreach (var file in files)
                 {
+                    if (file == null) continue;
+
+                    // 1. Direct POSIX access check
                     try
                     {
-                        using var testStream = File.OpenRead(localPath);
-                        if (testStream.Length > 0)
+                        string? localPath = file.TryGetLocalPath();
+                        if (!string.IsNullOrEmpty(localPath) && File.Exists(localPath))
                         {
-                            resultPaths.Add(localPath);
-                            continue;
+                            using var testStream = File.OpenRead(localPath);
+                            if (testStream.Length > 0)
+                            {
+                                resultPaths.Add(localPath);
+                                continue;
+                            }
                         }
                     }
                     catch
                     {
                         // Direct read inaccessible on this platform (e.g. Scoped Storage on Android 11+) -> stream via SAF
                     }
-                }
 
-                // On Android SAF or iOS document pickers, files are content:// URIs or security-scoped streams.
-                // We stream the file into local staging storage so that file-based converters and metadata readers have direct access.
-                try
-                {
-                    string fileName = file.Name;
-                    if (string.IsNullOrWhiteSpace(fileName))
+                    // 2. Stream from SAF or document provider into private app staging directory
+                    try
                     {
-                        fileName = Path.GetFileName(file.Path.LocalPath);
-                    }
-                    if (string.IsNullOrWhiteSpace(fileName))
-                    {
-                        fileName = $"import_{Guid.NewGuid():N}.raw";
-                    }
-
-                    string destFilePath = Path.Combine(stagingDir, fileName);
-
-                    await using (var sourceStream = await file.OpenReadAsync())
-                    await using (var destStream = File.Create(destFilePath))
-                    {
-                        await sourceStream.CopyToAsync(destStream);
-                    }
-
-                    // If file has no extension (e.g. Android SAF content URI gave a name without extension),
-                    // inspect the header bytes to detect RAW format and append correct extension:
-                    if (string.IsNullOrEmpty(Path.GetExtension(destFilePath)))
-                    {
-                        string detectedExt = DetectRawExtension(destFilePath);
-                        if (!string.IsNullOrEmpty(detectedExt))
+                        string fileName = file.Name;
+                        if (string.IsNullOrWhiteSpace(fileName))
                         {
-                            string newDestPath = Path.ChangeExtension(destFilePath, detectedExt);
-                            if (File.Exists(newDestPath)) File.Delete(newDestPath);
-                            File.Move(destFilePath, newDestPath);
-                            destFilePath = newDestPath;
+                            try { fileName = Path.GetFileName(file.Path.LocalPath); } catch { }
                         }
+                        if (string.IsNullOrWhiteSpace(fileName))
+                        {
+                            fileName = $"import_{Guid.NewGuid():N}.raw";
+                        }
+
+                        // Sanitize filename to avoid any path traversal or invalid characters
+                        fileName = Path.GetFileName(fileName);
+                        foreach (char c in Path.GetInvalidFileNameChars())
+                        {
+                            fileName = fileName.Replace(c, '_');
+                        }
+
+                        string destFilePath = Path.Combine(stagingDir, fileName);
+
+                        await using (var sourceStream = await file.OpenReadAsync())
+                        await using (var destStream = File.Create(destFilePath))
+                        {
+                            await sourceStream.CopyToAsync(destStream);
+                        }
+
+                        // If file has no extension (e.g. Android SAF content URI gave a name without extension),
+                        // inspect the header bytes to detect RAW format and append correct extension:
+                        if (string.IsNullOrEmpty(Path.GetExtension(destFilePath)))
+                        {
+                            string detectedExt = DetectRawExtension(destFilePath);
+                            if (!string.IsNullOrEmpty(detectedExt))
+                            {
+                                string newDestPath = Path.ChangeExtension(destFilePath, detectedExt);
+                                if (File.Exists(newDestPath)) File.Delete(newDestPath);
+                                File.Move(destFilePath, newDestPath);
+                                destFilePath = newDestPath;
+                            }
+                        }
+
+                        resultPaths.Add(destFilePath);
                     }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Fujify] Failed to stream storage file: {ex.Message}");
+                    }
+                }
 
-                    resultPaths.Add(destFilePath);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"[Fujify] Failed to stream storage file: {ex.Message}");
-                }
+                return resultPaths;
             }
-
-            return resultPaths;
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Fujify] Error in ShowOpenFileDialogAsync: {ex}");
+                return Array.Empty<string>();
+            }
         }
 
         public async Task<string?> ShowFolderBrowserDialogAsync(Window? owner, string title)
