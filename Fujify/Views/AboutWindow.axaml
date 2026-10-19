@@ -1,0 +1,38 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Fujify.Views.AboutWindow"
+        Title="About Fujify"
+        Width="440" Height="400"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Icon="/Assets/images/logo.ico">
+
+    <Grid Margin="24" RowDefinitions="Auto,*,Auto">
+        <!-- Header with Logo -->
+        <StackPanel Grid.Row="0" HorizontalAlignment="Center" Spacing="8" Margin="0,0,0,16">
+            <Image Source="/Assets/images/logos.png" Width="64" Height="64"/>
+            <TextBlock Text="Fujify" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+            <TextBlock Text="Version 1.1.0 (Cross-Platform)" FontSize="12" 
+                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" HorizontalAlignment="Center"/>
+        </StackPanel>
+
+        <!-- Information Content -->
+        <Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" 
+                CornerRadius="6" Padding="14" BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="1">
+            <StackPanel Spacing="10">
+                <TextBlock Text="Fujifilm Film Simulation Profiles for All Cameras" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap"/>
+                <TextBlock Text="Converts camera RAW images to DNG while embedding Fujifilm camera profiles and metadata so raw processors (Lightroom, Capture One, ACR) can apply authentic Fujifilm film simulations." 
+                           FontSize="12" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap"/>
+                
+                <Separator Margin="0,4"/>
+
+                <TextBlock Text="Developed by Isidore Paulin (ipweb.dev)" FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                <TextBlock Text="Powered by: DNGLab, ExifTool, LibRaw, Avalonia UI" FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                <TextBlock Text="Licensed under GNU General Public License v3" FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Footer -->
+        <Button Grid.Row="2" Content="Close" Click="Close_Click" Width="85" HorizontalAlignment="Right" HorizontalContentAlignment="Center" Margin="0,16,0,0"/>
+    </Grid>
+</Window>

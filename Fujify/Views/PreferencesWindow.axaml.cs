@@ -1,0 +1,19 @@
+using Avalonia.Controls;
+using Fujify.ViewModels;
+
+namespace Fujify.Views
+{
+    public partial class PreferencesWindow : Window
+    {
+        public PreferencesWindow()
+        {
+            InitializeComponent();
+        }
+
+        public PreferencesWindow(PreferencesViewModel viewModel) : this()
+        {
+            DataContext = viewModel;
+            viewModel.CloseAction = result => Close(result);
+        }
+    }
+}

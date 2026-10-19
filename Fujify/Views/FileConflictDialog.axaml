@@ -1,0 +1,47 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Fujify.ViewModels"
+        x:Class="Fujify.Views.FileConflictDialog"
+        x:DataType="vm:FileConflictDialogViewModel"
+        Title="File Conflict"
+        Width="480" Height="290"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Icon="/Assets/images/logo.ico">
+
+    <Grid Margin="24" RowDefinitions="Auto,*,Auto,Auto">
+        <!-- Title and Icon -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,16">
+            <Border Width="36" Height="36" CornerRadius="18" Background="#FFF3CD">
+                <TextBlock Text="⚠" FontSize="20" Foreground="#856404" 
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="Destination File Exists" FontWeight="SemiBold" FontSize="16"/>
+                <TextBlock Text="A file with this name already exists in the destination folder." 
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" FontSize="12"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- File Details -->
+        <Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" 
+                CornerRadius="6" Padding="12" Margin="0,0,0,16" BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="1">
+            <StackPanel Spacing="4">
+                <TextBlock Text="{Binding FileName}" FontWeight="Bold" FontSize="14" TextTrimming="CharacterEllipsis"/>
+                <TextBlock Text="{Binding DirectoryPath}" FontSize="11" 
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Apply to All Checkbox -->
+        <CheckBox Grid.Row="2" Content="Apply for all the pictures on the queue" 
+                  IsChecked="{Binding ApplyToAll}" Margin="0,0,0,16"/>
+
+        <!-- Action Buttons -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+            <Button Content="Skip" Command="{Binding SkipCommand}" Width="85" HorizontalContentAlignment="Center"/>
+            <Button Content="Use Unique Name" Command="{Binding UseUniqueNameCommand}" Width="150" HorizontalContentAlignment="Center"/>
+            <Button Content="Overwrite" Command="{Binding OverwriteCommand}" Classes="accent" Width="100" HorizontalContentAlignment="Center"/>
+        </StackPanel>
+    </Grid>
+</Window>

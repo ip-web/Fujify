@@ -1,0 +1,20 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Fujify.Views.MessageDialog"
+        Title="Notification"
+        Width="400" Height="220"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Icon="/Assets/images/logo.ico">
+
+    <Grid Margin="24" RowDefinitions="Auto,*,Auto">
+        <TextBlock x:Name="TitleText" Grid.Row="0" FontWeight="Bold" FontSize="16" Margin="0,0,0,12"/>
+        
+        <ScrollViewer Grid.Row="1">
+            <TextBlock x:Name="MessageContent" FontSize="13" TextWrapping="Wrap" 
+                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+        </ScrollViewer>
+
+        <Button Grid.Row="2" Content="OK" Click="Ok_Click" Classes="accent" Width="85" HorizontalAlignment="Right" HorizontalContentAlignment="Center" Margin="0,16,0,0"/>
+    </Grid>
+</Window>

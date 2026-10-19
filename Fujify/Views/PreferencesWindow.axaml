@@ -1,0 +1,60 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Fujify.ViewModels"
+        x:Class="Fujify.Views.PreferencesWindow"
+        x:DataType="vm:PreferencesViewModel"
+        Title="Preferences"
+        Width="500" Height="420"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Icon="/Assets/images/logo.ico">
+
+    <Grid Margin="24" RowDefinitions="Auto,*,Auto">
+        <!-- Header -->
+        <TextBlock Grid.Row="0" Text="Preferences" FontWeight="Bold" FontSize="18" Margin="0,0,0,20"/>
+
+        <!-- Settings Options -->
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="20">
+                <!-- Concurrency Slider -->
+                <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}" 
+                        CornerRadius="6" Padding="14" BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0" Text="Concurrent Conversions" FontWeight="SemiBold" FontSize="14"/>
+                            <TextBlock Grid.Column="1" Text="{Binding MaxConcurrentConversions}" FontWeight="Bold" FontSize="14"/>
+                        </Grid>
+                        <Slider Minimum="1" Maximum="{Binding TotalThreads}" Value="{Binding MaxConcurrentConversions}" 
+                                IsSnapToTickEnabled="True" TickFrequency="1"/>
+                        <TextBlock Text="{Binding ConcurrencyHint}" FontSize="12" 
+                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Checkboxes -->
+                <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}" 
+                        CornerRadius="6" Padding="14" BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="1">
+                    <StackPanel Spacing="12">
+                        <ToggleSwitch IsChecked="{Binding SkipThumbnailGeneration}" 
+                                      OnContent="Skip thumbnail generation (faster import)" 
+                                      OffContent="Skip thumbnail generation (faster import)"/>
+                        
+                        <ToggleSwitch IsChecked="{Binding EmbedOriginalRaw}" 
+                                      OnContent="Embed original RAW inside DNG" 
+                                      OffContent="Embed original RAW inside DNG"/>
+                        
+                        <ToggleSwitch IsChecked="{Binding IsDarkTheme}" 
+                                      OnContent="Dark Theme" 
+                                      OffContent="Dark Theme"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Footer Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,16,0,0">
+            <Button Content="Cancel" Command="{Binding CancelCommand}" Width="85" HorizontalContentAlignment="Center"/>
+            <Button Content="Save" Command="{Binding SaveCommand}" Classes="accent" Width="85" HorizontalContentAlignment="Center"/>
+        </StackPanel>
+    </Grid>
+</Window>
