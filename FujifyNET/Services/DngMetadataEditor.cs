@@ -1,0 +1,786 @@
+/*
+ * This file is part of Fujify.
+ *
+ * Copyright (C) 2024 Isidore Paulin contact@ipweb.dev
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Xml.Linq;
+
+namespace FujifyNET.Services
+{
+    /// <summary>
+    /// Pure C# high-performance TIFF 6.0 / DNG EXIF &amp; XMP reader and editor.
+    /// Replaces external tools (like ExifTool) with in-process binary IFD manipulation,
+    /// enabling sub-millisecond metadata reading and Fujifilm camera profile injection
+    /// without spawning child processes.
+    /// </summary>
+    public static class DngMetadataEditor
+    {
+        // TIFF Tag Constants
+        public const ushort TagImageDescription = 0x010E;
+        public const ushort TagMake = 0x010F;
+        public const ushort TagModel = 0x0110;
+        public const ushort TagSoftware = 0x0131;
+        public const ushort TagDateTime = 0x0132;
+        public const ushort TagXmp = 0x02BC; // 700 - ApplicationNotes / Adobe XMP
+        public const ushort TagExifIfdPointer = 0x8769; // 34665
+        public const ushort TagDngVersion = 0xC612; // 50706
+        public const ushort TagDngBackwardVersion = 0xC613; // 50707
+        public const ushort TagUniqueCameraModel = 0xC614; // 50708
+
+        // TIFF Type Constants
+        public const ushort TypeByte = 1;
+        public const ushort TypeAscii = 2;
+        public const ushort TypeShort = 3;
+        public const ushort TypeLong = 4;
+        public const ushort TypeRational = 5;
+        public const ushort TypeUndefined = 7;
+
+        public class TiffEntry
+        {
+            public ushort Tag { get; set; }
+            public ushort Type { get; set; }
+            public uint Count { get; set; }
+            public uint ValueOrOffset { get; set; }
+
+            public int DataSize => (int)(Count * GetTypeSize(Type));
+            public bool IsInline => DataSize <= 4;
+        }
+
+        public static int GetTypeSize(ushort type) => type switch
+        {
+            1 => 1, // BYTE
+            2 => 1, // ASCII
+            3 => 2, // SHORT
+            4 => 4, // LONG
+            5 => 8, // RATIONAL
+            6 => 1, // SBYTE
+            7 => 1, // UNDEFINED
+            8 => 2, // SSHORT
+            9 => 4, // SLONG
+            10 => 8, // SRATIONAL
+            11 => 4, // FLOAT
+            12 => 8, // DOUBLE
+            _ => 1
+        };
+
+        #region Metadata Reading
+
+        /// <summary>
+        /// Reads the camera make and model string from any supported RAW, DNG, RAF, or JPEG file.
+        /// </summary>
+        public static string? ReadCameraMakeAndModel(string filePath)
+        {
+            if (!File.Exists(filePath)) return null;
+
+            try
+            {
+                using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096);
+                if (fs.Length < 16) return null;
+
+                byte[] header = new byte[16];
+                int read = fs.Read(header, 0, 16);
+                if (read < 16) return null;
+
+                // 1. Fujifilm RAF check: starts with "FUJIFILM"
+                if (header[0] == 0x46 && header[1] == 0x55 && header[2] == 0x4A && header[3] == 0x49 &&
+                    header[4] == 0x46 && header[5] == 0x49 && header[6] == 0x4C && header[7] == 0x4D)
+                {
+                    if (fs.Length >= 92)
+                    {
+                        fs.Seek(0x3C, SeekOrigin.Begin);
+                        byte[] modelBytes = new byte[32];
+                        int modelRead = fs.Read(modelBytes, 0, 32);
+                        if (modelRead > 0)
+                        {
+                            string rafModel = Encoding.ASCII.GetString(modelBytes, 0, modelRead).Trim('\0', ' ');
+                            return string.IsNullOrEmpty(rafModel) ? "FUJIFILM" : $"FUJIFILM {rafModel}".Trim();
+                        }
+                    }
+                    return "FUJIFILM";
+                }
+
+                // 2. Canon CR3 check: starts with ftyp
+                if (header[4] == 0x66 && header[5] == 0x74 && header[6] == 0x79 && header[7] == 0x70)
+                {
+                    string? cr3Info = ReadCanonCr3CameraInfo(fs);
+                    if (!string.IsNullOrEmpty(cr3Info)) return cr3Info;
+                }
+
+                // 3. JPEG check: 0xFF 0xD8
+                if (header[0] == 0xFF && header[1] == 0xD8)
+                {
+                    string? jpegInfo = ReadJpegExifCameraInfo(fs);
+                    if (!string.IsNullOrEmpty(jpegInfo)) return jpegInfo;
+                }
+
+                // 4. TIFF-based RAW (DNG, Sony ARW, Nikon NEF, Canon CR2, Olympus ORF, etc.)
+                bool isLittleEndian;
+                if (header[0] == 0x49 && header[1] == 0x49 && header[2] == 0x2A && header[3] == 0x00)
+                {
+                    isLittleEndian = true;
+                }
+                else if (header[0] == 0x4D && header[1] == 0x4D && header[2] == 0x00 && header[3] == 0x2A)
+                {
+                    isLittleEndian = false;
+                }
+                else
+                {
+                    return null;
+                }
+
+                uint ifdOffset = ReadUInt32(header, 4, isLittleEndian);
+                if (ifdOffset == 0 || ifdOffset + 2 > fs.Length) return null;
+
+                var entries = ReadIfdEntries(fs, ifdOffset, isLittleEndian);
+                string? make = ReadTagString(fs, entries, TagMake, isLittleEndian);
+                string? model = ReadTagString(fs, entries, TagModel, isLittleEndian);
+
+                return FormatMakeAndModel(make, model);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Reads UniqueCameraModel (Tag 0xC614) from a DNG file.
+        /// </summary>
+        public static string? ReadUniqueCameraModel(string filePath)
+        {
+            if (!File.Exists(filePath)) return null;
+
+            try
+            {
+                using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096);
+                if (!TryReadTiffHeader(fs, out bool isLittleEndian, out uint ifd0Offset)) return null;
+
+                var entries = ReadIfdEntries(fs, ifd0Offset, isLittleEndian);
+                return ReadTagString(fs, entries, TagUniqueCameraModel, isLittleEndian);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Reads the Adobe XMP packet (Tag 0x02BC) from a DNG file.
+        /// </summary>
+        public static string? ReadXmpPacket(string filePath)
+        {
+            if (!File.Exists(filePath)) return null;
+
+            try
+            {
+                using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096);
+                if (!TryReadTiffHeader(fs, out bool isLittleEndian, out uint ifd0Offset)) return null;
+
+                var entries = ReadIfdEntries(fs, ifd0Offset, isLittleEndian);
+                var xmpEntry = entries.FirstOrDefault(e => e.Tag == TagXmp);
+                if (xmpEntry == null || xmpEntry.Count == 0) return null;
+
+                byte[] xmpBytes = new byte[xmpEntry.Count];
+                fs.Seek(xmpEntry.ValueOrOffset, SeekOrigin.Begin);
+                int read = fs.Read(xmpBytes, 0, (int)xmpEntry.Count);
+                if (read < xmpBytes.Length) return null;
+
+                return Encoding.UTF8.GetString(xmpBytes);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        #endregion
+
+        #region Metadata Injection & Editing
+
+        /// <summary>
+        /// Injects Fujifilm profile simulation metadata (UniqueCameraModel 0xC614 and XMP CameraProfiles 0x02BC)
+        /// into the target DNG file.
+        /// </summary>
+        public static MetadataResult InjectFujifilmMetadata(
+            string dngFilePath,
+            string? outputFolder = null,
+            bool createBackup = false,
+            bool isOriginallyDng = false,
+            string? customOutputFilePath = null,
+            string targetUniqueCameraModel = "Fujifilm X-T5",
+            string targetMake = "FUJIFILM",
+            string targetModel = "X-T5")
+        {
+            if (!File.Exists(dngFilePath))
+            {
+                return new MetadataResult(false, $"Source file does not exist: {dngFilePath}");
+            }
+
+            bool useOutputPath = !string.IsNullOrEmpty(outputFolder) || !string.IsNullOrEmpty(customOutputFilePath);
+            string targetFilePath;
+
+            if (useOutputPath)
+            {
+                targetFilePath = !string.IsNullOrEmpty(customOutputFilePath)
+                    ? customOutputFilePath
+                    : Path.Combine(outputFolder!, Path.GetFileNameWithoutExtension(dngFilePath) + ".dng");
+
+                try
+                {
+                    string? dir = Path.GetDirectoryName(targetFilePath);
+                    if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
+
+                    if (!string.Equals(dngFilePath, targetFilePath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        File.Copy(dngFilePath, targetFilePath, overwrite: true);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return new MetadataResult(false, $"Failed to prepare output file: {ex.Message}");
+                }
+            }
+            else
+            {
+                targetFilePath = dngFilePath;
+
+                if (isOriginallyDng && createBackup)
+                {
+                    string backupPath = Path.ChangeExtension(dngFilePath, ".dng_original");
+                    if (!File.Exists(backupPath))
+                    {
+                        try
+                        {
+                            File.Copy(dngFilePath, backupPath, overwrite: false);
+                        }
+                        catch (Exception ex)
+                        {
+                            return new MetadataResult(false, $"Failed to create backup file: {ex.Message}");
+                        }
+                    }
+                }
+            }
+
+            try
+            {
+                using var fs = new FileStream(targetFilePath, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                if (!TryReadTiffHeader(fs, out bool isLittleEndian, out uint ifd0Offset))
+                {
+                    return new MetadataResult(false, "Invalid TIFF/DNG header");
+                }
+
+                // 1. Read existing IFD0 entries
+                uint nextIfdOffset;
+                var entries = ReadIfdEntriesWithNext(fs, ifd0Offset, isLittleEndian, out nextIfdOffset);
+
+                // 2. Read existing XMP packet if present
+                string? existingXmp = null;
+                var existingXmpEntry = entries.FirstOrDefault(e => e.Tag == TagXmp);
+                if (existingXmpEntry != null && existingXmpEntry.Count > 0)
+                {
+                    byte[] oldXmpBytes = new byte[existingXmpEntry.Count];
+                    fs.Seek(existingXmpEntry.ValueOrOffset, SeekOrigin.Begin);
+                    int xmpRead = fs.Read(oldXmpBytes, 0, (int)existingXmpEntry.Count);
+                    if (xmpRead == existingXmpEntry.Count)
+                    {
+                        existingXmp = Encoding.UTF8.GetString(oldXmpBytes);
+                    }
+                }
+
+                // 3. Prepare updated XMP and UniqueCameraModel payloads
+                string newXmpString = MergeCameraProfilesIntoXmp(existingXmp, targetMake, targetModel, targetUniqueCameraModel);
+                byte[] newXmpBytes = Encoding.UTF8.GetBytes(newXmpString);
+
+                string modelStr = targetUniqueCameraModel + "\0";
+                byte[] modelBytes = Encoding.ASCII.GetBytes(modelStr);
+
+                // 4. Seek to end of file to append new tag payloads
+                long appendPos = fs.Length;
+                // Align to 4 bytes
+                appendPos = (appendPos + 3) & ~3;
+                fs.Seek(appendPos, SeekOrigin.Begin);
+
+                // Write UniqueCameraModel payload
+                uint modelPayloadOffset = (uint)fs.Position;
+                fs.Write(modelBytes, 0, modelBytes.Length);
+
+                // Align to 4 bytes
+                AlignStream4(fs);
+
+                // Write XMP payload
+                uint xmpPayloadOffset = (uint)fs.Position;
+                fs.Write(newXmpBytes, 0, newXmpBytes.Length);
+
+                // Align to 4 bytes
+                AlignStream4(fs);
+
+                // 5. Build new IFD0 entry list:
+                // Remove existing UniqueCameraModel and Xmp entries
+                entries.RemoveAll(e => e.Tag == TagUniqueCameraModel || e.Tag == TagXmp);
+
+                // Add updated UniqueCameraModel entry
+                entries.Add(new TiffEntry
+                {
+                    Tag = TagUniqueCameraModel,
+                    Type = TypeAscii,
+                    Count = (uint)modelBytes.Length,
+                    ValueOrOffset = modelPayloadOffset
+                });
+
+                // Add updated XMP entry
+                entries.Add(new TiffEntry
+                {
+                    Tag = TagXmp,
+                    Type = TypeByte,
+                    Count = (uint)newXmpBytes.Length,
+                    ValueOrOffset = xmpPayloadOffset
+                });
+
+                // TIFF 6.0 requirement: IFD entries MUST be sorted by Tag ID ascending
+                entries.Sort((a, b) => a.Tag.CompareTo(b.Tag));
+
+                // 6. Write new IFD0 table at end of file
+                uint newIfd0Offset = (uint)fs.Position;
+                WriteUInt16(fs, (ushort)entries.Count, isLittleEndian);
+
+                foreach (var entry in entries)
+                {
+                    WriteUInt16(fs, entry.Tag, isLittleEndian);
+                    WriteUInt16(fs, entry.Type, isLittleEndian);
+                    WriteUInt32(fs, entry.Count, isLittleEndian);
+                    WriteUInt32(fs, entry.ValueOrOffset, isLittleEndian);
+                }
+
+                // Write next IFD offset (preserves original chain)
+                WriteUInt32(fs, nextIfdOffset, isLittleEndian);
+
+                // 7. Update the IFD0 pointer in the TIFF header (offset 4)
+                fs.Seek(4, SeekOrigin.Begin);
+                WriteUInt32(fs, newIfd0Offset, isLittleEndian);
+
+                fs.Flush();
+            }
+            catch (Exception ex)
+            {
+                return new MetadataResult(false, $"Failed to inject metadata: {ex.Message}");
+            }
+
+            // Cleanup intermediate DNG if it was converted from another RAW format and output path was used
+            if (useOutputPath && !isOriginallyDng && !string.Equals(dngFilePath, targetFilePath, StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    if (File.Exists(dngFilePath))
+                    {
+                        File.Delete(dngFilePath);
+                    }
+                }
+                catch { }
+            }
+
+            return new MetadataResult(true, null);
+        }
+
+        /// <summary>
+        /// Injects Fujifilm profile simulation metadata asynchronously.
+        /// </summary>
+        public static Task<MetadataResult> InjectFujifilmMetadataAsync(
+            string dngFilePath,
+            string? outputFolder = null,
+            bool createBackup = false,
+            bool isOriginallyDng = false,
+            string? customOutputFilePath = null,
+            string targetUniqueCameraModel = "Fujifilm X-T5",
+            string targetMake = "FUJIFILM",
+            string targetModel = "X-T5",
+            CancellationToken cancellationToken = default)
+        {
+            return Task.Run(() =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                return InjectFujifilmMetadata(
+                    dngFilePath,
+                    outputFolder,
+                    createBackup,
+                    isOriginallyDng,
+                    customOutputFilePath,
+                    targetUniqueCameraModel,
+                    targetMake,
+                    targetModel);
+            }, cancellationToken);
+        }
+
+        #endregion
+
+        #region Helper Methods
+
+        private static bool TryReadTiffHeader(Stream stream, out bool isLittleEndian, out uint ifdOffset)
+        {
+            isLittleEndian = true;
+            ifdOffset = 0;
+
+            if (stream.Length < 8) return false;
+
+            byte[] header = new byte[8];
+            stream.Seek(0, SeekOrigin.Begin);
+            if (stream.Read(header, 0, 8) < 8) return false;
+
+            if (header[0] == 0x49 && header[1] == 0x49 && header[2] == 0x2A && header[3] == 0x00)
+            {
+                isLittleEndian = true;
+            }
+            else if (header[0] == 0x4D && header[1] == 0x4D && header[2] == 0x00 && header[3] == 0x2A)
+            {
+                isLittleEndian = false;
+            }
+            else
+            {
+                return false;
+            }
+
+            ifdOffset = ReadUInt32(header, 4, isLittleEndian);
+            return ifdOffset > 0 && ifdOffset + 2 <= stream.Length;
+        }
+
+        private static List<TiffEntry> ReadIfdEntries(Stream stream, uint ifdOffset, bool isLittleEndian)
+        {
+            return ReadIfdEntriesWithNext(stream, ifdOffset, isLittleEndian, out _);
+        }
+
+        private static List<TiffEntry> ReadIfdEntriesWithNext(Stream stream, uint ifdOffset, bool isLittleEndian, out uint nextIfdOffset)
+        {
+            nextIfdOffset = 0;
+            var list = new List<TiffEntry>();
+
+            stream.Seek(ifdOffset, SeekOrigin.Begin);
+            byte[] countBuf = new byte[2];
+            if (stream.Read(countBuf, 0, 2) < 2) return list;
+
+            ushort count = ReadUInt16(countBuf, 0, isLittleEndian);
+            if (count > 2000) return list; // Safety limit
+
+            byte[] entriesBuf = new byte[count * 12];
+            int read = stream.Read(entriesBuf, 0, entriesBuf.Length);
+            if (read < entriesBuf.Length) return list;
+
+            for (int i = 0; i < count; i++)
+            {
+                int offset = i * 12;
+                list.Add(new TiffEntry
+                {
+                    Tag = ReadUInt16(entriesBuf, offset, isLittleEndian),
+                    Type = ReadUInt16(entriesBuf, offset + 2, isLittleEndian),
+                    Count = ReadUInt32(entriesBuf, offset + 4, isLittleEndian),
+                    ValueOrOffset = ReadUInt32(entriesBuf, offset + 8, isLittleEndian)
+                });
+            }
+
+            byte[] nextBuf = new byte[4];
+            if (stream.Read(nextBuf, 0, 4) == 4)
+            {
+                nextIfdOffset = ReadUInt32(nextBuf, 0, isLittleEndian);
+            }
+
+            return list;
+        }
+
+        private static string? ReadTagString(Stream stream, List<TiffEntry> entries, ushort tag, bool isLittleEndian)
+        {
+            var entry = entries.FirstOrDefault(e => e.Tag == tag);
+            if (entry == null || entry.Count == 0 || entry.Count > 1024) return null;
+
+            byte[] bytes = new byte[entry.Count];
+            if (entry.IsInline)
+            {
+                byte[] inlineBytes = BitConverter.GetBytes(entry.ValueOrOffset);
+                if (!isLittleEndian && BitConverter.IsLittleEndian)
+                {
+                    Array.Reverse(inlineBytes);
+                }
+                Array.Copy(inlineBytes, 0, bytes, 0, Math.Min(bytes.Length, 4));
+            }
+            else
+            {
+                if (entry.ValueOrOffset + entry.Count > stream.Length) return null;
+                long saved = stream.Position;
+                stream.Seek(entry.ValueOrOffset, SeekOrigin.Begin);
+                int read = stream.Read(bytes, 0, (int)entry.Count);
+                stream.Seek(saved, SeekOrigin.Begin);
+                if (read < entry.Count) return null;
+            }
+
+            return Encoding.ASCII.GetString(bytes).Trim('\0', ' ');
+        }
+
+        private static string? FormatMakeAndModel(string? make, string? model)
+        {
+            if (string.IsNullOrWhiteSpace(make) && string.IsNullOrWhiteSpace(model))
+                return null;
+
+            if (make != null && make.Equals("NIKON CORPORATION", StringComparison.OrdinalIgnoreCase))
+            {
+                make = "NIKON";
+            }
+
+            if (make != null && model != null && model.StartsWith(make, StringComparison.OrdinalIgnoreCase))
+            {
+                return model.Trim();
+            }
+
+            return $"{make} {model}".Trim();
+        }
+
+        private static void AlignStream4(Stream stream)
+        {
+            while ((stream.Position % 4) != 0)
+            {
+                stream.WriteByte(0);
+            }
+        }
+
+        private static void WriteUInt16(Stream stream, ushort value, bool isLittleEndian)
+        {
+            if (isLittleEndian)
+            {
+                stream.WriteByte((byte)(value & 0xFF));
+                stream.WriteByte((byte)((value >> 8) & 0xFF));
+            }
+            else
+            {
+                stream.WriteByte((byte)((value >> 8) & 0xFF));
+                stream.WriteByte((byte)(value & 0xFF));
+            }
+        }
+
+        private static void WriteUInt32(Stream stream, uint value, bool isLittleEndian)
+        {
+            if (isLittleEndian)
+            {
+                stream.WriteByte((byte)(value & 0xFF));
+                stream.WriteByte((byte)((value >> 8) & 0xFF));
+                stream.WriteByte((byte)((value >> 16) & 0xFF));
+                stream.WriteByte((byte)((value >> 24) & 0xFF));
+            }
+            else
+            {
+                stream.WriteByte((byte)((value >> 24) & 0xFF));
+                stream.WriteByte((byte)((value >> 16) & 0xFF));
+                stream.WriteByte((byte)((value >> 8) & 0xFF));
+                stream.WriteByte((byte)(value & 0xFF));
+            }
+        }
+
+        private static ushort ReadUInt16(byte[] buf, int offset, bool littleEndian)
+        {
+            return littleEndian
+                ? (ushort)(buf[offset] | (buf[offset + 1] << 8))
+                : (ushort)((buf[offset] << 8) | buf[offset + 1]);
+        }
+
+        private static uint ReadUInt32(byte[] buf, int offset, bool littleEndian)
+        {
+            return littleEndian
+                ? (uint)(buf[offset] | (buf[offset + 1] << 8) | (buf[offset + 2] << 16) | (buf[offset + 3] << 24))
+                : (uint)((buf[offset] << 24) | (buf[offset + 1] << 16) | (buf[offset + 2] << 8) | buf[offset + 3]);
+        }
+
+        private static string MergeCameraProfilesIntoXmp(string? existingXmp, string make, string model, string uniqueModel)
+        {
+            if (string.IsNullOrWhiteSpace(existingXmp))
+            {
+                return BuildDefaultXmp(make, model, uniqueModel);
+            }
+
+            try
+            {
+                int xmpStart = existingXmp.IndexOf("<x:xmpmeta", StringComparison.OrdinalIgnoreCase);
+                int xmpEnd = existingXmp.LastIndexOf("</x:xmpmeta>", StringComparison.OrdinalIgnoreCase);
+
+                if (xmpStart < 0 || xmpEnd <= xmpStart)
+                {
+                    return BuildDefaultXmp(make, model, uniqueModel);
+                }
+
+                string xmlContent = existingXmp.Substring(xmpStart, xmpEnd + "</x:xmpmeta>".Length - xmpStart);
+                var doc = XDocument.Parse(xmlContent);
+
+                XNamespace rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+                XNamespace photoshop = "http://ns.adobe.com/photoshop/1.0/";
+                XNamespace stCamera = "http://ns.adobe.com/photoshop/1.0/camera-profile";
+
+                var rdfElem = doc.Descendants(rdf + "RDF").FirstOrDefault();
+                if (rdfElem == null)
+                {
+                    return BuildDefaultXmp(make, model, uniqueModel);
+                }
+
+                var descElem = rdfElem.Elements(rdf + "Description").FirstOrDefault();
+                if (descElem == null)
+                {
+                    descElem = new XElement(rdf + "Description", new XAttribute(rdf + "about", ""));
+                    rdfElem.Add(descElem);
+                }
+
+                // Remove existing photoshop:CameraProfiles
+                descElem.Elements(photoshop + "CameraProfiles").Remove();
+
+                // Add updated CameraProfiles
+                var profilesElem = new XElement(photoshop + "CameraProfiles",
+                    new XElement(rdf + "Seq",
+                        new XElement(rdf + "li",
+                            new XAttribute(rdf + "parseType", "Resource"),
+                            new XElement(stCamera + "CameraRawProfile", "True"),
+                            new XElement(stCamera + "Make", make),
+                            new XElement(stCamera + "Model", model),
+                            new XElement(stCamera + "UniqueCameraModel", uniqueModel)
+                        )
+                    )
+                );
+
+                descElem.Add(profilesElem);
+
+                string header = "<?xpacket begin='\uFEFF' id='W5M0MpCehiHzreSzNTczkc9d'?>\n";
+                string trailer = "\n<?xpacket end='w'?>";
+                return $"{header}{doc.ToString(SaveOptions.OmitDuplicateNamespaces)}{trailer}";
+            }
+            catch
+            {
+                return BuildDefaultXmp(make, model, uniqueModel);
+            }
+        }
+
+        private static string BuildDefaultXmp(string make, string model, string uniqueModel)
+        {
+            return $@"<?xpacket begin='﻿' id='W5M0MpCehiHzreSzNTczkc9d'?>
+<x:xmpmeta xmlns:x='adobe:ns:meta/' x:xmptk='Fujify Native'>
+<rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
+ <rdf:Description rdf:about=''
+  xmlns:photoshop='http://ns.adobe.com/photoshop/1.0/'
+  xmlns:stCamera='http://ns.adobe.com/photoshop/1.0/camera-profile'>
+  <photoshop:CameraProfiles>
+   <rdf:Seq>
+    <rdf:li rdf:parseType='Resource'>
+     <stCamera:CameraRawProfile>True</stCamera:CameraRawProfile>
+     <stCamera:Make>{make}</stCamera:Make>
+     <stCamera:Model>{model}</stCamera:Model>
+     <stCamera:UniqueCameraModel>{uniqueModel}</stCamera:UniqueCameraModel>
+    </rdf:li>
+   </rdf:Seq>
+  </photoshop:CameraProfiles>
+ </rdf:Description>
+</rdf:RDF>
+</x:xmpmeta>
+<?xpacket end='w'?>";
+        }
+
+        private static string? ReadCanonCr3CameraInfo(Stream stream)
+        {
+            try
+            {
+                // Scan the first 64KB for CMT1 or standard TIFF header
+                int scanLen = (int)Math.Min(stream.Length, 65536);
+                byte[] buf = new byte[scanLen];
+                stream.Seek(0, SeekOrigin.Begin);
+                int read = stream.Read(buf, 0, scanLen);
+
+                for (int i = 0; i < read - 16; i++)
+                {
+                    // Check for TIFF header: II*\0 or MM\0*
+                    if ((buf[i] == 0x49 && buf[i + 1] == 0x49 && buf[i + 2] == 0x2A && buf[i + 3] == 0x00) ||
+                        (buf[i] == 0x4D && buf[i + 1] == 0x4D && buf[i + 2] == 0x00 && buf[i + 3] == 0x2A))
+                    {
+                        bool isLittle = buf[i] == 0x49;
+                        uint relIfd = ReadUInt32(buf, i + 4, isLittle);
+                        long absIfd = i + relIfd;
+                        if (absIfd > 0 && absIfd + 2 < stream.Length)
+                        {
+                            var entries = ReadIfdEntries(stream, (uint)absIfd, isLittle);
+                            string? make = ReadTagString(stream, entries, TagMake, isLittle);
+                            string? model = ReadTagString(stream, entries, TagModel, isLittle);
+                            string? res = FormatMakeAndModel(make, model);
+                            if (!string.IsNullOrEmpty(res)) return res;
+                        }
+                    }
+                }
+            }
+            catch { }
+            return null;
+        }
+
+        private static string? ReadJpegExifCameraInfo(Stream stream)
+        {
+            try
+            {
+                byte[] markerBuf = new byte[4];
+                stream.Seek(2, SeekOrigin.Begin); // Skip 0xFF 0xD8
+
+                while (stream.Position < stream.Length - 4)
+                {
+                    if (stream.Read(markerBuf, 0, 4) < 4) break;
+                    if (markerBuf[0] != 0xFF) break;
+
+                    byte marker = markerBuf[1];
+                    int len = (markerBuf[2] << 8) | markerBuf[3];
+                    if (len < 2) break;
+
+                    // APP1 marker = 0xFF 0xE1
+                    if (marker == 0xE1)
+                    {
+                        byte[] exifId = new byte[6];
+                        if (stream.Read(exifId, 0, 6) == 6 &&
+                            exifId[0] == 'E' && exifId[1] == 'x' && exifId[2] == 'i' && exifId[3] == 'f' &&
+                            exifId[4] == 0 && exifId[5] == 0)
+                        {
+                            long tiffBase = stream.Position;
+                            if (TryReadTiffHeader(stream, out bool isLittle, out uint ifdOffset))
+                            {
+                                var entries = ReadIfdEntries(stream, (uint)(tiffBase + ifdOffset), isLittle);
+                                string? make = ReadTagString(stream, entries, TagMake, isLittle);
+                                string? model = ReadTagString(stream, entries, TagModel, isLittle);
+                                return FormatMakeAndModel(make, model);
+                            }
+                        }
+                        break;
+                    }
+                    else if (marker == 0xDA) // Start of Scan (SOS) - stop reading headers
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        stream.Seek(len - 2, SeekOrigin.Current);
+                    }
+                }
+            }
+            catch { }
+            return null;
+        }
+
+        #endregion
+    }
+}
+

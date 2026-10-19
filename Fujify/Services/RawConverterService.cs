@@ -37,11 +37,29 @@ namespace Fujify.Services
         public ConversionResult ConvertToDng(string filePath, bool embedOriginalRaw, string? targetDngPath = null)
         {
             string dngFilePath = !string.IsNullOrEmpty(targetDngPath) ? targetDngPath : Path.ChangeExtension(filePath, ".dng");
-            string? dngLabPath = FindDngLabPath();
 
+            // 1. Try high-performance in-process native library conversion
+            if (DngLabNative.IsAvailable)
+            {
+                var (success, errorMsg) = DngLabNative.ConvertFile(filePath, dngFilePath, embedOriginalRaw);
+                if (success && File.Exists(dngFilePath))
+                {
+                    return new ConversionResult(true, dngFilePath, null);
+                }
+
+                // If native failed with a critical error and no CLI runner exists, return the error
+                string? cliPath = FindDngLabPath();
+                if (string.IsNullOrEmpty(cliPath) || !File.Exists(cliPath))
+                {
+                    return new ConversionResult(false, null, errorMsg ?? "Native conversion failed.");
+                }
+            }
+
+            // 2. Fallback to external DNGLab CLI process
+            string? dngLabPath = FindDngLabPath();
             if (string.IsNullOrEmpty(dngLabPath) || !File.Exists(dngLabPath))
             {
-                return new ConversionResult(false, null, "DNGLab executable not found.");
+                return new ConversionResult(false, null, "DNGLab executable or native library not found.");
             }
 
             try
@@ -72,11 +90,28 @@ namespace Fujify.Services
         public async Task<ConversionResult> ConvertToDngAsync(string filePath, bool embedOriginalRaw, string? targetDngPath = null, CancellationToken cancellationToken = default)
         {
             string dngFilePath = !string.IsNullOrEmpty(targetDngPath) ? targetDngPath : Path.ChangeExtension(filePath, ".dng");
-            string? dngLabPath = FindDngLabPath();
 
+            // 1. Try high-performance in-process native library conversion
+            if (DngLabNative.IsAvailable)
+            {
+                var (success, errorMsg) = await DngLabNative.ConvertFileAsync(filePath, dngFilePath, embedOriginalRaw, cancellationToken);
+                if (success && File.Exists(dngFilePath))
+                {
+                    return new ConversionResult(true, dngFilePath, null);
+                }
+
+                string? cliPath = FindDngLabPath();
+                if (string.IsNullOrEmpty(cliPath) || !File.Exists(cliPath))
+                {
+                    return new ConversionResult(false, null, errorMsg ?? "Native conversion failed.");
+                }
+            }
+
+            // 2. Fallback to external DNGLab CLI process
+            string? dngLabPath = FindDngLabPath();
             if (string.IsNullOrEmpty(dngLabPath) || !File.Exists(dngLabPath))
             {
-                return new ConversionResult(false, null, "DNGLab executable not found.");
+                return new ConversionResult(false, null, "DNGLab executable or native library not found.");
             }
 
             try

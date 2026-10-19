@@ -364,3 +364,12 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Rust build target
+external/**/target/
+**/target/
+
+# Local sample media
+DSC00381.ARW
+DSC00381conv.dng
+*.dng_original
