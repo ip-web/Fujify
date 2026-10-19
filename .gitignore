@@ -22,6 +22,8 @@ mono_crash.*
 [Rr]elease/
 [Rr]eleases/
 [Pp]ublish/
+dist/
+build_assets/
 x64/
 x86/
 [Ww][Ii][Nn]32/
