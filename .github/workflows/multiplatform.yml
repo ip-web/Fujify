@@ -95,6 +95,9 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Remove global.json for iOS Job
+        run: rm -f global.json
+
       - name: Select Latest Xcode
         run: |
           for xc in /Applications/Xcode_16*.app /Applications/Xcode.app; do
