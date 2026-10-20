@@ -32,15 +32,15 @@ jobs:
 
       - name: Publish Windows Desktop x64
         run: |
-          dotnet publish Fujify/Fujify.csproj -c Release -r win-x64 --self-contained true -o ./publish/win-x64
+          dotnet publish Fujify/Fujify.csproj -f net10.0 -c Release -r win-x64 --self-contained true -o ./publish/win-x64
 
       - name: Publish Linux Desktop x64
         run: |
-          dotnet publish Fujify/Fujify.csproj -c Release -r linux-x64 --self-contained true -o ./publish/linux-x64
+          dotnet publish Fujify/Fujify.csproj -f net10.0 -c Release -r linux-x64 --self-contained true -o ./publish/linux-x64
 
       - name: Publish macOS Desktop arm64
         run: |
-          dotnet publish Fujify/Fujify.csproj -c Release -r osx-arm64 --self-contained true -o ./publish/osx-arm64
+          dotnet publish Fujify/Fujify.csproj -f net10.0 -c Release -r osx-arm64 --self-contained true -o ./publish/osx-arm64
 
       - name: Upload Desktop Artifacts
         uses: actions/upload-artifact@v4
@@ -109,18 +109,18 @@ jobs:
       - name: Setup .NET with Workloads
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.402'
+          dotnet-version: '9.0.x'
 
       - name: Install iOS Workload
-        run: dotnet workload install ios --version 10.0.400-manifests.da132f47 || dotnet workload restore Fujify.iOS/Fujify.iOS.csproj
+        run: dotnet workload install ios
 
       - name: Restore iOS Project
-        run: dotnet restore Fujify.iOS/Fujify.iOS.csproj
+        run: dotnet restore Fujify.iOS/Fujify.iOS.csproj -p:TargetFramework=net9.0-ios
 
       - name: Build and Package iOS IPA
         run: |
           rm -rf ./publish
-          dotnet build Fujify.iOS/Fujify.iOS.csproj -c Debug -r ios-arm64 -p:EnableCodeSigning=false -p:CodesignKey="-" -p:ValidateXcodeVersion=false -p:_SuppressXcodeRequirementCheck=true
+          dotnet build Fujify.iOS/Fujify.iOS.csproj -f net9.0-ios -c Release -r ios-arm64 -p:EnableCodeSigning=false -p:CodesignKey="-" -p:ValidateXcodeVersion=false -p:_SuppressXcodeRequirementCheck=true
           APP_PATH=$(find Fujify.iOS/bin -name "*.app" -type d | head -n 1)
           echo "Found app bundle at: $APP_PATH"
           if [ -z "$APP_PATH" ]; then
