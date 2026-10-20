@@ -9,6 +9,8 @@
     <ApplicationDisplayVersion>2.1.0</ApplicationDisplayVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <CodesignKey>-</CodesignKey>
   </PropertyGroup>
 
   <ItemGroup>

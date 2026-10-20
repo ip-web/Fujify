@@ -108,21 +108,17 @@ jobs:
 
       - name: Build and Package iOS IPA
         run: |
-          dotnet build Fujify.iOS/Fujify.iOS.csproj -c Release -r ios-arm64
-          mkdir -p ./publish/Payload
+          dotnet build Fujify.iOS/Fujify.iOS.csproj -c Release -r ios-arm64 -p:EnableCodeSigning=false -p:CodesignKey="-"
           APP_PATH=$(find Fujify.iOS/bin/Release -name "*.app" -type d | head -n 1)
-          if [ -d "$APP_PATH" ]; then
-            echo "Found app bundle at $APP_PATH"
-            cp -R "$APP_PATH" ./publish/Payload/
-          else
-            echo "Packaging from bin folder"
-            mkdir -p ./publish/Payload/Fujify.app
-            cp -R Fujify.iOS/bin/Release/net10.0-ios/ios-arm64/* ./publish/Payload/Fujify.app/
-            cp Fujify.iOS/Info.plist ./publish/Payload/Fujify.app/
-            if [ -f "Fujify.iOS/Resources/AppIcon.png" ]; then
-              cp Fujify.iOS/Resources/AppIcon.png ./publish/Payload/Fujify.app/
-            fi
+          echo "Found app bundle at $APP_PATH"
+          if [ -z "$APP_PATH" ]; then
+            echo "Error: No .app bundle found!"
+            exit 1
           fi
+          # Ensure static archives (.a) are removed from the .app bundle to prevent codesign / Sideloadly failures
+          find "$APP_PATH" -name "*.a" -delete
+          mkdir -p ./publish/Payload
+          cp -R "$APP_PATH" ./publish/Payload/Fujify.app
           cd ./publish
           zip -r -y Fujify-v2.1.0-iOS.ipa Payload
           cd ..

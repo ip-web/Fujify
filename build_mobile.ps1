@@ -140,6 +140,9 @@ if (-not $SkipiOS) {
             Copy-Item -Path $iconSrc -Destination (Join-Path $appDir "AppIcon.png") -Force
         }
 
+        # Remove all static library archives (.a) which trigger Sideloadly signing errors
+        Get-ChildItem -Path $appDir -Filter "*.a" -Recurse | Remove-Item -Force
+
         $targetIpa = Join-Path $releaseDir "Fujify-v2.1.0-iOS.ipa"
         if (Test-Path $targetIpa) { Remove-Item -Force $targetIpa }
 
