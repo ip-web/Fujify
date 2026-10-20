@@ -81,7 +81,7 @@ namespace Fujify.Services
             }
         }
 
-        private static string DetectRawExtension(string filePath)
+        public static string DetectRawExtension(string filePath)
         {
             try
             {

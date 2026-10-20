@@ -43,6 +43,10 @@
                                       OnContent="Embed original RAW inside DNG" 
                                       OffContent="Embed original RAW inside DNG"/>
                         
+                        <ToggleSwitch IsChecked="{Binding AutoOpenInLightroom}" 
+                                      OnContent="Auto-open converted photos in Lightroom" 
+                                      OffContent="Auto-open converted photos in Lightroom"/>
+
                         <ToggleSwitch IsChecked="{Binding IsDarkTheme}" 
                                       OnContent="Dark Theme" 
                                       OffContent="Dark Theme"/>
