@@ -60,9 +60,11 @@ namespace Fujify.Services
 
             try
             {
-                string baseDir = OperatingSystem.IsAndroid() || OperatingSystem.IsIOS()
-                    ? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
-                    : Path.GetTempPath();
+                string baseDir = OperatingSystem.IsIOS()
+                    ? Path.GetTempPath()
+                    : OperatingSystem.IsAndroid()
+                        ? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)
+                        : Path.GetTempPath();
 
                 if (string.IsNullOrWhiteSpace(baseDir) || !Directory.Exists(baseDir))
                 {

@@ -78,7 +78,7 @@ namespace Fujify.Services
             {
                 osExt = ".dll";
             }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || OperatingSystem.IsIOS() || OperatingSystem.IsMacCatalyst())
             {
                 osExt = ".dylib";
                 prefix = "lib";
@@ -126,10 +126,12 @@ namespace Fujify.Services
                 // Fall through to file system candidate search
             }
 
-            // 3. Candidate locations
+            // 3. Candidate locations (including iOS Frameworks and app bundle)
             string[] searchPaths =
             [
                 Path.Combine(baseDir, fileName),
+                Path.Combine(baseDir, "Frameworks", fileName),
+                Path.Combine(baseDir, "Frameworks", $"{LibraryName}.framework", LibraryName),
                 Path.Combine(baseDir, "libs", fileName),
                 Path.Combine(baseDir, "runtimes", RuntimeInformation.RuntimeIdentifier, "native", fileName),
                 Path.Combine(baseDir, "..", "..", "..", "FujifyNET", "libs", fileName)

@@ -38,5 +38,62 @@
     <string>Fujify requires access to your photo library to select camera RAW photos for conversion.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
     <string>Fujify needs permission to save converted DNG photos to your photo library.</string>
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>lightroom</string>
+        <string>adobe-lightroom</string>
+    </array>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Camera RAW &amp; DNG Image</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>public.camera-raw-image</string>
+                <string>public.image</string>
+                <string>com.adobe.raw-image</string>
+                <string>com.sony.raw-image</string>
+                <string>com.canon.cr2-raw-image</string>
+                <string>com.canon.cr3-raw-image</string>
+                <string>com.nikon.raw-image</string>
+                <string>com.fujifilm.raw-image</string>
+                <string>public.data</string>
+            </array>
+        </dict>
+    </array>
+    <key>UTImportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>public.camera-raw-image</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.image</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>dng</string>
+                    <string>arw</string>
+                    <string>cr3</string>
+                    <string>cr2</string>
+                    <string>nef</string>
+                    <string>raf</string>
+                    <string>orf</string>
+                    <string>rw2</string>
+                    <string>pef</string>
+                    <string>erf</string>
+                    <string>3fr</string>
+                    <string>srw</string>
+                </array>
+            </dict>
+        </dict>
+    </array>
 </dict>
 </plist>
