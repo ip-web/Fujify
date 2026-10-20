@@ -102,12 +102,21 @@ jobs:
         run: |
           echo "Listing all installed Xcode versions:"
           ls -d /Applications/Xcode*.app || true
-          LATEST_XCODE=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -n 1)
-          if [ -n "$LATEST_XCODE" ]; then
-            echo "Selecting latest Xcode: $LATEST_XCODE"
-            sudo xcode-select -s "$LATEST_XCODE/Contents/Developer"
+          SELECTED_XCODE=""
+          for xc in $(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V -r); do
+            if [ -d "$xc/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs" ] && [ -d "$xc/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs" ]; then
+              echo "Found complete Xcode toolchain with iOS & macOS SDKs: $xc"
+              SELECTED_XCODE="$xc"
+              break
+            fi
+          done
+          if [ -n "$SELECTED_XCODE" ]; then
+            echo "Selecting Xcode: $SELECTED_XCODE"
+            sudo xcode-select -s "$SELECTED_XCODE/Contents/Developer"
           fi
           xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-path
+          xcrun -find clang
 
       - name: Setup .NET with Workloads
         uses: actions/setup-dotnet@v4
