@@ -31,6 +31,7 @@ namespace Fujify.Models
         private string _cameraMakeAndModel = string.Empty;
 
         public bool HasAnimationPlayed { get; set; } = false;
+        public System.Windows.Input.ICommand? RemoveCommand { get; set; }
 
         public required string FilePath
         {
