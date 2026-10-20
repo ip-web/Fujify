@@ -33,9 +33,23 @@ namespace Fujify.ViewModels
         private bool _skipThumbnailGeneration;
         private int _maxConcurrentConversions;
         private bool _autoOpenInLightroom;
+        private bool _appendSuffix;
+        private string _suffix = "-fujified";
 
         public int TotalThreads => Environment.ProcessorCount;
         public int DefaultConcurrency => Math.Max(1, TotalThreads / 2);
+
+        public bool AppendSuffix
+        {
+            get => _appendSuffix;
+            set => SetProperty(ref _appendSuffix, value);
+        }
+
+        public string Suffix
+        {
+            get => _suffix;
+            set => SetProperty(ref _suffix, value);
+        }
 
         public bool IsDarkTheme
         {
@@ -107,6 +121,8 @@ namespace Fujify.ViewModels
             _embedOriginalRaw = settings.EmbedOriginalRaw;
             _skipThumbnailGeneration = settings.SkipThumbnailGeneration;
             _autoOpenInLightroom = settings.AutoOpenInLightroom;
+            _appendSuffix = settings.AppendSuffix;
+            _suffix = string.IsNullOrWhiteSpace(settings.Suffix) ? "-fujified" : settings.Suffix;
 
             int saved = settings.MaxConcurrentConversions;
             if (saved <= 0 || saved > TotalThreads) saved = DefaultConcurrency;
@@ -128,6 +144,8 @@ namespace Fujify.ViewModels
             s.SkipThumbnailGeneration = _skipThumbnailGeneration;
             s.MaxConcurrentConversions = _maxConcurrentConversions;
             s.AutoOpenInLightroom = _autoOpenInLightroom;
+            s.AppendSuffix = _appendSuffix;
+            s.Suffix = string.IsNullOrWhiteSpace(_suffix) ? "-fujified" : _suffix.Trim();
             _settingsService.Save();
             App.ApplyTheme(_isDarkTheme);
 
