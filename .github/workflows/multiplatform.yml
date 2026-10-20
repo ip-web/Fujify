@@ -100,13 +100,13 @@ jobs:
 
       - name: Select Latest Xcode
         run: |
-          for xc in /Applications/Xcode_16*.app /Applications/Xcode.app; do
-            if [ -d "$xc" ]; then
-              echo "Selecting $xc"
-              sudo xcode-select -s "$xc/Contents/Developer"
-              break
-            fi
-          done
+          echo "Listing all installed Xcode versions:"
+          ls -d /Applications/Xcode*.app || true
+          LATEST_XCODE=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -n 1)
+          if [ -n "$LATEST_XCODE" ]; then
+            echo "Selecting latest Xcode: $LATEST_XCODE"
+            sudo xcode-select -s "$LATEST_XCODE/Contents/Developer"
+          fi
           xcodebuild -version
 
       - name: Setup .NET with Workloads
@@ -123,7 +123,7 @@ jobs:
       - name: Build and Package iOS IPA
         run: |
           rm -rf ./publish
-          dotnet build Fujify.iOS/Fujify.iOS.csproj -f net9.0-ios -c Release -r ios-arm64 -p:EnableCodeSigning=false -p:CodesignKey="-" -p:ValidateXcodeVersion=false -p:_SuppressXcodeRequirementCheck=true
+          dotnet build Fujify.iOS/Fujify.iOS.csproj -f net9.0-ios -c Release -r ios-arm64 -p:EnableCodeSigning=false -p:CodesignKey="-" -p:ValidateXcodeVersion=false -p:_SuppressXcodeRequirementCheck=true -p:Registrar=dynamic -p:DynamicRegistrationSupported=true -p:MtouchExtraArgs="--registrar:dynamic"
           APP_PATH=$(find Fujify.iOS/bin -name "*.app" -type d | head -n 1)
           echo "Found app bundle at: $APP_PATH"
           if [ -z "$APP_PATH" ]; then

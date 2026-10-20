@@ -13,6 +13,8 @@
     <CodesignKey>-</CodesignKey>
     <ValidateXcodeVersion>false</ValidateXcodeVersion>
     <_SuppressXcodeRequirementCheck>true</_SuppressXcodeRequirementCheck>
+    <Registrar>dynamic</Registrar>
+    <DynamicRegistrationSupported>true</DynamicRegistrationSupported>
   </PropertyGroup>
 
   <ItemGroup>
