@@ -29,6 +29,8 @@ namespace Fujify.Services
         public int MaxConcurrentConversions { get; set; } = 0;
         public bool SkipThumbnailGeneration { get; set; } = false;
         public bool AutoOpenInLightroom { get; set; } = false;
+        public bool AppendSuffix { get; set; } = false;
+        public string Suffix { get; set; } = "-fujified";
     }
 
     public interface ISettingsService

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using Fujify.Services;
+using Fujify.ViewModels;
 using Xunit;
 
 namespace Fujify.Tests
@@ -119,6 +120,41 @@ namespace Fujify.Tests
             {
                 string info = service.GetCameraMakeAndModel(_sampleArw);
                 Assert.Contains("ILCE-7RM4", info);
+            }
+        }
+
+        [Fact]
+        public void AppSettings_ShouldDefaultToFujifiedSuffix()
+        {
+            var settings = new AppSettings();
+            Assert.False(settings.AppendSuffix);
+            Assert.Equal("-fujified", settings.Suffix);
+        }
+
+        [Fact]
+        public void PreferencesViewModel_ShouldLoadAndSaveSuffixOptions()
+        {
+            var tempSettingsPath = Path.Combine(Path.GetTempPath(), $"settings_{Guid.NewGuid():N}.json");
+            try
+            {
+                var settingsService = new SettingsService(tempSettingsPath);
+                var vm = new PreferencesViewModel(settingsService);
+
+                Assert.False(vm.AppendSuffix);
+                Assert.Equal("-fujified", vm.Suffix);
+
+                vm.AppendSuffix = true;
+                vm.Suffix = "_fuji_edit";
+                vm.SaveCommand.Execute(null);
+
+                // Reload and verify persistence
+                var reloaded = new SettingsService(tempSettingsPath);
+                Assert.True(reloaded.Settings.AppendSuffix);
+                Assert.Equal("_fuji_edit", reloaded.Settings.Suffix);
+            }
+            finally
+            {
+                if (File.Exists(tempSettingsPath)) File.Delete(tempSettingsPath);
             }
         }
     }

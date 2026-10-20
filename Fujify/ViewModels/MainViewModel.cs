@@ -249,6 +249,40 @@ namespace Fujify.ViewModels
             set => SetProperty(ref _isTabletLayout, value);
         }
 
+        public bool AppendSuffix
+        {
+            get => _settingsService.Settings.AppendSuffix;
+            set
+            {
+                if (_settingsService.Settings.AppendSuffix != value)
+                {
+                    _settingsService.Settings.AppendSuffix = value;
+                    _settingsService.Save();
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(SuffixPreview));
+                }
+            }
+        }
+
+        public string Suffix
+        {
+            get => _settingsService.Settings.Suffix;
+            set
+            {
+                if (_settingsService.Settings.Suffix != value)
+                {
+                    _settingsService.Settings.Suffix = value;
+                    _settingsService.Save();
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(SuffixPreview));
+                }
+            }
+        }
+
+        public string SuffixPreview => AppendSuffix && !string.IsNullOrWhiteSpace(Suffix)
+            ? $"DSC0001{Suffix.Trim()}.dng"
+            : "DSC0001.dng";
+
         public void UpdateLayoutMode(double width, double height)
         {
             IsPhoneLayout = width < 650;
@@ -844,11 +878,18 @@ namespace Fujify.ViewModels
             }
 
             bool isOriginallyDng = filePath.EndsWith(".dng", StringComparison.OrdinalIgnoreCase);
-            string initialDestFilePath = !string.IsNullOrEmpty(outputFolder)
-                ? Path.Combine(outputFolder, Path.GetFileNameWithoutExtension(filePath) + ".dng")
-                : Path.ChangeExtension(filePath, ".dng");
+            string baseFileName = Path.GetFileNameWithoutExtension(filePath);
+            bool appendSuffix = _settingsService.Settings.AppendSuffix && !string.IsNullOrWhiteSpace(_settingsService.Settings.Suffix);
+            if (appendSuffix)
+            {
+                baseFileName += _settingsService.Settings.Suffix.Trim();
+            }
 
-            bool isSameFileInPlace = isOriginallyDng && string.IsNullOrEmpty(outputFolder);
+            string initialDestFilePath = !string.IsNullOrEmpty(outputFolder)
+                ? Path.Combine(outputFolder, baseFileName + ".dng")
+                : Path.Combine(Path.GetDirectoryName(filePath) ?? string.Empty, baseFileName + ".dng");
+
+            bool isSameFileInPlace = isOriginallyDng && string.IsNullOrEmpty(outputFolder) && !appendSuffix;
             bool fileAlreadyExists;
             lock (reservedOutputPaths)
             {
@@ -952,7 +993,7 @@ namespace Fujify.ViewModels
                 UpdateFileStatus(filePath, "Conversion successful");
             }
 
-            string? customOutputPath = !string.IsNullOrEmpty(outputFolder)
+            string? customOutputPath = (!string.IsNullOrEmpty(outputFolder) || finalDestFilePath != dngFilePath)
                 ? finalDestFilePath
                 : null;
 

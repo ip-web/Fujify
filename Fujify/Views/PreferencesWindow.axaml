@@ -31,10 +31,24 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Checkboxes -->
+                <!-- Checkboxes & Options -->
                 <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}" 
                         CornerRadius="6" Padding="14" BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="1">
                     <StackPanel Spacing="12">
+                        <!-- Custom File Suffix -->
+                        <ToggleSwitch IsChecked="{Binding AppendSuffix}" 
+                                      OnContent="Add suffix to converted file name" 
+                                      OffContent="Add suffix to converted file name"/>
+
+                        <Grid ColumnDefinitions="Auto,*" Margin="0,2,0,4" IsVisible="{Binding AppendSuffix}">
+                            <TextBlock Grid.Column="0" Text="Suffix:" VerticalAlignment="Center" FontSize="12" Margin="0,0,10,0"/>
+                            <TextBox Grid.Column="1" Text="{Binding Suffix}"
+                                     Watermark="-fujified" FontSize="12" Height="32" CornerRadius="6" VerticalContentAlignment="Center"/>
+                        </Grid>
+                        <TextBlock Text="Example: DSC0001.ARW → DSC0001-fujified.dng" FontSize="11"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                   IsVisible="{Binding AppendSuffix}" Margin="0,-4,0,4"/>
+
                         <ToggleSwitch IsChecked="{Binding SkipThumbnailGeneration}" 
                                       OnContent="Skip thumbnail generation (faster import)" 
                                       OffContent="Skip thumbnail generation (faster import)"/>
