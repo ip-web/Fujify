@@ -119,8 +119,9 @@ jobs:
 
       - name: Build and Package iOS IPA
         run: |
-          dotnet build Fujify.iOS/Fujify.iOS.csproj -c Release -r ios-arm64 -p:EnableCodeSigning=false -p:CodesignKey="-" -p:ValidateXcodeVersion=false -p:_SuppressXcodeRequirementCheck=true
-          APP_PATH=$(find Fujify.iOS/bin/Release -name "*.app" -type d | head -n 1)
+          rm -rf ./publish
+          dotnet build Fujify.iOS/Fujify.iOS.csproj -c Debug -r ios-arm64 -p:EnableCodeSigning=false -p:CodesignKey="-" -p:ValidateXcodeVersion=false -p:_SuppressXcodeRequirementCheck=true
+          APP_PATH=$(find Fujify.iOS/bin -name "*.app" -type d | head -n 1)
           echo "Found app bundle at: $APP_PATH"
           if [ -z "$APP_PATH" ]; then
             echo "Error: No .app bundle found!"
@@ -130,6 +131,9 @@ jobs:
           find "$APP_PATH" -name "*.a" -delete
           mkdir -p ./publish/Payload
           cp -R "$APP_PATH" ./publish/Payload/
+          echo "Verifying app bundle contents:"
+          ls -la ./publish/Payload/*.app/
+          file ./publish/Payload/*.app/Fujify.iOS || true
           cd ./publish
           zip -r -y Fujify-v2.1.0-iOS.ipa Payload
           cd ..
@@ -139,3 +143,4 @@ jobs:
         with:
           name: fujify-ios-ipa
           path: ./publish/Fujify-v2.1.0-iOS.ipa
+

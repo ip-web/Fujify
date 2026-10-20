@@ -143,6 +143,11 @@ if (-not $SkipiOS) {
         # Remove all static library archives (.a) which trigger Sideloadly signing errors
         Get-ChildItem -Path $appDir -Filter "*.a" -Recurse | Remove-Item -Force
 
+        $machoBinary = Join-Path $appDir "Fujify.iOS"
+        if (-not (Test-Path $machoBinary)) {
+            Write-Warning "Native Mach-O executable 'Fujify.iOS' is not present in the app bundle. Windows builds MSIL assemblies only and requires a Mac build host (or GitHub Actions macos runner) to produce an installable iOS IPA."
+        }
+
         $targetIpa = Join-Path $releaseDir "Fujify-v2.1.0-iOS.ipa"
         if (Test-Path $targetIpa) { Remove-Item -Force $targetIpa }
 
