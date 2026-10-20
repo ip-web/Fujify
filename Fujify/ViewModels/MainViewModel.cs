@@ -165,6 +165,7 @@ namespace Fujify.ViewModels
         public static readonly List<string> PendingInitialFiles = new();
         public static Action<string>? PlatformFileCreatedCallback { get; set; }
         public static Action<IReadOnlyList<string>>? PlatformOpenInLightroomCallback { get; set; }
+        public static Func<Task<IReadOnlyList<string>?>>? PlatformPickPhotosCallback { get; set; }
 
         private readonly List<string> _recentlyConvertedDngFiles = new();
         public IReadOnlyList<string> RecentlyConvertedDngFiles => _recentlyConvertedDngFiles;
@@ -1014,7 +1015,16 @@ namespace Fujify.ViewModels
         {
             try
             {
-                var selectedFiles = await _dialogService.ShowOpenFileDialogAsync(OwnerWindow, "Select RAW & DNG files", allowMultiple: true);
+                IReadOnlyList<string>? selectedFiles = null;
+                if (PlatformPickPhotosCallback != null)
+                {
+                    selectedFiles = await PlatformPickPhotosCallback();
+                }
+                else
+                {
+                    selectedFiles = await _dialogService.ShowOpenFileDialogAsync(OwnerWindow, "Select RAW & DNG files", allowMultiple: true);
+                }
+
                 if (selectedFiles != null && selectedFiles.Count > 0)
                 {
                     await AddFilesAsync(selectedFiles);
