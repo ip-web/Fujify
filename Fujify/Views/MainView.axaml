@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:Fujify.ViewModels"
-             xmlns:models="using:Fujify.Models"
+             xmlns:vm="clr-namespace:Fujify.ViewModels;assembly=Fujify"
+             xmlns:models="clr-namespace:Fujify.Models;assembly=Fujify"
              x:Class="Fujify.Views.MainView"
              x:DataType="vm:MainViewModel"
              DragDrop.AllowDrop="True">
@@ -14,7 +14,7 @@
             <Border x:Name="HeaderBar" Grid.Row="0" Background="{DynamicResource SystemControlBackgroundAltHighBrush}"
                     BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="0,0,0,1"
                     Padding="16,10">
-                <Grid ColumnDefinitions="Auto,*,Auto">
+                <Grid ColumnDefinitions="*,Auto">
                     <!-- Brand / Title -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                         <Border Width="34" Height="34" CornerRadius="17" ClipToBounds="True" Background="#2A2A2E">
@@ -28,22 +28,23 @@
                                 </Border>
                             </StackPanel>
                             <TextBlock Text="Native Fujifilm Color Science for RAW" FontSize="11"
-                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+                                       IsVisible="{Binding !IsPhoneLayout}"/>
                         </StackPanel>
                     </StackPanel>
 
-                    <!-- Target Profile Badge (Fujifilm X-T5) -->
-                    <Border Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center"
-                            CornerRadius="16" Padding="12,5" Margin="10,0"
-                            Background="{DynamicResource SystemControlHighlightBaseLowBrush}">
-                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                            <TextBlock Text="📷" FontSize="11"/>
-                            <TextBlock Text="Fujifilm X-T5" FontWeight="SemiBold" FontSize="11"/>
-                        </StackPanel>
-                    </Border>
+                    <!-- Right Controls: Target Profile Badge + Action Buttons -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <!-- Target Profile Badge (Fujifilm X-T5) -->
+                        <Border Background="{DynamicResource SystemControlHighlightBaseLowBrush}"
+                                CornerRadius="14" Padding="10,5">
+                            <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                <TextBlock Text="📷" FontSize="11"/>
+                                <TextBlock Text="Fujifilm X-T5" FontWeight="SemiBold" FontSize="11"/>
+                            </StackPanel>
+                        </Border>
 
-                    <!-- Header Action Buttons (Preferences, About) -->
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <!-- Header Action Buttons (Preferences, About) -->
                         <Button Content="⚙" Command="{Binding OpenPreferencesCommand}"
                                 FontSize="14" Padding="10,6" CornerRadius="8"
                                 ToolTip.Tip="Preferences"/>
@@ -133,7 +134,7 @@
 
                                                 <!-- Remove Action -->
                                                 <Button Grid.Column="2" Content="✕"
-                                                        Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).RemoveFileCommand}"
+                                                        Command="{Binding RemoveCommand}"
                                                         CommandParameter="{Binding}"
                                                         Width="34" Height="34" CornerRadius="17"
                                                         Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
@@ -252,7 +253,7 @@
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate x:DataType="models:FileItem">
                                                 <Button Content="✕"
-                                                        Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).RemoveFileCommand}"
+                                                        Command="{Binding RemoveCommand}"
                                                         CommandParameter="{Binding}"
                                                         Background="Transparent" Padding="0" Width="28" Height="28"
                                                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"

@@ -77,19 +77,21 @@ namespace Fujify.ViewModels
             _settingsService = settingsService ?? new SettingsService();
             Instance = this;
 
+            ProcessCommand = new AsyncRelayCommand(ExecuteProcessOrStopAsync);
+            ClearCommand = new AsyncRelayCommand(ExecuteClearAsync, () => CanClear);
+            BrowseFolderCommand = new AsyncRelayCommand(ExecuteBrowseFolderAsync);
+            AddFilesCommand = new AsyncRelayCommand(ExecuteAddFilesAsync);
+            AddFolderCommand = new AsyncRelayCommand(ExecuteAddFolderAsync);
+
             Files.CollectionChanged += (s, e) =>
             {
                 OnPropertyChanged(nameof(HasFiles));
                 OnPropertyChanged(nameof(CanProcess));
                 OnPropertyChanged(nameof(CanClear));
                 OnPropertyChanged(nameof(CanProcessOrStop));
+                (ClearCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+                (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
             };
-
-            ProcessCommand = new AsyncRelayCommand(ExecuteProcessOrStopAsync);
-            ClearCommand = new AsyncRelayCommand(ExecuteClearAsync, () => CanClear);
-            BrowseFolderCommand = new AsyncRelayCommand(ExecuteBrowseFolderAsync);
-            AddFilesCommand = new AsyncRelayCommand(ExecuteAddFilesAsync);
-            AddFolderCommand = new AsyncRelayCommand(ExecuteAddFolderAsync);
             DeleteSelectedFilesCommand = new RelayCommand<System.Collections.IList>(ExecuteDeleteSelectedFiles);
             OpenFileCommand = new RelayCommand<FileItem>(ExecuteOpenFile);
             OpenFolderCommand = new RelayCommand<FileItem>(ExecuteOpenFolder);
@@ -412,6 +414,8 @@ namespace Fujify.ViewModels
                     OnPropertyChanged(nameof(CanProcess));
                     OnPropertyChanged(nameof(CanClear));
                     OnPropertyChanged(nameof(CanProcessOrStop));
+                    (ClearCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+                    (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
                 }
             }
         }
@@ -547,7 +551,8 @@ namespace Fujify.ViewModels
                                     FilePath = filePath,
                                     Status = "Pending",
                                     Thumbnail = thumbnail,
-                                    CameraMakeAndModel = cameraMakeAndModel
+                                    CameraMakeAndModel = cameraMakeAndModel,
+                                    RemoveCommand = RemoveFileCommand
                                 });
 
                                 if (batch.Count >= 10)
