@@ -56,6 +56,16 @@ if (-not $env:ANDROID_HOME) {
     }
 }
 
+# Detect Android NDK
+if (-not $env:ANDROID_NDK_HOME) {
+    $possibleNdk = (Get-ChildItem "$env:LOCALAPPDATA\Android\Sdk\ndk\*" -ErrorAction SilentlyContinue | Select-Object -Last 1).FullName
+    if ($possibleNdk -and (Test-Path $possibleNdk)) {
+        $env:ANDROID_NDK_HOME = $possibleNdk
+        $env:NDK_HOME = $possibleNdk
+        Write-Host "Detected ANDROID_NDK_HOME: $possibleNdk" -ForegroundColor Green
+    }
+}
+
 if ($env:JAVA_HOME -and $env:ANDROID_HOME) {
     $env:PATH = "$env:JAVA_HOME\bin;$env:ANDROID_HOME\cmdline-tools\latest\bin;$env:ANDROID_HOME\platform-tools;$env:PATH"
 }
@@ -64,6 +74,16 @@ if ($env:JAVA_HOME -and $env:ANDROID_HOME) {
 if (-not $SkipAndroid) {
     Write-Host "`n[2/4] Building Fujify for Android ($Configuration)..." -ForegroundColor Yellow
     $androidProj = Join-Path $repoRoot "Fujify.Android\Fujify.Android.csproj"
+    
+    # Ensure native dnglab_ffi libraries are present
+    $arm64Lib = Join-Path $repoRoot "Fujify.Android\libs\arm64-v8a\libdnglab_ffi.so"
+    $x64Lib = Join-Path $repoRoot "Fujify.Android\libs\x86_64\libdnglab_ffi.so"
+    if (-not (Test-Path $arm64Lib) -or -not (Test-Path $x64Lib)) {
+        Write-Host "Building dnglab_ffi native libraries for Android (arm64-v8a and x86_64)..." -ForegroundColor Cyan
+        $nativeDir = Join-Path $repoRoot "native\dnglab_ffi"
+        $outputLibs = Join-Path $repoRoot "Fujify.Android\libs"
+        & cargo ndk -t arm64-v8a -t x86_64 -P 26 -o $outputLibs --manifest-path (Join-Path $nativeDir "Cargo.toml") build --release
+    }
     
     $architectures = @("android-arm64", "android-x64")
     foreach ($rid in $architectures) {

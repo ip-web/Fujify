@@ -64,6 +64,12 @@ namespace FujifyNET.Services
         {
             if (libraryName != LibraryName) return IntPtr.Zero;
 
+            // 1. Direct try via standard dynamic linker (e.g. system search path, Android app native library dir)
+            if (NativeLibrary.TryLoad(LibraryName, assembly, searchPath, out IntPtr directHandle))
+            {
+                return directHandle;
+            }
+
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
             string osExt;
             string prefix = "";
@@ -85,7 +91,42 @@ namespace FujifyNET.Services
 
             string fileName = $"{prefix}{LibraryName}{osExt}";
 
-            // Candidate locations
+            if (NativeLibrary.TryLoad(fileName, assembly, searchPath, out directHandle))
+            {
+                return directHandle;
+            }
+
+            // 2. Android native library directory (when running on Android)
+            try
+            {
+                var appType = Type.GetType("Android.App.Application, Mono.Android");
+                var contextProp = appType?.GetProperty("Context", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                var context = contextProp?.GetValue(null);
+                if (context != null)
+                {
+                    var appInfoProp = context.GetType().GetProperty("ApplicationInfo");
+                    var appInfo = appInfoProp?.GetValue(context);
+                    if (appInfo != null)
+                    {
+                        var nativeLibDirProp = appInfo.GetType().GetProperty("NativeLibraryDir");
+                        var nativeLibDir = nativeLibDirProp?.GetValue(appInfo) as string;
+                        if (!string.IsNullOrEmpty(nativeLibDir))
+                        {
+                            string androidLibPath = Path.Combine(nativeLibDir, fileName);
+                            if (File.Exists(androidLibPath) && NativeLibrary.TryLoad(androidLibPath, out IntPtr androidHandle))
+                            {
+                                return androidHandle;
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Fall through to file system candidate search
+            }
+
+            // 3. Candidate locations
             string[] searchPaths =
             [
                 Path.Combine(baseDir, fileName),
