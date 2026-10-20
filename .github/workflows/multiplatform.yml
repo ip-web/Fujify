@@ -112,7 +112,7 @@ jobs:
           dotnet-version: '10.0.402'
 
       - name: Install iOS Workload
-        run: dotnet workload install ios --version 10.0.400-manifests.da132f47 --skip-manifest-update
+        run: dotnet workload install ios --version 10.0.400-manifests.da132f47 || dotnet workload restore Fujify.iOS/Fujify.iOS.csproj
 
       - name: Restore iOS Project
         run: dotnet restore Fujify.iOS/Fujify.iOS.csproj
