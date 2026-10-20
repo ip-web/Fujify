@@ -109,17 +109,17 @@ jobs:
       - name: Setup .NET with Workloads
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '10.0.402'
 
       - name: Install iOS Workload
-        run: dotnet workload install ios
+        run: dotnet workload install ios --version 10.0.400-manifests.da132f47 --skip-manifest-update
 
       - name: Restore iOS Project
-        run: dotnet restore Fujify.iOS/Fujify.iOS.csproj -p:TargetFramework=net9.0-ios
+        run: dotnet restore Fujify.iOS/Fujify.iOS.csproj
 
       - name: Build and Package iOS IPA
         run: |
-          dotnet build Fujify.iOS/Fujify.iOS.csproj -c Release -r ios-arm64 -p:TargetFramework=net9.0-ios -p:EnableCodeSigning=false -p:CodesignKey="-"
+          dotnet build Fujify.iOS/Fujify.iOS.csproj -c Release -r ios-arm64 -p:EnableCodeSigning=false -p:CodesignKey="-" -p:ValidateXcodeVersion=false -p:_SuppressXcodeRequirementCheck=true
           APP_PATH=$(find Fujify.iOS/bin/Release -name "*.app" -type d | head -n 1)
           echo "Found app bundle at: $APP_PATH"
           if [ -z "$APP_PATH" ]; then
