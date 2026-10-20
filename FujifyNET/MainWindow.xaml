@@ -435,7 +435,7 @@
 
             <!-- Icon Image -->
             <Image Grid.Column="0"
-                   Source="/assets/images/logos.png"
+                   Source="/assets/images/logoXL.png"
                    Width="16"
                    Height="16"
                    VerticalAlignment="Center"

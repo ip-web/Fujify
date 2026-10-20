@@ -18,7 +18,7 @@
                     <!-- Brand / Title -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                         <Border Width="34" Height="34" CornerRadius="17" ClipToBounds="True" Background="#2A2A2E">
-                            <Image Source="/Assets/images/logos.png" Width="26" Height="26" Stretch="Uniform"/>
+                            <Image Source="/Assets/images/logoXL.png" Width="26" Height="26" Stretch="Uniform"/>
                         </Border>
                         <StackPanel VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
@@ -490,7 +490,7 @@
                             <!-- D. About Modal -->
                             <StackPanel IsVisible="{Binding IsAboutModal}" Spacing="12" HorizontalAlignment="Center">
                                 <Border Width="64" Height="64" CornerRadius="32" ClipToBounds="True" Background="#2A2A2E" HorizontalAlignment="Center">
-                                    <Image Source="/Assets/images/logos.png" Width="48" Height="48" Stretch="Uniform"/>
+                                    <Image Source="/Assets/images/logoXL.png" Width="48" Height="48" Stretch="Uniform"/>
                                 </Border>
                                 <TextBlock Text="Fujify" FontWeight="Bold" FontSize="20" HorizontalAlignment="Center"/>
                                 <TextBlock Text="Version 2.1.0 (Multi-Platform Mobile &amp; Desktop)" FontSize="12"

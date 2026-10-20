@@ -10,9 +10,9 @@
     <Grid Margin="24" RowDefinitions="Auto,*,Auto">
         <!-- Header with Logo -->
         <StackPanel Grid.Row="0" HorizontalAlignment="Center" Spacing="8" Margin="0,0,0,16">
-            <Image Source="/Assets/images/logos.png" Width="64" Height="64"/>
+            <Image Source="/Assets/images/logoXL.png" Width="64" Height="64"/>
             <TextBlock Text="Fujify" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
-            <TextBlock Text="Version 1.1.0 (Cross-Platform)" FontSize="12" 
+            <TextBlock Text="Version 2.1.0 (Cross-Platform)" FontSize="12" 
                        Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" HorizontalAlignment="Center"/>
         </StackPanel>
 
