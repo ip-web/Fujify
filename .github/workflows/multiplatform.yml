@@ -103,11 +103,13 @@ jobs:
           echo "Listing all installed Xcode versions:"
           ls -d /Applications/Xcode*.app || true
           SELECTED_XCODE=""
-          for xc in $(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V -r); do
-            if [ -x "$xc/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++" ] && [ -d "$xc/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" ] && [ -d "$xc/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs" ]; then
-              echo "Found complete Xcode toolchain with clang++, MacOSX.sdk & iPhoneOS SDK: $xc"
-              SELECTED_XCODE="$xc"
-              break
+          for xc in /Applications/Xcode_16.4.app /Applications/Xcode_16.3.app /Applications/Xcode_16.2.app /Applications/Xcode_16.1.app /Applications/Xcode.app $(ls -d /Applications/Xcode*.app 2>/dev/null); do
+            if [ -x "$xc/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++" ] && [ -d "$xc/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs" ]; then
+              if "$xc/Contents/Developer/usr/bin/xcodebuild" -sdk macosx -version >/dev/null 2>&1; then
+                echo "Found verified working Xcode toolchain: $xc"
+                SELECTED_XCODE="$xc"
+                break
+              fi
             fi
           done
           if [ -n "$SELECTED_XCODE" ]; then
@@ -116,8 +118,8 @@ jobs:
           fi
           xcodebuild -version
           xcrun --sdk iphoneos --show-sdk-path
-          xcrun -find clang
           xcrun -find clang++
+          xcrun -find dsymutil
 
       - name: Setup .NET with Workloads
         uses: actions/setup-dotnet@v4
