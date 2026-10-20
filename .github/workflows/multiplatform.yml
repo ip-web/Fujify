@@ -104,8 +104,8 @@ jobs:
           ls -d /Applications/Xcode*.app || true
           SELECTED_XCODE=""
           for xc in $(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V -r); do
-            if [ -x "$xc/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++" ] && [ -d "$xc/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs" ]; then
-              echo "Found complete Xcode toolchain with clang++ & iPhoneOS SDK: $xc"
+            if [ -x "$xc/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++" ] && [ -d "$xc/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" ] && [ -d "$xc/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs" ]; then
+              echo "Found complete Xcode toolchain with clang++, MacOSX.sdk & iPhoneOS SDK: $xc"
               SELECTED_XCODE="$xc"
               break
             fi
@@ -133,7 +133,7 @@ jobs:
       - name: Build and Package iOS IPA
         run: |
           rm -rf ./publish
-          dotnet build Fujify.iOS/Fujify.iOS.csproj -f net9.0-ios -c Release -r ios-arm64 -p:EnableCodeSigning=false -p:CodesignKey="-" -p:ValidateXcodeVersion=false -p:_SuppressXcodeRequirementCheck=true -p:Registrar=dynamic -p:DynamicRegistrationSupported=true -p:MtouchExtraArgs="--registrar:dynamic"
+          dotnet build Fujify.iOS/Fujify.iOS.csproj -f net9.0-ios -c Release -r ios-arm64 -p:EnableCodeSigning=false -p:CodesignKey="-" -p:ValidateXcodeVersion=false -p:_SuppressXcodeRequirementCheck=true -p:Registrar=dynamic -p:DynamicRegistrationSupported=true -p:MtouchExtraArgs="--registrar:dynamic" -p:MtouchEnableDsym=false
           APP_PATH=$(find Fujify.iOS/bin -name "*.app" -type d | head -n 1)
           echo "Found app bundle at: $APP_PATH"
           if [ -z "$APP_PATH" ]; then

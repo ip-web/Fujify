@@ -15,6 +15,7 @@
     <_SuppressXcodeRequirementCheck>true</_SuppressXcodeRequirementCheck>
     <Registrar>dynamic</Registrar>
     <DynamicRegistrationSupported>true</DynamicRegistrationSupported>
+    <MtouchEnableDsym>false</MtouchEnableDsym>
   </PropertyGroup>
 
   <ItemGroup>
