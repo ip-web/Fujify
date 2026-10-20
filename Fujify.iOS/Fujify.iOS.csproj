@@ -11,6 +11,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <EnableCodeSigning>false</EnableCodeSigning>
     <CodesignKey>-</CodesignKey>
+    <ValidateXcodeVersion>false</ValidateXcodeVersion>
+    <_SuppressXcodeRequirementCheck>true</_SuppressXcodeRequirementCheck>
   </PropertyGroup>
 
   <ItemGroup>
