@@ -104,8 +104,8 @@ jobs:
           ls -d /Applications/Xcode*.app || true
           SELECTED_XCODE=""
           for xc in $(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V -r); do
-            if [ -d "$xc/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs" ] && [ -d "$xc/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs" ]; then
-              echo "Found complete Xcode toolchain with iOS & macOS SDKs: $xc"
+            if [ -x "$xc/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++" ] && [ -d "$xc/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs" ]; then
+              echo "Found complete Xcode toolchain with clang++ & iPhoneOS SDK: $xc"
               SELECTED_XCODE="$xc"
               break
             fi
@@ -117,6 +117,7 @@ jobs:
           xcodebuild -version
           xcrun --sdk iphoneos --show-sdk-path
           xcrun -find clang
+          xcrun -find clang++
 
       - name: Setup .NET with Workloads
         uses: actions/setup-dotnet@v4
