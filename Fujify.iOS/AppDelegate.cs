@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.iOS;
 using Foundation;
 using Fujify.Services;
 using Fujify.ViewModels;
 using Photos;
+using PhotosUI;
 using UIKit;
 
 namespace Fujify.iOS;
@@ -15,6 +17,8 @@ namespace Fujify.iOS;
 [Register("AppDelegate")]
 public class AppDelegate : AvaloniaAppDelegate<App>
 {
+    private static PhotoPickerDelegate? _activePickerDelegate;
+
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
         // Global unhandled exception handler
@@ -34,6 +38,9 @@ public class AppDelegate : AvaloniaAppDelegate<App>
 
         // Wire Open in Lightroom handler using native iOS share sheet & activity view controller
         MainViewModel.PlatformOpenInLightroomCallback = OpenInLightroom;
+
+        // Wire native iOS photo gallery picker (PHPickerViewController)
+        MainViewModel.PlatformPickPhotosCallback = PickPhotosAsync;
 
         // Wire media library export for newly converted DNG files (saving to iOS Photos Library)
         MainViewModel.PlatformFileCreatedCallback = (filePath) =>
@@ -190,5 +197,266 @@ public class AppDelegate : AvaloniaAppDelegate<App>
         {
             System.Diagnostics.Debug.WriteLine($"[Fujify iOS] Error opening files in Lightroom: {ex}");
         }
+    }
+
+    private Task<IReadOnlyList<string>?> PickPhotosAsync()
+    {
+        var tcs = new TaskCompletionSource<IReadOnlyList<string>?>();
+
+        UIApplication.SharedApplication.BeginInvokeOnMainThread(() =>
+        {
+            var topController = GetTopViewController();
+            if (topController == null)
+            {
+                tcs.TrySetResult(null);
+                return;
+            }
+
+            var alert = UIAlertController.Create(
+                "Import RAW Photos",
+                "Choose photo source to import:",
+                UIAlertControllerStyle.ActionSheet);
+
+            alert.AddAction(UIAlertAction.Create("Photo Library (Camera Roll)", UIAlertActionStyle.Default, _ =>
+            {
+                OpenPhotoLibraryPicker(topController, tcs);
+            }));
+
+            alert.AddAction(UIAlertAction.Create("Files App (Browse Files)", UIAlertActionStyle.Default, async _ =>
+            {
+                try
+                {
+                    var dialogService = new DialogService();
+                    var files = await dialogService.ShowOpenFileDialogAsync(null, "Select RAW & DNG files", allowMultiple: true);
+                    tcs.TrySetResult(files);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Fujify iOS] Error picking from files: {ex}");
+                    tcs.TrySetResult(Array.Empty<string>());
+                }
+            }));
+
+            alert.AddAction(UIAlertAction.Create("Cancel", UIAlertActionStyle.Cancel, _ =>
+            {
+                tcs.TrySetResult(Array.Empty<string>());
+            }));
+
+            // iPad popover configuration
+            if (alert.PopoverPresentationController != null && topController.View != null)
+            {
+                alert.PopoverPresentationController.SourceView = topController.View;
+                alert.PopoverPresentationController.SourceRect = new CoreGraphics.CGRect(
+                    topController.View.Bounds.GetMidX(),
+                    topController.View.Bounds.GetMidY(),
+                    0, 0);
+                alert.PopoverPresentationController.PermittedArrowDirections = 0;
+            }
+
+            topController.PresentViewController(alert, true, null);
+        });
+
+        return tcs.Task;
+    }
+
+    private static void OpenPhotoLibraryPicker(UIViewController topController, TaskCompletionSource<IReadOnlyList<string>?> tcs)
+    {
+        try
+        {
+            var config = new PHPickerConfiguration(PHPhotoLibrary.SharedPhotoLibrary)
+            {
+                SelectionLimit = 0,
+                Filter = PHPickerFilter.ImagesFilter,
+                PreferredAssetRepresentationMode = PHPickerConfigurationAssetRepresentationMode.Current
+            };
+
+            var picker = new PHPickerViewController(config);
+            var pickerDelegate = new PhotoPickerDelegate(tcs);
+            picker.Delegate = pickerDelegate;
+
+            _activePickerDelegate = pickerDelegate;
+            topController.PresentViewController(picker, true, null);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Fujify iOS] Error presenting photo picker: {ex}");
+            tcs.TrySetResult(Array.Empty<string>());
+        }
+    }
+
+    private class PhotoPickerDelegate : PHPickerViewControllerDelegate
+    {
+        private readonly TaskCompletionSource<IReadOnlyList<string>?> _tcs;
+
+        public PhotoPickerDelegate(TaskCompletionSource<IReadOnlyList<string>?> tcs)
+        {
+            _tcs = tcs;
+        }
+
+        public override void DidFinishPicking(PHPickerViewController picker, PHPickerResult[] results)
+        {
+            picker.DismissViewController(true, async () =>
+            {
+                try
+                {
+                    _activePickerDelegate = null;
+                    if (results == null || results.Length == 0)
+                    {
+                        _tcs.TrySetResult(Array.Empty<string>());
+                        return;
+                    }
+
+                    var files = await ProcessPickedResultsAsync(results);
+                    _tcs.TrySetResult(files);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Fujify iOS] Error in DidFinishPicking: {ex}");
+                    _tcs.TrySetResult(Array.Empty<string>());
+                }
+            });
+        }
+    }
+
+    private static async Task<IReadOnlyList<string>> ProcessPickedResultsAsync(PHPickerResult[] results)
+    {
+        var outputPaths = new List<string>();
+        string stagingDir = DialogService.GetStagingDirectory();
+
+        foreach (var result in results)
+        {
+            try
+            {
+                string? importedPath = null;
+
+                // 1. Try PHAsset direct master resource export (for high-fidelity camera RAW preservation)
+                if (!string.IsNullOrEmpty(result.AssetIdentifier))
+                {
+                    try
+                    {
+                        var fetch = PHAsset.FetchAssetsUsingLocalIdentifiers(new[] { result.AssetIdentifier }, null);
+                        if (fetch.Count > 0 && fetch.FirstObject is PHAsset asset)
+                        {
+                            var resources = PHAssetResource.GetAssetResources(asset);
+
+                            var targetResource = resources.FirstOrDefault(r =>
+                                r.OriginalFilename.EndsWith(".dng", StringComparison.OrdinalIgnoreCase) ||
+                                r.OriginalFilename.EndsWith(".raf", StringComparison.OrdinalIgnoreCase) ||
+                                r.OriginalFilename.EndsWith(".cr3", StringComparison.OrdinalIgnoreCase) ||
+                                r.OriginalFilename.EndsWith(".cr2", StringComparison.OrdinalIgnoreCase) ||
+                                r.OriginalFilename.EndsWith(".arw", StringComparison.OrdinalIgnoreCase) ||
+                                r.OriginalFilename.EndsWith(".nef", StringComparison.OrdinalIgnoreCase) ||
+                                r.OriginalFilename.EndsWith(".orf", StringComparison.OrdinalIgnoreCase) ||
+                                r.OriginalFilename.EndsWith(".rw2", StringComparison.OrdinalIgnoreCase))
+                                ?? resources.FirstOrDefault(r => r.ResourceType == PHAssetResourceType.Photo || r.ResourceType == PHAssetResourceType.FullSizePhoto)
+                                ?? resources.FirstOrDefault();
+
+                            if (targetResource != null)
+                            {
+                                string fileName = targetResource.OriginalFilename;
+                                if (string.IsNullOrWhiteSpace(fileName))
+                                {
+                                    fileName = $"photo_{Guid.NewGuid():N}.dng";
+                                }
+                                string destFile = Path.Combine(stagingDir, $"{Guid.NewGuid():N}_{fileName}");
+                                var options = new PHAssetResourceRequestOptions
+                                {
+                                    NetworkAccessAllowed = true
+                                };
+
+                                var writeTcs = new TaskCompletionSource<bool>();
+                                PHAssetResourceManager.DefaultManager.WriteData(targetResource, NSUrl.FromFilename(destFile), options, err =>
+                                {
+                                    if (err != null)
+                                    {
+                                        System.Diagnostics.Debug.WriteLine($"[Fujify iOS] PHAssetResourceManager error: {err.LocalizedDescription}");
+                                        writeTcs.TrySetResult(false);
+                                    }
+                                    else
+                                    {
+                                        writeTcs.TrySetResult(File.Exists(destFile));
+                                    }
+                                });
+
+                                bool ok = await writeTcs.Task;
+                                if (ok && File.Exists(destFile) && new FileInfo(destFile).Length > 0)
+                                {
+                                    importedPath = destFile;
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Fujify iOS] Exception exporting PHAssetResource: {ex.Message}");
+                    }
+                }
+
+                // 2. Fallback to NSItemProvider file representation
+                if (importedPath == null && result.ItemProvider != null)
+                {
+                    var item = result.ItemProvider;
+                    var typeIds = item.RegisteredTypeIdentifiers;
+                    if (typeIds != null && typeIds.Length > 0)
+                    {
+                        string preferredType = typeIds.FirstOrDefault(id => id.Contains("raw", StringComparison.OrdinalIgnoreCase) || id.Contains("dng", StringComparison.OrdinalIgnoreCase))
+                            ?? typeIds.FirstOrDefault(id => id.Equals("public.image", StringComparison.OrdinalIgnoreCase))
+                            ?? typeIds[0];
+
+                        var loadTcs = new TaskCompletionSource<string?>();
+                        item.LoadFileRepresentation(preferredType, (url, err) =>
+                        {
+                            if (url != null && !string.IsNullOrEmpty(url.Path) && File.Exists(url.Path))
+                            {
+                                try
+                                {
+                                    string origName = Path.GetFileName(url.Path);
+                                    if (string.IsNullOrWhiteSpace(origName) || origName.StartsWith("tmp", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        origName = item.SuggestedName ?? $"photo_{Guid.NewGuid():N}.raw";
+                                    }
+                                    string destFile = Path.Combine(stagingDir, $"{Guid.NewGuid():N}_{origName}");
+                                    File.Copy(url.Path, destFile, true);
+                                    loadTcs.TrySetResult(destFile);
+                                    return;
+                                }
+                                catch (Exception ex)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"[Fujify iOS] Error copying from LoadFileRepresentation: {ex.Message}");
+                                }
+                            }
+                            loadTcs.TrySetResult(null);
+                        });
+
+                        importedPath = await loadTcs.Task;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(importedPath) && File.Exists(importedPath))
+                {
+                    // Detect file extension if missing or generic .raw
+                    string ext = Path.GetExtension(importedPath);
+                    if (string.IsNullOrEmpty(ext) || ext.Equals(".raw", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string detected = DialogService.DetectRawExtension(importedPath);
+                        if (!string.IsNullOrEmpty(detected) && !detected.Equals(".raw", StringComparison.OrdinalIgnoreCase))
+                        {
+                            string renamed = Path.ChangeExtension(importedPath, detected);
+                            if (File.Exists(renamed)) File.Delete(renamed);
+                            File.Move(importedPath, renamed);
+                            importedPath = renamed;
+                        }
+                    }
+
+                    outputPaths.Add(importedPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Fujify iOS] Error processing item: {ex.Message}");
+            }
+        }
+
+        return outputPaths;
     }
 }

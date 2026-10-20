@@ -60,7 +60,11 @@ namespace Fujify.Views
             // On mobile platforms, if system has not reported safe area yet, provide fallback
             if ((System.OperatingSystem.IsAndroid() || System.OperatingSystem.IsIOS()) && topInset == 0)
             {
-                topInset = 36;
+                topInset = 47;
+            }
+            if ((System.OperatingSystem.IsAndroid() || System.OperatingSystem.IsIOS()) && bottomInset == 0)
+            {
+                bottomInset = 20;
             }
 
             var header = this.FindControl<Border>("HeaderBar");
