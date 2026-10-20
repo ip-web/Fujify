@@ -106,11 +106,22 @@ jobs:
       - name: Restore iOS Project
         run: dotnet restore Fujify.iOS/Fujify.iOS.csproj
 
+      - name: Select Latest Xcode
+        run: |
+          for xc in /Applications/Xcode_16*.app /Applications/Xcode.app; do
+            if [ -d "$xc" ]; then
+              echo "Selecting $xc"
+              sudo xcode-select -s "$xc/Contents/Developer"
+              break
+            fi
+          done
+          xcodebuild -version
+
       - name: Build and Package iOS IPA
         run: |
-          dotnet build Fujify.iOS/Fujify.iOS.csproj -c Release -r ios-arm64 -p:EnableCodeSigning=false -p:CodesignKey="-"
+          dotnet build Fujify.iOS/Fujify.iOS.csproj -c Release -r ios-arm64 -p:EnableCodeSigning=false -p:CodesignKey="-" -p:ValidateXcodeVersion=false -p:_SuppressXcodeRequirementCheck=true
           APP_PATH=$(find Fujify.iOS/bin/Release -name "*.app" -type d | head -n 1)
-          echo "Found app bundle at $APP_PATH"
+          echo "Found app bundle at: $APP_PATH"
           if [ -z "$APP_PATH" ]; then
             echo "Error: No .app bundle found!"
             exit 1
@@ -118,7 +129,7 @@ jobs:
           # Ensure static archives (.a) are removed from the .app bundle to prevent codesign / Sideloadly failures
           find "$APP_PATH" -name "*.a" -delete
           mkdir -p ./publish/Payload
-          cp -R "$APP_PATH" ./publish/Payload/Fujify.app
+          cp -R "$APP_PATH" ./publish/Payload/
           cd ./publish
           zip -r -y Fujify-v2.1.0-iOS.ipa Payload
           cd ..
