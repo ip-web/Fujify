@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <BundleResource Include="Resources\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Fujify\Fujify.csproj" Properties="OutputType=Library" />
   </ItemGroup>
 </Project>

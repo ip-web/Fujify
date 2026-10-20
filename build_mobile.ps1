@@ -115,28 +115,41 @@ if (-not $SkipAndroid) {
     Write-Host "`n[2/4] Skipping Android build (-SkipAndroid specified)." -ForegroundColor DarkGray
 }
 
-# 3. Build iOS App
+# 3. Build iOS App & Package IPA
 if (-not $SkipiOS) {
-    Write-Host "`n[3/4] Building Fujify for iOS ($Configuration)..." -ForegroundColor Yellow
+    Write-Host "`n[3/4] Building Fujify for iOS & Packaging IPA ($Configuration)..." -ForegroundColor Yellow
     $iosProj = Join-Path $repoRoot "Fujify.iOS\Fujify.iOS.csproj"
     
-    $isWindows = [System.OperatingSystem]::IsWindows()
-    if ($isWindows) {
-        Write-Host "Notice: Direct local IPA packaging requires a macOS host or Xcode pairing." -ForegroundColor Yellow
-        Write-Host "Testing iOS compilation & restore with dotnet..." -ForegroundColor Cyan
-        try {
-            & $dotnet build $iosProj -c $Configuration -f net10.0-ios /p:ServerAddress= /p:ServerUser= /p:ContinueOnDisconnected=true -warnAsError:false
-            Write-Host "✔ iOS project code compiled cleanly." -ForegroundColor Green
-        } catch {
-            Write-Host "Notice: iOS build requires macOS environment or Mac build agent: $_" -ForegroundColor Yellow
+    try {
+        & $dotnet build $iosProj -c $Configuration -r ios-arm64
+        Write-Host "[OK] iOS project code compiled cleanly for ios-arm64." -ForegroundColor Green
+
+        # Package IPA payload
+        $ipaStaging = Join-Path $distDir "ipa_staging"
+        if (Test-Path $ipaStaging) { Remove-Item -Recurse -Force $ipaStaging }
+        $appDir = Join-Path $ipaStaging "Payload\Fujify.app"
+        New-Item -ItemType Directory -Force -Path $appDir | Out-Null
+
+        $srcBin = Join-Path $repoRoot "Fujify.iOS\bin\$Configuration\net10.0-ios\ios-arm64"
+        Copy-Item -Path "$srcBin\*" -Destination $appDir -Recurse -Force
+
+        # Ensure Info.plist & AppIcon are included
+        Copy-Item -Path (Join-Path $repoRoot "Fujify.iOS\Info.plist") -Destination (Join-Path $appDir "Info.plist") -Force
+        $iconSrc = Join-Path $repoRoot "Fujify.iOS\Resources\AppIcon.png"
+        if (Test-Path $iconSrc) {
+            Copy-Item -Path $iconSrc -Destination (Join-Path $appDir "AppIcon.png") -Force
         }
-    } else {
-        try {
-            & $dotnet build $iosProj -c $Configuration
-            Write-Host "✔ iOS project built successfully." -ForegroundColor Green
-        } catch {
-            Write-Host "iOS build failed: $_" -ForegroundColor Red
-        }
+
+        $targetIpa = Join-Path $releaseDir "Fujify-v2.1.0-iOS.ipa"
+        if (Test-Path $targetIpa) { Remove-Item -Force $targetIpa }
+
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        [System.IO.Compression.ZipFile]::CreateFromDirectory($ipaStaging, $targetIpa, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+        
+        $ipaSizeMb = [math]::Round((Get-Item $targetIpa).Length / 1MB, 2)
+        Write-Host "[OK] IPA package created: $targetIpa ($ipaSizeMb MB)" -ForegroundColor Green
+    } catch {
+        Write-Host "iOS build/packaging error: $_" -ForegroundColor Red
     }
 } else {
     Write-Host "`n[3/4] Skipping iOS build (-SkipiOS specified)." -ForegroundColor DarkGray
