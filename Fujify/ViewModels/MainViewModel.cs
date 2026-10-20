@@ -139,6 +139,12 @@ namespace Fujify.ViewModels
 
             CloseModalCommand = new RelayCommand(CloseModal);
 
+            OpenInLightroomCommand = new RelayCommand(() =>
+            {
+                CloseModal();
+                OpenInLightroom(_recentlyConvertedDngFiles);
+            });
+
             ResolveConflictCommand = new RelayCommand<string>(choiceStr =>
             {
                 if (Enum.TryParse<ConflictChoice>(choiceStr, true, out var choice))
@@ -146,10 +152,24 @@ namespace Fujify.ViewModels
                     ResolveConflict(choice, ConflictApplyToAll);
                 }
             });
+
+            if (PendingInitialFiles.Count > 0)
+            {
+                var pending = PendingInitialFiles.ToList();
+                PendingInitialFiles.Clear();
+                Dispatcher.UIThread.Post(async () => await AddFilesAsync(pending));
+            }
         }
 
         public static MainViewModel? Instance { get; set; }
+        public static readonly List<string> PendingInitialFiles = new();
         public static Action<string>? PlatformFileCreatedCallback { get; set; }
+        public static Action<IReadOnlyList<string>>? PlatformOpenInLightroomCallback { get; set; }
+
+        private readonly List<string> _recentlyConvertedDngFiles = new();
+        public IReadOnlyList<string> RecentlyConvertedDngFiles => _recentlyConvertedDngFiles;
+        public bool HasRecentlyConvertedFiles => _recentlyConvertedDngFiles.Count > 0;
+        public bool CanOpenInLightroom => HasRecentlyConvertedFiles && ModalTitle == "Processing completed";
 
         #region Properties
 
@@ -158,6 +178,7 @@ namespace Fujify.ViewModels
         public ICommand OpenCameraPickerCommand { get; }
         public ICommand SelectCameraModelCommand { get; }
         public ICommand CloseModalCommand { get; }
+        public ICommand OpenInLightroomCommand { get; }
         public ICommand ResolveConflictCommand { get; }
 
         private FileItem? _selectedFile;
@@ -320,6 +341,7 @@ namespace Fujify.ViewModels
                 ModalTitle = title;
                 ModalMessage = message;
                 ModalType = "Message";
+                OnPropertyChanged(nameof(CanOpenInLightroom));
                 IsModalOpen = true;
             });
         }
@@ -379,6 +401,39 @@ namespace Fujify.ViewModels
             ModalType = "None";
             _conflictTcs?.TrySetResult(new FileConflictResolution(ConflictChoice.Skip, false));
             _conflictTcs = null;
+            OnPropertyChanged(nameof(CanOpenInLightroom));
+        }
+
+        public void ImportSharedFiles(IEnumerable<string> filePaths)
+        {
+            Dispatcher.UIThread.Post(async () => await AddFilesAsync(filePaths));
+        }
+
+        public void OpenInLightroom(IReadOnlyList<string>? files = null)
+        {
+            var targetFiles = files ?? _recentlyConvertedDngFiles;
+            if (targetFiles == null || targetFiles.Count == 0) return;
+
+            if (PlatformOpenInLightroomCallback != null)
+            {
+                PlatformOpenInLightroomCallback(targetFiles);
+            }
+            else
+            {
+                // Fallback for desktop: open with default system viewer or Lightroom
+                foreach (var file in targetFiles)
+                {
+                    try
+                    {
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = file,
+                            UseShellExecute = true
+                        });
+                    }
+                    catch { }
+                }
+            }
         }
 
         public string? OutputFolderPath
@@ -633,6 +688,12 @@ namespace Fujify.ViewModels
             IsProgressVisible = true;
             IsProcessing = true;
             ProcessButtonContent = "Stop";
+            lock (_recentlyConvertedDngFiles)
+            {
+                _recentlyConvertedDngFiles.Clear();
+            }
+            OnPropertyChanged(nameof(HasRecentlyConvertedFiles));
+            OnPropertyChanged(nameof(CanOpenInLightroom));
 
             bool createBackup = CreateBackup;
             string? currentOutputFolder = OutputFolderPath;
@@ -731,6 +792,17 @@ namespace Fujify.ViewModels
                 string message = hasProcessingErrors
                     ? "Processing completed with some errors. Please check the status for details."
                     : "Enjoy your new Film simulations!";
+
+                List<string> convertedToOpen;
+                lock (_recentlyConvertedDngFiles)
+                {
+                    convertedToOpen = _recentlyConvertedDngFiles.ToList();
+                }
+
+                if (_settingsService.Settings.AutoOpenInLightroom && convertedToOpen.Count > 0)
+                {
+                    OpenInLightroom(convertedToOpen);
+                }
 
                 await _dialogService.ShowMessageAsync(OwnerWindow, "Processing completed", message);
             }
@@ -894,6 +966,10 @@ namespace Fujify.ViewModels
             if (metaResult.Success)
             {
                 UpdateFileStatus(filePath, "✔");
+                lock (_recentlyConvertedDngFiles)
+                {
+                    _recentlyConvertedDngFiles.Add(finalDestFilePath);
+                }
                 PlatformFileCreatedCallback?.Invoke(finalDestFilePath);
             }
             else

@@ -32,6 +32,7 @@ namespace Fujify.ViewModels
         private bool _embedOriginalRaw;
         private bool _skipThumbnailGeneration;
         private int _maxConcurrentConversions;
+        private bool _autoOpenInLightroom;
 
         public int TotalThreads => Environment.ProcessorCount;
         public int DefaultConcurrency => Math.Max(1, TotalThreads / 2);
@@ -46,6 +47,12 @@ namespace Fujify.ViewModels
                     App.ApplyTheme(value);
                 }
             }
+        }
+
+        public bool AutoOpenInLightroom
+        {
+            get => _autoOpenInLightroom;
+            set => SetProperty(ref _autoOpenInLightroom, value);
         }
 
         public bool EmbedOriginalRaw
@@ -99,6 +106,7 @@ namespace Fujify.ViewModels
             _isDarkTheme = settings.IsDarkTheme;
             _embedOriginalRaw = settings.EmbedOriginalRaw;
             _skipThumbnailGeneration = settings.SkipThumbnailGeneration;
+            _autoOpenInLightroom = settings.AutoOpenInLightroom;
 
             int saved = settings.MaxConcurrentConversions;
             if (saved <= 0 || saved > TotalThreads) saved = DefaultConcurrency;
@@ -119,6 +127,7 @@ namespace Fujify.ViewModels
             s.EmbedOriginalRaw = _embedOriginalRaw;
             s.SkipThumbnailGeneration = _skipThumbnailGeneration;
             s.MaxConcurrentConversions = _maxConcurrentConversions;
+            s.AutoOpenInLightroom = _autoOpenInLightroom;
             _settingsService.Save();
             App.ApplyTheme(_isDarkTheme);
 

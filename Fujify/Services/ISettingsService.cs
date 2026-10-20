@@ -28,6 +28,7 @@ namespace Fujify.Services
         public bool EmbedOriginalRaw { get; set; } = false;
         public int MaxConcurrentConversions { get; set; } = 0;
         public bool SkipThumbnailGeneration { get; set; } = false;
+        public bool AutoOpenInLightroom { get; set; } = false;
     }
 
     public interface ISettingsService
