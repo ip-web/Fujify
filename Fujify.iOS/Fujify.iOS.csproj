@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework Condition="'$(TargetFramework)' == ''">net10.0-ios</TargetFramework>
+    <TargetFramework>net10.0-ios</TargetFramework>
     <SupportedOSPlatformVersion>15.0</SupportedOSPlatformVersion>
     <ApplicationTitle>Fujify</ApplicationTitle>
     <ApplicationId>com.ipweb.fujify</ApplicationId>
@@ -13,7 +13,6 @@
     <CodesignKey>-</CodesignKey>
     <ValidateXcodeVersion>false</ValidateXcodeVersion>
     <_SuppressXcodeRequirementCheck>true</_SuppressXcodeRequirementCheck>
-    <MtouchLink>None</MtouchLink>
   </PropertyGroup>
 
   <ItemGroup>
