@@ -90,7 +90,7 @@ jobs:
   # -------------------------------------------------------------
   build-ios:
     name: Build iOS App & IPA (iPhone & iPad)
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -119,7 +119,7 @@ jobs:
 
       - name: Build and Package iOS IPA
         run: |
-          dotnet build Fujify.iOS/Fujify.iOS.csproj -c Release -r ios-arm64 -p:EnableCodeSigning=false -p:CodesignKey="-" -p:ValidateXcodeVersion=false -p:_SuppressXcodeRequirementCheck=true
+          dotnet build Fujify.iOS/Fujify.iOS.csproj -c Release -r ios-arm64 -p:EnableCodeSigning=false -p:CodesignKey="-" -p:ValidateXcodeVersion=false -p:_SuppressXcodeRequirementCheck=true -p:PublishTrimmed=false -p:MtouchLink=None
           APP_PATH=$(find Fujify.iOS/bin/Release -name "*.app" -type d | head -n 1)
           echo "Found app bundle at: $APP_PATH"
           if [ -z "$APP_PATH" ]; then
