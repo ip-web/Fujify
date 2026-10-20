@@ -13,6 +13,8 @@
     <CodesignKey>-</CodesignKey>
     <ValidateXcodeVersion>false</ValidateXcodeVersion>
     <_SuppressXcodeRequirementCheck>true</_SuppressXcodeRequirementCheck>
+    <PublishTrimmed>false</PublishTrimmed>
+    <MtouchLink>None</MtouchLink>
   </PropertyGroup>
 
   <ItemGroup>
