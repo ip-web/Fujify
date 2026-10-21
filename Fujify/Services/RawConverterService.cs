@@ -34,7 +34,7 @@ namespace Fujify.Services
             _processRunner = processRunner ?? new ProcessRunner();
         }
 
-        public ConversionResult ConvertToDng(string filePath, bool embedOriginalRaw, string? targetDngPath = null)
+        public ConversionResult ConvertToDng(string filePath, bool embedOriginalRaw, string? targetDngPath = null, bool losslessCompression = true)
         {
             string dngFilePath = !string.IsNullOrEmpty(targetDngPath) ? targetDngPath : Path.ChangeExtension(filePath, ".dng");
 
@@ -74,6 +74,7 @@ namespace Fujify.Services
                 {
                     arguments += " --embed-raw false";
                 }
+                arguments += losslessCompression ? " --compression lossless" : " --compression uncompressed";
                 arguments += $" \"{filePath}\" \"{dngFilePath}\"";
 
                 var (exitCode, output, error) = _processRunner.Run(dngLabPath, arguments);
@@ -92,7 +93,7 @@ namespace Fujify.Services
             }
         }
 
-        public async Task<ConversionResult> ConvertToDngAsync(string filePath, bool embedOriginalRaw, string? targetDngPath = null, CancellationToken cancellationToken = default)
+        public async Task<ConversionResult> ConvertToDngAsync(string filePath, bool embedOriginalRaw, string? targetDngPath = null, bool losslessCompression = true, CancellationToken cancellationToken = default)
         {
             string dngFilePath = !string.IsNullOrEmpty(targetDngPath) ? targetDngPath : Path.ChangeExtension(filePath, ".dng");
 
@@ -131,6 +132,7 @@ namespace Fujify.Services
                 {
                     arguments += " --embed-raw false";
                 }
+                arguments += losslessCompression ? " --compression lossless" : " --compression uncompressed";
                 arguments += $" \"{filePath}\" \"{dngFilePath}\"";
 
                 var (exitCode, output, error) = await _processRunner.RunAsync(dngLabPath, arguments, cancellationToken);

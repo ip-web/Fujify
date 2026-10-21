@@ -8,6 +8,11 @@ namespace Fujify.Views
         public AboutWindow()
         {
             InitializeComponent();
+            if (!App.SupportsMica)
+            {
+                TransparencyLevelHint = new[] { WindowTransparencyLevel.None };
+                Background = null;
+            }
         }
 
         private void Close_Click(object? sender, RoutedEventArgs e)

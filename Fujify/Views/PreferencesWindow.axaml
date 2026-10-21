@@ -4,75 +4,163 @@
         x:Class="Fujify.Views.PreferencesWindow"
         x:DataType="vm:PreferencesViewModel"
         Title="Preferences"
-        Width="500" Height="420"
+        Width="520" Height="650"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
+        TransparencyLevelHint="Mica, AcrylicBlur"
+        Background="Transparent"
         Icon="/Assets/images/logo.ico">
 
-    <Grid Margin="24" RowDefinitions="Auto,*,Auto">
-        <!-- Header -->
-        <TextBlock Grid.Row="0" Text="Preferences" FontWeight="Bold" FontSize="18" Margin="0,0,0,20"/>
+    <Grid Background="{DynamicResource AppBackgroundBrush}">
+        <Grid Margin="24" RowDefinitions="Auto,*,Auto">
+            <!-- Header -->
+            <TextBlock Grid.Row="0" Text="Preferences" FontWeight="Bold" FontSize="18"
+                       Foreground="{DynamicResource AppTextPrimaryBrush}" Margin="0,0,0,16"/>
 
-        <!-- Settings Options -->
-        <ScrollViewer Grid.Row="1">
-            <StackPanel Spacing="20">
-                <!-- Concurrency Slider -->
-                <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}" 
-                        CornerRadius="6" Padding="14" BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="1">
-                    <StackPanel Spacing="8">
-                        <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Grid.Column="0" Text="Concurrent Conversions" FontWeight="SemiBold" FontSize="14"/>
-                            <TextBlock Grid.Column="1" Text="{Binding MaxConcurrentConversions}" FontWeight="Bold" FontSize="14"/>
-                        </Grid>
-                        <Slider Minimum="1" Maximum="{Binding TotalThreads}" Value="{Binding MaxConcurrentConversions}" 
-                                IsSnapToTickEnabled="True" TickFrequency="1"/>
-                        <TextBlock Text="{Binding ConcurrencyHint}" FontSize="12" 
-                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+            <!-- Settings Options Grouped by Category -->
+            <ScrollViewer Grid.Row="1">
+                <StackPanel Spacing="18">
+
+                    <!-- 1. THEME -->
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="THEME" FontWeight="Bold" FontSize="11"
+                                   Foreground="{DynamicResource AppTextSecondaryBrush}" LetterSpacing="1" Margin="2,0"/>
+                        <Border Background="{DynamicResource AppSurfaceBrush}" 
+                                CornerRadius="14" Padding="16" BorderThickness="0">
+                            <StackPanel Spacing="10">
+                                <TextBlock Text="Appearance Mode" FontWeight="SemiBold" FontSize="13"
+                                           Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                <Grid ColumnDefinitions="*,*,*,*" Margin="0,2,0,2">
+                                    <RadioButton Grid.Column="0" Content="Automatic" IsChecked="{Binding IsAutoThemeSelected, Mode=TwoWay}" GroupName="DesktopTheme"/>
+                                    <RadioButton Grid.Column="1" Content="Dark" IsChecked="{Binding IsDarkThemeSelected, Mode=TwoWay}" GroupName="DesktopTheme"/>
+                                    <RadioButton Grid.Column="2" Content="AMOLED" IsChecked="{Binding IsAmoledThemeSelected, Mode=TwoWay}" GroupName="DesktopTheme"/>
+                                    <RadioButton Grid.Column="3" Content="Light" IsChecked="{Binding IsLightThemeSelected, Mode=TwoWay}" GroupName="DesktopTheme"/>
+                                </Grid>
+                                <TextBlock Text="Automatic adapts to system dark/light mode. Dark features refined slate tones. AMOLED provides true pitch-black contrast."
+                                           FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
-                </Border>
 
-                <!-- Checkboxes & Options -->
-                <Border Background="{DynamicResource SystemControlBackgroundAltHighBrush}" 
-                        CornerRadius="6" Padding="14" BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="1">
-                    <StackPanel Spacing="12">
-                        <!-- Custom File Suffix -->
-                        <ToggleSwitch IsChecked="{Binding AppendSuffix}" 
-                                      OnContent="Add suffix to converted file name" 
-                                      OffContent="Add suffix to converted file name"/>
+                    <!-- 2. PERFORMANCE -->
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="PERFORMANCE" FontWeight="Bold" FontSize="11"
+                                   Foreground="{DynamicResource AppTextSecondaryBrush}" LetterSpacing="1" Margin="2,0"/>
+                        <Border Background="{DynamicResource AppSurfaceBrush}" 
+                                CornerRadius="14" Padding="16" BorderThickness="0">
+                            <StackPanel Spacing="12">
+                                <!-- Concurrency Slider -->
+                                <StackPanel Spacing="8">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="Concurrent Conversions" FontWeight="SemiBold" FontSize="13"
+                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding MaxConcurrentConversions}" FontWeight="Bold" FontSize="14"
+                                                   Foreground="{DynamicResource AppAccentBrush}"/>
+                                    </Grid>
+                                    <Slider Minimum="1" Maximum="{Binding TotalThreads}" Value="{Binding MaxConcurrentConversions}" 
+                                            IsSnapToTickEnabled="True" TickFrequency="1"/>
+                                    <TextBlock Text="{Binding ConcurrencyHint}" FontSize="11" 
+                                               Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                </StackPanel>
 
-                        <Grid ColumnDefinitions="Auto,*" Margin="0,2,0,4" IsVisible="{Binding AppendSuffix}">
-                            <TextBlock Grid.Column="0" Text="Suffix:" VerticalAlignment="Center" FontSize="12" Margin="0,0,10,0"/>
-                            <TextBox Grid.Column="1" Text="{Binding Suffix}"
-                                     Watermark="-fujified" FontSize="12" Height="32" CornerRadius="6" VerticalContentAlignment="Center"/>
-                        </Grid>
-                        <TextBlock Text="Example: DSC0001.ARW → DSC0001-fujified.dng" FontSize="11"
-                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                                   IsVisible="{Binding AppendSuffix}" Margin="0,-4,0,4"/>
+                                <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
 
-                        <ToggleSwitch IsChecked="{Binding SkipThumbnailGeneration}" 
-                                      OnContent="Skip thumbnail generation (faster import)" 
-                                      OffContent="Skip thumbnail generation (faster import)"/>
-                        
-                        <ToggleSwitch IsChecked="{Binding EmbedOriginalRaw}" 
-                                      OnContent="Embed original RAW inside DNG" 
-                                      OffContent="Embed original RAW inside DNG"/>
-                        
-                        <ToggleSwitch IsChecked="{Binding AutoOpenInLightroom}" 
-                                      OnContent="Auto-open converted photos in Lightroom" 
-                                      OffContent="Auto-open converted photos in Lightroom"/>
-
-                        <ToggleSwitch IsChecked="{Binding IsDarkTheme}" 
-                                      OnContent="Dark Theme" 
-                                      OffContent="Dark Theme"/>
+                                <!-- Skip Thumbnails Toggle -->
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="Skip Thumbnail Generation" FontWeight="SemiBold" FontSize="13"
+                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        <TextBlock Text="Speeds up batch photo queue loading significantly" FontSize="11"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding SkipThumbnailGeneration}" OnContent="" OffContent=""/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
-                </Border>
+
+                    <!-- 3. FILE HANDLING -->
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="FILE HANDLING" FontWeight="Bold" FontSize="11"
+                                   Foreground="{DynamicResource AppTextSecondaryBrush}" LetterSpacing="1" Margin="2,0"/>
+                        <Border Background="{DynamicResource AppSurfaceBrush}" 
+                                CornerRadius="14" Padding="16" BorderThickness="0">
+                            <StackPanel Spacing="12">
+                                <!-- Custom File Suffix -->
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="Add Suffix to Converted File Name" FontWeight="SemiBold" FontSize="13"
+                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        <TextBlock Text="Appends custom text identifier before .dng extension" FontSize="11"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding AppendSuffix}" OnContent="" OffContent=""/>
+                                </Grid>
+
+                                <Grid ColumnDefinitions="Auto,*" Margin="0,2,0,0" IsVisible="{Binding AppendSuffix}">
+                                    <TextBlock Grid.Column="0" Text="Suffix:" VerticalAlignment="Center" FontSize="12" Margin="0,0,10,0"
+                                               Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    <TextBox Grid.Column="1" Text="{Binding Suffix}"
+                                             Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                             Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                             BorderThickness="0" Watermark="-fujified" FontSize="12" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                </Grid>
+                                <TextBlock Text="Example: DSC0001.ARW → DSC0001-fujified.dng" FontSize="11"
+                                           Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                           IsVisible="{Binding AppendSuffix}" Margin="0,-4,0,2"/>
+
+                                <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
+
+                                <!-- Lossless Compression -->
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="Lossless DNG Compression" FontWeight="SemiBold" FontSize="13"
+                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        <TextBlock Text="Reduces DNG file size with zero image quality loss" FontSize="11"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding LosslessCompression}" OnContent="" OffContent=""/>
+                                </Grid>
+
+                                <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
+
+                                <!-- Embed RAW -->
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="Embed Original RAW inside DNG" FontWeight="SemiBold" FontSize="13"
+                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        <TextBlock Text="Preserves original unmodified camera sensor file inside DNG" FontSize="11"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding EmbedOriginalRaw}" OnContent="" OffContent=""/>
+                                </Grid>
+
+                                <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
+
+                                <!-- Auto-open in Lightroom -->
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="Auto-Open Converted Photos in Lightroom" FontWeight="SemiBold" FontSize="13"
+                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        <TextBlock Text="Automatically launches Lightroom with processed DNGs" FontSize="11"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenInLightroom}" OnContent="" OffContent=""/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Footer Buttons -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,16,0,0">
+                <Button Content="Cancel" Command="{Binding CancelCommand}" Width="90" Height="36" CornerRadius="10"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                <Button Content="Save" Command="{Binding SaveCommand}" Classes="accent" Width="90" Height="36" CornerRadius="10"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
             </StackPanel>
-        </ScrollViewer>
-
-        <!-- Footer Buttons -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,16,0,0">
-            <Button Content="Cancel" Command="{Binding CancelCommand}" Width="85" HorizontalContentAlignment="Center"/>
-            <Button Content="Save" Command="{Binding SaveCommand}" Classes="accent" Width="85" HorizontalContentAlignment="Center"/>
-        </StackPanel>
+        </Grid>
     </Grid>
 </Window>

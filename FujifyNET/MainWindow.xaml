@@ -731,16 +731,27 @@
                     </Grid>
                     <!-- Buttons and ToggleButton -->
                     <Grid Grid.Row="3" VerticalAlignment="Bottom">
-                        <StackPanel Orientation="Horizontal" HorizontalAlignment="left" Margin="10,0,0,0" Width="Auto" Grid.Row="3">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="left" Margin="10,0,0,0" Width="Auto">
                             <ToggleButton x:Name="customArgumentToggle" 
                                           IsChecked="{Binding CreateBackup, Mode=TwoWay}" 
                                           HorizontalAlignment="Left"   
                                           VerticalAlignment="center" 
                                           Style="{StaticResource MaterialDesignSwitchToggleButton}"/>
                             <Label Content="Backup original files" 
-                                   Margin="10,0,0,0" 
+                                   Margin="6,0,14,0" 
                                    HorizontalAlignment="Left" 
                                    VerticalAlignment="Center" />
+
+                            <ToggleButton x:Name="appendSuffixToggle" 
+                                          IsChecked="{Binding AppendSuffix, Mode=TwoWay}" 
+                                          HorizontalAlignment="Left"   
+                                          VerticalAlignment="center" 
+                                          Style="{StaticResource MaterialDesignSwitchToggleButton}"/>
+                            <Label Content="{Binding SuffixLabelContent, Mode=OneWay}" 
+                                   Margin="6,0,0,0" 
+                                   HorizontalAlignment="Left" 
+                                   VerticalAlignment="Center" 
+                                   ToolTip="Appends suffix to converted file names (configurable in Preferences)"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="10,0" >
                             <Button x:Name="processButton" 

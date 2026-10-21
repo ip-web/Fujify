@@ -5,9 +5,11 @@
         x:Class="Fujify.Views.MainWindow"
         x:DataType="vm:MainViewModel"
         Title="Fujify - Fujifilm Film Simulation Engine"
-        Width="920" Height="700"
+        Width="1180" Height="800"
         MinWidth="380" MinHeight="420"
         WindowStartupLocation="CenterScreen"
+        TransparencyLevelHint="Mica, AcrylicBlur"
+        Background="Transparent"
         Icon="/Assets/images/logo.ico">
 
     <views:MainView />

@@ -505,7 +505,13 @@ namespace FujifyNET
 
         private void PreferencesMenuItem_Click(object sender, RoutedEventArgs e)
         {
-            _dialogService.ShowPreferencesDialog(this);
+            if (_dialogService.ShowPreferencesDialog(this) == true)
+            {
+                if (DataContext is ViewModels.MainViewModel vm)
+                {
+                    vm.RefreshSettings();
+                }
+            }
         }
 
         private void AboutMenuItem_Click(object sender, RoutedEventArgs e)

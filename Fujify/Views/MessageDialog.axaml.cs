@@ -8,6 +8,11 @@ namespace Fujify.Views
         public MessageDialog()
         {
             InitializeComponent();
+            if (!App.SupportsMica)
+            {
+                TransparencyLevelHint = new[] { WindowTransparencyLevel.None };
+                Background = null;
+            }
         }
 
         public MessageDialog(string title, string message) : this()

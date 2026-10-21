@@ -5,8 +5,11 @@
             "name": ".NET Core Debugger (launch)",
             "type": "coreclr",
             "request": "launch",
-            "program": "${workspaceFolder}/FujifyNET/bin/Debug/net8.0-windows/FujifyNET.exe",
-            "cwd": "${workspaceFolder}/FujifyNET",
+            "program": "${workspaceFolder}/Fujify/bin/Debug/net10.0/win-x64/Fujify.exe",
+            "cwd": "${workspaceFolder}/Fujify",
+            "env": {
+                "DOTNET_ROOT": "C:\\Program Files\\dotnet"
+            },
             "preLaunchTask": "dotrush: Build",
             "stopAtEntry": false,
             "console": "internalConsole"

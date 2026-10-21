@@ -58,9 +58,15 @@ namespace Fujify.Models
                 {
                     _status = value;
                     OnPropertyChanged(nameof(Status));
+                    OnPropertyChanged(nameof(StatusIcon));
+                    OnPropertyChanged(nameof(IsCompleted));
+                    OnPropertyChanged(nameof(IsError));
+                    OnPropertyChanged(nameof(IsActive));
                 }
             }
         }
+
+        public string StatusIcon => IsCompleted ? "✓" : (IsError ? "✕" : (IsActive ? "⚡" : "⏳"));
 
         public Bitmap? Thumbnail
         {
@@ -88,21 +94,157 @@ namespace Fujify.Models
             }
         }
 
+        private string? _lens;
+        public string? Lens
+        {
+            get => _lens;
+            set
+            {
+                if (_lens != value)
+                {
+                    _lens = value;
+                    OnPropertyChanged(nameof(Lens));
+                    OnPropertyChanged(nameof(HasLens));
+                }
+            }
+        }
+        public bool HasLens => !string.IsNullOrWhiteSpace(_lens);
+
+        private string? _aperture;
+        public string? Aperture
+        {
+            get => _aperture;
+            set
+            {
+                if (_aperture != value)
+                {
+                    _aperture = value;
+                    OnPropertyChanged(nameof(Aperture));
+                    OnPropertyChanged(nameof(FormattedExposure));
+                }
+            }
+        }
+
+        private string? _shutterSpeed;
+        public string? ShutterSpeed
+        {
+            get => _shutterSpeed;
+            set
+            {
+                if (_shutterSpeed != value)
+                {
+                    _shutterSpeed = value;
+                    OnPropertyChanged(nameof(ShutterSpeed));
+                    OnPropertyChanged(nameof(FormattedExposure));
+                }
+            }
+        }
+
+        private string? _iso;
+        public string? Iso
+        {
+            get => _iso;
+            set
+            {
+                if (_iso != value)
+                {
+                    _iso = value;
+                    OnPropertyChanged(nameof(Iso));
+                    OnPropertyChanged(nameof(FormattedExposure));
+                }
+            }
+        }
+
+        private string? _focalLength;
+        public string? FocalLength
+        {
+            get => _focalLength;
+            set
+            {
+                if (_focalLength != value)
+                {
+                    _focalLength = value;
+                    OnPropertyChanged(nameof(FocalLength));
+                    OnPropertyChanged(nameof(FormattedExposure));
+                }
+            }
+        }
+
+        private string? _dateTimeOriginal;
+        public string? DateTimeOriginal
+        {
+            get => _dateTimeOriginal;
+            set
+            {
+                if (_dateTimeOriginal != value)
+                {
+                    _dateTimeOriginal = value;
+                    OnPropertyChanged(nameof(DateTimeOriginal));
+                }
+            }
+        }
+
+        private string? _orientation;
+        public string? Orientation
+        {
+            get => _orientation;
+            set
+            {
+                if (_orientation != value)
+                {
+                    _orientation = value;
+                    OnPropertyChanged(nameof(Orientation));
+                    OnPropertyChanged(nameof(HasOrientation));
+                }
+            }
+        }
+        public bool HasOrientation => !string.IsNullOrWhiteSpace(_orientation);
+
+        public bool HasExifLoaded { get; set; }
+
+        public string FormattedExposure
+        {
+            get
+            {
+                var parts = new System.Collections.Generic.List<string>();
+                if (!string.IsNullOrWhiteSpace(Aperture)) parts.Add(Aperture.StartsWith("ƒ") || Aperture.StartsWith("f/") ? Aperture : $"ƒ/{Aperture}");
+                if (!string.IsNullOrWhiteSpace(ShutterSpeed)) parts.Add(ShutterSpeed.EndsWith("s") ? ShutterSpeed : $"{ShutterSpeed}s");
+                if (!string.IsNullOrWhiteSpace(Iso)) parts.Add(Iso.StartsWith("ISO", System.StringComparison.OrdinalIgnoreCase) ? Iso : $"ISO {Iso}");
+                if (!string.IsNullOrWhiteSpace(FocalLength)) parts.Add(FocalLength);
+                return parts.Count > 0 ? string.Join("  •  ", parts) : "";
+            }
+        }
+
+        public bool HasExposureInfo => !string.IsNullOrEmpty(FormattedExposure);
+
+        private long _fileSizeBytes = -1;
+        public long FileSizeBytes
+        {
+            get
+            {
+                if (_fileSizeBytes < 0)
+                {
+                    try
+                    {
+                        if (File.Exists(_filePath))
+                        {
+                            _fileSizeBytes = new FileInfo(_filePath).Length;
+                        }
+                    }
+                    catch { _fileSizeBytes = 0; }
+                }
+                return _fileSizeBytes;
+            }
+        }
+
         public string FormattedFileSize
         {
             get
             {
-                try
-                {
-                    if (File.Exists(_filePath))
-                    {
-                        long bytes = new FileInfo(_filePath).Length;
-                        if (bytes > 1024 * 1024) return $"{bytes / (1024.0 * 1024.0):F1} MB";
-                        if (bytes > 1024) return $"{bytes / 1024.0:F1} KB";
-                        return $"{bytes} B";
-                    }
-                }
-                catch { }
+                long bytes = FileSizeBytes;
+                if (bytes > 1024 * 1024) return $"{bytes / (1024.0 * 1024.0):F1} MB";
+                if (bytes > 1024) return $"{bytes / 1024.0:F1} KB";
+                if (bytes > 0) return $"{bytes} B";
                 return "";
             }
         }

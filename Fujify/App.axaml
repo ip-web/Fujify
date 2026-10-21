@@ -9,8 +9,161 @@
         <local:ViewLocator />
     </Application.DataTemplates>
 
+    <Application.Resources>
+        <!-- Semantic App Theme Brushes (Dark by default, AMOLED pitch black or Light dynamically) -->
+        <SolidColorBrush x:Key="AppBackgroundBrush" Color="#FF202227"/>
+        <SolidColorBrush x:Key="AppSolidBackgroundBrush" Color="#FF202227"/>
+        <SolidColorBrush x:Key="AppSurfaceBrush" Color="#FF2B2D35"/>
+        <SolidColorBrush x:Key="AppSurfaceSecondaryBrush" Color="#FF363842"/>
+        <SolidColorBrush x:Key="AppHeaderBrush" Color="#FF202227"/>
+        <SolidColorBrush x:Key="AppSolidHeaderBrush" Color="#FF202227"/>
+        <SolidColorBrush x:Key="AppFooterBrush" Color="#FF202227"/>
+        <SolidColorBrush x:Key="AppTextPrimaryBrush" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="AppTextSecondaryBrush" Color="#A0A0AC"/>
+        <SolidColorBrush x:Key="AppGlassPillBrush" Color="#1AFFFFFF"/>
+        <SolidColorBrush x:Key="AppAccentBrush" Color="#01D701"/>
+        <x:Double x:Key="DataGridSortIconMinWidth">0</x:Double>
+    </Application.Resources>
+
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+
+        <!-- Seamless DataGrid Header & Queue Styling -->
+        <Style Selector="DataGrid">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource AppSurfaceSecondaryBrush}"/>
+        </Style>
+        <Style Selector="DataGrid /template/ Rectangle#PART_ColumnHeadersAndRowsSeparator">
+            <Setter Property="IsVisible" Value="False"/>
+            <Setter Property="Height" Value="0"/>
+            <Setter Property="Fill" Value="Transparent"/>
+        </Style>
+
+        <Style Selector="DataGridColumnHeader">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextSecondaryBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Padding" Value="4,6"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="AreSeparatorsVisible" Value="False"/>
+            <Setter Property="SeparatorBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="DataGridColumnHeadersPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="DataGridColumnHeader /template/ Border#HeaderBorder">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="DataGridColumnHeader /template/ Grid#PART_ColumnHeaderRoot">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="DataGridColumnHeader /template/ Rectangle#VerticalSeparator">
+            <Setter Property="IsVisible" Value="False"/>
+            <Setter Property="Width" Value="0"/>
+            <Setter Property="Fill" Value="Transparent"/>
+        </Style>
+        <Style Selector="DataGridColumnHeader /template/ Rectangle#PART_Separator">
+            <Setter Property="IsVisible" Value="False"/>
+            <Setter Property="Width" Value="0"/>
+        </Style>
+        <Style Selector="DataGridColumnHeader:pointerover /template/ Grid#PART_ColumnHeaderRoot">
+            <Setter Property="Background" Value="{DynamicResource AppGlassPillBrush}"/>
+        </Style>
+
+        <Style Selector="DataGridCell">
+            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="DataGridRow">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+        <Style Selector="DataGridRow:pointerover">
+            <Setter Property="Background" Value="{DynamicResource AppGlassPillBrush}"/>
+        </Style>
+        <Style Selector="DataGridRow:selected">
+            <Setter Property="Background" Value="{DynamicResource AppSurfaceSecondaryBrush}"/>
+        </Style>
+
+        <!-- View Mode Toggle Buttons (List vs Grid) -->
+        <Style Selector="Button.view-toggle">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextSecondaryBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+        <Style Selector="Button.view-toggle.active">
+            <Setter Property="Background" Value="{DynamicResource AppGlassPillBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextPrimaryBrush}"/>
+        </Style>
+
+        <!-- Micro-interactions & Smooth Transitions -->
+        <Style Selector="Button">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button:pointerover">
+            <Setter Property="Opacity" Value="0.88"/>
+        </Style>
+        <Style Selector="Button:pressed">
+            <Setter Property="RenderTransform" Value="scale(0.97)"/>
+            <Setter Property="Opacity" Value="0.75"/>
+        </Style>
+
+        <!-- Modern Borderless Accent Button -->
+        <Style Selector="Button.accent">
+            <Setter Property="Background" Value="{DynamicResource AppAccentBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <!-- Modern Borderless Card Style -->
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="14"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.chip">
+            <Setter Property="Background" Value="{DynamicResource AppSurfaceSecondaryBrush}"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,6"/>
+        </Style>
+
+        <!-- Dynamic Accent Theme Integration -->
+        <Style Selector="ProgressBar">
+            <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}"/>
+        </Style>
+
+        <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
+            <Setter Property="Background" Value="{DynamicResource AppAccentBrush}"/>
+        </Style>
+
+        <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
+            <Setter Property="Background" Value="{DynamicResource AppAccentBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppAccentBrush}"/>
+        </Style>
+
+        <Style Selector="RadioButton:checked /template/ Ellipse#CheckGlyph">
+            <Setter Property="Fill" Value="{DynamicResource AppAccentBrush}"/>
+        </Style>
     </Application.Styles>
 </Application>

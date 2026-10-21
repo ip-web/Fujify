@@ -16,7 +16,7 @@ Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host " Building Fujify for Linux (x64)..." -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 
-& $dotnet publish "$repoRoot\Fujify\Fujify.csproj" -c Release -r linux-x64 --self-contained true -o "$publishDir\linux-x64"
+& $dotnet publish "$repoRoot\Fujify\Fujify.csproj" -c Release -f net10.0 -r linux-x64 --self-contained true -o "$publishDir\linux-x64"
 
 # 1. Package Linux x64
 $linuxDist = Join-Path $distDir "Fujify-v1.1-Linux-x64"
@@ -30,6 +30,7 @@ $linuxLibs = Join-Path $linuxDist "libs"
 # Remove Windows-specific exes from libs
 Remove-Item -Path (Join-Path $linuxLibs "dnglab.exe") -Force -ErrorAction SilentlyContinue
 Remove-Item -Path (Join-Path $linuxLibs "exiftool.exe") -Force -ErrorAction SilentlyContinue
+Remove-Item -Path (Join-Path $linuxLibs "exiftool_files") -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item -Path (Join-Path $linuxLibs "libraw\simple_dcraw.exe") -Force -ErrorAction SilentlyContinue
 Remove-Item -Path (Join-Path $linuxLibs "libraw\libraw.dll") -Force -ErrorAction SilentlyContinue
 
@@ -39,9 +40,14 @@ Copy-Item -Path "$repoRoot\build_assets\tools\dnglab_linux_x64" -Destination (Jo
 # Create Linux exiftool launcher script
 $exifToolScript = @"
 #!/bin/sh
-DIR="`$(cd "`$(dirname "`$0")" && pwd)"
-if [ -f "`$DIR/exiftool_files/exiftool.pl" ]; then
-    exec perl "`$DIR/exiftool_files/exiftool.pl" "`$@"
+if command -v exiftool >/dev/null 2>&1; then
+    exec exiftool "`$@"
+fi
+if [ -x /usr/bin/exiftool ]; then
+    exec /usr/bin/exiftool "`$@"
+fi
+if [ -x /usr/local/bin/exiftool ]; then
+    exec /usr/local/bin/exiftool "`$@"
 fi
 exec exiftool "`$@"
 "@
@@ -80,7 +86,7 @@ Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host " Building Fujify for macOS (Apple Silicon)..." -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 
-& $dotnet publish "$repoRoot\Fujify\Fujify.csproj" -c Release -r osx-arm64 --self-contained true -o "$publishDir\osx-arm64"
+& $dotnet publish "$repoRoot\Fujify\Fujify.csproj" -c Release -f net10.0 -r osx-arm64 --self-contained true -o "$publishDir\osx-arm64"
 
 # 2. Package macOS Apple Silicon (.app bundle)
 $macAppDir = Join-Path $distDir "Fujify.app"
@@ -151,7 +157,7 @@ Write-Host "=========================================" -ForegroundColor Cyan
 Write-Host " Building Fujify for macOS (Intel)..." -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 
-& $dotnet publish "$repoRoot\Fujify\Fujify.csproj" -c Release -r osx-x64 --self-contained true -o "$publishDir\osx-x64"
+& $dotnet publish "$repoRoot\Fujify\Fujify.csproj" -c Release -f net10.0 -r osx-x64 --self-contained true -o "$publishDir\osx-x64"
 
 # 3. Package macOS Intel (.app bundle)
 $macIntelAppDir = Join-Path $distDir "Fujify-Intel.app"

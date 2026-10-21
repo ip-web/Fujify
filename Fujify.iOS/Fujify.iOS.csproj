@@ -16,6 +16,7 @@
     <Registrar>dynamic</Registrar>
     <DynamicRegistrationSupported>true</DynamicRegistrationSupported>
     <MtouchEnableDsym>false</MtouchEnableDsym>
+    <_TaskAssemblyFileNameWindows Condition="'$(OS)' == 'Windows_NT' and '$(_TaskAssemblyFileNameWindows)' == ''">C:\Program Files\dotnet\packs\Microsoft.iOS.Windows.Sdk.net10.0_26.0\26.0.11017\tools\msbuild\iOS\Xamarin.iOS.Tasks.Windows.dll</_TaskAssemblyFileNameWindows>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InterfaceDefinition Include="Resources\LaunchScreen.storyboard" />
     <BundleResource Include="Resources\**\*" />
   </ItemGroup>
 

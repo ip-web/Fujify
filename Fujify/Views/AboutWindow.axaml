@@ -2,37 +2,43 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Fujify.Views.AboutWindow"
         Title="About Fujify"
-        Width="440" Height="400"
+        Width="440" Height="410"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
+        TransparencyLevelHint="Mica, AcrylicBlur"
+        Background="Transparent"
         Icon="/Assets/images/logo.ico">
 
-    <Grid Margin="24" RowDefinitions="Auto,*,Auto">
-        <!-- Header with Logo -->
-        <StackPanel Grid.Row="0" HorizontalAlignment="Center" Spacing="8" Margin="0,0,0,16">
-            <Image Source="/Assets/images/logoXL.png" Width="64" Height="64"/>
-            <TextBlock Text="Fujify" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
-            <TextBlock Text="Version 2.1.0 (Cross-Platform)" FontSize="12" 
-                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" HorizontalAlignment="Center"/>
-        </StackPanel>
-
-        <!-- Information Content -->
-        <Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundAltHighBrush}" 
-                CornerRadius="6" Padding="14" BorderBrush="{DynamicResource SystemControlHighlightBaseLowBrush}" BorderThickness="1">
-            <StackPanel Spacing="10">
-                <TextBlock Text="Fujifilm Film Simulation Profiles for All Cameras" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap"/>
-                <TextBlock Text="Converts camera RAW images to DNG while embedding Fujifilm camera profiles and metadata so raw processors (Lightroom, Capture One, ACR) can apply authentic Fujifilm film simulations." 
-                           FontSize="12" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" TextWrapping="Wrap"/>
-                
-                <Separator Margin="0,4"/>
-
-                <TextBlock Text="Developed by Isidore Paulin (ipweb.dev)" FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
-                <TextBlock Text="Powered by: DNGLab, ExifTool, LibRaw, Avalonia UI" FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
-                <TextBlock Text="Licensed under GNU General Public License v3" FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
+    <Grid Background="{DynamicResource AppBackgroundBrush}">
+        <Grid Margin="24" RowDefinitions="Auto,*,Auto">
+            <!-- Header with Logo -->
+            <StackPanel Grid.Row="0" HorizontalAlignment="Center" Spacing="8" Margin="0,0,0,16">
+                <Image Source="/Assets/images/logoXL.png" Width="64" Height="64"/>
+                <TextBlock Text="Fujify" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
+                <TextBlock Text="Version 2.1.0 (Cross-Platform)" FontSize="12" 
+                           Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center"/>
             </StackPanel>
-        </Border>
 
-        <!-- Footer -->
-        <Button Grid.Row="2" Content="Close" Click="Close_Click" Width="85" HorizontalAlignment="Right" HorizontalContentAlignment="Center" Margin="0,16,0,0"/>
+            <!-- Information Content -->
+            <Border Grid.Row="1" Background="{DynamicResource AppSurfaceBrush}" 
+                    CornerRadius="14" Padding="16" BorderThickness="0">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="Fujifilm Film Simulation Profiles for All Cameras" FontWeight="SemiBold" FontSize="13"
+                               Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Text="Converts camera RAW images to DNG while embedding Fujifilm camera profiles and metadata so Adobe Lightroom and Camera Raw (ACR) can apply authentic Fujifilm film simulations."
+                               FontSize="12" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                    
+                    <Separator Margin="0,4" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
+
+                    <TextBlock Text="Developed by Isidore Paulin (ipweb.dev)" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                    <TextBlock Text="Powered by: DNGLab, ExifTool, Avalonia UI" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                    <TextBlock Text="Licensed under GNU General Public License v3" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Footer -->
+            <Button Grid.Row="2" Content="Close" Click="Close_Click" Classes="accent" Width="95" Height="36" CornerRadius="10"
+                    HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="0,16,0,0"/>
+        </Grid>
     </Grid>
 </Window>

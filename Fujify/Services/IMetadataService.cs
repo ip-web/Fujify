@@ -23,10 +23,13 @@ using System.Threading.Tasks;
 namespace Fujify.Services
 {
     public record MetadataResult(bool Success, string? ErrorMessage);
+    public record ExifData(string? Lens, string? Aperture, string? ShutterSpeed, string? Iso, string? FocalLength, string? DateTimeOriginal, string? Orientation = null);
 
     public interface IMetadataService
     {
         string GetCameraMakeAndModel(string filePath);
+        int GetOrientation(string filePath);
+        ExifData? GetExifData(string filePath);
         MetadataResult InjectFujifilmMetadata(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null, string targetUniqueCameraModel = "Fujifilm X-T5");
         Task<MetadataResult> InjectFujifilmMetadataAsync(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null, string targetUniqueCameraModel = "Fujifilm X-T5", CancellationToken cancellationToken = default);
         void CleanupTemporaryFiles(string dngFilePath, bool useOutputPath, bool createBackup, bool isOriginallyDng);

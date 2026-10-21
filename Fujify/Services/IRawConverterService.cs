@@ -26,7 +26,7 @@ namespace Fujify.Services
 
     public interface IRawConverterService
     {
-        ConversionResult ConvertToDng(string filePath, bool embedOriginalRaw, string? targetDngPath = null);
-        Task<ConversionResult> ConvertToDngAsync(string filePath, bool embedOriginalRaw, string? targetDngPath = null, CancellationToken cancellationToken = default);
+        ConversionResult ConvertToDng(string filePath, bool embedOriginalRaw, string? targetDngPath = null, bool losslessCompression = true);
+        Task<ConversionResult> ConvertToDngAsync(string filePath, bool embedOriginalRaw, string? targetDngPath = null, bool losslessCompression = true, CancellationToken cancellationToken = default);
     }
 }

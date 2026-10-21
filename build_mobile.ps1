@@ -92,10 +92,9 @@ if (-not $SkipAndroid) {
             & $dotnet build $androidProj -c $Configuration -r $rid -p:AndroidPackageFormat=apk
             
             $archSuffix = if ($rid -eq "android-arm64") { "arm64" } else { "x64" }
-            $apkFolder = Join-Path $repoRoot "Fujify.Android\bin\$Configuration\net10.0-android\$rid"
-            $signedApk = Get-ChildItem -Path $apkFolder -Filter "*Signed.apk" -ErrorAction SilentlyContinue | Select-Object -First 1
+            $signedApk = Get-ChildItem -Path (Join-Path $repoRoot "Fujify.Android\bin\$Configuration") -Filter "*Signed.apk" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.FullName -like "*\$rid\*" } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
             if (-not $signedApk) {
-                $signedApk = Get-ChildItem -Path $apkFolder -Filter "*.apk" -ErrorAction SilentlyContinue | Select-Object -First 1
+                $signedApk = Get-ChildItem -Path (Join-Path $repoRoot "Fujify.Android\bin\$Configuration") -Filter "*.apk" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.FullName -like "*\$rid\*" } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
             }
 
             if ($signedApk) {
@@ -131,6 +130,9 @@ if (-not $SkipiOS) {
         New-Item -ItemType Directory -Force -Path $appDir | Out-Null
 
         $srcBin = Join-Path $repoRoot "Fujify.iOS\bin\$Configuration\net10.0-ios\ios-arm64"
+        if (-not (Test-Path $srcBin)) {
+            $srcBin = (Get-ChildItem -Path (Join-Path $repoRoot "Fujify.iOS\bin\$Configuration") -Filter "ios-arm64" -Directory -Recurse | Select-Object -First 1).FullName
+        }
         Copy-Item -Path "$srcBin\*" -Destination $appDir -Recurse -Force
 
         # Ensure Info.plist & AppIcon are included

@@ -44,7 +44,7 @@ namespace Fujify.ViewModels
 
         private readonly HashSet<string> _supportedFormats = new(StringComparer.OrdinalIgnoreCase)
         {
-            ".dng", ".cr3", ".crw", ".erf", ".raf", ".3fr", ".kdc", ".dcs", ".dcr", ".iiq", ".mos",
+            ".dng", ".cr2", ".cr3", ".crw", ".erf", ".raf", ".3fr", ".kdc", ".dcs", ".dcr", ".iiq", ".mos",
             ".mef", ".mrw", ".nef", ".nrw", ".orf", ".rw2", ".pef", ".srw", ".arw", ".srf", ".sr2"
         };
 
@@ -85,10 +85,16 @@ namespace Fujify.ViewModels
 
             Files.CollectionChanged += (s, e) =>
             {
+                if (_selectedFile == null && Files.Count > 0)
+                {
+                    SelectedFile = Files[0];
+                }
                 OnPropertyChanged(nameof(HasFiles));
                 OnPropertyChanged(nameof(CanProcess));
                 OnPropertyChanged(nameof(CanClear));
                 OnPropertyChanged(nameof(CanProcessOrStop));
+                OnPropertyChanged(nameof(OverallStatusText));
+                OnPropertyChanged(nameof(ProgressSummaryText));
                 (ClearCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
                 (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
             };
@@ -101,15 +107,19 @@ namespace Fujify.ViewModels
             OpenUpdateCommand = new RelayCommand(ExecuteOpenUpdate);
             ReportBugCommand = new RelayCommand(ExecuteReportBug);
 
-            RemoveFileCommand = new RelayCommand<FileItem>(file =>
+            RemoveFileCommand = new RelayCommand<object>(param =>
             {
-                if (file != null && Files.Contains(file))
+                if (param is System.Collections.IList list && list.Count > 0)
                 {
-                    Files.Remove(file);
-                    if (SelectedFile == file)
-                    {
-                        SelectedFile = Files.FirstOrDefault();
-                    }
+                    RemoveFiles(list.OfType<FileItem>());
+                }
+                else if (param is FileItem file && Files.Contains(file))
+                {
+                    RemoveFiles(new[] { file });
+                }
+                else if (SelectedFile != null)
+                {
+                    RemoveFiles(new[] { SelectedFile });
                 }
             });
 
@@ -121,19 +131,38 @@ namespace Fujify.ViewModels
                 }
             });
 
+            SetListViewCommand = new RelayCommand(() => IsGridView = false);
+            SetGridViewCommand = new RelayCommand(() => IsGridView = true);
+            ShowPropertiesCommand = new RelayCommand<FileItem>(file =>
+            {
+                if (file != null)
+                {
+                    SelectedFile = file;
+                    CrossPlatformLauncher.ShowFileProperties(file.FilePath);
+                }
+            });
+            OpenWithCommand = new RelayCommand<FileItem>(ExecuteOpenWith);
+            ResetStatusCommand = new RelayCommand<object>(ExecuteResetStatus);
+
+            OpenOutputFolderCommand = new RelayCommand(() =>
+            {
+                string folder = !string.IsNullOrEmpty(OutputFolderPath) && Directory.Exists(OutputFolderPath)
+                    ? OutputFolderPath
+                    : (Files.Count > 0 ? (Path.GetDirectoryName(Files[0].FilePath) ?? "") : "");
+                if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
+                {
+                    CrossPlatformLauncher.OpenFolder(folder);
+                }
+            });
+            ClearOutputFolderCommand = new RelayCommand(() => OutputFolderPath = null);
+
             OpenCameraPickerCommand = new RelayCommand(() =>
             {
-                ModalTitle = "Select Fujifilm Camera Simulation";
-                ModalType = "CameraPicker";
-                IsModalOpen = true;
+                // X-T5 is the standard unified simulation target profile
             });
 
             SelectCameraModelCommand = new RelayCommand<string>(model =>
             {
-                if (!string.IsNullOrEmpty(model))
-                {
-                    TargetCameraModel = model;
-                }
                 CloseModal();
             });
 
@@ -181,21 +210,97 @@ namespace Fujify.ViewModels
         public ICommand CloseModalCommand { get; }
         public ICommand OpenInLightroomCommand { get; }
         public ICommand ResolveConflictCommand { get; }
+        public ICommand SetListViewCommand { get; }
+        public ICommand SetGridViewCommand { get; }
+        public ICommand ShowPropertiesCommand { get; }
+        public ICommand OpenOutputFolderCommand { get; }
+        public ICommand ClearOutputFolderCommand { get; }
+        public ICommand OpenWithCommand { get; }
+        public ICommand ResetStatusCommand { get; }
+
+        private bool _isDragOver;
+        public bool IsDragOver
+        {
+            get => _isDragOver;
+            set => SetProperty(ref _isDragOver, value);
+        }
+
+        private bool _isGridView;
+        public bool IsGridView
+        {
+            get => _isGridView;
+            set
+            {
+                if (SetProperty(ref _isGridView, value))
+                {
+                    OnPropertyChanged(nameof(IsListView));
+                }
+            }
+        }
+        public bool IsListView => !_isGridView;
 
         private FileItem? _selectedFile;
         public FileItem? SelectedFile
         {
-            get => _selectedFile ?? Files.FirstOrDefault();
+            get
+            {
+                if (_selectedFile == null && Files.Count > 0)
+                {
+                    _selectedFile = Files[0];
+                    if (!_selectedFile.HasExifLoaded)
+                    {
+                        LoadExifForFile(_selectedFile);
+                    }
+                }
+                return _selectedFile;
+            }
             set
             {
                 if (SetProperty(ref _selectedFile, value))
                 {
                     OnPropertyChanged(nameof(HasSelectedFile));
+                    if (value != null && !value.HasExifLoaded)
+                    {
+                        LoadExifForFile(value);
+                    }
                 }
             }
         }
 
         public bool HasSelectedFile => SelectedFile != null;
+
+        private void LoadExifForFile(FileItem item)
+        {
+            Task.Run(() =>
+            {
+                try
+                {
+                    var exif = _metadataService.GetExifData(item.FilePath);
+                    if (exif != null)
+                    {
+                        Dispatcher.UIThread.Post(() =>
+                        {
+                            item.Lens = exif.Lens;
+                            item.Aperture = exif.Aperture;
+                            item.ShutterSpeed = exif.ShutterSpeed;
+                            item.Iso = exif.Iso;
+                            item.FocalLength = exif.FocalLength;
+                            item.DateTimeOriginal = exif.DateTimeOriginal;
+                            item.Orientation = exif.Orientation;
+                            item.HasExifLoaded = true;
+                        });
+                    }
+                    else
+                    {
+                        item.HasExifLoaded = true;
+                    }
+                }
+                catch
+                {
+                    item.HasExifLoaded = true;
+                }
+            });
+        }
 
         private string _targetCameraModel = "Fujifilm X-T5";
         public string TargetCameraModel
@@ -260,6 +365,7 @@ namespace Fujify.ViewModels
                     _settingsService.Save();
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(SuffixPreview));
+                    OnPropertyChanged(nameof(SuffixLabelContent));
                 }
             }
         }
@@ -275,6 +381,7 @@ namespace Fujify.ViewModels
                     _settingsService.Save();
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(SuffixPreview));
+                    OnPropertyChanged(nameof(SuffixLabelContent));
                 }
             }
         }
@@ -283,10 +390,108 @@ namespace Fujify.ViewModels
             ? $"DSC0001{Suffix.Trim()}.dng"
             : "DSC0001.dng";
 
+        public string SuffixLabelContent => $"Add Suffix ({(string.IsNullOrWhiteSpace(Suffix) ? "-fujified" : Suffix.Trim())})";
+
+        public bool AutoOpenInLightroom
+        {
+            get => _settingsService.Settings.AutoOpenInLightroom;
+            set
+            {
+                if (_settingsService.Settings.AutoOpenInLightroom != value)
+                {
+                    _settingsService.Settings.AutoOpenInLightroom = value;
+                    _settingsService.Save();
+                    OnPropertyChanged();
+                    if (_preferences != null)
+                    {
+                        _preferences.AutoOpenInLightroom = value;
+                    }
+                }
+            }
+        }
+
+        public bool LosslessCompression
+        {
+            get => _settingsService.Settings.LosslessCompression;
+            set
+            {
+                if (_settingsService.Settings.LosslessCompression != value)
+                {
+                    _settingsService.Settings.LosslessCompression = value;
+                    _settingsService.Save();
+                    OnPropertyChanged();
+                    if (_preferences != null)
+                    {
+                        _preferences.LosslessCompression = value;
+                    }
+                }
+            }
+        }
+
+        public string OverallStatusText
+        {
+            get
+            {
+                if (IsProcessing)
+                {
+                    int done = Files.Count(f => f.Status == "✔" || (f.Status != null && f.Status != "Pending"));
+                    return $"Processing photo {Math.Min(done + 1, Files.Count)} of {Files.Count}...";
+                }
+                if (!HasFiles)
+                {
+                    return "Ready - Drop RAW photos or click + Add Files to begin";
+                }
+                int pendingCount = Files.Count(f => f.Status == "Pending");
+                int successCount = Files.Count(f => f.Status == "✔");
+                if (successCount > 0 && pendingCount == 0)
+                {
+                    return $"All {Files.Count} photos converted successfully ✔";
+                }
+                return $"{Files.Count} photo{(Files.Count > 1 ? "s" : "")} in queue ({pendingCount} pending)";
+            }
+        }
+
+        public string ProgressSummaryText
+        {
+            get
+            {
+                if (!HasFiles) return string.Empty;
+                if (IsProcessing || ProgressValue > 0)
+                {
+                    int done = Files.Count(f => f.Status == "✔");
+                    return $"{done} / {Files.Count} completed";
+                }
+                long totalBytes = Files.Sum(f => f.FileSizeBytes);
+                if (totalBytes > 0)
+                {
+                    if (totalBytes >= 1024L * 1024 * 1024)
+                        return $"{totalBytes / (1024.0 * 1024.0 * 1024.0):F1} GB";
+                    if (totalBytes >= 1024 * 1024)
+                        return $"{totalBytes / (1024.0 * 1024.0):F1} MB";
+                    if (totalBytes >= 1024)
+                        return $"{totalBytes / 1024.0:F1} KB";
+                    return $"{totalBytes} B";
+                }
+                return $"{Files.Count} items";
+            }
+        }
+
+        public void RefreshSettings()
+        {
+            OnPropertyChanged(nameof(AppendSuffix));
+            OnPropertyChanged(nameof(Suffix));
+            OnPropertyChanged(nameof(SuffixPreview));
+            OnPropertyChanged(nameof(SuffixLabelContent));
+            OnPropertyChanged(nameof(AutoOpenInLightroom));
+            OnPropertyChanged(nameof(LosslessCompression));
+            OnPropertyChanged(nameof(OverallStatusText));
+            OnPropertyChanged(nameof(ProgressSummaryText));
+        }
+
         public void UpdateLayoutMode(double width, double height)
         {
             IsPhoneLayout = width < 650;
-            IsTabletLayout = width >= 650 && width < 1050;
+            IsTabletLayout = width >= 650 && width < 900;
             if (_selectedFile == null && Files.Count > 0)
             {
                 SelectedFile = Files[0];
@@ -298,7 +503,18 @@ namespace Fujify.ViewModels
         public bool IsModalOpen
         {
             get => _isModalOpen;
-            set => SetProperty(ref _isModalOpen, value);
+            set
+            {
+                if (SetProperty(ref _isModalOpen, value))
+                {
+                    OnPropertyChanged(nameof(IsBottomSheetOpen));
+                    OnPropertyChanged(nameof(IsPreferencesModal));
+                    OnPropertyChanged(nameof(IsAboutModal));
+                    OnPropertyChanged(nameof(IsCameraPickerModal));
+                    OnPropertyChanged(nameof(IsConflictModal));
+                    OnPropertyChanged(nameof(IsMessageModal));
+                }
+            }
         }
 
         private string _modalType = "None";
@@ -314,15 +530,17 @@ namespace Fujify.ViewModels
                     OnPropertyChanged(nameof(IsPreferencesModal));
                     OnPropertyChanged(nameof(IsAboutModal));
                     OnPropertyChanged(nameof(IsMessageModal));
+                    OnPropertyChanged(nameof(IsBottomSheetOpen));
                 }
             }
         }
 
         public bool IsCameraPickerModal => _modalType == "CameraPicker";
         public bool IsConflictModal => _modalType == "Conflict";
-        public bool IsPreferencesModal => _modalType == "Preferences";
-        public bool IsAboutModal => _modalType == "About";
+        public bool IsPreferencesModal => _modalType == "Preferences" && _isModalOpen;
+        public bool IsAboutModal => _modalType == "About" && _isModalOpen;
         public bool IsMessageModal => _modalType == "Message";
+        public bool IsBottomSheetOpen => _isModalOpen && (IsCameraPickerModal || IsConflictModal || IsMessageModal);
 
         private string _modalTitle = string.Empty;
         public string ModalTitle
@@ -387,7 +605,14 @@ namespace Fujify.ViewModels
             {
                 Preferences = new PreferencesViewModel(_settingsService)
                 {
-                    CloseAction = ok => CloseModal()
+                    CloseAction = ok =>
+                    {
+                        if (ok)
+                        {
+                            RefreshSettings();
+                        }
+                        CloseModal();
+                    }
                 };
                 ModalTitle = "Preferences";
                 ModalType = "Preferences";
@@ -479,9 +704,12 @@ namespace Fujify.ViewModels
                 if (SetProperty(ref _outputFolderPath, value))
                 {
                     OnPropertyChanged(nameof(FormattedOutputFolderPath));
+                    OnPropertyChanged(nameof(HasCustomOutputFolder));
                 }
             }
         }
+
+        public bool HasCustomOutputFolder => !string.IsNullOrWhiteSpace(_outputFolderPath);
 
         public string FormattedOutputFolderPath =>
             string.IsNullOrWhiteSpace(_outputFolderPath)
@@ -504,6 +732,8 @@ namespace Fujify.ViewModels
                     OnPropertyChanged(nameof(CanProcess));
                     OnPropertyChanged(nameof(CanClear));
                     OnPropertyChanged(nameof(CanProcessOrStop));
+                    OnPropertyChanged(nameof(OverallStatusText));
+                    OnPropertyChanged(nameof(ProgressSummaryText));
                     (ClearCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
                     (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
                 }
@@ -543,7 +773,14 @@ namespace Fujify.ViewModels
         public double ProgressValue
         {
             get => _progressValue;
-            set => SetProperty(ref _progressValue, value);
+            set
+            {
+                if (SetProperty(ref _progressValue, value))
+                {
+                    OnPropertyChanged(nameof(OverallStatusText));
+                    OnPropertyChanged(nameof(ProgressSummaryText));
+                }
+            }
         }
 
         public bool IsProgressVisible
@@ -981,7 +1218,11 @@ namespace Fujify.ViewModels
                     targetDngForConversion = Path.Combine(sourceDir, $"{Path.GetFileNameWithoutExtension(filePath)}_tmp_{Guid.NewGuid():N}.dng");
                 }
 
-                var convResult = await Task.Run(() => _rawConverterService.ConvertToDng(filePath, embedOriginalRaw, targetDngForConversion), ct);
+                var convResult = await Task.Run(() => _rawConverterService.ConvertToDng(
+                    filePath,
+                    embedOriginalRaw,
+                    targetDngForConversion,
+                    _settingsService.Settings.LosslessCompression), ct);
                 if (!convResult.Success || string.IsNullOrEmpty(convResult.OutputDngPath))
                 {
                     string err = convResult.ErrorMessage ?? "Conversion failed";
@@ -1030,6 +1271,8 @@ namespace Fujify.ViewModels
                 if (fileItem != null)
                 {
                     fileItem.Status = status;
+                    OnPropertyChanged(nameof(OverallStatusText));
+                    OnPropertyChanged(nameof(ProgressSummaryText));
                 }
             });
         }
@@ -1114,14 +1357,78 @@ namespace Fujify.ViewModels
             }
         }
 
+        private void ExecuteOpenWith(FileItem? item)
+        {
+            if (item == null || string.IsNullOrWhiteSpace(item.FilePath)) return;
+            CrossPlatformLauncher.OpenWith(item.FilePath);
+        }
+
+        private void ExecuteResetStatus(object? param)
+        {
+            if (param is System.Collections.IList list && list.Count > 0)
+            {
+                foreach (var item in list.OfType<FileItem>())
+                {
+                    item.Status = "Pending";
+                }
+            }
+            else if (param is FileItem single)
+            {
+                single.Status = "Pending";
+            }
+            else if (SelectedFile != null)
+            {
+                SelectedFile.Status = "Pending";
+            }
+
+            OnPropertyChanged(nameof(CanProcess));
+            OnPropertyChanged(nameof(CanProcessOrStop));
+            OnPropertyChanged(nameof(OverallStatusText));
+        }
+
+        public void RemoveFiles(IEnumerable<FileItem> items)
+        {
+            var list = items.ToList();
+            if (list.Count == 0) return;
+            foreach (var file in list)
+            {
+                Files.Remove(file);
+            }
+            if (_selectedFile != null && !Files.Contains(_selectedFile))
+            {
+                SelectedFile = Files.FirstOrDefault();
+            }
+            OnPropertyChanged(nameof(HasFiles));
+            OnPropertyChanged(nameof(CanClear));
+            OnPropertyChanged(nameof(CanProcess));
+            OnPropertyChanged(nameof(CanProcessOrStop));
+            OnPropertyChanged(nameof(OverallStatusText));
+            OnPropertyChanged(nameof(ProgressSummaryText));
+        }
+
         private async Task ExecuteOpenPreferencesAsync()
         {
-            await _dialogService.ShowPreferencesDialogAsync(OwnerWindow);
+            if (IsPhoneLayout || Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ISingleViewApplicationLifetime)
+            {
+                ShowPreferencesModal();
+            }
+            else
+            {
+                await _dialogService.ShowPreferencesDialogAsync(OwnerWindow);
+            }
+            RefreshSettings();
         }
 
         private async Task ExecuteOpenAboutAsync()
         {
-            await _dialogService.ShowAboutDialogAsync(OwnerWindow);
+            if (IsPhoneLayout || Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ISingleViewApplicationLifetime)
+            {
+                ShowAboutModal();
+            }
+            else
+            {
+                await _dialogService.ShowAboutDialogAsync(OwnerWindow);
+            }
         }
 
         private void ExecuteOpenHelp()

@@ -19,12 +19,44 @@
 
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace Fujify.Common
 {
     public static class CrossPlatformLauncher
     {
+        [DllImport("shell32.dll", CharSet = CharSet.Auto)]
+        private static extern bool ShellExecuteEx(ref SHELLEXECUTEINFO lpExecInfo);
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        private struct SHELLEXECUTEINFO
+        {
+            public int cbSize;
+            public uint fMask;
+            public IntPtr hwnd;
+            [MarshalAs(UnmanagedType.LPTStr)]
+            public string lpVerb;
+            [MarshalAs(UnmanagedType.LPTStr)]
+            public string lpFile;
+            [MarshalAs(UnmanagedType.LPTStr)]
+            public string lpParameters;
+            [MarshalAs(UnmanagedType.LPTStr)]
+            public string lpDirectory;
+            public int nShow;
+            public IntPtr hInstApp;
+            public IntPtr lpIDList;
+            [MarshalAs(UnmanagedType.LPTStr)]
+            public string lpClass;
+            public IntPtr hkeyClass;
+            public uint dwHotKey;
+            public IntPtr hIcon;
+            public IntPtr hProcess;
+        }
+
+        private const int SW_SHOW = 5;
+        private const uint SEE_MASK_INVOKEIDLIST = 0x0000000C;
+
         public static void OpenPath(string path)
         {
             try
@@ -45,6 +77,64 @@ namespace Fujify.Common
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error launching path {path}: {ex.Message}");
+            }
+        }
+
+        public static void OpenWith(string filePath)
+        {
+            try
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "rundll32.exe",
+                        Arguments = $"shell32.dll,OpenAs_RunDLL \"{filePath}\"",
+                        UseShellExecute = true
+                    });
+                }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    Process.Start("open", $"-a \"{filePath}\"");
+                }
+                else
+                {
+                    Process.Start("xdg-open", $"\"{filePath}\"");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error launching Open With for {filePath}: {ex.Message}");
+            }
+        }
+
+        public static void ShowFileProperties(string filePath)
+        {
+            try
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    var info = new SHELLEXECUTEINFO();
+                    info.cbSize = Marshal.SizeOf(info);
+                    info.lpVerb = "properties";
+                    info.lpFile = filePath;
+                    info.nShow = SW_SHOW;
+                    info.fMask = SEE_MASK_INVOKEIDLIST;
+                    ShellExecuteEx(ref info);
+                }
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    string script = $"tell application \"Finder\" to open information window of (POSIX file \"{filePath}\" as alias)";
+                    Process.Start("osascript", $"-e '{script}'");
+                }
+                else
+                {
+                    OpenPath(filePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Error displaying properties for {filePath}: {ex.Message}");
             }
         }
 

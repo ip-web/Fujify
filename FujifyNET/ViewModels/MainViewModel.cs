@@ -55,6 +55,7 @@ namespace FujifyNET.ViewModels
         private bool _isProgressVisible;
         private double _progressValue;
         private string _processButtonContent = "Process";
+        private readonly List<string> _recentlyConvertedDngFiles = new();
 
         public ObservableCollection<FileItem> Files { get; } = new();
 
@@ -174,6 +175,64 @@ namespace FujifyNET.ViewModels
         {
             get => _isProgressVisible;
             set => SetProperty(ref _isProgressVisible, value);
+        }
+
+        public bool AppendSuffix
+        {
+            get => Properties.Settings.Default.AppendSuffix;
+            set
+            {
+                if (Properties.Settings.Default.AppendSuffix != value)
+                {
+                    Properties.Settings.Default.AppendSuffix = value;
+                    Properties.Settings.Default.Save();
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(SuffixLabelContent));
+                }
+            }
+        }
+
+        public string Suffix
+        {
+            get => string.IsNullOrWhiteSpace(Properties.Settings.Default.Suffix) ? "-fujified" : Properties.Settings.Default.Suffix;
+            set
+            {
+                if (Properties.Settings.Default.Suffix != value)
+                {
+                    Properties.Settings.Default.Suffix = value;
+                    Properties.Settings.Default.Save();
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(SuffixLabelContent));
+                }
+            }
+        }
+
+        public string SuffixLabelContent => $"Add Suffix ({Suffix})";
+
+        public void RefreshSettings()
+        {
+            OnPropertyChanged(nameof(AppendSuffix));
+            OnPropertyChanged(nameof(Suffix));
+            OnPropertyChanged(nameof(SuffixLabelContent));
+        }
+
+        public void OpenInLightroom(IReadOnlyList<string>? files = null)
+        {
+            var targetFiles = files ?? _recentlyConvertedDngFiles;
+            if (targetFiles == null || targetFiles.Count == 0) return;
+
+            foreach (var file in targetFiles)
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = file,
+                        UseShellExecute = true
+                    });
+                }
+                catch { }
+            }
         }
 
         #endregion
@@ -355,6 +414,11 @@ namespace FujifyNET.ViewModels
                 FileConflictAction? batchConflictAction = null;
                 var reservedOutputPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+                lock (_recentlyConvertedDngFiles)
+                {
+                    _recentlyConvertedDngFiles.Clear();
+                }
+
                 await Parallel.ForEachAsync(files, parallelOptions, async (filePath, ct) =>
                 {
                     ct.ThrowIfCancellationRequested();
@@ -423,6 +487,17 @@ namespace FujifyNET.ViewModels
             {
                 ProcessingCompleted?.Invoke();
 
+                List<string> convertedToOpen;
+                lock (_recentlyConvertedDngFiles)
+                {
+                    convertedToOpen = _recentlyConvertedDngFiles.ToList();
+                }
+
+                if (Properties.Settings.Default.AutoOpenInLightroom && convertedToOpen.Count > 0)
+                {
+                    OpenInLightroom(convertedToOpen);
+                }
+
                 string message = hasProcessingErrors
                     ? "Processing completed with some errors. Please check the status for details."
                     : "Enjoy your new Film simulations!";
@@ -466,11 +541,18 @@ namespace FujifyNET.ViewModels
             }
 
             bool isOriginallyDng = filePath.EndsWith(".dng", StringComparison.OrdinalIgnoreCase);
-            string initialDestFilePath = !string.IsNullOrEmpty(outputFolder)
-                ? Path.Combine(outputFolder, Path.GetFileNameWithoutExtension(filePath) + ".dng")
-                : Path.ChangeExtension(filePath, ".dng");
+            string baseFileName = Path.GetFileNameWithoutExtension(filePath);
+            bool appendSuffix = Properties.Settings.Default.AppendSuffix && !string.IsNullOrWhiteSpace(Properties.Settings.Default.Suffix);
+            if (appendSuffix)
+            {
+                baseFileName += Properties.Settings.Default.Suffix.Trim();
+            }
 
-            bool isSameFileInPlace = isOriginallyDng && string.IsNullOrEmpty(outputFolder);
+            string initialDestFilePath = !string.IsNullOrEmpty(outputFolder)
+                ? Path.Combine(outputFolder, baseFileName + ".dng")
+                : Path.Combine(Path.GetDirectoryName(filePath) ?? string.Empty, baseFileName + ".dng");
+
+            bool isSameFileInPlace = isOriginallyDng && string.IsNullOrEmpty(outputFolder) && !appendSuffix;
             bool fileAlreadyExists;
             lock (reservedOutputPaths)
             {
@@ -574,7 +656,7 @@ namespace FujifyNET.ViewModels
                 UpdateFileStatus(filePath, "Conversion successful");
             }
 
-            string? customOutputPath = !string.IsNullOrEmpty(outputFolder)
+            string? customOutputPath = (!string.IsNullOrEmpty(outputFolder) || finalDestFilePath != dngFilePath)
                 ? finalDestFilePath
                 : null;
 
@@ -588,6 +670,10 @@ namespace FujifyNET.ViewModels
             if (metaResult.Success)
             {
                 UpdateFileStatus(filePath, "✔");
+                lock (_recentlyConvertedDngFiles)
+                {
+                    _recentlyConvertedDngFiles.Add(finalDestFilePath);
+                }
             }
             else
             {
@@ -690,7 +776,10 @@ namespace FujifyNET.ViewModels
 
         private void ExecuteOpenPreferences()
         {
-            _dialogService.ShowPreferencesDialog(Application.Current.MainWindow);
+            if (_dialogService.ShowPreferencesDialog(Application.Current.MainWindow) == true)
+            {
+                RefreshSettings();
+            }
         }
 
         private void ExecuteOpenAbout()

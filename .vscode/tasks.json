@@ -4,16 +4,19 @@
         {
             "label": "dotrush: Build",
             "type": "process",
-            "command": "C:\\Users\\isisk\\.dotnet\\dotnet.exe",
+            "command": "C:\\Program Files\\dotnet\\dotnet.exe",
             "args": [
                 "build",
-                "${workspaceFolder}\\FujifyNET\\FujifyNET.csproj",
+                "${workspaceFolder}\\Fujify\\Fujify.csproj",
                 "-c",
-                "Debug"
+                "Debug",
+                "-r",
+                "win-x64",
+                "--no-self-contained"
             ],
             "options": {
                 "env": {
-                    "DOTNET_ROOT": "C:\\Users\\isisk\\.dotnet"
+                    "DOTNET_ROOT": "C:\\Program Files\\dotnet"
                 }
             },
             "problemMatcher": "$msCompile",

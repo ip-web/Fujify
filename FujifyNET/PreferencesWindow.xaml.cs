@@ -48,6 +48,10 @@ namespace FujifyNET
             DarkThemeToggle.IsChecked = App.IsDarkTheme;
             EmbedOriginalRawToggle.IsChecked = Properties.Settings.Default.EmbedOriginalRaw;
             SkipThumbnailGenerationToggle.IsChecked = Properties.Settings.Default.SkipThumbnailGeneration;
+            AppendSuffixToggle.IsChecked = Properties.Settings.Default.AppendSuffix;
+            SuffixTextBox.Text = string.IsNullOrWhiteSpace(Properties.Settings.Default.Suffix) ? "-fujified" : Properties.Settings.Default.Suffix;
+            AutoOpenInLightroomToggle.IsChecked = Properties.Settings.Default.AutoOpenInLightroom;
+            UpdateSuffixUI();
 
             int totalThreads = Environment.ProcessorCount;
             ConcurrencySlider.Maximum = totalThreads;
@@ -61,6 +65,28 @@ namespace FujifyNET
 
             ConcurrencySlider.Value = savedConcurrency;
             UpdateConcurrencyUI(savedConcurrency);
+        }
+
+        private void AppendSuffixToggle_Changed(object sender, RoutedEventArgs e)
+        {
+            UpdateSuffixUI();
+        }
+
+        private void SuffixTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            UpdateSuffixUI();
+        }
+
+        private void UpdateSuffixUI()
+        {
+            if (SuffixInputGrid == null || SuffixPreviewText == null || SuffixTextBox == null || AppendSuffixToggle == null) return;
+
+            bool isEnabled = AppendSuffixToggle.IsChecked ?? false;
+            SuffixInputGrid.Visibility = isEnabled ? Visibility.Visible : Visibility.Collapsed;
+            SuffixPreviewText.Visibility = isEnabled ? Visibility.Visible : Visibility.Collapsed;
+
+            string suffix = string.IsNullOrWhiteSpace(SuffixTextBox.Text) ? "-fujified" : SuffixTextBox.Text.Trim();
+            SuffixPreviewText.Text = $"Preview: DSC0001{suffix}.dng";
         }
 
         private void ConcurrencySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -113,6 +139,9 @@ namespace FujifyNET
             bool newEmbedSetting = EmbedOriginalRawToggle.IsChecked ?? false;
             Properties.Settings.Default.EmbedOriginalRaw = newEmbedSetting;
             Properties.Settings.Default.SkipThumbnailGeneration = SkipThumbnailGenerationToggle.IsChecked ?? false;
+            Properties.Settings.Default.AppendSuffix = AppendSuffixToggle.IsChecked ?? false;
+            Properties.Settings.Default.Suffix = string.IsNullOrWhiteSpace(SuffixTextBox.Text) ? "-fujified" : SuffixTextBox.Text.Trim();
+            Properties.Settings.Default.AutoOpenInLightroom = AutoOpenInLightroomToggle.IsChecked ?? false;
             Properties.Settings.Default.MaxConcurrentConversions = (int)ConcurrencySlider.Value;
             Properties.Settings.Default.Save();
 
