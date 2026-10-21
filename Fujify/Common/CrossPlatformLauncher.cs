@@ -163,8 +163,38 @@ namespace Fujify.Common
 
         public static void OpenUrl(string url)
         {
+            if (string.IsNullOrWhiteSpace(url)) return;
+
             try
             {
+                // 1. Mobile platform callback (iOS / Android)
+                if (Fujify.ViewModels.MainViewModel.PlatformOpenUrlCallback != null)
+                {
+                    Fujify.ViewModels.MainViewModel.PlatformOpenUrlCallback(url);
+                    return;
+                }
+
+                // 2. Avalonia TopLevel Launcher API
+                if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ISingleViewApplicationLifetime singleView && singleView.MainView != null)
+                {
+                    var topLevel = Avalonia.Controls.TopLevel.GetTopLevel(singleView.MainView);
+                    if (topLevel?.Launcher != null)
+                    {
+                        topLevel.Launcher.LaunchUriAsync(new Uri(url));
+                        return;
+                    }
+                }
+                else if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
+                {
+                    var topLevel = Avalonia.Controls.TopLevel.GetTopLevel(desktop.MainWindow);
+                    if (topLevel?.Launcher != null)
+                    {
+                        topLevel.Launcher.LaunchUriAsync(new Uri(url));
+                        return;
+                    }
+                }
+
+                // 3. Desktop OS fallback
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });

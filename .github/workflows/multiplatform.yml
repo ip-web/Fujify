@@ -77,13 +77,20 @@ jobs:
 
       - name: Build Android APK
         run: |
-          dotnet build Fujify.Android/Fujify.Android.csproj -c Release -p:AndroidPackageFormat=apk
+          mkdir -p ./publish-android
+          dotnet build Fujify.Android/Fujify.Android.csproj -c Release -r android-arm64 -p:AndroidPackageFormat=apk
+          SIGNED_APK=$(find Fujify.Android/bin/Release -name "*Signed.apk" | head -n 1)
+          if [ -n "$SIGNED_APK" ]; then
+            cp "$SIGNED_APK" ./publish-android/Fujify-v2.1.0-Android-arm64.apk
+          else
+            cp $(find Fujify.Android/bin/Release -name "*.apk" | head -n 1) ./publish-android/Fujify-v2.1.0-Android-arm64.apk
+          fi
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: fujify-android-apk
-          path: Fujify.Android/bin/Release/**/com.ipweb.fujify*.apk
+          path: ./publish-android/Fujify-v2.1.0-Android-arm64.apk
 
   # -------------------------------------------------------------
   # 3. iOS App (iPhone & iPad)

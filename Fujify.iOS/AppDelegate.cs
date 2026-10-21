@@ -73,8 +73,46 @@ public class AppDelegate : AvaloniaAppDelegate<App>
             }
         };
 
+        // Wire native URL opening handler (Safari / External Browser)
+        MainViewModel.PlatformOpenUrlCallback = (url) =>
+        {
+            UIApplication.SharedApplication.BeginInvokeOnMainThread(() =>
+            {
+                try
+                {
+                    var nsUrl = NSUrl.FromString(url);
+                    if (nsUrl != null)
+                    {
+                        UIApplication.SharedApplication.OpenUrl(nsUrl, new UIApplicationOpenUrlOptions(), null);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[Fujify iOS] Error in PlatformOpenUrlCallback: {ex}");
+                }
+            });
+        };
+
         return base.CustomizeAppBuilder(builder)
             .WithInterFont();
+    }
+
+    [Export("application:didFinishLaunchingWithOptions:")]
+    public new bool FinishedLaunching(UIApplication application, NSDictionary launchOptions)
+    {
+        var result = base.FinishedLaunching(application, launchOptions);
+        try
+        {
+            if (Window != null)
+            {
+                Window.BackgroundColor = UIColor.FromRGB(24, 24, 27);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Fujify iOS] Error setting Window background: {ex}");
+        }
+        return result;
     }
 
     [Export("application:openURL:options:")]

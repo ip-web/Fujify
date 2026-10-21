@@ -19,5 +19,20 @@ namespace Fujify.Views
         {
             Close();
         }
+
+        private void Website_Click(object? sender, RoutedEventArgs e)
+        {
+            Common.CrossPlatformLauncher.OpenUrl("https://ipweb.dev");
+        }
+
+        private void GitHub_Click(object? sender, RoutedEventArgs e)
+        {
+            Common.CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujify");
+        }
+
+        private void Releases_Click(object? sender, RoutedEventArgs e)
+        {
+            Common.CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujify/releases");
+        }
     }
 }

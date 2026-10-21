@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Fujify.Views.AboutWindow"
         Title="About Fujify"
-        Width="440" Height="410"
+        Width="440" Height="470"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
         TransparencyLevelHint="Mica, AcrylicBlur"
@@ -12,7 +12,7 @@
     <Grid Background="{DynamicResource AppBackgroundBrush}">
         <Grid Margin="24" RowDefinitions="Auto,*,Auto">
             <!-- Header with Logo -->
-            <StackPanel Grid.Row="0" HorizontalAlignment="Center" Spacing="8" Margin="0,0,0,16">
+            <StackPanel Grid.Row="0" HorizontalAlignment="Center" Spacing="8" Margin="0,0,0,14">
                 <Image Source="/Assets/images/logoXL.png" Width="64" Height="64"/>
                 <TextBlock Text="Fujify" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
                 <TextBlock Text="Version 2.1.0 (Cross-Platform)" FontSize="12" 
@@ -30,6 +30,21 @@
                     
                     <Separator Margin="0,4" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
 
+                    <!-- Functional Link Buttons -->
+                    <Grid ColumnDefinitions="*,*,*">
+                        <Button Grid.Column="0" Content="Website" Click="Website_Click"
+                                Background="Transparent" Foreground="{DynamicResource AppAccentBrush}"
+                                HorizontalAlignment="Center" FontSize="11" Padding="4"/>
+                        <Button Grid.Column="1" Content="GitHub" Click="GitHub_Click"
+                                Background="Transparent" Foreground="{DynamicResource AppAccentBrush}"
+                                HorizontalAlignment="Center" FontSize="11" Padding="4"/>
+                        <Button Grid.Column="2" Content="Updates" Click="Releases_Click"
+                                Background="Transparent" Foreground="{DynamicResource AppAccentBrush}"
+                                HorizontalAlignment="Center" FontSize="11" Padding="4"/>
+                    </Grid>
+
+                    <Separator Margin="0,4" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
+
                     <TextBlock Text="Developed by Isidore Paulin (ipweb.dev)" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                     <TextBlock Text="Powered by: DNGLab, ExifTool, Avalonia UI" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                     <TextBlock Text="Licensed under GNU General Public License v3" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
@@ -38,7 +53,7 @@
 
             <!-- Footer -->
             <Button Grid.Row="2" Content="Close" Click="Close_Click" Classes="accent" Width="95" Height="36" CornerRadius="10"
-                    HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="0,16,0,0"/>
+                    HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="0,14,0,0"/>
         </Grid>
     </Grid>
 </Window>
