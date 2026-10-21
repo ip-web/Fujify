@@ -147,6 +147,19 @@
                                     </StackPanel>
                                     <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenInLightroom}" OnContent="" OffContent=""/>
                                 </Grid>
+
+                                <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}" IsVisible="{Binding IsWindows}"/>
+
+                                <!-- Windows Explorer Context Menu -->
+                                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsWindows}">
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="Windows Context Menu (Open in Fujify)" FontWeight="SemiBold" FontSize="13"
+                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        <TextBlock Text="Adds 'Open in Fujify' to right-click menu on RAW files to queue them automatically" FontSize="11"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsWindowsContextMenuEnabled}" OnContent="" OffContent=""/>
+                                </Grid>
                             </StackPanel>
                         </Border>
                     </StackPanel>

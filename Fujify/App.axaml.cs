@@ -139,6 +139,43 @@ public partial class App : Application
 
     public static void ApplyTheme(bool isDark) => ApplyTheme(isDark ? "Dark" : "Light");
 
+    private static MainViewModel? _activeViewModel;
+    private static MainWindow? _activeMainWindow;
+    private static readonly System.Collections.Concurrent.ConcurrentQueue<string> _pendingStartupFiles = new();
+
+    public static void HandleIncomingFiles(System.Collections.Generic.IReadOnlyList<string> files)
+    {
+        if (files == null || files.Count == 0) return;
+
+        var existingFiles = files.Where(System.IO.File.Exists).ToList();
+        if (existingFiles.Count == 0) return;
+
+        if (_activeViewModel != null)
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+            {
+                if (_activeMainWindow != null)
+                {
+                    _activeMainWindow.Show();
+                    if (_activeMainWindow.WindowState == Avalonia.Controls.WindowState.Minimized)
+                    {
+                        _activeMainWindow.WindowState = Avalonia.Controls.WindowState.Normal;
+                    }
+                    _activeMainWindow.Activate();
+                }
+
+                await _activeViewModel.AddFilesAsync(existingFiles);
+            });
+        }
+        else
+        {
+            foreach (var f in existingFiles)
+            {
+                _pendingStartupFiles.Enqueue(f);
+            }
+        }
+    }
+
     public override void OnFrameworkInitializationCompleted()
     {
         var settingsService = new Services.SettingsService();
@@ -171,14 +208,32 @@ public partial class App : Application
             };
             vm.OwnerWindow = mainWindow;
             desktop.MainWindow = mainWindow;
+            _activeMainWindow = mainWindow;
+            _activeViewModel = vm;
 
+            // Ensure Windows Explorer context menu is kept up-to-date if enabled
+            if (System.OperatingSystem.IsWindows() && settingsService.Settings.EnableWindowsContextMenu)
+            {
+                Services.WindowsContextMenuService.RegisterContextMenu();
+            }
+
+            var startupFiles = new System.Collections.Generic.List<string>();
             if (desktop.Args != null && desktop.Args.Length > 0)
             {
-                var files = desktop.Args.Where(System.IO.File.Exists).ToList();
-                if (files.Count > 0)
+                startupFiles.AddRange(desktop.Args.Where(System.IO.File.Exists));
+            }
+
+            while (_pendingStartupFiles.TryDequeue(out var pending))
+            {
+                if (System.IO.File.Exists(pending) && !startupFiles.Contains(pending, System.StringComparer.OrdinalIgnoreCase))
                 {
-                    Avalonia.Threading.Dispatcher.UIThread.Post(async () => await vm.AddFilesAsync(files));
+                    startupFiles.Add(pending);
                 }
+            }
+
+            if (startupFiles.Count > 0)
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(async () => await vm.AddFilesAsync(startupFiles));
             }
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
