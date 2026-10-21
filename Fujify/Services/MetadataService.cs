@@ -85,6 +85,90 @@ namespace Fujify.Services
             }
         }
 
+        public int GetOrientation(string filePath)
+        {
+            int? direct = RawMetadataReader.TryGetOrientation(filePath);
+            if (direct.HasValue) return direct.Value;
+
+            var runner = FindExifToolRunner();
+            if (runner != null)
+            {
+                try
+                {
+                    string rawArgs = $"-Orientation# -n -s3 \"{filePath}\"";
+                    string arguments = !string.IsNullOrEmpty(runner.Value.PrefixArgs)
+                        ? $"{runner.Value.PrefixArgs} {rawArgs}"
+                        : rawArgs;
+
+                    var (exitCode, output, _) = _processRunner.Run(runner.Value.Command, arguments);
+                    if (exitCode == 0 && int.TryParse(output.Trim(), out int exifOrient) && exifOrient >= 1 && exifOrient <= 8)
+                    {
+                        return exifOrient;
+                    }
+                }
+                catch { }
+            }
+
+            return 1;
+        }
+
+        public ExifData? GetExifData(string filePath)
+        {
+            var runner = FindExifToolRunner();
+            if (runner == null) return null;
+
+            try
+            {
+                string rawArgs = $"-LensModel -Lens -FNumber -Aperture -ExposureTime -ShutterSpeed -ISO -FocalLength -DateTimeOriginal -CreateDate -Orientation \"{filePath}\"";
+                string arguments = !string.IsNullOrEmpty(runner.Value.PrefixArgs)
+                    ? $"{runner.Value.PrefixArgs} {rawArgs}"
+                    : rawArgs;
+
+                var (exitCode, output, error) = _processRunner.Run(runner.Value.Command, arguments);
+                if (exitCode == 0 && !string.IsNullOrWhiteSpace(output))
+                {
+                    string lens = ExtractExifValue(output, "Lens Model", "Lens", "Lens Type", "Lens Spec");
+                    string aperture = ExtractExifValue(output, "F Number", "Aperture Value", "Aperture");
+                    if (aperture.StartsWith("f/", StringComparison.OrdinalIgnoreCase) || aperture.StartsWith("ƒ/", StringComparison.OrdinalIgnoreCase))
+                    {
+                        aperture = aperture.Substring(2).Trim();
+                    }
+                    string shutter = ExtractExifValue(output, "Exposure Time", "Shutter Speed Value", "Shutter Speed");
+                    string iso = ExtractExifValue(output, "ISO");
+                    if (iso.StartsWith("ISO", StringComparison.OrdinalIgnoreCase))
+                    {
+                        iso = iso.Substring(3).Trim();
+                    }
+                    string focal = ExtractExifValue(output, "Focal Length");
+                    string dt = ExtractExifValue(output, "Date/Time Original", "Create Date", "Date Time Original");
+                    string? orientation = ExtractExifValue(output, "Orientation");
+                    if (orientation.Equals("Unknown", StringComparison.OrdinalIgnoreCase))
+                    {
+                        int? direct = RawMetadataReader.TryGetOrientation(filePath);
+                        orientation = direct switch
+                        {
+                            3 => "Rotate 180",
+                            6 => "Rotate 90 CW",
+                            8 => "Rotate 270 CW",
+                            _ => null
+                        };
+                    }
+
+                    return new ExifData(
+                        lens.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? null : lens,
+                        aperture.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? null : aperture,
+                        shutter.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? null : shutter,
+                        iso.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? null : iso,
+                        focal.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? null : focal,
+                        dt.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? null : dt,
+                        orientation?.Equals("Unknown", StringComparison.OrdinalIgnoreCase) == true ? null : orientation
+                    );
+                }
+            }
+            catch { }
+            return null;
+        }
+
         public MetadataResult InjectFujifilmMetadata(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null, string targetUniqueCameraModel = "Fujifilm X-T5")
         {
             // Direct in-memory TIFF/DNG IFD0 rewriting (<2ms, 0 external processes)
@@ -318,7 +402,24 @@ namespace Fujify.Services
             string localPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "libs", binaryName);
             if (File.Exists(localPath)) return (localPath, null);
 
-            // 2. Check system PATH
+            // 2. Check well-known Linux / macOS system paths directly
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                string[] standardPaths = new[]
+                {
+                    "/usr/bin/exiftool",
+                    "/usr/local/bin/exiftool",
+                    "/opt/homebrew/bin/exiftool",
+                    "/snap/bin/exiftool",
+                    "/usr/pkg/bin/exiftool"
+                };
+                foreach (var path in standardPaths)
+                {
+                    if (File.Exists(path)) return (path, null);
+                }
+            }
+
+            // 3. Check system PATH
             var pathEnv = Environment.GetEnvironmentVariable("PATH");
             if (!string.IsNullOrEmpty(pathEnv))
             {
@@ -334,8 +435,8 @@ namespace Fujify.Services
                 }
             }
 
-            // 3. Fallback on Unix/macOS: run bundled perl script
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            // 4. Fallback on Windows only: bundled strawberry perl script
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 string plPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "libs", "exiftool_files", "exiftool.pl");
                 if (File.Exists(plPath))
@@ -347,10 +448,21 @@ namespace Fujify.Services
             return null;
         }
 
-        private static string ExtractExifValue(string exifOutput, string tagName)
+        private static string ExtractExifValue(string exifOutput, params string[] tagNames)
         {
-            var match = Regex.Match(exifOutput, $@"{tagName}\s*:\s*(.+)");
-            return match.Success ? match.Groups[1].Value.Trim() : "Unknown";
+            foreach (var tagName in tagNames)
+            {
+                var match = Regex.Match(exifOutput, $@"(?:^|\n)\s*{Regex.Escape(tagName)}\s*:\s*(.+)", RegexOptions.IgnoreCase);
+                if (match.Success)
+                {
+                    var val = match.Groups[1].Value.Trim();
+                    if (!string.IsNullOrEmpty(val) && !val.Equals("Unknown", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return val;
+                    }
+                }
+            }
+            return "Unknown";
         }
     }
 }

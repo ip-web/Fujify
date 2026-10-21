@@ -129,7 +129,8 @@ namespace Fujify.Services
         }
 
         private static bool IsMobileOrSingleView =>
-            Application.Current?.ApplicationLifetime is ISingleViewApplicationLifetime;
+            Application.Current?.ApplicationLifetime is ISingleViewApplicationLifetime
+            || (MainViewModel.Instance != null && MainViewModel.Instance.IsPhoneLayout);
 
         private static IStorageProvider? GetStorageProvider(Window? owner)
         {
@@ -211,7 +212,7 @@ namespace Fujify.Services
                     {
                         new("All Supported RAW & Photos")
                         {
-                            Patterns = new[] { "*.dng", "*.cr3", "*.crw", "*.erf", "*.raf", "*.3fr", "*.kdc", "*.dcs", "*.dcr", "*.iiq", "*.mos", "*.mef", "*.mrw", "*.nef", "*.nrw", "*.orf", "*.rw2", "*.pef", "*.srw", "*.arw", "*.srf", "*.sr2", "*.*" },
+                            Patterns = new[] { "*.dng", "*.cr2", "*.cr3", "*.crw", "*.erf", "*.raf", "*.3fr", "*.kdc", "*.dcs", "*.dcr", "*.iiq", "*.mos", "*.mef", "*.mrw", "*.nef", "*.nrw", "*.orf", "*.rw2", "*.pef", "*.srw", "*.arw", "*.srf", "*.sr2", "*.*" },
                             MimeTypes = new[] { "image/*", "application/octet-stream", "*/*" }
                         },
                         new("All Files (*.*)") { Patterns = new[] { "*.*" }, MimeTypes = new[] { "*/*" } }

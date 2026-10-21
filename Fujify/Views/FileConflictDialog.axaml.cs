@@ -11,6 +11,11 @@ namespace Fujify.Views
         public FileConflictDialog()
         {
             InitializeComponent();
+            if (!App.SupportsMica)
+            {
+                TransparencyLevelHint = new[] { WindowTransparencyLevel.None };
+                Background = null;
+            }
         }
 
         public FileConflictDialog(FileConflictDialogViewModel viewModel) : this()

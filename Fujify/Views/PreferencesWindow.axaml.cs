@@ -8,6 +8,11 @@ namespace Fujify.Views
         public PreferencesWindow()
         {
             InitializeComponent();
+            if (!App.SupportsMica)
+            {
+                TransparencyLevelHint = new[] { WindowTransparencyLevel.None };
+                Background = null;
+            }
         }
 
         public PreferencesWindow(PreferencesViewModel viewModel) : this()

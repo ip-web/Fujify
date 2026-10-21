@@ -23,7 +23,7 @@ namespace Fujify.Services
 {
     public interface IThumbnailService
     {
-        Bitmap? GenerateThumbnail(string filePath);
+        Bitmap? GenerateThumbnail(string filePath, int? orientation = null);
         Bitmap? GetPlaceholderImage();
     }
 }

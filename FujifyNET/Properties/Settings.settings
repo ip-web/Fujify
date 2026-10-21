@@ -23,5 +23,14 @@
     <Setting Name="SkipThumbnailGeneration" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
+    <Setting Name="AppendSuffix" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="Suffix" Type="System.String" Scope="User">
+      <Value Profile="(Default)">-fujified</Value>
+    </Setting>
+    <Setting Name="AutoOpenInLightroom" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

@@ -2,19 +2,38 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Fujify.Views.MessageDialog"
         Title="Notification"
-        Width="400" Height="220"
+        Width="380" Height="250"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
+        TransparencyLevelHint="Mica, AcrylicBlur"
+        Background="Transparent"
         Icon="/Assets/images/logo.ico">
 
-    <Grid Margin="24" RowDefinitions="Auto,*,Auto">
-        <TextBlock x:Name="TitleText" Grid.Row="0" FontWeight="Bold" FontSize="16" Margin="0,0,0,12"/>
-        
-        <ScrollViewer Grid.Row="1">
-            <TextBlock x:Name="MessageContent" FontSize="13" TextWrapping="Wrap" 
-                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"/>
-        </ScrollViewer>
+    <Grid Background="{DynamicResource AppBackgroundBrush}">
+        <Grid Margin="24" RowDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+            <!-- Icon -->
+            <Border Grid.Row="0" Width="48" Height="48" CornerRadius="24"
+                    Background="{DynamicResource AppGlassPillBrush}"
+                    HorizontalAlignment="Center" Margin="0,0,0,12">
+                <TextBlock Text="✔" FontSize="24" Foreground="{DynamicResource AppAccentBrush}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
 
-        <Button Grid.Row="2" Content="OK" Click="Ok_Click" Classes="accent" Width="85" HorizontalAlignment="Right" HorizontalContentAlignment="Center" Margin="0,16,0,0"/>
+            <!-- Text Content -->
+            <StackPanel Grid.Row="1" Spacing="6" HorizontalAlignment="Center">
+                <TextBlock x:Name="TitleText" FontWeight="Bold" FontSize="17"
+                           Foreground="{DynamicResource AppTextPrimaryBrush}"
+                           HorizontalAlignment="Center" TextAlignment="Center"/>
+                <TextBlock x:Name="MessageContent" FontSize="13" TextWrapping="Wrap" 
+                           Foreground="{DynamicResource AppTextSecondaryBrush}"
+                           HorizontalAlignment="Center" TextAlignment="Center" MaxWidth="320"/>
+            </StackPanel>
+
+            <!-- Centered Action -->
+            <Button Grid.Row="2" Content="Done" Click="Ok_Click" Classes="accent"
+                    Height="38" Width="110" CornerRadius="12"
+                    HorizontalAlignment="Center" HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center" Margin="0,18,0,0"/>
+        </Grid>
     </Grid>
 </Window>

@@ -23,6 +23,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using SkiaSharp;
 
 namespace Fujify.Services
 {
@@ -37,20 +38,26 @@ namespace Fujify.Services
             _processRunner = processRunner ?? new ProcessRunner();
         }
 
-        public Bitmap? GenerateThumbnail(string filePath)
+        public Bitmap? GenerateThumbnail(string filePath, int? orientation = null)
         {
             if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
             {
                 return GetPlaceholderImage();
             }
 
+            int resolvedOrientation = orientation ?? RawMetadataReader.TryGetOrientation(filePath) ?? 1;
+
             try
             {
-                // 1. Fast direct embedded JPEG extraction (works for Sony ARW, Adobe DNG, Canon CR2, Nikon NEF)
-                var embedded = TryExtractEmbeddedJpeg(filePath);
-                if (embedded != null)
+                // 1. Fast direct embedded JPEG extraction (works for Fujifilm RAF, Sony ARW, Adobe DNG, Canon CR2, Nikon NEF)
+                var embeddedBytes = TryExtractEmbeddedJpeg(filePath);
+                if (embeddedBytes != null && embeddedBytes.Length > 0)
                 {
-                    return embedded;
+                    var oriented = DecodeAndOrient(embeddedBytes, resolvedOrientation);
+                    if (oriented != null)
+                    {
+                        return oriented;
+                    }
                 }
             }
             catch (Exception ex)
@@ -76,7 +83,7 @@ namespace Fujify.Services
                                 return GetPlaceholderImage();
                             }
 
-                            bitmap = CreateBitmapFromPath(thumbnailPath);
+                            bitmap = CreateBitmapFromPath(thumbnailPath, resolvedOrientation);
                         }
                         finally
                         {
@@ -96,7 +103,7 @@ namespace Fujify.Services
                 }
                 else
                 {
-                    bitmap = CreateBitmapFromPath(filePath);
+                    bitmap = CreateBitmapFromPath(filePath, resolvedOrientation);
                 }
             }
             catch (Exception ex)
@@ -107,7 +114,127 @@ namespace Fujify.Services
             return bitmap ?? GetPlaceholderImage();
         }
 
-        private static Bitmap? TryExtractEmbeddedJpeg(string filePath)
+        private static Bitmap? DecodeAndOrient(byte[] imageBytes, int orientation)
+        {
+            try
+            {
+                using var ms = new MemoryStream(imageBytes);
+                using var codec = SKCodec.Create(ms);
+                if (codec == null)
+                {
+                    using var fallbackMs = new MemoryStream(imageBytes);
+                    return new Bitmap(fallbackMs);
+                }
+
+                // If orientation was not in the raw header, check if JPEG itself has EncodedOrigin
+                if (orientation == 1 && codec.EncodedOrigin != SKEncodedOrigin.TopLeft)
+                {
+                    orientation = (int)codec.EncodedOrigin;
+                }
+
+                using var originalBitmap = SKBitmap.Decode(codec);
+                if (originalBitmap == null) return null;
+
+                var orientedBitmap = ApplyOrientation(originalBitmap, orientation);
+                bool isOrientedSeparate = !ReferenceEquals(orientedBitmap, originalBitmap);
+
+                try
+                {
+                    // Scale down to max dimension 320 for optimal memory footprint and crisp preview
+                    int maxDim = Math.Max(orientedBitmap.Width, orientedBitmap.Height);
+                    SKBitmap displayBitmap;
+                    bool shouldDisposeDisplay = false;
+
+                    if (maxDim > 320)
+                    {
+                        float scale = 320f / maxDim;
+                        int targetW = Math.Max(1, (int)(orientedBitmap.Width * scale));
+                        int targetH = Math.Max(1, (int)(orientedBitmap.Height * scale));
+                        displayBitmap = orientedBitmap.Resize(new SKImageInfo(targetW, targetH), SKFilterQuality.Medium);
+                        shouldDisposeDisplay = true;
+                    }
+                    else
+                    {
+                        displayBitmap = orientedBitmap;
+                    }
+
+                    try
+                    {
+                        using var image = SKImage.FromBitmap(displayBitmap);
+                        using var data = image.Encode(SKEncodedImageFormat.Jpeg, 85);
+                        using var outMs = new MemoryStream();
+                        data.SaveTo(outMs);
+                        outMs.Position = 0;
+                        return new Bitmap(outMs);
+                    }
+                    finally
+                    {
+                        if (shouldDisposeDisplay)
+                        {
+                            displayBitmap.Dispose();
+                        }
+                    }
+                }
+                finally
+                {
+                    if (isOrientedSeparate)
+                    {
+                        orientedBitmap.Dispose();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[Fujify] DecodeAndOrient failed: {ex.Message}");
+                try
+                {
+                    using var fallbackMs = new MemoryStream(imageBytes);
+                    return new Bitmap(fallbackMs);
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+        }
+
+        private static SKBitmap ApplyOrientation(SKBitmap bitmap, int orientation)
+        {
+            switch (orientation)
+            {
+                case 3: // 180 deg
+                {
+                    var rotated = new SKBitmap(bitmap.Width, bitmap.Height, bitmap.ColorType, bitmap.AlphaType);
+                    using var canvas = new SKCanvas(rotated);
+                    canvas.Translate(bitmap.Width, bitmap.Height);
+                    canvas.RotateDegrees(180);
+                    canvas.DrawBitmap(bitmap, 0, 0);
+                    return rotated;
+                }
+                case 6: // 90 deg CW (Portrait)
+                {
+                    var rotated = new SKBitmap(bitmap.Height, bitmap.Width, bitmap.ColorType, bitmap.AlphaType);
+                    using var canvas = new SKCanvas(rotated);
+                    canvas.Translate(bitmap.Height, 0);
+                    canvas.RotateDegrees(90);
+                    canvas.DrawBitmap(bitmap, 0, 0);
+                    return rotated;
+                }
+                case 8: // 270 deg CW / 90 deg CCW (Portrait)
+                {
+                    var rotated = new SKBitmap(bitmap.Height, bitmap.Width, bitmap.ColorType, bitmap.AlphaType);
+                    using var canvas = new SKCanvas(rotated);
+                    canvas.Translate(0, bitmap.Width);
+                    canvas.RotateDegrees(270);
+                    canvas.DrawBitmap(bitmap, 0, 0);
+                    return rotated;
+                }
+                default:
+                    return bitmap;
+            }
+        }
+
+        private static byte[]? TryExtractEmbeddedJpeg(string filePath)
         {
             try
             {
@@ -117,6 +244,34 @@ namespace Fujify.Services
                 byte[] header = new byte[16];
                 if (fs.Read(header, 0, 16) < 16) return null;
 
+                // 1. Fujifilm RAF: embedded JPEG preview offset at 84 (0x54) and length at 88 (0x58)
+                if (header[0] == 0x46 && header[1] == 0x55 && header[2] == 0x4A && header[3] == 0x49 &&
+                    header[4] == 0x46 && header[5] == 0x49 && header[6] == 0x4C && header[7] == 0x4D)
+                {
+                    if (fs.Length >= 92)
+                    {
+                        fs.Seek(84, SeekOrigin.Begin);
+                        byte[] posLen = new byte[8];
+                        if (fs.Read(posLen, 0, 8) == 8)
+                        {
+                            uint jpos = (uint)((posLen[0] << 24) | (posLen[1] << 16) | (posLen[2] << 8) | posLen[3]);
+                            uint jlen = (uint)((posLen[4] << 24) | (posLen[5] << 16) | (posLen[6] << 8) | posLen[7]);
+                            if (jpos > 0 && jlen > 0 && jpos + jlen <= fs.Length && jlen < 15 * 1024 * 1024)
+                            {
+                                fs.Seek(jpos, SeekOrigin.Begin);
+                                byte[] jpegBytes = new byte[jlen];
+                                int read = fs.Read(jpegBytes, 0, (int)jlen);
+                                if (read == jlen && jpegBytes[0] == 0xFF && jpegBytes[1] == 0xD8)
+                                {
+                                    return jpegBytes;
+                                }
+                            }
+                        }
+                    }
+                    return null;
+                }
+
+                // 2. TIFF-based RAW (DNG, Sony ARW, Canon CR2, Nikon NEF, Olympus ORF, Pentax PEF)
                 bool isLittleEndian;
                 if (header[0] == 0x49 && header[1] == 0x49 && header[2] == 0x2A && header[3] == 0x00)
                     isLittleEndian = true;
@@ -164,8 +319,7 @@ namespace Fujify.Services
                     int read = fs.Read(jpegBytes, 0, (int)jpegLength);
                     if (read == jpegLength && jpegBytes[0] == 0xFF && jpegBytes[1] == 0xD8)
                     {
-                        using var ms = new MemoryStream(jpegBytes);
-                        return new Bitmap(ms);
+                        return jpegBytes;
                     }
                 }
             }
@@ -235,12 +389,12 @@ namespace Fujify.Services
             }
         }
 
-        private static Bitmap? CreateBitmapFromPath(string path)
+        private static Bitmap? CreateBitmapFromPath(string path, int orientation)
         {
             try
             {
-                using var stream = File.OpenRead(path);
-                return Bitmap.DecodeToWidth(stream, 70);
+                byte[] bytes = File.ReadAllBytes(path);
+                return DecodeAndOrient(bytes, orientation);
             }
             catch (Exception ex)
             {

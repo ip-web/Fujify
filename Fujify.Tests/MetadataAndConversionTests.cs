@@ -157,5 +157,31 @@ namespace Fujify.Tests
                 if (File.Exists(tempSettingsPath)) File.Delete(tempSettingsPath);
             }
         }
+
+        [Fact]
+        public void ProgressSummaryText_ShouldFormatDecimalProperly_NeverOmitDecimalPoint()
+        {
+            var vm = new MainViewModel();
+            // Create a fake file with 118.1 MB (118.1 * 1024 * 1024 = 123836826 bytes)
+            long bytes = (long)(118.1 * 1024 * 1024);
+            var tempFile = Path.Combine(Path.GetTempPath(), $"test_size_{Guid.NewGuid():N}.dng");
+            try
+            {
+                using var fs = File.Create(tempFile);
+                fs.SetLength(bytes);
+
+                var fileItem = new Models.FileItem { FilePath = tempFile };
+                vm.Files.Add(fileItem);
+
+                string summary = vm.ProgressSummaryText;
+                Assert.True(summary.Contains("118.1 MB") || summary.Contains("118,1 MB"),
+                    $"Expected decimal format like 118.1 MB or 118,1 MB, but got: {summary}");
+                Assert.DoesNotContain("1181", summary);
+            }
+            finally
+            {
+                if (File.Exists(tempFile)) File.Delete(tempFile);
+            }
+        }
     }
 }

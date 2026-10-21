@@ -106,5 +106,41 @@ namespace FujifyNET.Properties {
                 this["SkipThumbnailGeneration"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AppendSuffix {
+            get {
+                return ((bool)(this["AppendSuffix"]));
+            }
+            set {
+                this["AppendSuffix"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("-fujified")]
+        public string Suffix {
+            get {
+                return ((string)(this["Suffix"]));
+            }
+            set {
+                this["Suffix"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AutoOpenInLightroom {
+            get {
+                return ((bool)(this["AutoOpenInLightroom"]));
+            }
+            set {
+                this["AutoOpenInLightroom"] = value;
+            }
+        }
     }
 }

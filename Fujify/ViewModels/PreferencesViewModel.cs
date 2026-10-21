@@ -31,6 +31,7 @@ namespace Fujify.ViewModels
         private bool _isDarkTheme;
         private bool _embedOriginalRaw;
         private bool _skipThumbnailGeneration;
+        private bool _losslessCompression = true;
         private int _maxConcurrentConversions;
         private bool _autoOpenInLightroom;
         private bool _appendSuffix;
@@ -38,6 +39,12 @@ namespace Fujify.ViewModels
 
         public int TotalThreads => Environment.ProcessorCount;
         public int DefaultConcurrency => Math.Max(1, TotalThreads / 2);
+
+        public bool LosslessCompression
+        {
+            get => _losslessCompression;
+            set => SetProperty(ref _losslessCompression, value);
+        }
 
         public bool AppendSuffix
         {
@@ -51,6 +58,50 @@ namespace Fujify.ViewModels
             set => SetProperty(ref _suffix, value);
         }
 
+        private string _themeMode = "Automatic";
+
+        public string ThemeMode
+        {
+            get => _themeMode;
+            set
+            {
+                if (SetProperty(ref _themeMode, value))
+                {
+                    _isDarkTheme = value != "Light";
+                    OnPropertyChanged(nameof(IsDarkTheme));
+                    OnPropertyChanged(nameof(IsAutoThemeSelected));
+                    OnPropertyChanged(nameof(IsDarkThemeSelected));
+                    OnPropertyChanged(nameof(IsAmoledThemeSelected));
+                    OnPropertyChanged(nameof(IsLightThemeSelected));
+                    App.ApplyTheme(value);
+                }
+            }
+        }
+
+        public bool IsAutoThemeSelected
+        {
+            get => _themeMode.Equals("Automatic", StringComparison.OrdinalIgnoreCase) || _themeMode.Equals("Auto", StringComparison.OrdinalIgnoreCase);
+            set { if (value) ThemeMode = "Automatic"; }
+        }
+
+        public bool IsDarkThemeSelected
+        {
+            get => _themeMode.Equals("Dark", StringComparison.OrdinalIgnoreCase);
+            set { if (value) ThemeMode = "Dark"; }
+        }
+
+        public bool IsAmoledThemeSelected
+        {
+            get => _themeMode.Equals("Amoled", StringComparison.OrdinalIgnoreCase);
+            set { if (value) ThemeMode = "Amoled"; }
+        }
+
+        public bool IsLightThemeSelected
+        {
+            get => _themeMode.Equals("Light", StringComparison.OrdinalIgnoreCase);
+            set { if (value) ThemeMode = "Light"; }
+        }
+
         public bool IsDarkTheme
         {
             get => _isDarkTheme;
@@ -58,7 +109,7 @@ namespace Fujify.ViewModels
             {
                 if (SetProperty(ref _isDarkTheme, value))
                 {
-                    App.ApplyTheme(value);
+                    ThemeMode = value ? (_themeMode == "Amoled" ? "Amoled" : "Dark") : "Light";
                 }
             }
         }
@@ -117,10 +168,14 @@ namespace Fujify.ViewModels
             _settingsService = settingsService;
             var settings = _settingsService.Settings;
 
-            _isDarkTheme = settings.IsDarkTheme;
+            _themeMode = string.IsNullOrEmpty(settings.ThemeMode)
+                ? (settings.IsDarkTheme ? "Dark" : "Light")
+                : settings.ThemeMode;
+            _isDarkTheme = _themeMode != "Light";
             _embedOriginalRaw = settings.EmbedOriginalRaw;
             _skipThumbnailGeneration = settings.SkipThumbnailGeneration;
             _autoOpenInLightroom = settings.AutoOpenInLightroom;
+            _losslessCompression = settings.LosslessCompression;
             _appendSuffix = settings.AppendSuffix;
             _suffix = string.IsNullOrWhiteSpace(settings.Suffix) ? "-fujified" : settings.Suffix;
 
@@ -131,7 +186,7 @@ namespace Fujify.ViewModels
             SaveCommand = new RelayCommand(Save);
             CancelCommand = new RelayCommand(() =>
             {
-                App.ApplyTheme(_settingsService.Settings.IsDarkTheme);
+                App.ApplyTheme(_settingsService.Settings.ThemeMode);
                 CloseAction?.Invoke(false);
             });
         }
@@ -139,15 +194,17 @@ namespace Fujify.ViewModels
         private void Save()
         {
             var s = _settingsService.Settings;
-            s.IsDarkTheme = _isDarkTheme;
+            s.ThemeMode = _themeMode;
+            s.IsDarkTheme = _themeMode != "Light";
             s.EmbedOriginalRaw = _embedOriginalRaw;
             s.SkipThumbnailGeneration = _skipThumbnailGeneration;
+            s.LosslessCompression = _losslessCompression;
             s.MaxConcurrentConversions = _maxConcurrentConversions;
             s.AutoOpenInLightroom = _autoOpenInLightroom;
             s.AppendSuffix = _appendSuffix;
             s.Suffix = string.IsNullOrWhiteSpace(_suffix) ? "-fujified" : _suffix.Trim();
             _settingsService.Save();
-            App.ApplyTheme(_isDarkTheme);
+            App.ApplyTheme(_themeMode);
 
             CloseAction?.Invoke(true);
         }

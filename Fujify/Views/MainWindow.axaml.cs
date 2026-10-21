@@ -26,6 +26,11 @@ namespace Fujify.Views
         public MainWindow()
         {
             InitializeComponent();
+            if (!App.SupportsMica)
+            {
+                TransparencyLevelHint = new[] { WindowTransparencyLevel.None };
+                Background = null;
+            }
         }
     }
 }

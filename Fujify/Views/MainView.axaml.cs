@@ -29,6 +29,8 @@ namespace Fujify.Views
         public MainView()
         {
             InitializeComponent();
+            AddHandler(DragDrop.DragEnterEvent, View_DragEnter);
+            AddHandler(DragDrop.DragLeaveEvent, View_DragLeave);
             AddHandler(DragDrop.DragOverEvent, View_DragOver);
             AddHandler(DragDrop.DropEvent, View_Drop);
         }
@@ -57,13 +59,10 @@ namespace Fujify.Views
             double leftInset = System.Math.Max(0, insets.Left);
             double rightInset = System.Math.Max(0, insets.Right);
 
-            // On mobile platforms, if system has not reported safe area yet, provide fallback
-            if ((System.OperatingSystem.IsAndroid() || System.OperatingSystem.IsIOS()) && topInset == 0)
+            // On mobile platforms, if insets manager was unavailable and reported 0
+            if ((System.OperatingSystem.IsAndroid() || System.OperatingSystem.IsIOS()) && topInset == 0 && bottomInset == 0)
             {
-                topInset = 47;
-            }
-            if ((System.OperatingSystem.IsAndroid() || System.OperatingSystem.IsIOS()) && bottomInset == 0)
-            {
+                topInset = 44;
                 bottomInset = 20;
             }
 
@@ -82,7 +81,19 @@ namespace Fujify.Views
             var tabletBottom = this.FindControl<Border>("TabletBottomBar");
             if (tabletBottom != null)
             {
-                tabletBottom.Padding = new Avalonia.Thickness(16 + leftInset, 12, 16 + rightInset, 12 + bottomInset);
+                tabletBottom.Padding = new Avalonia.Thickness(16 + leftInset, 10, 16 + rightInset, 10 + bottomInset);
+            }
+
+            var prefHeader = this.FindControl<Border>("PreferencesHeaderBar");
+            if (prefHeader != null)
+            {
+                prefHeader.Padding = new Avalonia.Thickness(16 + leftInset, 12 + topInset, 16 + rightInset, 12);
+            }
+
+            var aboutHeader = this.FindControl<Border>("AboutHeaderBar");
+            if (aboutHeader != null)
+            {
+                aboutHeader.Padding = new Avalonia.Thickness(16 + leftInset, 12 + topInset, 16 + rightInset, 12);
             }
 
             var modal = this.FindControl<Border>("ModalDialogContainer");
@@ -110,6 +121,22 @@ namespace Fujify.Views
             }
         }
 
+        private void View_DragEnter(object? sender, DragEventArgs e)
+        {
+            if (DataContext is MainViewModel vm && e.Data.Contains(DataFormats.Files))
+            {
+                vm.IsDragOver = true;
+            }
+        }
+
+        private void View_DragLeave(object? sender, DragEventArgs e)
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                vm.IsDragOver = false;
+            }
+        }
+
         private void View_DragOver(object? sender, DragEventArgs e)
         {
             if (e.Data.Contains(DataFormats.Files))
@@ -124,12 +151,17 @@ namespace Fujify.Views
 
         private async void View_Drop(object? sender, DragEventArgs e)
         {
+            if (DataContext is MainViewModel vm)
+            {
+                vm.IsDragOver = false;
+            }
+
             if (e.Data.Contains(DataFormats.Files))
             {
                 var files = e.Data.GetFiles()?.Select(f => f.Path.LocalPath).ToList();
-                if (files != null && files.Count > 0 && DataContext is MainViewModel vm)
+                if (files != null && files.Count > 0 && DataContext is MainViewModel vm2)
                 {
-                    await vm.AddFilesAsync(files);
+                    await vm2.AddFilesAsync(files);
                 }
             }
         }
@@ -139,6 +171,22 @@ namespace Fujify.Views
             if (DataContext is MainViewModel vm)
             {
                 vm.CloseModal();
+            }
+        }
+
+        private void DataGrid_DoubleTapped(object? sender, TappedEventArgs e)
+        {
+            if (DataContext is MainViewModel vm && vm.SelectedFile != null)
+            {
+                vm.OpenFileCommand.Execute(vm.SelectedFile);
+            }
+        }
+
+        private void GridItem_DoubleTapped(object? sender, TappedEventArgs e)
+        {
+            if (DataContext is MainViewModel vm && vm.SelectedFile != null)
+            {
+                vm.OpenFileCommand.Execute(vm.SelectedFile);
             }
         }
     }

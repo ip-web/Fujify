@@ -4,7 +4,7 @@
 #define MyAppVersion "1.1"
 #define MyAppPublisher "Isidore Paulin"
 #define MyAppURL "https://ipweb.dev"
-#define MyAppExeName "FujifyNET.exe"
+#define MyAppExeName "Fujify.exe"
 #define MyAppSourceDir "publish\win-x64"
 
 [Setup]

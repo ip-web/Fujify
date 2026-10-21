@@ -24,7 +24,7 @@
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:local="clr-namespace:FujifyNET"
         mc:Ignorable="d"
-        Title="Preferences" Height="480" Width="380"
+        Title="Preferences" Height="600" Width="400"
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         Background="Transparent"
         TextElement.FontWeight="Medium"
@@ -125,6 +125,40 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="Skip Thumbnail Generation" VerticalAlignment="Center"/>
                     <ToggleButton x:Name="SkipThumbnailGenerationToggle" Grid.Column="1" Style="{StaticResource MaterialDesignSwitchToggleButton}"/>
+                </Grid>
+
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Add Suffix to File Name" VerticalAlignment="Center"/>
+                    <ToggleButton x:Name="AppendSuffixToggle" Grid.Column="1" Style="{StaticResource MaterialDesignSwitchToggleButton}"
+                                  Checked="AppendSuffixToggle_Changed" Unchecked="AppendSuffixToggle_Changed"/>
+                </Grid>
+
+                <Grid x:Name="SuffixInputGrid" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Suffix:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBox x:Name="SuffixTextBox" Grid.Column="1" 
+                             Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                             Padding="8,6" Height="36"
+                             TextChanged="SuffixTextBox_TextChanged"/>
+                </Grid>
+                <TextBlock x:Name="SuffixPreviewText" FontSize="11" 
+                           Foreground="{DynamicResource MaterialDesignBodyLight}" 
+                           Margin="0,-4,0,12" Text="Preview: DSC0001-fujified.dng"/>
+
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Auto-open in Lightroom" VerticalAlignment="Center"/>
+                    <ToggleButton x:Name="AutoOpenInLightroomToggle" Grid.Column="1" Style="{StaticResource MaterialDesignSwitchToggleButton}"/>
                 </Grid>
 
                 <Grid Margin="0,0,0,4">

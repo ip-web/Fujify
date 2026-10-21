@@ -21,7 +21,13 @@ namespace Fujify.Services
 {
     public class AppSettings
     {
-        public bool IsDarkTheme { get; set; } = true;
+        public string ThemeMode { get; set; } = "Automatic"; // "Automatic", "Dark", "Amoled", "Light"
+
+        public bool IsDarkTheme
+        {
+            get => !ThemeMode.Equals("Light", System.StringComparison.OrdinalIgnoreCase);
+            set => ThemeMode = value ? (ThemeMode.Equals("Amoled", System.StringComparison.OrdinalIgnoreCase) ? "Amoled" : "Dark") : "Light";
+        }
         public double WindowHeight { get; set; } = 770;
         public double WindowWidth { get; set; } = 700;
         public bool BatchProcessing { get; set; } = false;
@@ -31,6 +37,7 @@ namespace Fujify.Services
         public bool AutoOpenInLightroom { get; set; } = false;
         public bool AppendSuffix { get; set; } = false;
         public string Suffix { get; set; } = "-fujified";
+        public bool LosslessCompression { get; set; } = true;
     }
 
     public interface ISettingsService

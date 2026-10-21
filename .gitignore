@@ -369,7 +369,8 @@ FodyWeavers.xsd
 external/**/target/
 **/target/
 
-# Local sample media
-DSC00381.ARW
-DSC00381conv.dng
+# Local sample media and test artifacts
+DSC00381*
 *.dng_original
+Fujify/settings.json
+/*.png
