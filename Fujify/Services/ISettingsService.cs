@@ -38,6 +38,7 @@ namespace Fujify.Services
         public bool AppendSuffix { get; set; } = false;
         public string Suffix { get; set; } = "-fujified";
         public bool LosslessCompression { get; set; } = true;
+        public bool EnableWindowsContextMenu { get; set; } = false;
     }
 
     public interface ISettingsService

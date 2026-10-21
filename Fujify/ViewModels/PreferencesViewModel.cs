@@ -58,6 +58,16 @@ namespace Fujify.ViewModels
             set => SetProperty(ref _suffix, value);
         }
 
+        private bool _isWindowsContextMenuEnabled;
+
+        public bool IsWindows => OperatingSystem.IsWindows();
+
+        public bool IsWindowsContextMenuEnabled
+        {
+            get => _isWindowsContextMenuEnabled;
+            set => SetProperty(ref _isWindowsContextMenuEnabled, value);
+        }
+
         private string _themeMode = "Automatic";
 
         public string ThemeMode
@@ -178,6 +188,8 @@ namespace Fujify.ViewModels
             _losslessCompression = settings.LosslessCompression;
             _appendSuffix = settings.AppendSuffix;
             _suffix = string.IsNullOrWhiteSpace(settings.Suffix) ? "-fujified" : settings.Suffix;
+            _isWindowsContextMenuEnabled = OperatingSystem.IsWindows() &&
+                (WindowsContextMenuService.IsContextMenuRegistered() || settings.EnableWindowsContextMenu);
 
             int saved = settings.MaxConcurrentConversions;
             if (saved <= 0 || saved > TotalThreads) saved = DefaultConcurrency;
@@ -203,6 +215,20 @@ namespace Fujify.ViewModels
             s.AutoOpenInLightroom = _autoOpenInLightroom;
             s.AppendSuffix = _appendSuffix;
             s.Suffix = string.IsNullOrWhiteSpace(_suffix) ? "-fujified" : _suffix.Trim();
+
+            if (OperatingSystem.IsWindows())
+            {
+                if (_isWindowsContextMenuEnabled)
+                {
+                    WindowsContextMenuService.RegisterContextMenu();
+                }
+                else
+                {
+                    WindowsContextMenuService.UnregisterContextMenu();
+                }
+                s.EnableWindowsContextMenu = _isWindowsContextMenuEnabled;
+            }
+
             _settingsService.Save();
             App.ApplyTheme(_themeMode);
 
