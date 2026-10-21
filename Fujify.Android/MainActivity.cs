@@ -109,6 +109,22 @@ public class MainActivity : AvaloniaMainActivity<App>
         // Wire Open in Lightroom handler
         MainViewModel.PlatformOpenInLightroomCallback = OpenInLightroom;
 
+        // Wire native URL opening handler (Default Browser)
+        MainViewModel.PlatformOpenUrlCallback = (url) =>
+        {
+            try
+            {
+                var uri = global::Android.Net.Uri.Parse(url);
+                var browserIntent = new Intent(Intent.ActionView, uri);
+                browserIntent.AddFlags(ActivityFlags.NewTask);
+                StartActivity(browserIntent);
+            }
+            catch (Exception ex)
+            {
+                global::Android.Util.Log.Error("Fujify", $"Error opening url {url}: {ex}");
+            }
+        };
+
         // Process any incoming share or view intent
         HandleIncomingIntent(Intent);
     }

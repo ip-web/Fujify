@@ -106,6 +106,7 @@ namespace Fujify.ViewModels
             OpenHelpCommand = new RelayCommand(ExecuteOpenHelp);
             OpenUpdateCommand = new RelayCommand(ExecuteOpenUpdate);
             ReportBugCommand = new RelayCommand(ExecuteReportBug);
+            OpenWebsiteCommand = new RelayCommand(ExecuteOpenWebsite);
 
             RemoveFileCommand = new RelayCommand<object>(param =>
             {
@@ -806,6 +807,9 @@ namespace Fujify.ViewModels
         public ICommand OpenHelpCommand { get; }
         public ICommand OpenUpdateCommand { get; }
         public ICommand ReportBugCommand { get; }
+        public ICommand OpenWebsiteCommand { get; }
+
+        public static Action<string>? PlatformOpenUrlCallback { get; set; }
 
         #endregion
 
@@ -1444,6 +1448,11 @@ namespace Fujify.ViewModels
         private void ExecuteReportBug()
         {
             CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujify/issues");
+        }
+
+        private void ExecuteOpenWebsite()
+        {
+            CrossPlatformLauncher.OpenUrl("https://ipweb.dev");
         }
 
         #endregion

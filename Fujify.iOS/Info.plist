@@ -20,8 +20,6 @@
     <string>15.0</string>
     <key>UILaunchStoryboardName</key>
     <string>LaunchScreen</string>
-    <key>UILaunchScreen</key>
-    <dict/>
     <key>UIFileSharingEnabled</key>
     <true/>
     <key>LSSupportsOpeningDocumentsInPlace</key>

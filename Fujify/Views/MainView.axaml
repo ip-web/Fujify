@@ -4,6 +4,7 @@
              xmlns:models="clr-namespace:Fujify.Models;assembly=Fujify"
              x:Class="Fujify.Views.MainView"
              x:DataType="vm:MainViewModel"
+             TopLevel.AutoSafeAreaPadding="False"
              DragDrop.AllowDrop="True">
 
     <UserControl.KeyBindings>
@@ -11,7 +12,7 @@
         <KeyBinding Gesture="Back" Command="{Binding RemoveFileCommand}" CommandParameter="{Binding SelectedFile}"/>
     </UserControl.KeyBindings>
 
-    <Grid Background="{DynamicResource AppBackgroundBrush}">
+    <Grid Background="{DynamicResource AppBackgroundBrush}" ClipToBounds="True">
         <!-- BASE APP INTERFACE -->
         <Grid RowDefinitions="Auto,*">
 
@@ -95,21 +96,21 @@
                     <Grid Grid.Row="1">
                         <!-- Empty State -->
                         <ScrollViewer IsVisible="{Binding !HasFiles}" HorizontalScrollBarVisibility="Disabled">
-                            <Border Padding="16,12" VerticalAlignment="Center" HorizontalAlignment="Stretch">
-                                <StackPanel Spacing="16" HorizontalAlignment="Stretch" MaxWidth="340">
-                                    <Border Width="76" Height="76" CornerRadius="38"
+                            <Border Padding="16,8" VerticalAlignment="Center" HorizontalAlignment="Stretch">
+                                <StackPanel Spacing="10" HorizontalAlignment="Stretch" MaxWidth="340">
+                                    <Border Width="64" Height="64" CornerRadius="32"
                                             Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                             HorizontalAlignment="Center">
-                                        <TextBlock Text="📸" FontSize="34" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <TextBlock Text="📸" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
-                                    <TextBlock Text="Add RAW Photos to Begin" FontWeight="Bold" FontSize="18"
+                                    <TextBlock Text="Add RAW Photos to Begin" FontWeight="Bold" FontSize="17"
                                                Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
                                     <TextBlock Text="Tap '+ Add Files' above to import RAW files from your camera, SD card, or photo library."
-                                               FontSize="13" Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                               FontSize="12" Foreground="{DynamicResource AppTextSecondaryBrush}"
                                                TextAlignment="Center" TextWrapping="Wrap"/>
 
                                     <Border Background="{DynamicResource AppSurfaceBrush}"
-                                            CornerRadius="16" Padding="14" Margin="0,8,0,0" BorderThickness="0">
+                                            CornerRadius="16" Padding="12,10" Margin="0,4,0,0" BorderThickness="0">
                                         <StackPanel Spacing="8">
                                             <TextBlock Text="Unlocked Film Simulations" FontWeight="SemiBold" FontSize="12"
                                                        Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
@@ -191,11 +192,11 @@
                     <Border x:Name="PhoneBottomBar" Grid.Row="2"
                             Background="{DynamicResource AppFooterBrush}"
                             BorderThickness="0"
-                            Padding="16,12">
-                        <StackPanel Spacing="10">
+                            Padding="16,8">
+                        <StackPanel Spacing="8">
                             <!-- Grouped Conversion Options Card -->
-                            <Border Background="{DynamicResource AppSurfaceBrush}" CornerRadius="16" Padding="14" BorderThickness="0">
-                                <StackPanel Spacing="10">
+                            <Border Background="{DynamicResource AppSurfaceBrush}" CornerRadius="16" Padding="12,10" BorderThickness="0">
+                                <StackPanel Spacing="8">
                                     <!-- Backup Switch -->
                                     <Grid ColumnDefinitions="*,Auto">
                                         <TextBlock Grid.Column="0" Text="Backup Original DNG files" FontSize="13"
@@ -839,10 +840,14 @@
 
 
         <!-- 3. FULL-SCREEN SLIDING PANEL: PREFERENCES / SETTINGS -->
-        <Grid x:Name="PreferencesSlidePanel" IsVisible="{Binding IsPreferencesModal}" ZIndex="10000"
-              Background="{DynamicResource AppSolidBackgroundBrush}">
+        <Grid x:Name="PreferencesSlidePanel" ZIndex="10000"
+              Background="{DynamicResource AppSolidBackgroundBrush}"
+              RenderTransform="translateX(800px)"
+              Opacity="0"
+              IsHitTestVisible="False">
             <Grid.Transitions>
                 <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.28" Easing="CubicEaseOut"/>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut"/>
                 </Transitions>
             </Grid.Transitions>
@@ -1012,10 +1017,14 @@
 
 
         <!-- 4. FULL-SCREEN SLIDING PANEL: ABOUT FUJIFY -->
-        <Grid x:Name="AboutSlidePanel" IsVisible="{Binding IsAboutModal}" ZIndex="10000"
-              Background="{DynamicResource AppSolidBackgroundBrush}">
+        <Grid x:Name="AboutSlidePanel" ZIndex="10000"
+              Background="{DynamicResource AppSolidBackgroundBrush}"
+              RenderTransform="translateX(800px)"
+              Opacity="0"
+              IsHitTestVisible="False">
             <Grid.Transitions>
                 <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.28" Easing="CubicEaseOut"/>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut"/>
                 </Transitions>
             </Grid.Transitions>
@@ -1088,6 +1097,15 @@
                         <!-- Action Links Card -->
                         <Border Background="{DynamicResource AppSurfaceBrush}" CornerRadius="16" Padding="8" BorderThickness="0">
                             <StackPanel Spacing="2">
+                                <Button Command="{Binding OpenWebsiteCommand}" Background="Transparent" BorderThickness="0"
+                                        HorizontalAlignment="Stretch" Padding="12,10" CornerRadius="10">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="Visit Website (ipweb.dev)" FontSize="13"
+                                                   Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,8,0"/>
+                                        <TextBlock Grid.Column="1" Text="›" FontSize="16" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    </Grid>
+                                </Button>
+                                <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
                                 <Button Command="{Binding OpenHelpCommand}" Background="Transparent" BorderThickness="0"
                                         HorizontalAlignment="Stretch" Padding="12,10" CornerRadius="10">
                                     <Grid ColumnDefinitions="*,Auto">
