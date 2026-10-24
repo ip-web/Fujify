@@ -39,6 +39,22 @@ namespace Fujify.Services
         public string Suffix { get; set; } = "-fujified";
         public bool LosslessCompression { get; set; } = true;
         public bool EnableWindowsContextMenu { get; set; } = false;
+        public string? LicenseKey { get; set; }
+        public string? LicenseeEmail { get; set; }
+        public string? LicenseSignature { get; set; }
+        public string? DeviceId { get; set; }
+        public string? OfflineToken { get; set; }
+        public System.DateTime? OfflineTokenExpires { get; set; }
+        public string? AccessToken { get; set; }
+        public string? RefreshToken { get; set; }
+        public string? AccountEmail { get; set; }
+        public string? AccountDisplayName { get; set; }
+        public int MaxActivations { get; set; } = 3;
+        public int UsedActivations { get; set; } = 0;
+        public string LicenseApiBaseUrl { get; set; } = "https://fujifier.net/wp-json/fujifier/v1";
+        public bool CheckForUpdatesOnStartup { get; set; } = true;
+        public string? SkippedVersion { get; set; }
+        public System.DateTime? LastUpdateCheck { get; set; }
     }
 
     public interface ISettingsService

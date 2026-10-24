@@ -1,0 +1,86 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Fujify.Views.UpdateDialog"
+        Title="New Update Available - Fujifier"
+        Width="520" Height="490"
+        MinWidth="460" MinHeight="420"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        TransparencyLevelHint="Mica, AcrylicBlur"
+        Background="Transparent"
+        Icon="/Assets/images/logo.ico">
+
+    <Grid Background="{DynamicResource AppBackgroundBrush}">
+        <Grid Margin="24" RowDefinitions="Auto, *, Auto, Auto">
+            <!-- 1. Header: Icon & Version Badge -->
+            <Grid Grid.Row="0" ColumnDefinitions="Auto, *" Margin="0,0,0,16">
+                <Border Grid.Column="0" Width="46" Height="46" CornerRadius="23" 
+                        Background="{DynamicResource AppGlassPillBrush}" 
+                        VerticalAlignment="Center" Margin="0,0,14,0">
+                    <TextBlock Text="🚀" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <TextBlock Text="New Version Available" FontWeight="Bold" FontSize="17" 
+                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                        <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="6" Padding="6,2" VerticalAlignment="Center">
+                            <TextBlock x:Name="VersionBadgeText" Text="v2.2.0" FontSize="11" FontWeight="Bold" Foreground="White"/>
+                        </Border>
+                    </StackPanel>
+                    <TextBlock x:Name="CurrentVsNewText" Text="Current: v2.1.0 • Latest release is ready" 
+                               FontSize="12" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- 2. Release Notes Card (Scrollable) -->
+            <Border Grid.Row="1" Background="{DynamicResource AppSurfaceBrush}" CornerRadius="14" Padding="16" BorderThickness="0">
+                <Grid RowDefinitions="Auto, *">
+                    <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,0,0,10">
+                        <TextBlock x:Name="ReleaseTitleText" Text="Release Highlights" FontWeight="SemiBold" FontSize="13" 
+                                   Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock x:Name="ReleaseDateText" Grid.Column="1" Text="Just now" FontSize="11" 
+                                   Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <TextBlock x:Name="ReleaseNotesText" FontSize="12" TextWrapping="Wrap" LineHeight="18"
+                                   Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                   Text="Loading release notes..."/>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- 3. Download Progress & Status Area -->
+            <StackPanel Grid.Row="2" Spacing="6" Margin="0,12,0,12">
+                <Grid ColumnDefinitions="*, Auto">
+                    <TextBlock x:Name="DownloadStatusText" Text="Ready to update" FontSize="11" 
+                               Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                    <TextBlock x:Name="DownloadPercentText" Grid.Column="1" Text="" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource AppAccentBrush}"/>
+                </Grid>
+
+                <ProgressBar x:Name="DownloadProgressBar" Height="6" CornerRadius="3" 
+                             Minimum="0" Maximum="100" Value="0" IsVisible="False"
+                             Foreground="{DynamicResource AppAccentBrush}"/>
+
+                <TextBlock x:Name="DownloadErrorText" FontSize="11" Foreground="#E74C3C" 
+                           IsVisible="False" TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <!-- 4. Actions Toolbar -->
+            <Grid Grid.Row="3" ColumnDefinitions="Auto, *, Auto, Auto">
+                <Button Grid.Column="0" Content="Skip This Version" Click="SkipVersion_Click" 
+                        Background="Transparent" BorderThickness="0" Foreground="{DynamicResource AppTextSecondaryBrush}"
+                        FontSize="11" Padding="8,4" VerticalAlignment="Center"/>
+
+                <Button Grid.Column="2" Content="Later" Click="Later_Click" 
+                        Height="36" Padding="16,0" CornerRadius="10" Margin="0,0,8,0"
+                        VerticalContentAlignment="Center"/>
+
+                <Button x:Name="InstallButton" Grid.Column="3" Content="Update Now" Click="Install_Click" 
+                        Classes="accent" Height="36" Padding="18,0" CornerRadius="10" FontWeight="SemiBold"
+                        VerticalContentAlignment="Center"/>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

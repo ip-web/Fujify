@@ -5,6 +5,13 @@
     <Nullable>enable</Nullable>
     <ApplicationManifest Condition="'$(TargetPlatformIdentifier)' == ''">app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\images\logo.ico</ApplicationIcon>
+    <AssemblyName>Fujifier</AssemblyName>
+    <Product>Fujifier</Product>
+    <AssemblyTitle>Fujifier</AssemblyTitle>
+    <Description>Fujifilm Film Simulation Profiles for Any RAW Photo</Description>
+    <Version>2.1.0</Version>
+    <AssemblyVersion>2.1.0.0</AssemblyVersion>
+    <FileVersion>2.1.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

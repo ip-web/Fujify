@@ -1,6 +1,6 @@
-After getting all my photography gear stolen and not having the funds and time to buy back on Fujifilm, I settled down to buying used Sony gear. I immediately missed the Fuji film simulations which had become one of the pillars of my editing process. That's what motivated me to develop this program to bring back some Fujifilm magic into my shots. After some trials and errors, I'm glad to present you with Fujify.   
+After getting all my photography gear stolen and not having the funds and time to buy back on Fujifilm, I settled down to buying used Sony gear. I immediately missed the Fuji film simulations which had become one of the pillars of my editing process. That's what motivated me to develop this program to bring back some Fujifilm magic into my shots. After some trials and errors, I'm glad to present you with Fujifier.   
 
-# FUJIFY - Fujifilm Film Simulation Unlocker
+# FUJIFIER - Fujifilm Film Simulation Unlocker
 Unlock the Fujifilm Film Simulations for any camera's RAW files in Lightroom. This program allows you to convert DNG ( or any other RAW files with conversion ) from other camera brands to be compatible with Lightroom's Fujifilm film simulation profiles.
 
 ## Features

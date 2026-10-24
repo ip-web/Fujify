@@ -18,16 +18,24 @@
  */
 
 using System;
+using System.Threading.Tasks;
 using System.Windows.Input;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Fujify.Common;
+using Fujify.Models;
 using Fujify.Services;
+using Fujify.Views;
 
 namespace Fujify.ViewModels
 {
     public class PreferencesViewModel : ObservableObject
     {
         private readonly ISettingsService _settingsService;
+        private readonly ILicenseService _licenseService;
+        private readonly IUpdateService _updateService;
+
         private bool _isDarkTheme;
         private bool _embedOriginalRaw;
         private bool _skipThumbnailGeneration;
@@ -36,9 +44,93 @@ namespace Fujify.ViewModels
         private bool _autoOpenInLightroom;
         private bool _appendSuffix;
         private string _suffix = "-fujified";
+        private bool _isWindowsContextMenuEnabled;
+        private string _themeMode = "Automatic";
+        private bool _checkForUpdatesOnStartup = true;
+
+        private bool _isCheckingForUpdate;
+        private string _updateStatusMessage = string.Empty;
+        private string _updateStatusColor = "#A0A0AC";
+        private bool _hasUpdateStatusMessage;
+
+        private string _licenseKeyInput = string.Empty;
+        private string _accountEmailInput = string.Empty;
+        private string _accountPasswordInput = string.Empty;
+        private bool _isAccountTabActive = false;
+        private string _licenseMessageText = string.Empty;
+        private string _licenseMessageColor = "#A0A0AC";
+        private bool _hasLicenseMessage = false;
 
         public int TotalThreads => Environment.ProcessorCount;
         public int DefaultConcurrency => Math.Max(1, TotalThreads / 2);
+
+        public bool IsPro => _licenseService.IsPro;
+
+        public string LicenseStatusText => _licenseService.IsPro
+            ? "Fujifier Pro (Activated)"
+            : "Fujifier Free Tier";
+
+        public string LicenseDescriptionText => _licenseService.IsPro
+            ? (!string.IsNullOrWhiteSpace(_licenseService.CurrentStatus.LicenseeEmail)
+                ? $"Licensed to: {_licenseService.CurrentStatus.LicenseeEmail} ({SlotInfoText})"
+                : $"Lifetime Pro License Active ({SlotInfoText})")
+            : "Queue limited to 10 photos, 15s cooldown timer, context menu locked.";
+
+        public string LicenseKeyInput
+        {
+            get => _licenseKeyInput;
+            set => SetProperty(ref _licenseKeyInput, value);
+        }
+
+        public string AccountEmailInput
+        {
+            get => _accountEmailInput;
+            set => SetProperty(ref _accountEmailInput, value);
+        }
+
+        public string AccountPasswordInput
+        {
+            get => _accountPasswordInput;
+            set => SetProperty(ref _accountPasswordInput, value);
+        }
+
+        public bool IsAccountTabActive
+        {
+            get => _isAccountTabActive;
+            set
+            {
+                if (SetProperty(ref _isAccountTabActive, value))
+                {
+                    OnPropertyChanged(nameof(IsKeyTabActive));
+                }
+            }
+        }
+
+        public bool IsKeyTabActive => !IsAccountTabActive;
+
+        public bool IsAccountLoggedIn => _licenseService.IsAccountLoggedIn;
+
+        public string AccountDisplayText => _licenseService.AccountEmail ?? "Not connected";
+
+        public string SlotInfoText => _licenseService.SlotInfoText;
+
+        public string LicenseMessageText
+        {
+            get => _licenseMessageText;
+            set => SetProperty(ref _licenseMessageText, value);
+        }
+
+        public string LicenseMessageColor
+        {
+            get => _licenseMessageColor;
+            set => SetProperty(ref _licenseMessageColor, value);
+        }
+
+        public bool HasLicenseMessage
+        {
+            get => _hasLicenseMessage;
+            set => SetProperty(ref _hasLicenseMessage, value);
+        }
 
         public bool LosslessCompression
         {
@@ -58,17 +150,25 @@ namespace Fujify.ViewModels
             set => SetProperty(ref _suffix, value);
         }
 
-        private bool _isWindowsContextMenuEnabled;
-
         public bool IsWindows => OperatingSystem.IsWindows();
 
         public bool IsWindowsContextMenuEnabled
         {
-            get => _isWindowsContextMenuEnabled;
-            set => SetProperty(ref _isWindowsContextMenuEnabled, value);
-        }
+            get => _licenseService.IsPro && _isWindowsContextMenuEnabled;
+            set
+            {
+                if (value && !_licenseService.IsPro)
+                {
+                    LicenseMessageText = "Windows Explorer context menu integration is exclusive to Fujifier Pro.";
+                    LicenseMessageColor = "#F39C12";
+                    HasLicenseMessage = true;
+                    OnPropertyChanged(nameof(IsWindowsContextMenuEnabled));
+                    return;
+                }
 
-        private string _themeMode = "Automatic";
+                SetProperty(ref _isWindowsContextMenuEnabled, value);
+            }
+        }
 
         public string ThemeMode
         {
@@ -88,30 +188,6 @@ namespace Fujify.ViewModels
             }
         }
 
-        public bool IsAutoThemeSelected
-        {
-            get => _themeMode.Equals("Automatic", StringComparison.OrdinalIgnoreCase) || _themeMode.Equals("Auto", StringComparison.OrdinalIgnoreCase);
-            set { if (value) ThemeMode = "Automatic"; }
-        }
-
-        public bool IsDarkThemeSelected
-        {
-            get => _themeMode.Equals("Dark", StringComparison.OrdinalIgnoreCase);
-            set { if (value) ThemeMode = "Dark"; }
-        }
-
-        public bool IsAmoledThemeSelected
-        {
-            get => _themeMode.Equals("Amoled", StringComparison.OrdinalIgnoreCase);
-            set { if (value) ThemeMode = "Amoled"; }
-        }
-
-        public bool IsLightThemeSelected
-        {
-            get => _themeMode.Equals("Light", StringComparison.OrdinalIgnoreCase);
-            set { if (value) ThemeMode = "Light"; }
-        }
-
         public bool IsDarkTheme
         {
             get => _isDarkTheme;
@@ -119,21 +195,32 @@ namespace Fujify.ViewModels
             {
                 if (SetProperty(ref _isDarkTheme, value))
                 {
-                    ThemeMode = value ? (_themeMode == "Amoled" ? "Amoled" : "Dark") : "Light";
+                    _themeMode = value ? "Dark" : "Light";
+                    OnPropertyChanged(nameof(ThemeMode));
+                    OnPropertyChanged(nameof(IsAutoThemeSelected));
+                    OnPropertyChanged(nameof(IsDarkThemeSelected));
+                    OnPropertyChanged(nameof(IsAmoledThemeSelected));
+                    OnPropertyChanged(nameof(IsLightThemeSelected));
+                    App.ApplyTheme(_themeMode);
                 }
             }
+        }
+
+        public bool IsAutoThemeSelected => _themeMode.Equals("Automatic", StringComparison.OrdinalIgnoreCase) || _themeMode.Equals("Auto", StringComparison.OrdinalIgnoreCase);
+        public bool IsDarkThemeSelected => _themeMode.Equals("Dark", StringComparison.OrdinalIgnoreCase);
+        public bool IsAmoledThemeSelected => _themeMode.Equals("Amoled", StringComparison.OrdinalIgnoreCase);
+        public bool IsLightThemeSelected => _themeMode.Equals("Light", StringComparison.OrdinalIgnoreCase);
+
+        public bool EmbedOriginalRaw
+        {
+            get => _embedOriginalRaw;
+            set => SetProperty(ref _embedOriginalRaw, value);
         }
 
         public bool AutoOpenInLightroom
         {
             get => _autoOpenInLightroom;
             set => SetProperty(ref _autoOpenInLightroom, value);
-        }
-
-        public bool EmbedOriginalRaw
-        {
-            get => _embedOriginalRaw;
-            set => SetProperty(ref _embedOriginalRaw, value);
         }
 
         public bool SkipThumbnailGeneration
@@ -168,15 +255,70 @@ namespace Fujify.ViewModels
             }
         }
 
+        public bool CheckForUpdatesOnStartup
+        {
+            get => _checkForUpdatesOnStartup;
+            set => SetProperty(ref _checkForUpdatesOnStartup, value);
+        }
+
+        public bool IsCheckingForUpdate
+        {
+            get => _isCheckingForUpdate;
+            set => SetProperty(ref _isCheckingForUpdate, value);
+        }
+
+        public string UpdateStatusMessage
+        {
+            get => _updateStatusMessage;
+            set => SetProperty(ref _updateStatusMessage, value);
+        }
+
+        public string UpdateStatusColor
+        {
+            get => _updateStatusColor;
+            set => SetProperty(ref _updateStatusColor, value);
+        }
+
+        public bool HasUpdateStatusMessage
+        {
+            get => _hasUpdateStatusMessage;
+            set => SetProperty(ref _hasUpdateStatusMessage, value);
+        }
+
+        public string CurrentAppVersionText => $"Current Version: v{_updateService.CurrentVersionString}";
+
         public ICommand SaveCommand { get; }
         public ICommand CancelCommand { get; }
+        public ICommand UpgradeToProCommand { get; }
+        public ICommand ActivateLicenseCommand { get; }
+        public ICommand DeactivateLicenseCommand { get; }
+        public ICommand CheckForUpdatesCommand { get; }
+        public ICommand AccountLoginCommand { get; }
+        public ICommand LogoutAccountCommand { get; }
+        public ICommand SetKeyTabCommand { get; }
+        public ICommand SetAccountTabCommand { get; }
 
         public Action<bool>? CloseAction { get; set; }
 
-        public PreferencesViewModel(ISettingsService settingsService)
+        public PreferencesViewModel(ISettingsService settingsService, ILicenseService? licenseService = null, IUpdateService? updateService = null)
         {
             _settingsService = settingsService;
+            _licenseService = licenseService ?? new LicenseService(_settingsService);
+            _updateService = updateService ?? new UpdateService(_settingsService);
             var settings = _settingsService.Settings;
+
+            _checkForUpdatesOnStartup = settings.CheckForUpdatesOnStartup;
+
+            _licenseService.LicenseChanged += (s, status) =>
+            {
+                OnPropertyChanged(nameof(IsPro));
+                OnPropertyChanged(nameof(LicenseStatusText));
+                OnPropertyChanged(nameof(LicenseDescriptionText));
+                OnPropertyChanged(nameof(IsWindowsContextMenuEnabled));
+                OnPropertyChanged(nameof(IsAccountLoggedIn));
+                OnPropertyChanged(nameof(AccountDisplayText));
+                OnPropertyChanged(nameof(SlotInfoText));
+            };
 
             _themeMode = string.IsNullOrEmpty(settings.ThemeMode)
                 ? (settings.IsDarkTheme ? "Dark" : "Light")
@@ -188,7 +330,7 @@ namespace Fujify.ViewModels
             _losslessCompression = settings.LosslessCompression;
             _appendSuffix = settings.AppendSuffix;
             _suffix = string.IsNullOrWhiteSpace(settings.Suffix) ? "-fujified" : settings.Suffix;
-            _isWindowsContextMenuEnabled = OperatingSystem.IsWindows() &&
+            _isWindowsContextMenuEnabled = OperatingSystem.IsWindows() && _licenseService.IsPro &&
                 (WindowsContextMenuService.IsContextMenuRegistered() || settings.EnableWindowsContextMenu);
 
             int saved = settings.MaxConcurrentConversions;
@@ -200,6 +342,140 @@ namespace Fujify.ViewModels
             {
                 App.ApplyTheme(_settingsService.Settings.ThemeMode);
                 CloseAction?.Invoke(false);
+            });
+
+            UpgradeToProCommand = new RelayCommand(() =>
+            {
+                CrossPlatformLauncher.OpenUrl("https://fujifier.net/pro");
+            });
+
+            SetKeyTabCommand = new RelayCommand(() => IsAccountTabActive = false);
+            SetAccountTabCommand = new RelayCommand(() => IsAccountTabActive = true);
+
+            AccountLoginCommand = new AsyncRelayCommand(async () =>
+            {
+                if (string.IsNullOrWhiteSpace(AccountEmailInput) || string.IsNullOrWhiteSpace(AccountPasswordInput))
+                {
+                    LicenseMessageText = "Please enter both your account email and password.";
+                    LicenseMessageColor = "#E74C3C";
+                    HasLicenseMessage = true;
+                    return;
+                }
+
+                LicenseMessageText = "Signing in to fujifier.net...";
+                LicenseMessageColor = "#A0A0AC";
+                HasLicenseMessage = true;
+
+                var res = await _licenseService.LoginWithAccountAsync(AccountEmailInput, AccountPasswordInput);
+                if (res.Success)
+                {
+                    LicenseMessageText = res.ErrorMessage ?? "✔ Signed in successfully and license synced!";
+                    LicenseMessageColor = "#01D701";
+                    HasLicenseMessage = true;
+                    AccountPasswordInput = string.Empty;
+                }
+                else
+                {
+                    LicenseMessageText = res.ErrorMessage ?? "Authentication failed.";
+                    LicenseMessageColor = "#E74C3C";
+                    HasLicenseMessage = true;
+                }
+            });
+
+            LogoutAccountCommand = new AsyncRelayCommand(async () =>
+            {
+                await _licenseService.LogoutAccountAsync();
+                LicenseMessageText = "Disconnected from Fujifier account.";
+                LicenseMessageColor = "#A0A0AC";
+                HasLicenseMessage = true;
+            });
+
+            ActivateLicenseCommand = new AsyncRelayCommand(async () =>
+            {
+                if (string.IsNullOrWhiteSpace(LicenseKeyInput))
+                {
+                    LicenseMessageText = "Please enter your license key (e.g. FUJI-XXXX-XXXX-XXXX).";
+                    LicenseMessageColor = "#E74C3C";
+                    HasLicenseMessage = true;
+                    return;
+                }
+
+                LicenseMessageText = "Verifying license and activating device slot...";
+                LicenseMessageColor = "#A0A0AC";
+                HasLicenseMessage = true;
+
+                var res = await _licenseService.ActivateLicenseKeyAsync(LicenseKeyInput);
+                if (res.Success)
+                {
+                    LicenseMessageText = "✔ Pro license activated on this device!";
+                    LicenseMessageColor = "#01D701";
+                    HasLicenseMessage = true;
+                    LicenseKeyInput = string.Empty;
+                }
+                else
+                {
+                    LicenseMessageText = res.ErrorMessage ?? "Invalid license key.";
+                    LicenseMessageColor = "#E74C3C";
+                    HasLicenseMessage = true;
+                }
+            });
+
+            DeactivateLicenseCommand = new AsyncRelayCommand(async () =>
+            {
+                LicenseMessageText = "Deactivating license and releasing device slot...";
+                LicenseMessageColor = "#A0A0AC";
+                HasLicenseMessage = true;
+
+                await _licenseService.DeactivateLicenseAsync();
+                LicenseMessageText = "License deactivated. Device slot freed on fujifier.net.";
+                LicenseMessageColor = "#A0A0AC";
+                HasLicenseMessage = true;
+            });
+
+            CheckForUpdatesCommand = new AsyncRelayCommand(async () =>
+            {
+                IsCheckingForUpdate = true;
+                UpdateStatusMessage = "Checking GitHub releases...";
+                UpdateStatusColor = "#A0A0AC";
+                HasUpdateStatusMessage = true;
+
+                try
+                {
+                    var result = await _updateService.CheckForUpdateAsync(force: true);
+                    if (result.IsUpdateAvailable && result.UpdateInfo != null)
+                    {
+                        UpdateStatusMessage = $"Update available: {result.UpdateInfo.TagName}!";
+                        UpdateStatusColor = "#01D701";
+
+                        if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+                        {
+                            await UpdateDialog.ShowUpdateDialogAsync(desktop.MainWindow, result.UpdateInfo, _updateService);
+                        }
+                        else
+                        {
+                            await UpdateDialog.ShowUpdateDialogAsync(null, result.UpdateInfo, _updateService);
+                        }
+                    }
+                    else if (result.Success && !result.IsUpdateAvailable)
+                    {
+                        UpdateStatusMessage = $"You're on the latest version ({_updateService.CurrentVersionString}).";
+                        UpdateStatusColor = "#01D701";
+                    }
+                    else
+                    {
+                        UpdateStatusMessage = result.ErrorMessage ?? "Could not check for updates.";
+                        UpdateStatusColor = "#E74C3C";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    UpdateStatusMessage = $"Error: {ex.Message}";
+                    UpdateStatusColor = "#E74C3C";
+                }
+                finally
+                {
+                    IsCheckingForUpdate = false;
+                }
             });
         }
 
@@ -215,18 +491,20 @@ namespace Fujify.ViewModels
             s.AutoOpenInLightroom = _autoOpenInLightroom;
             s.AppendSuffix = _appendSuffix;
             s.Suffix = string.IsNullOrWhiteSpace(_suffix) ? "-fujified" : _suffix.Trim();
+            s.CheckForUpdatesOnStartup = _checkForUpdatesOnStartup;
 
             if (OperatingSystem.IsWindows())
             {
-                if (_isWindowsContextMenuEnabled)
+                if (_isWindowsContextMenuEnabled && _licenseService.IsPro)
                 {
                     WindowsContextMenuService.RegisterContextMenu();
+                    s.EnableWindowsContextMenu = true;
                 }
-                else
+                else if (s.EnableWindowsContextMenu || WindowsContextMenuService.IsContextMenuRegistered())
                 {
                     WindowsContextMenuService.UnregisterContextMenu();
+                    s.EnableWindowsContextMenu = false;
                 }
-                s.EnableWindowsContextMenu = _isWindowsContextMenuEnabled;
             }
 
             _settingsService.Save();

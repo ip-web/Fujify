@@ -47,14 +47,14 @@ namespace Fujify.Services
                     string dir = PlatformStagingDirectoryResolver();
                     if (!string.IsNullOrWhiteSpace(dir))
                     {
-                        string staging = Path.Combine(dir, "Fujify_Staging");
+                        string staging = Path.Combine(dir, "Fujifier_Staging");
                         Directory.CreateDirectory(staging);
                         return staging;
                     }
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"[Fujify] Error resolving platform staging dir: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[Fujifier] Error resolving platform staging dir: {ex.Message}");
                 }
             }
 
@@ -71,13 +71,13 @@ namespace Fujify.Services
                     baseDir = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                 }
 
-                string stagingDir = Path.Combine(baseDir, "Fujify_Staging");
+                string stagingDir = Path.Combine(baseDir, "Fujifier_Staging");
                 Directory.CreateDirectory(stagingDir);
                 return stagingDir;
             }
             catch
             {
-                string fallback = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Fujify_Staging");
+                string fallback = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Fujifier_Staging");
                 Directory.CreateDirectory(fallback);
                 return fallback;
             }

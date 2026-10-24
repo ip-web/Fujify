@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:Fujify.ViewModels;assembly=Fujify"
-             xmlns:models="clr-namespace:Fujify.Models;assembly=Fujify"
+             xmlns:vm="clr-namespace:Fujify.ViewModels;assembly=Fujifier"
+             xmlns:models="clr-namespace:Fujify.Models;assembly=Fujifier"
              x:Class="Fujify.Views.MainView"
              x:DataType="vm:MainViewModel"
              TopLevel.AutoSafeAreaPadding="False"
@@ -29,7 +29,7 @@
                         </Border>
                         <StackPanel VerticalAlignment="Center" Spacing="1">
                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                <TextBlock Text="Fujify" FontWeight="Bold" FontSize="17" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                <TextBlock Text="Fujifier" FontWeight="Bold" FontSize="17" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                 <Border Background="{DynamicResource AppGlassPillBrush}" CornerRadius="6" Padding="6,2" VerticalAlignment="Center"
                                         IsVisible="{Binding !IsPhoneLayout}">
                                     <TextBlock Text="FILM SIM" FontSize="9" FontWeight="Black" Foreground="White"/>
@@ -52,14 +52,14 @@
                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                 FontSize="14" ToolTip.Tip="Settings"/>
 
-                        <!-- About Fujify -->
+                        <!-- About Fujifier -->
                         <Button Content="ℹ" Command="{Binding OpenAboutCommand}"
                                 Background="{DynamicResource AppGlassPillBrush}"
                                 Foreground="{DynamicResource AppTextPrimaryBrush}"
                                 BorderThickness="0"
                                 Width="36" Height="36" CornerRadius="18" Padding="0"
                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                FontSize="14" ToolTip.Tip="About Fujify"/>
+                                FontSize="14" ToolTip.Tip="About Fujifier"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -1011,13 +1011,39 @@
                                     <!-- Windows Explorer Context Menu -->
                                     <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding Preferences.IsWindows}">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
-                                            <TextBlock Text="Windows Context Menu (Open in Fujify)" FontSize="14" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
-                                            <TextBlock Text="Adds 'Open in Fujify' to right-click menu on RAW files to queue them automatically" FontSize="11"
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="Windows Context Menu (Fujifier)" FontSize="14" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
+                                                <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="4" Padding="5,1" 
+                                                        IsVisible="{Binding !Preferences.IsPro}" VerticalAlignment="Center">
+                                                    <TextBlock Text="PRO" FontSize="10" FontWeight="Bold" Foreground="White"/>
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="Adds 'Fujifier' cascading options to right-click menu on RAW files for direct processing and queueing" FontSize="11"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding Preferences.IsWindowsContextMenuEnabled}" OnContent="" OffContent="" VerticalAlignment="Center"/>
                                     </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- License & Plan Card -->
+                            <TextBlock Text="License &amp; Plan" FontWeight="Bold" FontSize="15" Foreground="{DynamicResource AppTextPrimaryBrush}" Margin="0,16,0,8"/>
+                            <Border Classes="card">
+                                <StackPanel Spacing="10">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2">
+                                            <TextBlock Text="{Binding Preferences.LicenseStatusText}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <TextBlock Text="{Binding Preferences.LicenseDescriptionText}" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="⭐ Upgrade to Pro" Command="{Binding Preferences.UpgradeToProCommand}" Classes="accent" IsVisible="{Binding !Preferences.IsPro}" Height="32" Padding="12,0" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                                        <TextBox Grid.Column="0" Text="{Binding Preferences.LicenseKeyInput, Mode=TwoWay}" Watermark="Enter license key (FUJIFIER-PRO...)" Height="32" CornerRadius="8" FontSize="12" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                                        <Button Grid.Column="1" Content="Activate Key" Command="{Binding Preferences.ActivateLicenseCommand}" Height="32" Padding="12,0" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                    </Grid>
+                                    <TextBlock Text="{Binding Preferences.LicenseMessageText}" FontSize="11" Foreground="{Binding Preferences.LicenseMessageColor}" IsVisible="{Binding Preferences.HasLicenseMessage}"/>
                                 </StackPanel>
                             </Border>
                         </StackPanel>
@@ -1029,7 +1055,7 @@
         </Grid>
 
 
-        <!-- 4. FULL-SCREEN SLIDING PANEL: ABOUT FUJIFY -->
+        <!-- 4. FULL-SCREEN SLIDING PANEL: ABOUT FUJIFIER -->
         <Grid x:Name="AboutSlidePanel" ZIndex="10000"
               Background="{DynamicResource AppSolidBackgroundBrush}"
               RenderTransform="translateX(800px)"
@@ -1056,7 +1082,7 @@
                             </StackPanel>
                         </Button>
 
-                        <TextBlock Grid.Column="1" Text="About Fujify" FontWeight="Bold" FontSize="17"
+                        <TextBlock Grid.Column="1" Text="About Fujifier" FontWeight="Bold" FontSize="17"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Foreground="{DynamicResource AppTextPrimaryBrush}"/>
 
@@ -1072,7 +1098,7 @@
                             <Border Width="80" Height="80" CornerRadius="20" ClipToBounds="True" Background="{DynamicResource AppGlassPillBrush}" HorizontalAlignment="Center">
                                 <Image Source="/Assets/images/logoXL.png" Width="60" Height="60" Stretch="Uniform"/>
                             </Border>
-                            <TextBlock Text="Fujify" FontWeight="Bold" FontSize="24"
+                            <TextBlock Text="Fujifier" FontWeight="Bold" FontSize="24"
                                        Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
                             <TextBlock Text="Version 2.1.0 • Native Color Science Engine" FontSize="12"
                                        Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center"/>
@@ -1083,7 +1109,7 @@
                             <StackPanel Spacing="8">
                                 <TextBlock Text="Authentic Fujifilm Film Simulations" FontWeight="Bold" FontSize="14"
                                            Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                <TextBlock Text="Fujify transforms RAW photos from non-Fujifilm camera brands (Sony, Canon, Nikon, Leica, Panasonic, Hasselblad, and more) into standardized DNGs embedded with Fujifilm camera color matrices."
+                                <TextBlock Text="Fujifier transforms RAW photos from non-Fujifilm camera brands (Sony, Canon, Nikon, Leica, Panasonic, Hasselblad, and more) into standardized DNGs embedded with Fujifilm camera color matrices."
                                            FontSize="13" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                 <TextBlock Text="When opened in Adobe Lightroom or Adobe Camera Raw (ACR), the genuine Fujifilm Film Simulation profiles (Classic Chrome, Classic Neg, Nostalgic Neg, Reala Ace, Velvia, Astia, Provia, Acros) appear and render with authentic color science."
                                            FontSize="12" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>

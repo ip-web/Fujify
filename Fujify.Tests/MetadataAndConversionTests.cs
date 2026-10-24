@@ -7,6 +7,7 @@ using Xunit;
 
 namespace Fujify.Tests
 {
+    [Collection("Registry")]
     public class MetadataAndConversionTests : IDisposable
     {
         private readonly string _sampleArw;

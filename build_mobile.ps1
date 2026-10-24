@@ -98,8 +98,8 @@ if (-not $SkipAndroid) {
             }
 
             if ($signedApk) {
-                $targetRelease = Join-Path $releaseDir "Fujify-v2.1.0-Android-$archSuffix.apk"
-                $targetDist = Join-Path $distDir "Fujify-v2.1.0-Android-$archSuffix.apk"
+                $targetRelease = Join-Path $releaseDir "Fujifier-v2.1.0-Android-$archSuffix.apk"
+                $targetDist = Join-Path $distDir "Fujifier-v2.1.0-Android-$archSuffix.apk"
                 Copy-Item -Path $signedApk.FullName -Destination $targetRelease -Force
                 Copy-Item -Path $signedApk.FullName -Destination $targetDist -Force
                 $sizeMb = [math]::Round($signedApk.Length / 1MB, 2)
@@ -116,7 +116,7 @@ if (-not $SkipAndroid) {
 
 # 3. Build iOS App & Package IPA
 if (-not $SkipiOS) {
-    Write-Host "`n[3/4] Building Fujify for iOS & Packaging IPA ($Configuration)..." -ForegroundColor Yellow
+    Write-Host "`n[3/4] Building Fujifier for iOS & Packaging IPA ($Configuration)..." -ForegroundColor Yellow
     $iosProj = Join-Path $repoRoot "Fujify.iOS\Fujify.iOS.csproj"
     
     try {
@@ -126,7 +126,7 @@ if (-not $SkipiOS) {
         # Package IPA payload
         $ipaStaging = Join-Path $distDir "ipa_staging"
         if (Test-Path $ipaStaging) { Remove-Item -Recurse -Force $ipaStaging }
-        $appDir = Join-Path $ipaStaging "Payload\Fujify.app"
+        $appDir = Join-Path $ipaStaging "Payload\Fujifier.app"
         New-Item -ItemType Directory -Force -Path $appDir | Out-Null
 
         $srcBin = Join-Path $repoRoot "Fujify.iOS\bin\$Configuration\net10.0-ios\ios-arm64"
@@ -150,7 +150,7 @@ if (-not $SkipiOS) {
             Write-Warning "Native Mach-O executable 'Fujify.iOS' is not present in the app bundle. Windows builds MSIL assemblies only and requires a Mac build host (or GitHub Actions macos runner) to produce an installable iOS IPA."
         }
 
-        $targetIpa = Join-Path $releaseDir "Fujify-v2.1.0-iOS.ipa"
+        $targetIpa = Join-Path $releaseDir "Fujifier-v2.1.0-iOS.ipa"
         if (Test-Path $targetIpa) { Remove-Item -Force $targetIpa }
 
         Add-Type -AssemblyName System.IO.Compression.FileSystem

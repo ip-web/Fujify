@@ -1,10 +1,10 @@
 ; Script generated for Inno Setup 6
-; Fujify Installer Script
-#define MyAppName "Fujify"
-#define MyAppVersion "1.1"
+; Fujifier Installer Script
+#define MyAppName "Fujifier"
+#define MyAppVersion "2.1.0"
 #define MyAppPublisher "Isidore Paulin"
 #define MyAppURL "https://ipweb.dev"
-#define MyAppExeName "Fujify.exe"
+#define MyAppExeName "Fujifier.exe"
 #define MyAppSourceDir "publish\win-x64"
 
 [Setup]
@@ -14,14 +14,14 @@ AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
-AppSupportURL=https://github.com/ip-web/Fujify/issues
-AppUpdatesURL=https://github.com/ip-web/Fujify/releases
+AppSupportURL=https://github.com/ip-web/Fujifier/issues
+AppUpdatesURL=https://github.com/ip-web/Fujifier/releases
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 LicenseFile=FujifyNET\LICENCE
 OutputDir=release
-OutputBaseFilename=Fujify-v1.1-Setup
+OutputBaseFilename=Fujifier-v2.1.0-Setup
 SetupIconFile=FujifyNET\assets\images\logo.ico
 Compression=lzma2/ultra64
 SolidCompression=yes

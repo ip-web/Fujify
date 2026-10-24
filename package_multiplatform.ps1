@@ -1,5 +1,5 @@
 # package_multiplatform.ps1
-# Automates publishing and packaging of Fujify for Linux and macOS
+# Automates publishing and packaging of Fujifier for Linux and macOS
 
 $ErrorActionPreference = "Stop"
 
@@ -13,13 +13,13 @@ New-Item -ItemType Directory -Force -Path $distDir | Out-Null
 New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
 
 Write-Host "=========================================" -ForegroundColor Cyan
-Write-Host " Building Fujify for Linux (x64)..." -ForegroundColor Cyan
+Write-Host " Building Fujifier for Linux (x64)..." -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 
 & $dotnet publish "$repoRoot\Fujify\Fujify.csproj" -c Release -f net10.0 -r linux-x64 --self-contained true -o "$publishDir\linux-x64"
 
 # 1. Package Linux x64
-$linuxDist = Join-Path $distDir "Fujify-v1.1-Linux-x64"
+$linuxDist = Join-Path $distDir "Fujifier-v2.1.0-Linux-x64"
 if (Test-Path $linuxDist) { Remove-Item -Recurse -Force $linuxDist }
 New-Item -ItemType Directory -Force -Path $linuxDist | Out-Null
 
@@ -56,40 +56,40 @@ exec exiftool "`$@"
 # Add Desktop file & icon
 $desktopEntry = @"
 [Desktop Entry]
-Name=Fujify
+Name=Fujifier
 Comment=Fujifilm Film Simulation Profiles for Any RAW Photo
-Exec=Fujify
-Icon=fujify
+Exec=Fujifier
+Icon=fujifier
 Terminal=false
 Type=Application
 Categories=Graphics;Photography;
 "@
-[IO.File]::WriteAllText((Join-Path $linuxDist "Fujify.desktop"), $desktopEntry.Replace("`r`n", "`n"))
-Copy-Item -Path "$repoRoot\Fujify\Assets\images\logos.png" -Destination (Join-Path $linuxDist "fujify.png") -Force
+[IO.File]::WriteAllText((Join-Path $linuxDist "Fujifier.desktop"), $desktopEntry.Replace("`r`n", "`n"))
+Copy-Item -Path "$repoRoot\Fujify\Assets\images\logos.png" -Destination (Join-Path $linuxDist "fujifier.png") -Force
 
 # Add run script
 $runScript = @"
 #!/bin/sh
 DIR="`$(cd "`$(dirname "`$0")" && pwd)"
-chmod +x "`$DIR/Fujify" "`$DIR/libs/dnglab" "`$DIR/libs/exiftool" 2>/dev/null
-exec "`$DIR/Fujify" "`$@"
+chmod +x "`$DIR/Fujifier" "`$DIR/libs/dnglab" "`$DIR/libs/exiftool" 2>/dev/null
+exec "`$DIR/Fujifier" "`$@"
 "@
 [IO.File]::WriteAllText((Join-Path $linuxDist "run.sh"), $runScript.Replace("`r`n", "`n"))
 
 # Archive Linux tar.gz
-$linuxArchive = Join-Path $releaseDir "Fujify-v1.1-Linux-x64.tar.gz"
+$linuxArchive = Join-Path $releaseDir "Fujifier-v2.1.0-Linux-x64.tar.gz"
 if (Test-Path $linuxArchive) { Remove-Item -Force $linuxArchive }
-& tar -czf $linuxArchive -C $distDir "Fujify-v1.1-Linux-x64"
+& tar -czf $linuxArchive -C $distDir "Fujifier-v2.1.0-Linux-x64"
 Write-Host " Created Linux Archive: $linuxArchive" -ForegroundColor Green
 
 Write-Host "=========================================" -ForegroundColor Cyan
-Write-Host " Building Fujify for macOS (Apple Silicon)..." -ForegroundColor Cyan
+Write-Host " Building Fujifier for macOS (Apple Silicon)..." -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 
 & $dotnet publish "$repoRoot\Fujify\Fujify.csproj" -c Release -f net10.0 -r osx-arm64 --self-contained true -o "$publishDir\osx-arm64"
 
 # 2. Package macOS Apple Silicon (.app bundle)
-$macAppDir = Join-Path $distDir "Fujify.app"
+$macAppDir = Join-Path $distDir "Fujifier.app"
 if (Test-Path $macAppDir) { Remove-Item -Recurse -Force $macAppDir }
 
 $contentsDir = Join-Path $macAppDir "Contents"
@@ -119,21 +119,21 @@ $infoPlist = @"
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>Fujify</string>
+    <string>Fujifier</string>
     <key>CFBundleDisplayName</key>
-    <string>Fujify</string>
+    <string>Fujifier</string>
     <key>CFBundleIdentifier</key>
-    <string>dev.ipweb.fujify</string>
+    <string>dev.ipweb.fujifier</string>
     <key>CFBundleVersion</key>
-    <string>1.1.0</string>
+    <string>2.1.0</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.1</string>
+    <string>2.1.0</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleExecutable</key>
-    <string>Fujify</string>
+    <string>Fujifier</string>
     <key>CFBundleIconFile</key>
     <string>logo.ico</string>
     <key>NSHighResolutionCapable</key>
@@ -148,19 +148,19 @@ Copy-Item -Path "$repoRoot\Fujify\Assets\images\logo.ico" -Destination (Join-Pat
 Copy-Item -Path "$repoRoot\Fujify\Assets\images\logos.png" -Destination (Join-Path $resourcesDir "logo.png") -Force
 
 # Archive macOS Apple Silicon
-$macArmArchive = Join-Path $releaseDir "Fujify-v1.1-macOS-AppleSilicon.zip"
+$macArmArchive = Join-Path $releaseDir "Fujifier-v2.1.0-macOS-AppleSilicon.zip"
 if (Test-Path $macArmArchive) { Remove-Item -Force $macArmArchive }
-& tar -a -cf $macArmArchive -C $distDir "Fujify.app"
+& tar -a -cf $macArmArchive -C $distDir "Fujifier.app"
 Write-Host " Created macOS Apple Silicon Archive: $macArmArchive" -ForegroundColor Green
 
 Write-Host "=========================================" -ForegroundColor Cyan
-Write-Host " Building Fujify for macOS (Intel)..." -ForegroundColor Cyan
+Write-Host " Building Fujifier for macOS (Intel)..." -ForegroundColor Cyan
 Write-Host "=========================================" -ForegroundColor Cyan
 
 & $dotnet publish "$repoRoot\Fujify\Fujify.csproj" -c Release -f net10.0 -r osx-x64 --self-contained true -o "$publishDir\osx-x64"
 
 # 3. Package macOS Intel (.app bundle)
-$macIntelAppDir = Join-Path $distDir "Fujify-Intel.app"
+$macIntelAppDir = Join-Path $distDir "Fujifier-Intel.app"
 if (Test-Path $macIntelAppDir) { Remove-Item -Recurse -Force $macIntelAppDir }
 
 $intelContentsDir = Join-Path $macIntelAppDir "Contents"
@@ -187,9 +187,9 @@ Copy-Item -Path "$repoRoot\Fujify\Assets\images\logo.ico" -Destination (Join-Pat
 Copy-Item -Path "$repoRoot\Fujify\Assets\images\logos.png" -Destination (Join-Path $intelResourcesDir "logo.png") -Force
 
 # Archive macOS Intel
-$macIntelArchive = Join-Path $releaseDir "Fujify-v1.1-macOS-Intel.zip"
+$macIntelArchive = Join-Path $releaseDir "Fujifier-v2.1.0-macOS-Intel.zip"
 if (Test-Path $macIntelArchive) { Remove-Item -Force $macIntelArchive }
-& tar -a -cf $macIntelArchive -C $distDir "Fujify-Intel.app"
+& tar -a -cf $macIntelArchive -C $distDir "Fujifier-Intel.app"
 Write-Host " Created macOS Intel Archive: $macIntelArchive" -ForegroundColor Green
 
 Write-Host "=========================================" -ForegroundColor Green

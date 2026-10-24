@@ -153,12 +153,108 @@
                                 <!-- Windows Explorer Context Menu -->
                                 <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsWindows}">
                                     <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
-                                        <TextBlock Text="Windows Context Menu (Open in Fujify)" FontWeight="SemiBold" FontSize="13"
-                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                        <TextBlock Text="Adds 'Open in Fujify' to right-click menu on RAW files to queue them automatically" FontSize="11"
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="Windows Context Menu (Fujifier)" FontWeight="SemiBold" FontSize="13"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="4" Padding="5,1" 
+                                                    IsVisible="{Binding !IsPro}" VerticalAlignment="Center">
+                                                <TextBlock Text="PRO" FontSize="10" FontWeight="Bold" Foreground="White"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="Adds 'Fujifier' cascading options to right-click menu on RAW files for direct processing and queueing" FontSize="11"
                                                    Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                     </StackPanel>
                                     <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsWindowsContextMenuEnabled}" OnContent="" OffContent=""/>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- License & Plan Card -->
+                        <TextBlock Text="License &amp; Plan" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource AppTextPrimaryBrush}" Margin="0,16,0,8"/>
+                        <Border Classes="card">
+                            <StackPanel Spacing="12">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" Spacing="3">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="{Binding LicenseStatusText}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="4" Padding="6,1" IsVisible="{Binding IsPro}" VerticalAlignment="Center">
+                                                <TextBlock Text="PRO ACTIVE" FontSize="10" FontWeight="Bold" Foreground="White"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding LicenseDescriptionText}" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="⭐ Get Fujifier Pro" Command="{Binding UpgradeToProCommand}" Classes="accent" IsVisible="{Binding !IsPro}" Height="32" Padding="12,0" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                    <Button Grid.Column="1" Content="Deactivate Device" Command="{Binding DeactivateLicenseCommand}" IsVisible="{Binding IsPro}" Height="32" Padding="12,0" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                </Grid>
+
+                                <!-- Activation Options when in Free Tier -->
+                                <StackPanel Spacing="10" IsVisible="{Binding !IsPro}">
+                                    <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
+                                    
+                                    <!-- Tabs for Activation Mode: Key vs Account -->
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <RadioButton Content="Enter License Key" IsChecked="{Binding IsKeyTabActive, Mode=OneWay}" Command="{Binding SetKeyTabCommand}" GroupName="ActivationMode" FontSize="12"/>
+                                        <RadioButton Content="Sign In to Fujifier Account" IsChecked="{Binding IsAccountTabActive, Mode=OneWay}" Command="{Binding SetAccountTabCommand}" GroupName="ActivationMode" FontSize="12"/>
+                                    </StackPanel>
+
+                                    <!-- Option A: Direct License Key Input -->
+                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsKeyTabActive}">
+                                        <TextBox Grid.Column="0" Text="{Binding LicenseKeyInput, Mode=TwoWay}" Watermark="Enter license key (FUJI-XXXX-XXXX-XXXX)" Height="32" CornerRadius="8" FontSize="12" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                                        <Button Grid.Column="1" Content="Activate Key" Command="{Binding ActivateLicenseCommand}" Classes="accent" Height="32" Padding="14,0" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                    </Grid>
+
+                                    <!-- Option B: Account Sign In -->
+                                    <StackPanel Spacing="8" IsVisible="{Binding IsAccountTabActive}">
+                                        <Grid ColumnDefinitions="*,*" Margin="0,2,0,0">
+                                            <TextBox Grid.Column="0" Text="{Binding AccountEmailInput, Mode=TwoWay}" Watermark="Account Email" Height="32" CornerRadius="8" FontSize="12" VerticalContentAlignment="Center" Margin="0,0,6,0"/>
+                                            <TextBox Grid.Column="1" Text="{Binding AccountPasswordInput, Mode=TwoWay}" PasswordChar="●" Watermark="Account Password" Height="32" CornerRadius="8" FontSize="12" VerticalContentAlignment="Center" Margin="6,0,0,0"/>
+                                        </Grid>
+                                        <Button Content="Sign In &amp; Activate License" Command="{Binding AccountLoginCommand}" Classes="accent" HorizontalAlignment="Right" Height="32" Padding="14,0" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <!-- Live Status Feedback Message -->
+                                <TextBlock Text="{Binding LicenseMessageText}" FontSize="11" Foreground="{Binding LicenseMessageColor}" IsVisible="{Binding HasLicenseMessage}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- 4. UPDATES -->
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="UPDATES" FontWeight="Bold" FontSize="11"
+                                   Foreground="{DynamicResource AppTextSecondaryBrush}" LetterSpacing="1" Margin="2,0"/>
+                        <Border Background="{DynamicResource AppSurfaceBrush}" 
+                                CornerRadius="14" Padding="16" BorderThickness="0">
+                            <StackPanel Spacing="12">
+                                <!-- Check on startup toggle -->
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="Check for Updates on Startup" FontWeight="SemiBold" FontSize="13"
+                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        <TextBlock Text="Automatically check GitHub releases when Fujifier opens" FontSize="11"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding CheckForUpdatesOnStartup}" OnContent="" OffContent=""/>
+                                </Grid>
+
+                                <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
+
+                                <!-- Manual Check Button -->
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="{Binding CurrentAppVersionText}" FontWeight="SemiBold" FontSize="13"
+                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        <TextBlock Text="{Binding UpdateStatusMessage}" FontSize="11"
+                                                   Foreground="{Binding UpdateStatusColor}"
+                                                   IsVisible="{Binding HasUpdateStatusMessage}"/>
+                                        <TextBlock Text="Check GitHub releases for the latest updates &amp; improvements" FontSize="11"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                                   IsVisible="{Binding !HasUpdateStatusMessage}"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="Check Now" Command="{Binding CheckForUpdatesCommand}"
+                                            IsEnabled="{Binding !IsCheckingForUpdate}"
+                                            Classes="accent" Height="32" Padding="14,0" CornerRadius="8"
+                                            VerticalContentAlignment="Center"/>
                                 </Grid>
                             </StackPanel>
                         </Border>

@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace Fujify.Android;
 
 [Activity(
-    Label = "Fujify",
+    Label = "Fujifier",
     Theme = "@style/MyTheme.NoActionBar",
     Icon = "@drawable/icon",
     MainLauncher = true,
@@ -54,7 +54,7 @@ public class MainActivity : AvaloniaMainActivity<App>
         global::Android.Runtime.AndroidEnvironment.UnhandledExceptionRaiser += (sender, args) =>
         {
             var ex = args.Exception;
-            global::Android.Util.Log.Error("FujifyCrash", $"[Fujify Crash Interceptor]: {ex}");
+            global::Android.Util.Log.Error("FujifierCrash", $"[Fujifier Crash Interceptor]: {ex}");
             try
             {
                 string logPath = Path.Combine(CacheDir?.AbsolutePath ?? "", "crash.log");
@@ -67,7 +67,7 @@ public class MainActivity : AvaloniaMainActivity<App>
         AppDomain.CurrentDomain.UnhandledException += (sender, args) =>
         {
             var ex = args.ExceptionObject as Exception;
-            global::Android.Util.Log.Error("FujifyCrash", $"[Fujify AppDomain Interceptor]: {ex}");
+            global::Android.Util.Log.Error("FujifierCrash", $"[Fujifier AppDomain Interceptor]: {ex}");
         };
 
         // Configure persistent writable staging directory for Android
@@ -84,7 +84,7 @@ public class MainActivity : AvaloniaMainActivity<App>
 
                 if (!string.IsNullOrEmpty(picturesDir))
                 {
-                    string fujifyPicturesDir = Path.Combine(picturesDir, "Fujify");
+                    string fujifyPicturesDir = Path.Combine(picturesDir, "Fujifier");
                     Directory.CreateDirectory(fujifyPicturesDir);
                     string targetPath = Path.Combine(fujifyPicturesDir, Path.GetFileName(filePath));
                     if (!string.Equals(filePath, targetPath, StringComparison.OrdinalIgnoreCase))
@@ -102,7 +102,7 @@ public class MainActivity : AvaloniaMainActivity<App>
             }
             catch (Exception ex)
             {
-                global::Android.Util.Log.Warn("Fujify", $"Error in PlatformFileCreatedCallback: {ex.Message}");
+                global::Android.Util.Log.Warn("Fujifier", $"Error in PlatformFileCreatedCallback: {ex.Message}");
             }
         };
 
@@ -121,7 +121,7 @@ public class MainActivity : AvaloniaMainActivity<App>
             }
             catch (Exception ex)
             {
-                global::Android.Util.Log.Error("Fujify", $"Error opening url {url}: {ex}");
+                global::Android.Util.Log.Error("Fujifier", $"Error opening url {url}: {ex}");
             }
         };
 
@@ -221,7 +221,7 @@ public class MainActivity : AvaloniaMainActivity<App>
                 }
                 catch (Exception ex)
                 {
-                    global::Android.Util.Log.Warn("Fujify", $"Failed to stage incoming shared URI {uri}: {ex.Message}");
+                    global::Android.Util.Log.Warn("Fujifier", $"Failed to stage incoming shared URI {uri}: {ex.Message}");
                 }
             }
 
@@ -350,7 +350,7 @@ public class MainActivity : AvaloniaMainActivity<App>
                 var javaFile = new Java.IO.File(path);
                 var contentUri = AndroidX.Core.Content.FileProvider.GetUriForFile(
                     this,
-                    "com.ipweb.fujify.fileprovider",
+                    "com.ipweb.fujifier.fileprovider",
                     javaFile);
 
                 var intent = new Intent(Intent.ActionSend);
@@ -394,7 +394,7 @@ public class MainActivity : AvaloniaMainActivity<App>
                     var javaFile = new Java.IO.File(path);
                     var contentUri = AndroidX.Core.Content.FileProvider.GetUriForFile(
                         this,
-                        "com.ipweb.fujify.fileprovider",
+                        "com.ipweb.fujifier.fileprovider",
                         javaFile);
 
                     if (contentUri != null)
@@ -449,7 +449,7 @@ public class MainActivity : AvaloniaMainActivity<App>
         }
         catch (Exception ex)
         {
-            global::Android.Util.Log.Error("Fujify", $"Error opening files in Lightroom: {ex}");
+            global::Android.Util.Log.Error("Fujifier", $"Error opening files in Lightroom: {ex}");
         }
     }
 

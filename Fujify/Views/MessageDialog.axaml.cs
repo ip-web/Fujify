@@ -17,7 +17,7 @@ namespace Fujify.Views
 
         public MessageDialog(string title, string message) : this()
         {
-            Title = string.IsNullOrWhiteSpace(title) ? "Fujify" : title;
+            Title = string.IsNullOrWhiteSpace(title) ? "Fujifier" : title;
             TitleText.Text = Title;
             MessageContent.Text = message;
         }
