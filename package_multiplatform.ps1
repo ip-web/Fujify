@@ -27,12 +27,11 @@ Copy-Item -Path "$publishDir\linux-x64\*" -Destination $linuxDist -Recurse -Forc
 
 # Setup Linux native binaries in libs
 $linuxLibs = Join-Path $linuxDist "libs"
-# Remove Windows-specific exes from libs
+# Remove Windows-specific exes/dlls from libs
 Remove-Item -Path (Join-Path $linuxLibs "dnglab.exe") -Force -ErrorAction SilentlyContinue
+Remove-Item -Path (Join-Path $linuxLibs "dnglab_ffi.dll") -Force -ErrorAction SilentlyContinue
 Remove-Item -Path (Join-Path $linuxLibs "exiftool.exe") -Force -ErrorAction SilentlyContinue
 Remove-Item -Path (Join-Path $linuxLibs "exiftool_files") -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item -Path (Join-Path $linuxLibs "libraw\simple_dcraw.exe") -Force -ErrorAction SilentlyContinue
-Remove-Item -Path (Join-Path $linuxLibs "libraw\libraw.dll") -Force -ErrorAction SilentlyContinue
 
 # Copy Linux dnglab binary
 Copy-Item -Path "$repoRoot\build_assets\tools\dnglab_linux_x64" -Destination (Join-Path $linuxLibs "dnglab") -Force
@@ -105,9 +104,9 @@ Copy-Item -Path "$publishDir\osx-arm64\*" -Destination $macOsDir -Recurse -Force
 # Setup Mac native binaries in libs
 $macLibs = Join-Path $macOsDir "libs"
 Remove-Item -Path (Join-Path $macLibs "dnglab.exe") -Force -ErrorAction SilentlyContinue
+Remove-Item -Path (Join-Path $macLibs "dnglab_ffi.dll") -Force -ErrorAction SilentlyContinue
 Remove-Item -Path (Join-Path $macLibs "exiftool.exe") -Force -ErrorAction SilentlyContinue
-Remove-Item -Path (Join-Path $macLibs "libraw\simple_dcraw.exe") -Force -ErrorAction SilentlyContinue
-Remove-Item -Path (Join-Path $macLibs "libraw\libraw.dll") -Force -ErrorAction SilentlyContinue
+Remove-Item -Path (Join-Path $macLibs "exiftool_files") -Recurse -Force -ErrorAction SilentlyContinue
 
 Copy-Item -Path "$repoRoot\build_assets\tools\mac\dnglab" -Destination (Join-Path $macLibs "dnglab") -Force
 [IO.File]::WriteAllText((Join-Path $macLibs "exiftool"), $exifToolScript.Replace("`r`n", "`n"))
@@ -174,9 +173,9 @@ Copy-Item -Path "$publishDir\osx-x64\*" -Destination $intelMacOsDir -Recurse -Fo
 
 $intelMacLibs = Join-Path $intelMacOsDir "libs"
 Remove-Item -Path (Join-Path $intelMacLibs "dnglab.exe") -Force -ErrorAction SilentlyContinue
+Remove-Item -Path (Join-Path $intelMacLibs "dnglab_ffi.dll") -Force -ErrorAction SilentlyContinue
 Remove-Item -Path (Join-Path $intelMacLibs "exiftool.exe") -Force -ErrorAction SilentlyContinue
-Remove-Item -Path (Join-Path $intelMacLibs "libraw\simple_dcraw.exe") -Force -ErrorAction SilentlyContinue
-Remove-Item -Path (Join-Path $intelMacLibs "libraw\libraw.dll") -Force -ErrorAction SilentlyContinue
+Remove-Item -Path (Join-Path $intelMacLibs "exiftool_files") -Recurse -Force -ErrorAction SilentlyContinue
 
 # For Intel Mac, dnglab can be installed via brew or used via system PATH, or Rosetta 2
 Copy-Item -Path "$repoRoot\build_assets\tools\mac\dnglab" -Destination (Join-Path $intelMacLibs "dnglab") -Force

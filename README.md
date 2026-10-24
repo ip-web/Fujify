@@ -8,7 +8,7 @@ Unlock the Fujifilm Film Simulations for any camera's RAW files in Lightroom. Th
 - **Unlock Fujifilm Film simulation in Lightroom**: Unlock all the film simulations of the Fujifilm X-T5 (currently have the most simulations available) for any camera.
 - **Convert RAW to DNG**: Supports various RAW file formats and converts them to DNG to enable film simulations.
 - **Embeded original RAW to DNG**: Let you choose if you want to backup the original file inside the DNG or as file.
-- **Uses Powerful Libraries**: Built using ExifTool, LibRaw, and DNGLab for reliable and efficient conversion.
+- **Uses Powerful Libraries**: Built using ExifTool and DNGLab for reliable and efficient conversion.
 - **Easy to Use**: Drag and drop files or folders, or use the context menu and toolbar options to add files.
 - **Light and Dark themes**: Light and Dark themes available for better accessibility.
 - **Installer or portable**: Available as an installer with or without .NET Framwork self-contained or as portable app.
@@ -74,7 +74,6 @@ I'm also taking feature requests and will try implementing them as much as time 
 This app could not have been made without the incredible work of:
 
 - **Phil Harvey**, creator of [ExifTool](https://exiftool.org/)
-- **Iliah Borg**, creator of [LibRaw](https://www.libraw.org/)
 - [**DNGLab**](https://github.com/dnglab/dnglab/tree/main)
 - All the contributors to these projects
   
@@ -84,7 +83,6 @@ This project is licensed under the GNU General Public License v3.0. See the [LIC
 
 - ExifTool is licenced under the Perl Artistic Licence
 - DNGLab is licensed under LGPL2.1
-- LibRaw is licensed under LGPL2
 
 ## Donations
 
