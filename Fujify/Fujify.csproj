@@ -17,8 +17,7 @@
   <ItemGroup>
     <Folder Include="Models\" />
     <AvaloniaResource Include="Assets\**" />
-    <Content Include="..\FujifyNET\libs\**\*.*" Condition="'$(TargetPlatformIdentifier)' == ''">
-      <Link>libs\%(RecursiveDir)%(FileName)%(Extension)</Link>
+    <Content Include="libs\**\*.*" Condition="'$(TargetPlatformIdentifier)' == ''">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

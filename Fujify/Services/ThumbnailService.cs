@@ -70,45 +70,11 @@ namespace Fujify.Services
 
             try
             {
-                if (extension != ".dng")
-                {
-                    string thumbnailPath = ExtractThumbnailWithDcraw(filePath);
-                    if (!string.IsNullOrEmpty(thumbnailPath))
-                    {
-                        try
-                        {
-                            string thumbnailExtension = Path.GetExtension(thumbnailPath).ToLowerInvariant();
-                            if (thumbnailExtension == ".ppm")
-                            {
-                                return GetPlaceholderImage();
-                            }
-
-                            bitmap = CreateBitmapFromPath(thumbnailPath, resolvedOrientation);
-                        }
-                        finally
-                        {
-                            if (File.Exists(thumbnailPath) && !thumbnailPath.Equals(filePath, StringComparison.OrdinalIgnoreCase))
-                            {
-                                try
-                                {
-                                    File.Delete(thumbnailPath);
-                                }
-                                catch (IOException ioEx)
-                                {
-                                    Debug.WriteLine($"Error deleting thumbnail file {thumbnailPath}: {ioEx.Message}");
-                                }
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    bitmap = CreateBitmapFromPath(filePath, resolvedOrientation);
-                }
+                bitmap = CreateBitmapFromPath(filePath, resolvedOrientation);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error generating thumbnail for {filePath}: {ex.Message}");
+                Debug.WriteLine($"[Fujifier] Fallback bitmap load failed for {filePath}: {ex.Message}");
             }
 
             return bitmap ?? GetPlaceholderImage();
@@ -325,35 +291,6 @@ namespace Fujify.Services
             }
             catch { }
             return null;
-        }
-
-        private string ExtractThumbnailWithDcraw(string filePath)
-        {
-            if (string.IsNullOrEmpty(filePath)) return string.Empty;
-
-            string dcrawName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "simple_dcraw.exe" : "simple_dcraw";
-            string dcrawPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "libs", "libraw", dcrawName);
-            if (!File.Exists(dcrawPath)) return string.Empty;
-
-            try
-            {
-                _processRunner.Run(dcrawPath, $"-e \"{filePath}\"");
-
-                string? directory = Path.GetDirectoryName(filePath);
-                if (directory == null) return string.Empty;
-
-                string thumbnailPathJpg = Path.Combine(directory, Path.GetFileName(filePath) + ".thumb.jpg");
-                if (File.Exists(thumbnailPathJpg)) return thumbnailPathJpg;
-
-                string thumbnailPathPpm = Path.Combine(directory, Path.GetFileName(filePath) + ".thumb.ppm");
-                if (File.Exists(thumbnailPathPpm)) return thumbnailPathPpm;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error running dcraw: {ex.Message}");
-            }
-
-            return string.Empty;
         }
 
         public Bitmap? GetPlaceholderImage()

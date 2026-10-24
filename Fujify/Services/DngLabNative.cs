@@ -134,7 +134,7 @@ namespace Fujify.Services
                 Path.Combine(baseDir, "Frameworks", $"{LibraryName}.framework", LibraryName),
                 Path.Combine(baseDir, "libs", fileName),
                 Path.Combine(baseDir, "runtimes", RuntimeInformation.RuntimeIdentifier, "native", fileName),
-                Path.Combine(baseDir, "..", "..", "..", "FujifyNET", "libs", fileName)
+                Path.Combine(baseDir, "..", "..", "..", "Fujify", "libs", fileName)
             ];
 
             foreach (var path in searchPaths)
