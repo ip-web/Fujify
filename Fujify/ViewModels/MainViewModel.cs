@@ -31,6 +31,7 @@ using CommunityToolkit.Mvvm.Input;
 using Fujify.Common;
 using Fujify.Models;
 using Fujify.Services;
+using Fujify.Views;
 
 namespace Fujify.ViewModels
 {
@@ -41,6 +42,11 @@ namespace Fujify.ViewModels
         private readonly IThumbnailService _thumbnailService;
         private readonly IDialogService _dialogService;
         private readonly ISettingsService _settingsService;
+        private readonly ILicenseService _licenseService;
+        private readonly IUpdateService _updateService;
+
+        public bool IsPro => _licenseService.IsPro;
+        public ILicenseService LicenseService => _licenseService;
 
         private readonly HashSet<string> _supportedFormats = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -68,14 +74,23 @@ namespace Fujify.ViewModels
             IMetadataService? metadataService = null,
             IThumbnailService? thumbnailService = null,
             IDialogService? dialogService = null,
-            ISettingsService? settingsService = null)
+            ISettingsService? settingsService = null,
+            ILicenseService? licenseService = null,
+            IUpdateService? updateService = null)
         {
             _rawConverterService = rawConverterService ?? new RawConverterService();
             _metadataService = metadataService ?? new MetadataService();
             _thumbnailService = thumbnailService ?? new ThumbnailService();
-            _dialogService = dialogService ?? new DialogService();
             _settingsService = settingsService ?? new SettingsService();
+            _dialogService = dialogService ?? new DialogService(_settingsService);
+            _licenseService = licenseService ?? new LicenseService(_settingsService);
+            _updateService = updateService ?? new UpdateService(_settingsService);
             Instance = this;
+
+            _licenseService.LicenseChanged += (s, status) =>
+            {
+                OnPropertyChanged(nameof(IsPro));
+            };
 
             ProcessCommand = new AsyncRelayCommand(ExecuteProcessOrStopAsync);
             ClearCommand = new AsyncRelayCommand(ExecuteClearAsync, () => CanClear);
@@ -104,7 +119,7 @@ namespace Fujify.ViewModels
             OpenPreferencesCommand = new AsyncRelayCommand(ExecuteOpenPreferencesAsync);
             OpenAboutCommand = new AsyncRelayCommand(ExecuteOpenAboutAsync);
             OpenHelpCommand = new RelayCommand(ExecuteOpenHelp);
-            OpenUpdateCommand = new RelayCommand(ExecuteOpenUpdate);
+            OpenUpdateCommand = new AsyncRelayCommand(ExecuteOpenUpdateAsync);
             ReportBugCommand = new RelayCommand(ExecuteReportBug);
             OpenWebsiteCommand = new RelayCommand(ExecuteOpenWebsite);
 
@@ -584,7 +599,7 @@ namespace Fujify.ViewModels
         private PreferencesViewModel? _preferences;
         public PreferencesViewModel Preferences
         {
-            get => _preferences ??= new PreferencesViewModel(_settingsService);
+            get => _preferences ??= new PreferencesViewModel(_settingsService, _licenseService);
             set => SetProperty(ref _preferences, value);
         }
 
@@ -625,7 +640,7 @@ namespace Fujify.ViewModels
         {
             Dispatcher.UIThread.Post(() =>
             {
-                ModalTitle = "About Fujify";
+                ModalTitle = "About Fujifier";
                 ModalType = "About";
                 IsModalOpen = true;
             });
@@ -854,6 +869,36 @@ namespace Fujify.ViewModels
                         _dialogService.ShowMessageAsync(OwnerWindow, "No Supported Photos Found", "No supported RAW or DNG photos could be loaded from the selection."));
                 }
 
+                // Free Tier Queue Limit Enforcement (Max 10 photos)
+                if (!_licenseService.IsPro)
+                {
+                    if (Files.Count >= _licenseService.MaxFreeQueueSize)
+                    {
+                        Dispatcher.UIThread.Post(async () =>
+                        {
+                            await _dialogService.ShowMessageAsync(
+                                OwnerWindow,
+                                "Free Tier Queue Limit",
+                                $"The Free tier of Fujifier allows up to {_licenseService.MaxFreeQueueSize} photos in the queue.\nUpgrade to Fujifier Pro to convert unlimited photos at once!");
+                        });
+                        return;
+                    }
+
+                    int availableSlots = _licenseService.MaxFreeQueueSize - Files.Count;
+                    if (filesToAdd.Count > availableSlots)
+                    {
+                        int skipped = filesToAdd.Count - availableSlots;
+                        filesToAdd = filesToAdd.Take(availableSlots).ToList();
+                        Dispatcher.UIThread.Post(async () =>
+                        {
+                            await _dialogService.ShowMessageAsync(
+                                OwnerWindow,
+                                "Free Tier Limit Applied",
+                                $"Under the Free tier, the queue is capped at {_licenseService.MaxFreeQueueSize} photos. Added {availableSlots} photos ({skipped} skipped).\nUpgrade to Fujifier Pro for unlimited batch processing!");
+                        });
+                    }
+                }
+
                 var existingPaths = new HashSet<string>(Files.Select(f => f.FilePath), StringComparer.OrdinalIgnoreCase);
 
                 await Task.Run(() =>
@@ -904,7 +949,7 @@ namespace Fujify.ViewModels
                         }
                         catch (Exception ex)
                         {
-                            System.Diagnostics.Debug.WriteLine($"[Fujify] Error processing {filePath}: {ex.Message}");
+                            System.Diagnostics.Debug.WriteLine($"[Fujifier] Error processing {filePath}: {ex.Message}");
                         }
                     }
 
@@ -920,7 +965,7 @@ namespace Fujify.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[Fujify] Exception in AddFilesAsync: {ex}");
+                System.Diagnostics.Debug.WriteLine($"[Fujifier] Exception in AddFilesAsync: {ex}");
                 Dispatcher.UIThread.Post(() =>
                     _dialogService.ShowMessageAsync(OwnerWindow, "Import Error", $"Could not import photos: {ex.Message}"));
             }
@@ -1081,6 +1126,11 @@ namespace Fujify.ViewModels
                 }
 
                 await _dialogService.ShowMessageAsync(OwnerWindow, "Processing completed", message);
+
+                if (!_licenseService.IsPro)
+                {
+                    await FreeTierDelayDialog.ShowDelayDialogAsync(OwnerWindow, _licenseService, isPostConversion: true);
+                }
             }
         }
 
@@ -1320,7 +1370,7 @@ namespace Fujify.ViewModels
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[Fujify] Error in ExecuteAddFilesAsync: {ex}");
+                System.Diagnostics.Debug.WriteLine($"[Fujifier] Error in ExecuteAddFilesAsync: {ex}");
                 await _dialogService.ShowMessageAsync(OwnerWindow, "Import Error", $"Failed to select files: {ex.Message}");
             }
         }
@@ -1437,17 +1487,43 @@ namespace Fujify.ViewModels
 
         private void ExecuteOpenHelp()
         {
-            CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujify");
+            CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujifier");
         }
 
-        private void ExecuteOpenUpdate()
+        private async Task ExecuteOpenUpdateAsync()
         {
-            CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujify/releases");
+            try
+            {
+                var result = await _updateService.CheckForUpdateAsync(force: true);
+                if (result.IsUpdateAvailable && result.UpdateInfo != null)
+                {
+                    if (OwnerWindow != null)
+                    {
+                        await UpdateDialog.ShowUpdateDialogAsync(OwnerWindow, result.UpdateInfo, _updateService);
+                    }
+                    else
+                    {
+                        await UpdateDialog.ShowUpdateDialogAsync(null, result.UpdateInfo, _updateService);
+                    }
+                }
+                else if (result.Success && !result.IsUpdateAvailable)
+                {
+                    ShowMessageModal("Up to Date", $"You are running the latest version of Fujifier (v{_updateService.CurrentVersionString}).");
+                }
+                else
+                {
+                    ShowMessageModal("Update Check", result.ErrorMessage ?? "Could not check for updates. Please check your internet connection.");
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowMessageModal("Update Check Error", $"An error occurred: {ex.Message}");
+            }
         }
 
         private void ExecuteReportBug()
         {
-            CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujify/issues");
+            CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujifier/issues");
         }
 
         private void ExecuteOpenWebsite()

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.ipweb.fujify"
+    package="com.ipweb.fujifier"
     android:versionCode="1"
     android:versionName="2.1.0">
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
@@ -22,12 +22,12 @@
     <application
         android:allowBackup="true"
         android:icon="@drawable/icon"
-        android:label="Fujify"
+        android:label="Fujifier"
         android:supportsRtl="true"
         android:theme="@style/MyTheme.NoActionBar">
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="com.ipweb.fujify.fileprovider"
+            android:authorities="com.ipweb.fujifier.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

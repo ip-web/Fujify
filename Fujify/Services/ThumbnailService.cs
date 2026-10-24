@@ -62,7 +62,7 @@ namespace Fujify.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[Fujify] Direct thumbnail extraction failed: {ex.Message}");
+                Debug.WriteLine($"[Fujifier] Direct thumbnail extraction failed: {ex.Message}");
             }
 
             string extension = Path.GetExtension(filePath).ToLowerInvariant();
@@ -185,7 +185,7 @@ namespace Fujify.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[Fujify] DecodeAndOrient failed: {ex.Message}");
+                Debug.WriteLine($"[Fujifier] DecodeAndOrient failed: {ex.Message}");
                 try
                 {
                     using var fallbackMs = new MemoryStream(imageBytes);
@@ -366,7 +366,11 @@ namespace Fujify.Services
 
                 try
                 {
-                    var uri = new Uri("avares://Fujify/Assets/images/placeholder.png");
+                    var uri = new Uri("avares://Fujifier/Assets/images/placeholder.png");
+                    if (!AssetLoader.Exists(uri))
+                    {
+                        uri = new Uri("avares://Fujify/Assets/images/placeholder.png");
+                    }
                     if (AssetLoader.Exists(uri))
                     {
                         using var stream = AssetLoader.Open(uri);

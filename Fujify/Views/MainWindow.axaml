@@ -4,7 +4,7 @@
         xmlns:views="using:Fujify.Views"
         x:Class="Fujify.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Title="Fujify - Fujifilm Film Simulation Engine"
+        Title="Fujifier - Fujifilm Film Simulation Engine"
         Width="1180" Height="800"
         MinWidth="380" MinHeight="420"
         WindowStartupLocation="CenterScreen"

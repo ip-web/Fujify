@@ -1,0 +1,324 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
+using Fujify.Models;
+using Fujify.Services;
+using Fujify.ViewModels;
+using Xunit;
+
+namespace Fujify.Tests
+{
+    [Collection("Registry")]
+    public class LicensingAndTierGatingTests
+    {
+        private const string RsaPrivateKeyXml = @"<RSAKeyValue><Modulus>xNCFZILhKeCCfY0Vk7/cFywefj5rUmDPXrYciIbQ3jC5GgVNpdUsag/noI1tncmttOiwiqXZFO6K1VbYCbXbWujHA8iOfdYLU3JITwZ+6fKw5jJAuE9pptqpx0s47SZzieki6XrcX7mQ5o6eo+RXIhlfdeTveXmX71ndzCA6EAQBjpvOVE/7IYEtzkEVxwg2+SBAHeLTmjCygwWdePFhr9CRuVCQ+6AEvyA0ZRiHjyorowt8WM2KVaNLEALZMh7hxXQBcuh8qffVTS89MG1+N8NOurFRtQAG3ZCHp5YrMh/cpTdIrgB0jhwqPv0ZiGhQ9ORZNECzjQ/TUhtveX9mBQ==</Modulus><Exponent>AQAB</Exponent><P>3blMhv4bMYJ0jBqLOIVA71LFLW8PYo3ncYikI+yS3HiqjECBbwwNeTGq/O0ccwWvIb2P6XLKQP5Lb35a1lspeGsRcjbB9HaXi5J4Yf/iaxEiwtS4msRN4DGJgf9JFJA72zF6COAJqjGQHkF+ZpJT7WF0jOwRL3zOxc+tYJB6H68=</P><Q>4z1wb20vwjCBMV0YXDEKIIzPxRcdsiLdfxoPCArEXilMDZoWscAmGg3vtwGVvk0L642lz57iFmHRPPhnr/hFW4n4lbQW4tWFsX/gYw4HNOrNZpiWYjuf3iUQIvXVprgcuNngzS1WlxxPOijvk0c8/5tMXXwj6F32Gie+oWVdbos=</Q><DP>K2je+cMAUfYnmVKNFVjJeNGstxN6YKJFwO2urTXhHvck9OagMLycWrEFuBU4L7DaM/HoHh2SSZ0/6alEYZlhiij0NndQC+u4CeR4Wz989ddaBekd53cthApO0LvJdBQ1E9og+WHboo2nmLTb6XsWoXAmIH0LdE+sMABUAobm0hM=</DP><DQ>ggTTYk3894U9RntXxtggTUOEVebGDPi591F3rEhM1vuWEmpJ9eZVZq72q6VygnIfEeX4K3VjMx9A0zvmR98sABZPb4idV6iIWGksgEC0iuiWIc/Iq+glrrtSIk66sivB81pmr77zPn7qLgLiIUivdCjtZsfy2693cruu7TXMYcU=</DQ><InverseQ>iR/+jo6wOgkznEJ4e6SLr6Rb3fBKPpXexZ7xTtWGn5T/gf/ir0qSYyEQuGPXMrR9ZppBCFBfV+b8KI7907vnYTihE0pOb8XLbsi+PqgxbP3opMy6NHqtIkWiiCfY1gQLgitXHYelxkBXonthlPXYlkAUFxSxtRseXoWRtbql6yk=</InverseQ><D>a48p10xPkXtI1SSNbjmkJmXOJGAodtTBf5k27sX+z+8Aud+8F6zwoOYgR/YCugDGFeA02xDYGkBjT0QuvN/OCVi9qquoc8zOU8RZEBcUtPYVBzjfddqweqd1sZzCd5hT/EKU+dRTK11WeynmONtJYzFKojuDRHfXOM98D1ptYOJaOqVmicpdzWQW+L8LEgLNo4Al34tL0nU5d0aXEaUVQtSkSeuyI7i4LmDfW9WBu3Vet9Hy7qSOHPB9LHOi1mCQrB2+aUVjsm8MUttyvColAbza3fenI23ihR/XtIDhgHmQi8WWP4JNgAW9BtVRE1RTJgD3RDvz0vRzGlRVHWZU4Q==</D></RSAKeyValue>";
+
+        private class MockSettingsService : ISettingsService
+        {
+            public AppSettings Settings { get; } = new();
+            public void Save() { }
+            public void Load() { }
+        }
+
+        [Fact]
+        public void LicenseService_DefaultState_ShouldBeFreeTier()
+        {
+            var settings = new MockSettingsService();
+            var service = new LicenseService(settings);
+
+            Assert.False(service.IsPro);
+            Assert.Equal(LicenseTier.Free, service.CurrentStatus.Tier);
+            Assert.Equal(10, service.MaxFreeQueueSize);
+            Assert.Equal(15, service.DelaySeconds);
+        }
+
+        [Fact]
+        public async Task LicenseService_ActivateDevOverrideKey_ShouldUnlockPro()
+        {
+            var settings = new MockSettingsService();
+            var service = new LicenseService(settings);
+
+            var result = await service.ActivateLicenseKeyAsync("FUJIFIER-PRO-DEV-OVERRIDE");
+
+            Assert.True(result.Success);
+            Assert.True(service.IsPro);
+            Assert.Equal(LicenseTier.Pro, service.CurrentStatus.Tier);
+            Assert.Equal("pro-developer@fujifier.net", service.CurrentStatus.LicenseeEmail);
+        }
+
+        [Fact]
+        public async Task LicenseService_CryptographicKeyVerification_Lifecycle()
+        {
+            var settings = new MockSettingsService();
+            var service = new LicenseService(settings);
+
+            // 1. Generate valid signed key using private key
+            string email = "photographer@example.com";
+            string validKey = LicenseService.GenerateTestKey(email, RsaPrivateKeyXml);
+
+            // 2. Activate key
+            var result = await service.ActivateLicenseKeyAsync(validKey);
+            Assert.True(result.Success, result.ErrorMessage);
+            Assert.True(service.IsPro);
+            Assert.Equal(email, service.CurrentStatus.LicenseeEmail);
+
+            // 3. Deactivate key
+            await service.DeactivateLicenseAsync();
+            Assert.False(service.IsPro);
+            Assert.Equal(LicenseTier.Free, service.CurrentStatus.Tier);
+        }
+
+        [Fact]
+        public async Task LicenseService_ForgedKey_ShouldBeRejected()
+        {
+            var settings = new MockSettingsService();
+            var service = new LicenseService(settings);
+
+            var result = await service.ActivateLicenseKeyAsync("FUJIFIER-PRO.invalidpayload.invalidsignature");
+            Assert.False(result.Success);
+            Assert.False(service.IsPro);
+        }
+
+        [Fact]
+        public void PreferencesViewModel_FreeTier_ContextMenuCannotBeEnabled()
+        {
+            var settings = new MockSettingsService();
+            var licenseService = new LicenseService(settings);
+            var vm = new PreferencesViewModel(settings, licenseService);
+
+            Assert.False(vm.IsPro);
+
+            // Attempt to enable context menu as a free user
+            vm.IsWindowsContextMenuEnabled = true;
+
+            // Should remain disabled
+            Assert.False(vm.IsWindowsContextMenuEnabled);
+            Assert.True(vm.HasLicenseMessage);
+        }
+
+        [Fact]
+        public async Task PreferencesViewModel_ProTier_ContextMenuCanBeEnabled()
+        {
+            var settings = new MockSettingsService();
+            var licenseService = new LicenseService(settings);
+            await licenseService.ActivateLicenseKeyAsync("FUJIFIER-PRO-DEV-OVERRIDE");
+
+            var vm = new PreferencesViewModel(settings, licenseService);
+
+            Assert.True(vm.IsPro);
+
+            // Enable context menu as Pro user
+            vm.IsWindowsContextMenuEnabled = true;
+            Assert.True(vm.IsWindowsContextMenuEnabled);
+        }
+
+        private class MockHttpMessageHandler : HttpMessageHandler
+        {
+            private readonly Func<HttpRequestMessage, HttpResponseMessage> _handler;
+
+            public MockHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> handler)
+            {
+                _handler = handler;
+            }
+
+            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+            {
+                return Task.FromResult(_handler(request));
+            }
+        }
+
+        [Fact]
+        public void DeviceIdentityService_GeneratesAndPersistsDeviceId()
+        {
+            var settings = new MockSettingsService();
+            var deviceService = new DeviceIdentityService(settings);
+
+            string id1 = deviceService.GetOrCreateDeviceId();
+            Assert.False(string.IsNullOrWhiteSpace(id1));
+            Assert.Equal(id1, settings.Settings.DeviceId);
+
+            // Calling again should return the exact same persisted ID
+            string id2 = deviceService.GetOrCreateDeviceId();
+            Assert.Equal(id1, id2);
+
+            string name = deviceService.GetDeviceName();
+            Assert.False(string.IsNullOrWhiteSpace(name));
+
+            string platform = deviceService.GetPlatform();
+            Assert.False(string.IsNullOrWhiteSpace(platform));
+        }
+
+        [Fact]
+        public void LicenseService_WebsiteKeyFormat_Recognized()
+        {
+            var settings = new MockSettingsService();
+            var service = new LicenseService(settings);
+
+            bool isValid = service.VerifyLicenseKey("FUJI-A1B2-C3D4-E5F6", out _, out var error);
+            Assert.True(isValid);
+            Assert.Null(error);
+
+            bool isInvalid = service.VerifyLicenseKey("INVALID-KEY", out _, out var err2);
+            Assert.False(isInvalid);
+            Assert.NotNull(err2);
+        }
+
+        [Fact]
+        public void LicenseService_OfflineEntitlementToken_KeepsProActiveOffline()
+        {
+            var settings = new MockSettingsService();
+            settings.Settings.LicenseKey = "FUJI-A1B2-C3D4-E5F6";
+            settings.Settings.OfflineToken = "header.payload.signature";
+            settings.Settings.OfflineTokenExpires = DateTime.UtcNow.AddDays(5);
+            settings.Settings.UsedActivations = 1;
+            settings.Settings.MaxActivations = 3;
+
+            var service = new LicenseService(settings);
+
+            Assert.True(service.IsPro);
+            Assert.Equal("1 of 3 device slots active", service.SlotInfoText);
+        }
+
+        [Fact]
+        public async Task LicenseService_MockHttp_ActivationSuccess_ActivatesAndSetsSlots()
+        {
+            var settings = new MockSettingsService();
+
+            var handler = new MockHttpMessageHandler(req =>
+            {
+                if (req.RequestUri != null && req.RequestUri.ToString().Contains("/license/activate"))
+                {
+                    var responseObj = new LicenseActivationResponse
+                    {
+                        Success = true,
+                        LicenseKey = "FUJI-TEST-KEY-0001",
+                        PlanType = "pro_lifetime",
+                        Status = "active",
+                        UsedActivations = 2,
+                        MaxActivations = 3,
+                        OfflineToken = "signed.offline.jwt",
+                        OfflineExpires = DateTime.UtcNow.AddDays(7).ToString("o")
+                    };
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(responseObj))
+                    };
+                }
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            });
+
+            var httpClient = new HttpClient(handler);
+            var service = new LicenseService(settings, httpClient);
+
+            var result = await service.ActivateLicenseKeyAsync("FUJI-TEST-KEY-0001");
+
+            Assert.True(result.Success, result.ErrorMessage);
+            Assert.True(service.IsPro);
+            Assert.Equal(2, service.UsedActivations);
+            Assert.Equal(3, service.MaxActivations);
+            Assert.Equal("2 of 3 device slots active", service.SlotInfoText);
+        }
+
+        [Fact]
+        public async Task LicenseService_MockHttp_ActivationLimitReached_ReturnsFriendlyError()
+        {
+            var settings = new MockSettingsService();
+
+            var handler = new MockHttpMessageHandler(req =>
+            {
+                string errorJson = @"{
+                    ""code"": ""activation_limit_reached"",
+                    ""message"": ""Activation limit reached (3/3 devices).""
+                }";
+                return new HttpResponseMessage(HttpStatusCode.Conflict)
+                {
+                    Content = new StringContent(errorJson)
+                };
+            });
+
+            var httpClient = new HttpClient(handler);
+            var service = new LicenseService(settings, httpClient);
+
+            var result = await service.ActivateLicenseKeyAsync("FUJI-TEST-KEY-0002");
+
+            Assert.False(result.Success);
+            Assert.False(service.IsPro);
+            Assert.Contains("Activation limit reached", result.ErrorMessage);
+        }
+
+        [Fact]
+        public async Task LicenseService_MockHttp_AccountLoginSuccess_ActivatesUserLicense()
+        {
+            var settings = new MockSettingsService();
+
+            var handler = new MockHttpMessageHandler(req =>
+            {
+                string uri = req.RequestUri?.ToString() ?? "";
+                if (uri.Contains("/auth/login"))
+                {
+                    var loginResponse = new AuthLoginResponse
+                    {
+                        Success = true,
+                        AccessToken = "jwt.access.token",
+                        RefreshToken = "jwt.refresh.token",
+                        User = new AuthUserDto
+                        {
+                            Id = 1,
+                            Email = "photographer@ipweb.dev",
+                            DisplayName = "Isidore"
+                        },
+                        Licenses = new List<UserLicenseDto>
+                        {
+                            new UserLicenseDto
+                            {
+                                Id = 10,
+                                LicenseKey = "FUJI-USER-KEY-1234",
+                                Status = "active",
+                                MaxActivations = 3,
+                                UsedActivations = 1
+                            }
+                        }
+                    };
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(loginResponse))
+                    };
+                }
+
+                if (uri.Contains("/license/activate"))
+                {
+                    var actResponse = new LicenseActivationResponse
+                    {
+                        Success = true,
+                        LicenseKey = "FUJI-USER-KEY-1234",
+                        Status = "active",
+                        UsedActivations = 2,
+                        MaxActivations = 3
+                    };
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(actResponse))
+                    };
+                }
+
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            });
+
+            var httpClient = new HttpClient(handler);
+            var service = new LicenseService(settings, httpClient);
+
+            var result = await service.LoginWithAccountAsync("photographer@ipweb.dev", "SecurePassword123!");
+
+            Assert.True(result.Success, result.ErrorMessage);
+            Assert.True(service.IsPro);
+            Assert.True(service.IsAccountLoggedIn);
+            Assert.Equal("photographer@ipweb.dev", service.AccountEmail);
+            Assert.Equal(2, service.UsedActivations);
+        }
+    }
+}

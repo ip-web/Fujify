@@ -27,12 +27,28 @@ namespace Fujify.Views
 
         private void GitHub_Click(object? sender, RoutedEventArgs e)
         {
-            Common.CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujify");
+            Common.CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujifier");
         }
 
-        private void Releases_Click(object? sender, RoutedEventArgs e)
+        private async void Releases_Click(object? sender, RoutedEventArgs e)
         {
-            Common.CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujify/releases");
+            try
+            {
+                var updateService = new Services.UpdateService();
+                var result = await updateService.CheckForUpdateAsync(force: true);
+                if (result.IsUpdateAvailable && result.UpdateInfo != null)
+                {
+                    await UpdateDialog.ShowUpdateDialogAsync(this, result.UpdateInfo, updateService);
+                }
+                else
+                {
+                    Common.CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujifier/releases");
+                }
+            }
+            catch
+            {
+                Common.CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujifier/releases");
+            }
         }
     }
 }

@@ -1,0 +1,81 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Fujify.Views.FreeTierDelayDialog"
+        Title="Fujifier Free Tier"
+        Width="480" Height="400"
+        MinWidth="440" MinHeight="360"
+        CanResize="False"
+        WindowStartupLocation="CenterScreen"
+        TransparencyLevelHint="Mica, AcrylicBlur"
+        Background="Transparent"
+        Icon="/Assets/images/logo.ico">
+
+    <Grid Background="{DynamicResource AppBackgroundBrush}">
+        <Grid Margin="24" RowDefinitions="Auto, *, Auto, Auto">
+            <!-- Header: Icon & Tier Badge -->
+            <StackPanel Grid.Row="0" Spacing="8" HorizontalAlignment="Center" Margin="0,0,0,12">
+                <Border Width="48" Height="48" CornerRadius="24" 
+                        Background="{DynamicResource AppGlassPillBrush}" 
+                        HorizontalAlignment="Center">
+                    <TextBlock x:Name="IconText" Text="⏳" FontSize="22" 
+                               Foreground="{DynamicResource AppAccentBrush}" 
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock x:Name="TitleText" Text="Fujifier Free Tier" FontWeight="Bold" FontSize="17" 
+                           Foreground="{DynamicResource AppTextPrimaryBrush}" 
+                           HorizontalAlignment="Center" TextAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Explanation & Details -->
+            <StackPanel Grid.Row="1" Spacing="10" VerticalAlignment="Center">
+                <TextBlock x:Name="MessageText" FontSize="12.5" TextWrapping="Wrap" 
+                           Foreground="{DynamicResource AppTextSecondaryBrush}" 
+                           HorizontalAlignment="Center" TextAlignment="Center" LineHeight="18"
+                           Text="You are currently using the Free tier of Fujifier. Free version is limited to 10 photos per queue with a 15-second cooldown timer. Upgrade to Fujifier Pro to enjoy unlimited batch processing, instant execution, and Windows Explorer context menu integration!"/>
+
+                <!-- Cooldown Progress -->
+                <StackPanel Spacing="6" Margin="0,8,0,0">
+                    <ProgressBar x:Name="CountdownProgressBar" Height="6" CornerRadius="3" 
+                                 Minimum="0" Maximum="15" Value="0" 
+                                 Foreground="{DynamicResource AppAccentBrush}"/>
+                    <TextBlock x:Name="CountdownStatusText" Text="Cooldown active: 15s remaining..." 
+                               FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" 
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- License Key Entry Section (Expandable) -->
+                <StackPanel x:Name="LicenseKeySection" IsVisible="False" Spacing="6" Margin="0,6,0,0">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <TextBox x:Name="LicenseKeyInput" Grid.Column="0" 
+                                 Watermark="Paste FUJIFIER-PRO license key here..." 
+                                 FontSize="12" Height="34" CornerRadius="8" 
+                                 VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                        <Button Grid.Column="1" Content="Activate" Click="ActivateKey_Click" 
+                                Classes="accent" Height="34" Padding="14,0" CornerRadius="8"
+                                VerticalContentAlignment="Center"/>
+                    </Grid>
+                    <TextBlock x:Name="LicenseActivationError" FontSize="11" 
+                               Foreground="#E74C3C" IsVisible="False" 
+                               TextAlignment="Center"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Middle Links (Upgrade & Toggle License Key) -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16" Margin="0,12,0,14">
+                <Button Content="⭐ Upgrade to Pro ($19)" Click="Upgrade_Click" Classes="accent" 
+                        Height="36" Padding="16,0" CornerRadius="10"
+                        VerticalContentAlignment="Center" FontWeight="SemiBold"/>
+                <Button x:Name="ToggleKeyButton" Content="Enter License Key" Click="ToggleLicenseKey_Click" 
+                        Height="36" Padding="14,0" CornerRadius="10"
+                        VerticalContentAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Bottom Action: Continue with Free Version (Disabled until timer finishes) -->
+            <Button Grid.Row="3" x:Name="ContinueButton" 
+                    Content="Continue with Free Version (15s)" 
+                    Click="Continue_Click" IsEnabled="False"
+                    Height="38" CornerRadius="10" HorizontalAlignment="Stretch" 
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+        </Grid>
+    </Grid>
+</Window>

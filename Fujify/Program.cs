@@ -1,5 +1,7 @@
 using Avalonia;
 using System;
+using Fujify.Common;
+using Fujify.Services;
 
 namespace Fujify;
 
@@ -11,32 +13,40 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        var parsed = CommandLineArgs.Parse(args);
+        string channel = parsed.IsQuickProcess ? SingleInstanceService.ChannelQuick : SingleInstanceService.ChannelMain;
+
         if (OperatingSystem.IsWindows())
         {
-            if (!Services.SingleInstanceService.TryAcquireMutex())
+            if (!SingleInstanceService.TryAcquireMutex(channel))
             {
-                // Another instance of Fujify is already running.
+                // Another instance of Fujify is already running on this channel.
                 // Forward files to the running instance via IPC and exit immediately.
-                Services.SingleInstanceService.SendArgsToExistingInstance(args);
+                SingleInstanceService.SendPayloadToExistingInstance(new IpcPayload
+                {
+                    Mode = parsed.Mode.ToString().ToLowerInvariant(),
+                    Files = parsed.Files
+                }, channel);
                 return;
             }
 
-            // Primary instance: start Named Pipe listener for files opened in Windows Explorer
-            Services.SingleInstanceService.StartServer(files =>
+            // Primary instance: start Named Pipe listener
+            SingleInstanceService.StartServer(payload =>
             {
-                App.HandleIncomingFiles(files);
-            });
+                App.HandleIncomingPayload(payload);
+            }, channel);
         }
 
         try
         {
+            App.InitialCommandLineArgs = parsed;
             BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         }
         finally
         {
             if (OperatingSystem.IsWindows())
             {
-                Services.SingleInstanceService.Release();
+                SingleInstanceService.Release(channel);
             }
         }
     }

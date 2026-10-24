@@ -27,86 +27,140 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Fujify.Common;
 
 namespace Fujify.Services
 {
+    public class IpcPayload
+    {
+        public string Mode { get; set; } = "queue"; // "queue", "process", "process-to"
+        public List<string> Files { get; set; } = new();
+    }
+
     public static class SingleInstanceService
     {
-        private static Mutex? _mutex;
-        private static CancellationTokenSource? _serverCts;
-        private static Action<IReadOnlyList<string>>? _filesReceivedCallback;
+        public const string ChannelMain = "main";
+        public const string ChannelQuick = "quick";
 
-        private static readonly ConcurrentQueue<string> _incomingQueue = new();
-        private static readonly object _timerLock = new();
-        private static Timer? _debounceTimer;
+        private static readonly Dictionary<string, Mutex> _mutexes = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<string, CancellationTokenSource> _serverCtss = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<string, Action<IpcPayload>> _payloadCallbacks = new(StringComparer.OrdinalIgnoreCase);
 
-        private static string GetPipeName()
+        private static readonly ConcurrentDictionary<string, ConcurrentQueue<IpcPayload>> _incomingQueues = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly ConcurrentDictionary<string, Timer> _debounceTimers = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly object _syncLock = new();
+
+        public static string GetPipeName(string channel = ChannelMain)
         {
             string user = Environment.UserName.Replace("\\", "_").Replace("/", "_");
-            return $"Fujify_IPC_Pipe_{user}";
+            return channel.Equals(ChannelQuick, StringComparison.OrdinalIgnoreCase)
+                ? $"Fujifier_QuickProcess_Pipe_{user}"
+                : $"Fujifier_IPC_Pipe_{user}";
         }
 
-        private static string GetMutexName()
+        public static string GetMutexName(string channel = ChannelMain)
         {
             string user = Environment.UserName.Replace("\\", "_").Replace("/", "_");
-            return $"Fujify_SingleInstance_Mutex_{user}";
+            return channel.Equals(ChannelQuick, StringComparison.OrdinalIgnoreCase)
+                ? $"Fujifier_QuickProcess_Mutex_{user}"
+                : $"Fujifier_SingleInstance_Mutex_{user}";
         }
 
         /// <summary>
-        /// Attempts to acquire the single-instance mutex.
-        /// Returns true if this is the first running instance.
+        /// Attempts to acquire the single-instance mutex for the specified channel ("main" or "quick").
+        /// Returns true if this is the first running instance for this channel.
         /// </summary>
-        public static bool TryAcquireMutex()
+        public static bool TryAcquireMutex(string channel = ChannelMain)
         {
             try
             {
-                _mutex = new Mutex(true, GetMutexName(), out bool createdNew);
-                return createdNew;
+                lock (_syncLock)
+                {
+                    if (_mutexes.TryGetValue(channel, out var existing))
+                    {
+                        return true;
+                    }
+
+                    var mutex = new Mutex(true, GetMutexName(channel), out bool createdNew);
+                    _mutexes[channel] = mutex;
+                    return createdNew;
+                }
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[SingleInstanceService] Mutex error: {ex.Message}");
+                Debug.WriteLine($"[SingleInstanceService] Mutex error on channel '{channel}': {ex.Message}");
                 return true; // Fallback to running if mutex fails
             }
         }
 
         /// <summary>
-        /// Sends command-line arguments to the running primary instance via Named Pipe.
-        /// Returns true if successfully delivered.
+        /// Sends an IPC payload to the running primary instance of the specified channel via Named Pipe.
         /// </summary>
-        public static bool SendArgsToExistingInstance(string[] args, int timeoutMs = 3500)
+        public static bool SendPayloadToExistingInstance(IpcPayload payload, string channel = ChannelMain, int timeoutMs = 3500)
         {
             try
             {
-                using var pipeClient = new NamedPipeClientStream(".", GetPipeName(), PipeDirection.Out);
+                using var pipeClient = new NamedPipeClientStream(".", GetPipeName(channel), PipeDirection.Out);
                 pipeClient.Connect(timeoutMs);
 
                 using var writer = new StreamWriter(pipeClient, Encoding.UTF8) { AutoFlush = true };
-                string json = JsonSerializer.Serialize(args ?? Array.Empty<string>());
+                string json = JsonSerializer.Serialize(payload ?? new IpcPayload());
                 writer.WriteLine(json);
                 return true;
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[SingleInstanceService] Failed to send args to primary instance: {ex.Message}");
+                Debug.WriteLine($"[SingleInstanceService] Failed to send payload to primary instance ({channel}): {ex.Message}");
                 return false;
             }
         }
 
         /// <summary>
-        /// Starts the Named Pipe server loop in the background to accept files from other instances.
+        /// Backwards-compatible overload: parses command-line args and forwards them to the appropriate channel.
+        /// </summary>
+        public static bool SendArgsToExistingInstance(string[] args, int timeoutMs = 3500)
+        {
+            var parsed = CommandLineArgs.Parse(args);
+            string channel = parsed.IsQuickProcess ? ChannelQuick : ChannelMain;
+            return SendPayloadToExistingInstance(new IpcPayload
+            {
+                Mode = parsed.Mode.ToString().ToLowerInvariant(),
+                Files = parsed.Files
+            }, channel, timeoutMs);
+        }
+
+        /// <summary>
+        /// Starts the Named Pipe server loop in the background for the specified channel.
+        /// </summary>
+        public static void StartServer(Action<IpcPayload> onPayloadReceived, string channel = ChannelMain)
+        {
+            lock (_syncLock)
+            {
+                _payloadCallbacks[channel] = onPayloadReceived;
+                if (_serverCtss.TryGetValue(channel, out var existingCts))
+                {
+                    existingCts.Cancel();
+                    existingCts.Dispose();
+                }
+
+                var cts = new CancellationTokenSource();
+                _serverCtss[channel] = cts;
+
+                Task.Run(async () => await RunServerLoopAsync(channel, cts.Token));
+            }
+        }
+
+        /// <summary>
+        /// Backwards-compatible overload for full UI file callback.
         /// </summary>
         public static void StartServer(Action<IReadOnlyList<string>> onFilesReceived)
         {
-            _filesReceivedCallback = onFilesReceived;
-            _serverCts = new CancellationTokenSource();
-
-            Task.Run(async () => await RunServerLoopAsync(_serverCts.Token));
+            StartServer(payload => onFilesReceived(payload.Files), ChannelMain);
         }
 
-        private static async Task RunServerLoopAsync(CancellationToken token)
+        private static async Task RunServerLoopAsync(string channel, CancellationToken token)
         {
-            string pipeName = GetPipeName();
+            string pipeName = GetPipeName(channel);
 
             while (!token.IsCancellationRequested)
             {
@@ -121,7 +175,7 @@ namespace Fujify.Services
 
                     await server.WaitForConnectionAsync(token);
 
-                    // Process client connection asynchronously so next instance can connect immediately
+                    // Process client connection asynchronously
                     _ = Task.Run(async () =>
                     {
                         using (server)
@@ -132,16 +186,34 @@ namespace Fujify.Services
                                 var line = await reader.ReadLineAsync(token);
                                 if (!string.IsNullOrWhiteSpace(line))
                                 {
-                                    var files = JsonSerializer.Deserialize<string[]>(line);
-                                    if (files != null)
+                                    IpcPayload? payload = null;
+                                    if (line.TrimStart().StartsWith("{", StringComparison.Ordinal))
                                     {
-                                        EnqueueIncomingFiles(files);
+                                        payload = JsonSerializer.Deserialize<IpcPayload>(line);
+                                    }
+                                    else if (line.TrimStart().StartsWith("[", StringComparison.Ordinal))
+                                    {
+                                        var rawArray = JsonSerializer.Deserialize<string[]>(line);
+                                        if (rawArray != null)
+                                        {
+                                            var parsed = CommandLineArgs.Parse(rawArray);
+                                            payload = new IpcPayload
+                                            {
+                                                Mode = parsed.Mode.ToString().ToLowerInvariant(),
+                                                Files = parsed.Files
+                                            };
+                                        }
+                                    }
+
+                                    if (payload != null)
+                                    {
+                                        EnqueueIncomingPayload(channel, payload);
                                     }
                                 }
                             }
                             catch (Exception ex)
                             {
-                                Debug.WriteLine($"[SingleInstanceService] Client reader error: {ex.Message}");
+                                Debug.WriteLine($"[SingleInstanceService] Client reader error on channel '{channel}': {ex.Message}");
                             }
                         }
                     }, token);
@@ -152,7 +224,7 @@ namespace Fujify.Services
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"[SingleInstanceService] Server accept loop error: {ex.Message}");
+                    Debug.WriteLine($"[SingleInstanceService] Server accept loop error on channel '{channel}': {ex.Message}");
                     try
                     {
                         await Task.Delay(100, token);
@@ -162,47 +234,88 @@ namespace Fujify.Services
             }
         }
 
-        /// <summary>
-        /// Debounces incoming files so multiple simultaneous processes (e.g. from Windows Explorer context menu)
-        /// are batched into a single unified queue update.
-        /// </summary>
-        public static void EnqueueIncomingFiles(IEnumerable<string> files)
+        private static void EnqueueIncomingPayload(string channel, IpcPayload payload)
         {
-            foreach (var file in files)
-            {
-                if (!string.IsNullOrWhiteSpace(file))
-                {
-                    _incomingQueue.Enqueue(file);
-                }
-            }
+            var queue = _incomingQueues.GetOrAdd(channel, _ => new ConcurrentQueue<IpcPayload>());
+            queue.Enqueue(payload);
 
-            lock (_timerLock)
+            lock (_syncLock)
             {
-                _debounceTimer?.Dispose();
-                _debounceTimer = new Timer(_ =>
+                if (_debounceTimers.TryGetValue(channel, out var timer))
                 {
-                    var batch = new List<string>();
-                    while (_incomingQueue.TryDequeue(out var f))
+                    timer.Dispose();
+                }
+
+                _debounceTimers[channel] = new Timer(_ =>
+                {
+                    var allFiles = new List<string>();
+                    string mode = "queue";
+
+                    while (queue.TryDequeue(out var p))
                     {
-                        batch.Add(f);
+                        if (p.Files != null)
+                        {
+                            allFiles.AddRange(p.Files);
+                        }
+                        if (!string.IsNullOrWhiteSpace(p.Mode))
+                        {
+                            mode = p.Mode;
+                        }
                     }
 
-                    if (batch.Count > 0)
+                    if (allFiles.Count > 0 && _payloadCallbacks.TryGetValue(channel, out var callback))
                     {
-                        _filesReceivedCallback?.Invoke(batch);
+                        callback.Invoke(new IpcPayload
+                        {
+                            Mode = mode,
+                            Files = allFiles
+                        });
                     }
                 }, null, 150, Timeout.Infinite);
             }
         }
 
-        public static void Release()
+        public static void Release(string? channel = null)
+        {
+            lock (_syncLock)
+            {
+                if (channel != null)
+                {
+                    ReleaseChannel(channel);
+                }
+                else
+                {
+                    foreach (var key in new List<string>(_mutexes.Keys))
+                    {
+                        ReleaseChannel(key);
+                    }
+                }
+            }
+        }
+
+        private static void ReleaseChannel(string channel)
         {
             try
             {
-                _serverCts?.Cancel();
-                _serverCts?.Dispose();
-                _mutex?.ReleaseMutex();
-                _mutex?.Dispose();
+                if (_serverCtss.TryGetValue(channel, out var cts))
+                {
+                    cts.Cancel();
+                    cts.Dispose();
+                    _serverCtss.Remove(channel);
+                }
+
+                if (_debounceTimers.TryGetValue(channel, out var timer))
+                {
+                    timer.Dispose();
+                    _debounceTimers.TryRemove(channel, out _);
+                }
+
+                if (_mutexes.TryGetValue(channel, out var mutex))
+                {
+                    mutex.ReleaseMutex();
+                    mutex.Dispose();
+                    _mutexes.Remove(channel);
+                }
             }
             catch { }
         }

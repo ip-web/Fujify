@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Fujify.Views.AboutWindow"
-        Title="About Fujify"
+        Title="About Fujifier"
         Width="440" Height="470"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
@@ -14,7 +14,7 @@
             <!-- Header with Logo -->
             <StackPanel Grid.Row="0" HorizontalAlignment="Center" Spacing="8" Margin="0,0,0,14">
                 <Image Source="/Assets/images/logoXL.png" Width="64" Height="64"/>
-                <TextBlock Text="Fujify" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
+                <TextBlock Text="Fujifier" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
                 <TextBlock Text="Version 2.1.0 (Cross-Platform)" FontSize="12" 
                            Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center"/>
             </StackPanel>

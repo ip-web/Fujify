@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDisplayName</key>
-    <string>Fujify</string>
+    <string>Fujifier</string>
     <key>CFBundleExecutable</key>
     <string>Fujify.iOS</string>
     <key>CFBundleIdentifier</key>
-    <string>com.ipweb.fujify</string>
+    <string>com.ipweb.fujifier</string>
     <key>CFBundleShortVersionString</key>
     <string>2.1.0</string>
     <key>CFBundleVersion</key>
@@ -43,9 +43,9 @@
         <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>Fujify requires access to your photo library to select camera RAW photos for conversion.</string>
+    <string>Fujifier requires access to your photo library to select camera RAW photos for conversion.</string>
     <key>NSPhotoLibraryAddUsageDescription</key>
-    <string>Fujify needs permission to save converted DNG photos to your photo library.</string>
+    <string>Fujifier needs permission to save converted DNG photos to your photo library.</string>
     <key>LSApplicationQueriesSchemes</key>
     <array>
         <string>lightroom</string>

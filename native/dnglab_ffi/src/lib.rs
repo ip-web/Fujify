@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: LGPL-2.1
-// Copyright 2024 Fujify Project / Isidore Paulin
+// Copyright 2024 Fujifier Project / Isidore Paulin
 
 use std::ffi::CStr;
 use std::fs::File;
@@ -90,7 +90,7 @@ pub unsafe extern "C" fn dnglab_convert_file(
 
     let mut params = ConvertParams::default();
     params.embedded = embed_raw;
-    params.software = "Fujify / DNGLab Native".into();
+    params.software = "Fujifier / DNGLab Native".into();
 
     match convert_raw_file(&in_path, &mut writer, &params) {
         Ok(_) => 0,

@@ -39,7 +39,22 @@ namespace Fujify.Services
             else
             {
                 string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                string folder = Path.Combine(appData, "Fujify");
+                string folder = Path.Combine(appData, "Fujifier");
+                string legacyFolder = Path.Combine(appData, "Fujify");
+                if (!Directory.Exists(folder) && Directory.Exists(legacyFolder))
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(folder);
+                        string oldFile = Path.Combine(legacyFolder, "settings.json");
+                        string newFile = Path.Combine(folder, "settings.json");
+                        if (File.Exists(oldFile) && !File.Exists(newFile))
+                        {
+                            File.Copy(oldFile, newFile);
+                        }
+                    }
+                    catch { }
+                }
                 Directory.CreateDirectory(folder);
                 _settingsFilePath = Path.Combine(folder, "settings.json");
             }

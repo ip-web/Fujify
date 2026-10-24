@@ -31,7 +31,7 @@ public class AppDelegate : AvaloniaAppDelegate<App>
         // Configure persistent writable staging directory for iOS
         DialogService.PlatformStagingDirectoryResolver = () =>
         {
-            string staging = Path.Combine(Path.GetTempPath(), "Fujify_Staging");
+            string staging = Path.Combine(Path.GetTempPath(), "Fujifier_Staging");
             Directory.CreateDirectory(staging);
             return staging;
         };

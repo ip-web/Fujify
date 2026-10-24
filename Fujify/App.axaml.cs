@@ -5,6 +5,10 @@ using Avalonia.Markup.Xaml;
 using Fujify.ViewModels;
 using Fujify.Views;
 
+[assembly: Avalonia.Metadata.XmlnsDefinition("using:Fujify.ViewModels", "Fujify.ViewModels")]
+[assembly: Avalonia.Metadata.XmlnsDefinition("using:Fujify.Models", "Fujify.Models")]
+[assembly: Avalonia.Metadata.XmlnsDefinition("using:Fujify.Views", "Fujify.Views")]
+
 namespace Fujify;
 
 public partial class App : Application
@@ -139,9 +143,38 @@ public partial class App : Application
 
     public static void ApplyTheme(bool isDark) => ApplyTheme(isDark ? "Dark" : "Light");
 
+    public static Common.CommandLineArgs? InitialCommandLineArgs { get; set; }
     private static MainViewModel? _activeViewModel;
     private static MainWindow? _activeMainWindow;
+    private static QuickProcessViewModel? _activeQuickViewModel;
+    private static QuickProcessWindow? _activeQuickWindow;
     private static readonly System.Collections.Concurrent.ConcurrentQueue<string> _pendingStartupFiles = new();
+
+    public static void HandleIncomingPayload(Services.IpcPayload payload)
+    {
+        if (payload == null || payload.Files == null || payload.Files.Count == 0) return;
+
+        if (_activeQuickViewModel != null)
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                if (_activeQuickWindow != null)
+                {
+                    _activeQuickWindow.Show();
+                    if (_activeQuickWindow.WindowState == Avalonia.Controls.WindowState.Minimized)
+                    {
+                        _activeQuickWindow.WindowState = Avalonia.Controls.WindowState.Normal;
+                    }
+                    _activeQuickWindow.Activate();
+                }
+
+                _activeQuickViewModel.AddFiles(payload.Files);
+            });
+            return;
+        }
+
+        HandleIncomingFiles(payload.Files);
+    }
 
     public static void HandleIncomingFiles(System.Collections.Generic.IReadOnlyList<string> files)
     {
@@ -197,11 +230,48 @@ public partial class App : Application
         ApplyTheme(settingsService.Settings.ThemeMode);
         UpdateAccentBrush();
 
-        var dialogService = new Services.DialogService(settingsService);
-        var vm = new MainViewModel(dialogService: dialogService, settingsService: settingsService);
+        var licenseService = new Services.LicenseService(settingsService);
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            // Direct Quick Process Mode: Do not boot up full UI
+            if (InitialCommandLineArgs?.IsQuickProcess == true)
+            {
+                var quickVm = new QuickProcessViewModel(
+                    InitialCommandLineArgs.Files,
+                    isProcessTo: InitialCommandLineArgs.Mode == Common.LaunchMode.ProcessTo,
+                    settingsService: settingsService,
+                    licenseService: licenseService);
+
+                var quickWindow = new QuickProcessWindow
+                {
+                    DataContext = quickVm
+                };
+                quickVm.OwnerWindow = quickWindow;
+                desktop.MainWindow = quickWindow;
+                _activeQuickViewModel = quickVm;
+                _activeQuickWindow = quickWindow;
+
+                if (System.OperatingSystem.IsWindows())
+                {
+                    if (settingsService.Settings.EnableWindowsContextMenu && licenseService.IsPro)
+                    {
+                        Services.WindowsContextMenuService.RegisterContextMenu();
+                    }
+                    else if (!licenseService.IsPro && Services.WindowsContextMenuService.IsContextMenuRegistered())
+                    {
+                        Services.WindowsContextMenuService.UnregisterContextMenu();
+                    }
+                }
+
+                quickWindow.Show();
+                base.OnFrameworkInitializationCompleted();
+                return;
+            }
+
+            var dialogService = new Services.DialogService(settingsService);
+            var vm = new MainViewModel(dialogService: dialogService, settingsService: settingsService, licenseService: licenseService);
+
             var mainWindow = new MainWindow
             {
                 DataContext = vm,
@@ -211,14 +281,25 @@ public partial class App : Application
             _activeMainWindow = mainWindow;
             _activeViewModel = vm;
 
-            // Ensure Windows Explorer context menu is kept up-to-date if enabled
-            if (System.OperatingSystem.IsWindows() && settingsService.Settings.EnableWindowsContextMenu)
+            // Ensure Windows Explorer context menu is kept up-to-date only if Pro
+            if (System.OperatingSystem.IsWindows())
             {
-                Services.WindowsContextMenuService.RegisterContextMenu();
+                if (settingsService.Settings.EnableWindowsContextMenu && licenseService.IsPro)
+                {
+                    Services.WindowsContextMenuService.RegisterContextMenu();
+                }
+                else if (!licenseService.IsPro && Services.WindowsContextMenuService.IsContextMenuRegistered())
+                {
+                    Services.WindowsContextMenuService.UnregisterContextMenu();
+                }
             }
 
             var startupFiles = new System.Collections.Generic.List<string>();
-            if (desktop.Args != null && desktop.Args.Length > 0)
+            if (InitialCommandLineArgs != null && InitialCommandLineArgs.Files.Count > 0)
+            {
+                startupFiles.AddRange(InitialCommandLineArgs.Files.Where(System.IO.File.Exists));
+            }
+            else if (desktop.Args != null && desktop.Args.Length > 0)
             {
                 startupFiles.AddRange(desktop.Args.Where(System.IO.File.Exists));
             }
@@ -235,14 +316,84 @@ public partial class App : Application
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(async () => await vm.AddFilesAsync(startupFiles));
             }
+
+            // Free Tier Launch Delay Modal
+            if (!licenseService.IsPro)
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+                {
+                    await Views.FreeTierDelayDialog.ShowDelayDialogAsync(mainWindow, licenseService, isPostConversion: false);
+                });
+            }
+
+            // Automatic update check on startup (if enabled)
+            if (settingsService.Settings.CheckForUpdatesOnStartup)
+            {
+                _ = System.Threading.Tasks.Task.Run(async () =>
+                {
+                    try
+                    {
+                        await System.Threading.Tasks.Task.Delay(2500);
+                        var updateService = new Services.UpdateService(settingsService);
+                        var result = await updateService.CheckForUpdateAsync(force: false);
+                        if (result.IsUpdateAvailable && result.UpdateInfo != null)
+                        {
+                            Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+                            {
+                                await Views.UpdateDialog.ShowUpdateDialogAsync(mainWindow, result.UpdateInfo, updateService);
+                            });
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[App] Background update check error: {ex.Message}");
+                    }
+                });
+            }
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
         {
+            var dialogService = new Services.DialogService(settingsService);
+            var vm = new MainViewModel(dialogService: dialogService, settingsService: settingsService, licenseService: licenseService);
             var mainView = new MainView
             {
                 DataContext = vm,
             };
             singleView.MainView = mainView;
+
+            // Free Tier Launch Delay Modal for mobile
+            if (!licenseService.IsPro)
+            {
+                Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+                {
+                    await Views.FreeTierDelayDialog.ShowDelayDialogAsync(null, licenseService, isPostConversion: false);
+                });
+            }
+
+            // Automatic update check on startup (if enabled)
+            if (settingsService.Settings.CheckForUpdatesOnStartup)
+            {
+                _ = System.Threading.Tasks.Task.Run(async () =>
+                {
+                    try
+                    {
+                        await System.Threading.Tasks.Task.Delay(3000);
+                        var updateService = new Services.UpdateService(settingsService);
+                        var result = await updateService.CheckForUpdateAsync(force: false);
+                        if (result.IsUpdateAvailable && result.UpdateInfo != null)
+                        {
+                            Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+                            {
+                                await Views.UpdateDialog.ShowUpdateDialogAsync(null, result.UpdateInfo, updateService);
+                            });
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[App] Background update check error: {ex.Message}");
+                    }
+                });
+            }
         }
 
         base.OnFrameworkInitializationCompleted();
