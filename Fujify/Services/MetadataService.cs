@@ -435,16 +435,6 @@ namespace Fujify.Services
                 }
             }
 
-            // 4. Fallback on Windows only: bundled strawberry perl script
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                string plPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "libs", "exiftool_files", "exiftool.pl");
-                if (File.Exists(plPath))
-                {
-                    return ("perl", $"\"{plPath}\"");
-                }
-            }
-
             return null;
         }
 
