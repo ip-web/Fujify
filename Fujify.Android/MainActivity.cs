@@ -127,6 +127,27 @@ public class MainActivity : AvaloniaMainActivity<App>
 
         // Process any incoming share or view intent
         HandleIncomingIntent(Intent);
+
+        // Initialize Google Mobile Ads (Banner, Splash Video, Interstitial)
+        AdManager.Instance.Initialize(this);
+    }
+
+    protected override void OnResume()
+    {
+        base.OnResume();
+        AdManager.Instance.Resume();
+    }
+
+    protected override void OnPause()
+    {
+        base.OnPause();
+        AdManager.Instance.Pause();
+    }
+
+    protected override void OnDestroy()
+    {
+        AdManager.Instance.Destroy();
+        base.OnDestroy();
     }
 
     protected override void OnNewIntent(Intent? intent)
