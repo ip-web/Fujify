@@ -44,6 +44,7 @@ namespace Fujify.ViewModels
         private readonly ISettingsService _settingsService;
         private readonly ILicenseService _licenseService;
         private readonly IUpdateService _updateService;
+        private readonly IAdService _adService;
 
         public bool IsPro => _licenseService.IsPro;
         public ILicenseService LicenseService => _licenseService;
@@ -76,7 +77,8 @@ namespace Fujify.ViewModels
             IDialogService? dialogService = null,
             ISettingsService? settingsService = null,
             ILicenseService? licenseService = null,
-            IUpdateService? updateService = null)
+            IUpdateService? updateService = null,
+            IAdService? adService = null)
         {
             _rawConverterService = rawConverterService ?? new RawConverterService();
             _metadataService = metadataService ?? new MetadataService();
@@ -85,6 +87,7 @@ namespace Fujify.ViewModels
             _dialogService = dialogService ?? new DialogService(_settingsService);
             _licenseService = licenseService ?? new LicenseService(_settingsService);
             _updateService = updateService ?? new UpdateService(_settingsService);
+            _adService = adService ?? new AdService(_licenseService);
             Instance = this;
 
             _licenseService.LicenseChanged += (s, status) =>
@@ -1129,6 +1132,7 @@ namespace Fujify.ViewModels
 
                 if (!_licenseService.IsPro)
                 {
+                    _adService.ShowInterstitialAd();
                     await FreeTierDelayDialog.ShowDelayDialogAsync(OwnerWindow, _licenseService, isPostConversion: true);
                 }
             }

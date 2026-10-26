@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.Android" Version="11.2.8" />
+    <PackageReference Include="Xamarin.GooglePlayServices.Ads.Lite" Version="124.0.0.9" />
   </ItemGroup>
 
   <ItemGroup>
