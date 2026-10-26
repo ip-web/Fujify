@@ -171,7 +171,22 @@ namespace Fujify.Services
 
         public MetadataResult InjectFujifilmMetadata(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null, string targetUniqueCameraModel = "Fujifilm X-T5")
         {
-            // Direct in-memory TIFF/DNG IFD0 rewriting (<2ms, 0 external processes)
+            // 1. On Linux: Prefer system-installed ExifTool dependency first to leverage the latest installed version
+            if (OperatingSystem.IsLinux())
+            {
+                var runner = FindExifToolRunner();
+                if (runner != null)
+                {
+                    var exifToolResult = InjectMetadataWithExifTool(runner.Value, dngFilePath, outputFolder, createBackup, isOriginallyDng, customOutputFilePath);
+                    if (exifToolResult.Success)
+                    {
+                        return exifToolResult;
+                    }
+                    // If ExifTool failed, continue to fallback to integrated code
+                }
+            }
+
+            // 2. Direct in-memory TIFF/DNG IFD0 rewriting (<2ms, 0 external processes)
             var nativeResult = DngMetadataEditor.InjectFujifilmMetadata(
                 dngFilePath,
                 outputFolder,
@@ -185,13 +200,72 @@ namespace Fujify.Services
                 return nativeResult;
             }
 
-            // Fallback to ExifTool CLI if native editor encountered an issue
-            var runner = FindExifToolRunner();
-            if (runner == null)
+            // 3. Fallback to ExifTool CLI on non-Linux if native editor encountered an issue
+            if (!OperatingSystem.IsLinux())
+            {
+                var runner = FindExifToolRunner();
+                if (runner != null)
+                {
+                    return InjectMetadataWithExifTool(runner.Value, dngFilePath, outputFolder, createBackup, isOriginallyDng, customOutputFilePath);
+                }
+            }
+
+            return nativeResult;
+        }
+
+        public async Task<MetadataResult> InjectFujifilmMetadataAsync(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null, string targetUniqueCameraModel = "Fujifilm X-T5", CancellationToken cancellationToken = default)
+        {
+            // 1. On Linux: Prefer system-installed ExifTool dependency first to leverage the latest installed version
+            if (OperatingSystem.IsLinux())
+            {
+                var runner = FindExifToolRunner();
+                if (runner != null)
+                {
+                    var exifToolResult = await InjectMetadataWithExifToolAsync(runner.Value, dngFilePath, outputFolder, createBackup, isOriginallyDng, customOutputFilePath, cancellationToken);
+                    if (exifToolResult.Success)
+                    {
+                        return exifToolResult;
+                    }
+                    // If ExifTool failed, continue to fallback to integrated code
+                }
+            }
+
+            // 2. Direct in-memory TIFF/DNG IFD0 rewriting (<2ms, 0 external processes)
+            var nativeResult = await DngMetadataEditor.InjectFujifilmMetadataAsync(
+                dngFilePath,
+                outputFolder,
+                createBackup,
+                isOriginallyDng,
+                customOutputFilePath,
+                targetUniqueCameraModel: targetUniqueCameraModel,
+                cancellationToken: cancellationToken);
+
+            if (nativeResult.Success)
             {
                 return nativeResult;
             }
 
+            // 3. Fallback to ExifTool CLI on non-Linux if native editor encountered an issue
+            if (!OperatingSystem.IsLinux())
+            {
+                var runner = FindExifToolRunner();
+                if (runner != null)
+                {
+                    return await InjectMetadataWithExifToolAsync(runner.Value, dngFilePath, outputFolder, createBackup, isOriginallyDng, customOutputFilePath, cancellationToken);
+                }
+            }
+
+            return nativeResult;
+        }
+
+        private MetadataResult InjectMetadataWithExifTool(
+            (string Command, string? PrefixArgs) runner,
+            string dngFilePath,
+            string? outputFolder,
+            bool createBackup,
+            bool isOriginallyDng,
+            string? customOutputFilePath)
+        {
             string baseArguments = CommonArgs;
             bool useOutputPath = !string.IsNullOrEmpty(outputFolder) || !string.IsNullOrEmpty(customOutputFilePath);
 
@@ -217,7 +291,6 @@ namespace Fujify.Services
             }
             else
             {
-                // In-place modification
                 if (isOriginallyDng)
                 {
                     if (!createBackup)
@@ -232,13 +305,13 @@ namespace Fujify.Services
             }
 
             string rawArgs = $"{baseArguments} \"{dngFilePath}\"";
-            string arguments = !string.IsNullOrEmpty(runner.Value.PrefixArgs)
-                ? $"{runner.Value.PrefixArgs} {rawArgs}"
+            string arguments = !string.IsNullOrEmpty(runner.PrefixArgs)
+                ? $"{runner.PrefixArgs} {rawArgs}"
                 : rawArgs;
 
             try
             {
-                var (exitCode, output, error) = _processRunner.Run(runner.Value.Command, arguments);
+                var (exitCode, output, error) = _processRunner.Run(runner.Command, arguments);
 
                 if (exitCode == 0)
                 {
@@ -262,30 +335,15 @@ namespace Fujify.Services
             }
         }
 
-        public async Task<MetadataResult> InjectFujifilmMetadataAsync(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null, string targetUniqueCameraModel = "Fujifilm X-T5", CancellationToken cancellationToken = default)
+        private async Task<MetadataResult> InjectMetadataWithExifToolAsync(
+            (string Command, string? PrefixArgs) runner,
+            string dngFilePath,
+            string? outputFolder,
+            bool createBackup,
+            bool isOriginallyDng,
+            string? customOutputFilePath,
+            CancellationToken cancellationToken)
         {
-            // Direct in-memory TIFF/DNG IFD0 rewriting (<2ms, 0 external processes)
-            var nativeResult = await DngMetadataEditor.InjectFujifilmMetadataAsync(
-                dngFilePath,
-                outputFolder,
-                createBackup,
-                isOriginallyDng,
-                customOutputFilePath,
-                targetUniqueCameraModel: targetUniqueCameraModel,
-                cancellationToken: cancellationToken);
-
-            if (nativeResult.Success)
-            {
-                return nativeResult;
-            }
-
-            // Fallback to ExifTool CLI if native editor encountered an issue
-            var runner = FindExifToolRunner();
-            if (runner == null)
-            {
-                return nativeResult;
-            }
-
             string baseArguments = CommonArgs;
             bool useOutputPath = !string.IsNullOrEmpty(outputFolder) || !string.IsNullOrEmpty(customOutputFilePath);
 
@@ -311,7 +369,6 @@ namespace Fujify.Services
             }
             else
             {
-                // In-place modification
                 if (isOriginallyDng)
                 {
                     if (!createBackup)
@@ -326,13 +383,13 @@ namespace Fujify.Services
             }
 
             string rawArgs = $"{baseArguments} \"{dngFilePath}\"";
-            string arguments = !string.IsNullOrEmpty(runner.Value.PrefixArgs)
-                ? $"{runner.Value.PrefixArgs} {rawArgs}"
+            string arguments = !string.IsNullOrEmpty(runner.PrefixArgs)
+                ? $"{runner.PrefixArgs} {rawArgs}"
                 : rawArgs;
 
             try
             {
-                var (exitCode, output, error) = await _processRunner.RunAsync(runner.Value.Command, arguments, cancellationToken);
+                var (exitCode, output, error) = await _processRunner.RunAsync(runner.Command, arguments, cancellationToken);
 
                 if (exitCode == 0)
                 {
@@ -397,41 +454,58 @@ namespace Fujify.Services
 
         private static (string Command, string? PrefixArgs)? FindExifToolRunner()
         {
-            // 1. Check local libs directory
             string binaryName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "exiftool.exe" : "exiftool";
-            string localPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "libs", binaryName);
-            if (File.Exists(localPath)) return (localPath, null);
 
-            // 2. Check well-known Linux / macOS system paths directly
+            // On Linux / macOS: check standard system paths and system PATH first so the latest version is used
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                string[] standardPaths = new[]
-                {
+                string[] standardPaths =
+                [
                     "/usr/bin/exiftool",
                     "/usr/local/bin/exiftool",
                     "/opt/homebrew/bin/exiftool",
                     "/snap/bin/exiftool",
                     "/usr/pkg/bin/exiftool"
-                };
+                ];
                 foreach (var path in standardPaths)
                 {
                     if (File.Exists(path)) return (path, null);
                 }
+
+                var pathEnv = Environment.GetEnvironmentVariable("PATH");
+                if (!string.IsNullOrEmpty(pathEnv))
+                {
+                    foreach (var dir in pathEnv.Split(':'))
+                    {
+                        try
+                        {
+                            string fullPath = Path.Combine(dir.Trim(), binaryName);
+                            if (File.Exists(fullPath)) return (fullPath, null);
+                        }
+                        catch { }
+                    }
+                }
             }
 
-            // 3. Check system PATH
-            var pathEnv = Environment.GetEnvironmentVariable("PATH");
-            if (!string.IsNullOrEmpty(pathEnv))
+            // Check local libs directory (e.g. bundled binary or fallback wrapper)
+            string localPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "libs", binaryName);
+            if (File.Exists(localPath)) return (localPath, null);
+
+            // On Windows: check system PATH as fallback
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                char sep = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ';' : ':';
-                foreach (var dir in pathEnv.Split(sep))
+                var pathEnv = Environment.GetEnvironmentVariable("PATH");
+                if (!string.IsNullOrEmpty(pathEnv))
                 {
-                    try
+                    foreach (var dir in pathEnv.Split(';'))
                     {
-                        string fullPath = Path.Combine(dir.Trim(), binaryName);
-                        if (File.Exists(fullPath)) return (fullPath, null);
+                        try
+                        {
+                            string fullPath = Path.Combine(dir.Trim(), binaryName);
+                            if (File.Exists(fullPath)) return (fullPath, null);
+                        }
+                        catch { }
                     }
-                    catch { }
                 }
             }
 

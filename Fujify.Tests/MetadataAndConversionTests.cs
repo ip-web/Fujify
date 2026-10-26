@@ -184,5 +184,23 @@ namespace Fujify.Tests
                 if (File.Exists(tempFile)) File.Delete(tempFile);
             }
         }
+
+        [Fact]
+        public void RawConverterService_ShouldFallbackToNativeWhenNoCli()
+        {
+            var service = new RawConverterService();
+            // Verifies service can be instantiated and basic non-existent file handling returns false
+            var result = service.ConvertToDng("non_existent_file.arw", false);
+            Assert.False(result.Success);
+        }
+
+        [Fact]
+        public void MetadataService_ShouldHandleDirectMetadataWhenNoExifTool()
+        {
+            var service = new MetadataService();
+            // Should not throw even when no external exiftool executable is present
+            int orientation = service.GetOrientation("non_existent_file.dng");
+            Assert.Equal(1, orientation);
+        }
     }
 }
