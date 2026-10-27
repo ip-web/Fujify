@@ -477,5 +477,25 @@ namespace Fujify.Tests
                 Assert.NotNull(exif.DateTimeOriginal);
             }
         }
+
+        [Fact]
+        public async Task DngLabNative_ConvertFile_ShouldSucceedForPentaxK200D()
+        {
+            string k200dPath = @"D:\Users\isisk\Documents\test sony\test files\raws\pentax\k200d\RAW_PENTAX_K200D.PEF";
+            if (!File.Exists(k200dPath)) return;
+
+            string outDng = Path.Combine(Path.GetTempPath(), $"k200d_test_{Guid.NewGuid():N}.dng");
+            try
+            {
+                var (success, error) = await DngLabNative.ConvertFileAsync(k200dPath, outDng, false);
+                Assert.True(success, $"K200D conversion failed: {error}");
+                Assert.True(File.Exists(outDng));
+                Assert.True(new FileInfo(outDng).Length > 1_000_000);
+            }
+            finally
+            {
+                if (File.Exists(outDng)) File.Delete(outDng);
+            }
+        }
     }
 }
