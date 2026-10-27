@@ -37,6 +37,8 @@ sealed class Program
             }, channel);
         }
 
+        ConfigureCrashLogging();
+
         try
         {
             App.InitialCommandLineArgs = parsed;
@@ -48,6 +50,38 @@ sealed class Program
             {
                 SingleInstanceService.Release(channel);
             }
+        }
+    }
+
+    private static void ConfigureCrashLogging()
+    {
+        AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+        {
+            LogFatalException("AppDomain.UnhandledException", e.ExceptionObject as Exception);
+        };
+
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (sender, e) =>
+        {
+            LogFatalException("TaskScheduler.UnobservedTaskException", e.Exception);
+        };
+    }
+
+    private static void LogFatalException(string source, Exception? ex)
+    {
+        try
+        {
+            string logDir = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "Fujifier");
+            System.IO.Directory.CreateDirectory(logDir);
+            string logFile = System.IO.Path.Combine(logDir, "crash.log");
+
+            string entry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] FATAL ({source}):\n{ex?.ToString() ?? "Unknown exception"}\n\n";
+            System.IO.File.AppendAllText(logFile, entry);
+        }
+        catch
+        {
+            // Suppress secondary crash logging errors
         }
     }
 

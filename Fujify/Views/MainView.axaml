@@ -473,7 +473,8 @@
                                               IsVisible="{Binding IsListView}" ItemsSource="{Binding Files}"
                                               SelectedItem="{Binding SelectedFile, Mode=TwoWay}"
                                               AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="True"
-                                              HorizontalScrollBarVisibility="Auto"
+                                              HorizontalScrollBarVisibility="Disabled"
+                                              VerticalScrollBarVisibility="Auto"
                                               IsReadOnly="True" GridLinesVisibility="Horizontal" SelectionMode="Extended"
                                               Background="Transparent" BorderThickness="0" Margin="6,0,6,4"
                                               DoubleTapped="DataGrid_DoubleTapped">
@@ -534,7 +535,7 @@
                                                 </DataGridTemplateColumn.CellTemplate>
                                             </DataGridTemplateColumn>
 
-                                            <DataGridTextColumn Header="File Name" Binding="{Binding FileName}" Width="260" MinWidth="80" />
+                                            <DataGridTextColumn Header="File Name" Binding="{Binding FileName}" Width="*" MinWidth="160" />
                                             <DataGridTextColumn Header="Detected Camera" Binding="{Binding CameraMakeAndModel}" Width="160" MinWidth="80" />
 
                                             <DataGridTemplateColumn Header="Status" Width="100" MinWidth="60" SortMemberPath="Status">

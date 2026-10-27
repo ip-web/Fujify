@@ -516,6 +516,8 @@ namespace Fujify.ViewModels
 
         public void UpdateLayoutMode(double width, double height)
         {
+            if (double.IsNaN(width) || double.IsInfinity(width) || width <= 0) return;
+
             IsPhoneLayout = width < 650;
             IsTabletLayout = width >= 650 && width < 900;
             if (_selectedFile == null && Files.Count > 0)
