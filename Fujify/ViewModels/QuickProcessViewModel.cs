@@ -259,6 +259,12 @@ namespace Fujify.ViewModels
                     ? configuredConcurrency
                     : Math.Max(1, Environment.ProcessorCount / 2);
 
+                // Free tier restriction: sequential conversion (1 thread at a time)
+                if (!_licenseService.IsPro)
+                {
+                    maxConcurrency = 1;
+                }
+
                 var parallelOptions = new ParallelOptions
                 {
                     MaxDegreeOfParallelism = maxConcurrency,
@@ -419,11 +425,12 @@ namespace Fujify.ViewModels
                     targetDngForConversion = Path.Combine(sourceDir, $"{Path.GetFileNameWithoutExtension(filePath)}_tmp_{Guid.NewGuid():N}.dng");
                 }
 
+                bool useLossless = _licenseService.IsPro && _settingsService.Settings.LosslessCompression;
                 var convResult = await Task.Run(() => _rawConverterService.ConvertToDng(
                     filePath,
                     embedOriginalRaw,
                     targetDngForConversion,
-                    _settingsService.Settings.LosslessCompression), ct);
+                    useLossless), ct);
 
                 if (!convResult.Success || string.IsNullOrEmpty(convResult.OutputDngPath))
                 {

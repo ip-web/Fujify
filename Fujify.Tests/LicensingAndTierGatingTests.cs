@@ -117,6 +117,76 @@ namespace Fujify.Tests
             Assert.True(vm.IsWindowsContextMenuEnabled);
         }
 
+        [Fact]
+        public void PreferencesViewModel_FreeTier_LosslessCompression_IsDisabledAndCannotBeEnabled()
+        {
+            var settings = new MockSettingsService();
+            var licenseService = new LicenseService(settings);
+            var vm = new PreferencesViewModel(settings, licenseService);
+
+            Assert.False(vm.IsPro);
+            Assert.False(vm.LosslessCompression);
+
+            // Attempt to enable lossless compression on free tier
+            vm.LosslessCompression = true;
+            Assert.False(vm.LosslessCompression);
+            Assert.True(vm.HasLicenseMessage);
+            Assert.Contains("exclusive to Fujifier Pro", vm.LicenseMessageText);
+        }
+
+        [Fact]
+        public void PreferencesViewModel_FreeTier_ConcurrentConversions_IsLockedToOne()
+        {
+            var settings = new MockSettingsService();
+            settings.Settings.MaxConcurrentConversions = 8;
+            var licenseService = new LicenseService(settings);
+            var vm = new PreferencesViewModel(settings, licenseService);
+
+            Assert.False(vm.IsPro);
+            Assert.Equal(1, vm.MaxConcurrentConversions);
+            Assert.Contains("Free tier: sequential conversion", vm.ConcurrencyHint);
+
+            // Attempt to set concurrent conversions > 1
+            vm.MaxConcurrentConversions = 4;
+            Assert.Equal(1, vm.MaxConcurrentConversions);
+            Assert.True(vm.HasLicenseMessage);
+            Assert.Contains("exclusive to Fujifier Pro", vm.LicenseMessageText);
+        }
+
+        [Fact]
+        public async Task PreferencesViewModel_ProTier_LosslessAndConcurrency_CanBeConfigured()
+        {
+            var settings = new MockSettingsService();
+            var licenseService = new LicenseService(settings);
+            await licenseService.ActivateLicenseKeyAsync("FUJIFIER-PRO-DEV-OVERRIDE");
+
+            var vm = new PreferencesViewModel(settings, licenseService);
+
+            Assert.True(vm.IsPro);
+
+            vm.LosslessCompression = true;
+            Assert.True(vm.LosslessCompression);
+
+            vm.MaxConcurrentConversions = 4;
+            Assert.Equal(4, vm.MaxConcurrentConversions);
+        }
+
+        [Fact]
+        public void MainViewModel_FreeTier_LosslessCompression_IsDisabled()
+        {
+            var settings = new MockSettingsService();
+            settings.Settings.LosslessCompression = true;
+            var licenseService = new LicenseService(settings);
+            var vm = new MainViewModel(settingsService: settings, licenseService: licenseService);
+
+            Assert.False(vm.IsPro);
+            Assert.False(vm.LosslessCompression);
+
+            // Attempt to toggle
+            vm.LosslessCompression = true;
+            Assert.False(vm.LosslessCompression);
+        }
+
         private class MockHttpMessageHandler : HttpMessageHandler
         {
             private readonly Func<HttpRequestMessage, HttpResponseMessage> _handler;

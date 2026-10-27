@@ -153,8 +153,20 @@ namespace Fujify.ViewModels
 
         public bool LosslessCompression
         {
-            get => _losslessCompression;
-            set => SetProperty(ref _losslessCompression, value);
+            get => _licenseService.IsPro && _losslessCompression;
+            set
+            {
+                if (value && !_licenseService.IsPro)
+                {
+                    LicenseMessageText = "Lossless DNG compression is exclusive to Fujifier Pro.";
+                    LicenseMessageColor = "#F39C12";
+                    HasLicenseMessage = true;
+                    OnPropertyChanged(nameof(LosslessCompression));
+                    return;
+                }
+
+                SetProperty(ref _losslessCompression, value);
+            }
         }
 
         public bool AppendSuffix
@@ -250,9 +262,23 @@ namespace Fujify.ViewModels
 
         public int MaxConcurrentConversions
         {
-            get => _maxConcurrentConversions;
+            get => _licenseService.IsPro ? _maxConcurrentConversions : 1;
             set
             {
+                if (!_licenseService.IsPro)
+                {
+                    if (value > 1)
+                    {
+                        LicenseMessageText = "Concurrent batch conversions are exclusive to Fujifier Pro (Free tier is limited to 1 thread).";
+                        LicenseMessageColor = "#F39C12";
+                        HasLicenseMessage = true;
+                    }
+                    SetProperty(ref _maxConcurrentConversions, 1);
+                    OnPropertyChanged(nameof(MaxConcurrentConversions));
+                    OnPropertyChanged(nameof(ConcurrencyHint));
+                    return;
+                }
+
                 if (SetProperty(ref _maxConcurrentConversions, value))
                 {
                     OnPropertyChanged(nameof(ConcurrencyHint));
@@ -264,6 +290,8 @@ namespace Fujify.ViewModels
         {
             get
             {
+                if (!_licenseService.IsPro)
+                    return "1 thread (Free tier: sequential conversion. Upgrade to Pro for multi-threaded conversions)";
                 if (_maxConcurrentConversions == DefaultConcurrency)
                     return $"Default: {_maxConcurrentConversions} (Recommended for P-core / E-core balance)";
                 if (_maxConcurrentConversions == TotalThreads)
@@ -341,6 +369,9 @@ namespace Fujify.ViewModels
                 OnPropertyChanged(nameof(LicenseStatusText));
                 OnPropertyChanged(nameof(LicenseDescriptionText));
                 OnPropertyChanged(nameof(IsWindowsContextMenuEnabled));
+                OnPropertyChanged(nameof(LosslessCompression));
+                OnPropertyChanged(nameof(MaxConcurrentConversions));
+                OnPropertyChanged(nameof(ConcurrencyHint));
                 OnPropertyChanged(nameof(IsAccountLoggedIn));
                 OnPropertyChanged(nameof(AccountDisplayText));
                 OnPropertyChanged(nameof(AccountDisplayName));
@@ -604,8 +635,8 @@ namespace Fujify.ViewModels
             s.IsDarkTheme = _themeMode != "Light";
             s.EmbedOriginalRaw = _embedOriginalRaw;
             s.SkipThumbnailGeneration = _skipThumbnailGeneration;
-            s.LosslessCompression = _losslessCompression;
-            s.MaxConcurrentConversions = _maxConcurrentConversions;
+            s.LosslessCompression = _licenseService.IsPro && _losslessCompression;
+            s.MaxConcurrentConversions = _licenseService.IsPro ? _maxConcurrentConversions : 1;
             s.AutoOpenInLightroom = _autoOpenInLightroom;
             s.AppendSuffix = _appendSuffix;
             s.Suffix = string.IsNullOrWhiteSpace(_suffix) ? "-fujified" : _suffix.Trim();
