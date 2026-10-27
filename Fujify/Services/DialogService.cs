@@ -35,6 +35,7 @@ namespace Fujify.Services
     public class DialogService : IDialogService
     {
         private readonly ISettingsService _settingsService;
+        private readonly ILicenseService? _licenseService;
 
         public static Func<string>? PlatformStagingDirectoryResolver { get; set; }
 
@@ -123,9 +124,10 @@ namespace Fujify.Services
             return ".arw";
         }
 
-        public DialogService(ISettingsService? settingsService = null)
+        public DialogService(ISettingsService? settingsService = null, ILicenseService? licenseService = null)
         {
             _settingsService = settingsService ?? new SettingsService();
+            _licenseService = licenseService;
         }
 
         private static bool IsMobileOrSingleView =>
@@ -340,7 +342,7 @@ namespace Fujify.Services
                 return;
             }
 
-            var vm = new PreferencesViewModel(_settingsService, dialogService: this);
+            var vm = new PreferencesViewModel(_settingsService, _licenseService, dialogService: this);
             var dialog = new PreferencesWindow(vm);
 
             if (owner != null)

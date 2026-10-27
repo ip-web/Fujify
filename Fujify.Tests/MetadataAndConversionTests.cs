@@ -231,5 +231,79 @@ namespace Fujify.Tests
             int orientation = service.GetOrientation("non_existent_file.dng");
             Assert.Equal(1, orientation);
         }
+
+        [Fact]
+        public void PreferencesViewModel_ThemeSelection_ShouldUpdateAndPersistThemeMode()
+        {
+            var tempSettingsPath = Path.Combine(Path.GetTempPath(), $"settings_theme_{Guid.NewGuid():N}.json");
+            try
+            {
+                var settingsService = new SettingsService(tempSettingsPath);
+                var vm = new PreferencesViewModel(settingsService);
+
+                // Default is Automatic
+                Assert.True(vm.IsAutoThemeSelected);
+                Assert.False(vm.IsLightThemeSelected);
+                Assert.False(vm.IsDarkThemeSelected);
+                Assert.False(vm.IsAmoledThemeSelected);
+
+                // Select Light
+                vm.IsLightThemeSelected = true;
+                Assert.Equal("Light", vm.ThemeMode);
+                Assert.True(vm.IsLightThemeSelected);
+                Assert.False(vm.IsAutoThemeSelected);
+                Assert.False(vm.IsDarkThemeSelected);
+                Assert.False(vm.IsAmoledThemeSelected);
+                Assert.False(vm.IsDarkTheme);
+
+                // Save Light and verify persistence
+                vm.SaveCommand.Execute(null);
+                var reloaded = new SettingsService(tempSettingsPath);
+                Assert.Equal("Light", reloaded.Settings.ThemeMode);
+                Assert.False(reloaded.Settings.IsDarkTheme);
+
+                // Select AMOLED
+                var vm2 = new PreferencesViewModel(reloaded);
+                Assert.True(vm2.IsLightThemeSelected);
+                vm2.IsAmoledThemeSelected = true;
+                Assert.Equal("Amoled", vm2.ThemeMode);
+                Assert.True(vm2.IsAmoledThemeSelected);
+                Assert.False(vm2.IsLightThemeSelected);
+                Assert.False(vm2.IsDarkThemeSelected);
+                Assert.False(vm2.IsAutoThemeSelected);
+                Assert.True(vm2.IsDarkTheme);
+
+                vm2.SaveCommand.Execute(null);
+                reloaded = new SettingsService(tempSettingsPath);
+                Assert.Equal("Amoled", reloaded.Settings.ThemeMode);
+                Assert.True(reloaded.Settings.IsDarkTheme);
+
+                // Select Dark
+                var vm3 = new PreferencesViewModel(reloaded);
+                vm3.IsDarkThemeSelected = true;
+                Assert.Equal("Dark", vm3.ThemeMode);
+                Assert.True(vm3.IsDarkThemeSelected);
+                Assert.False(vm3.IsAmoledThemeSelected);
+                Assert.False(vm3.IsLightThemeSelected);
+                Assert.False(vm3.IsAutoThemeSelected);
+                Assert.True(vm3.IsDarkTheme);
+
+                // Select Automatic
+                vm3.IsAutoThemeSelected = true;
+                Assert.Equal("Automatic", vm3.ThemeMode);
+                Assert.True(vm3.IsAutoThemeSelected);
+                Assert.False(vm3.IsDarkThemeSelected);
+                Assert.False(vm3.IsAmoledThemeSelected);
+                Assert.False(vm3.IsLightThemeSelected);
+
+                vm3.SaveCommand.Execute(null);
+                reloaded = new SettingsService(tempSettingsPath);
+                Assert.Equal("Automatic", reloaded.Settings.ThemeMode);
+            }
+            finally
+            {
+                if (File.Exists(tempSettingsPath)) File.Delete(tempSettingsPath);
+            }
+        }
     }
 }
