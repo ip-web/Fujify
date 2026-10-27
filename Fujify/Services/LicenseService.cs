@@ -26,6 +26,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Fujify.Common;
@@ -43,6 +44,12 @@ namespace Fujify.Services
 
     public class LicenseService : ILicenseService
     {
+        private static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            NumberHandling = JsonNumberHandling.AllowReadingFromString | JsonNumberHandling.WriteAsString
+        };
+
         private const string RsaPublicKeyXml = @"<RSAKeyValue><Modulus>xNCFZILhKeCCfY0Vk7/cFywefj5rUmDPXrYciIbQ3jC5GgVNpdUsag/noI1tncmttOiwiqXZFO6K1VbYCbXbWujHA8iOfdYLU3JITwZ+6fKw5jJAuE9pptqpx0s47SZzieki6XrcX7mQ5o6eo+RXIhlfdeTveXmX71ndzCA6EAQBjpvOVE/7IYEtzkEVxwg2+SBAHeLTmjCygwWdePFhr9CRuVCQ+6AEvyA0ZRiHjyorowt8WM2KVaNLEALZMh7hxXQBcuh8qffVTS89MG1+N8NOurFRtQAG3ZCHp5YrMh/cpTdIrgB0jhwqPv0ZiGhQ9ORZNECzjQ/TUhtveX9mBQ==</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>";
 
         private readonly ISettingsService _settingsService;
@@ -210,7 +217,7 @@ namespace Fujify.Services
                     return new LicenseActivationResult(false, errorMsg);
                 }
 
-                var res = JsonSerializer.Deserialize<LicenseActivationResponse>(responseJson);
+                var res = JsonSerializer.Deserialize<LicenseActivationResponse>(responseJson, JsonOptions);
                 if (res == null || !res.Success)
                 {
                     string errorMsg = res?.Message ?? "Server rejected license activation.";
@@ -267,7 +274,7 @@ namespace Fujify.Services
                     return new LicenseActivationResult(false, errorMsg);
                 }
 
-                var loginRes = JsonSerializer.Deserialize<AuthLoginResponse>(responseJson);
+                var loginRes = JsonSerializer.Deserialize<AuthLoginResponse>(responseJson, JsonOptions);
                 if (loginRes == null || !loginRes.Success)
                 {
                     return new LicenseActivationResult(false, loginRes?.Message ?? "Login failed.");
@@ -442,7 +449,7 @@ namespace Fujify.Services
                     return new LicenseActivationResult(false, errorMsg);
                 }
 
-                var authRes = JsonSerializer.Deserialize<AuthLoginResponse>(responseJson);
+                var authRes = JsonSerializer.Deserialize<AuthLoginResponse>(responseJson, JsonOptions);
                 if (authRes == null || !authRes.Success)
                 {
                     return new LicenseActivationResult(false, authRes?.Message ?? "Authorization exchange failed.");
@@ -507,7 +514,7 @@ namespace Fujify.Services
                     return new LicenseActivationResult(false, errorMsg);
                 }
 
-                var loginRes = JsonSerializer.Deserialize<AuthLoginResponse>(responseJson);
+                var loginRes = JsonSerializer.Deserialize<AuthLoginResponse>(responseJson, JsonOptions);
                 if (loginRes == null || !loginRes.Success)
                 {
                     return new LicenseActivationResult(false, loginRes?.Message ?? "Google login failed.");
@@ -575,7 +582,7 @@ namespace Fujify.Services
                     return new LicenseActivationResult(false, errorMsg);
                 }
 
-                var meRes = JsonSerializer.Deserialize<AuthMeResponse>(responseJson);
+                var meRes = JsonSerializer.Deserialize<AuthMeResponse>(responseJson, JsonOptions);
                 if (meRes == null || !meRes.Success)
                 {
                     return new LicenseActivationResult(false, meRes?.Message ?? "Could not read account details.");
@@ -757,7 +764,7 @@ namespace Fujify.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var verRes = JsonSerializer.Deserialize<LicenseVerificationResponse>(responseJson);
+                    var verRes = JsonSerializer.Deserialize<LicenseVerificationResponse>(responseJson, JsonOptions);
                     if (verRes != null && verRes.Valid)
                     {
                         if (!string.IsNullOrWhiteSpace(verRes.OfflineExpires) && DateTime.TryParse(verRes.OfflineExpires, out var newExpiry))

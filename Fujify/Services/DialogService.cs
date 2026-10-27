@@ -152,7 +152,7 @@ namespace Fujify.Services
             return null;
         }
 
-        public async Task ShowMessageAsync(Window? owner, string title, string message)
+        public async Task ShowMessageAsync(Window? owner, string title, string message, bool isSuccess = true)
         {
             if (IsMobileOrSingleView || (owner == null && (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow == null))
             {
@@ -160,10 +160,14 @@ namespace Fujify.Services
                 return;
             }
 
-            var dialog = new MessageDialog(title, message);
+            var dialog = new MessageDialog(title, message, isSuccess);
             if (owner != null)
             {
                 await dialog.ShowDialog(owner);
+            }
+            else if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
+            {
+                await dialog.ShowDialog(desktop.MainWindow);
             }
             else
             {
@@ -336,7 +340,7 @@ namespace Fujify.Services
                 return;
             }
 
-            var vm = new PreferencesViewModel(_settingsService);
+            var vm = new PreferencesViewModel(_settingsService, dialogService: this);
             var dialog = new PreferencesWindow(vm);
 
             if (owner != null)

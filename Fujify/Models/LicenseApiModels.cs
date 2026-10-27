@@ -19,10 +19,53 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Fujify.Models
 {
+    public class FlexibleIntConverter : JsonConverter<int>
+    {
+        public override int Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            switch (reader.TokenType)
+            {
+                case JsonTokenType.Number:
+                    if (reader.TryGetInt32(out int i)) return i;
+                    if (reader.TryGetInt64(out long l)) return (int)l;
+                    if (reader.TryGetDouble(out double d)) return (int)d;
+                    return 0;
+
+                case JsonTokenType.String:
+                    string? str = reader.GetString();
+                    if (string.IsNullOrWhiteSpace(str)) return 0;
+                    if (int.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out int val))
+                        return val;
+                    if (double.TryParse(str, NumberStyles.Any, CultureInfo.InvariantCulture, out double dVal))
+                        return (int)dVal;
+                    return 0;
+
+                case JsonTokenType.Null:
+                    return 0;
+
+                case JsonTokenType.True:
+                    return 1;
+
+                case JsonTokenType.False:
+                    return 0;
+
+                default:
+                    return 0;
+            }
+        }
+
+        public override void Write(Utf8JsonWriter writer, int value, JsonSerializerOptions options)
+        {
+            writer.WriteNumberValue(value);
+        }
+    }
+
     public class LicenseActivationRequest
     {
         [JsonPropertyName("license_key")]
@@ -64,9 +107,11 @@ namespace Fujify.Models
         [JsonPropertyName("platform")]
         public string? Platform { get; set; }
 
+        [JsonConverter(typeof(FlexibleIntConverter))]
         [JsonPropertyName("max_activations")]
         public int MaxActivations { get; set; } = 3;
 
+        [JsonConverter(typeof(FlexibleIntConverter))]
         [JsonPropertyName("used_activations")]
         public int UsedActivations { get; set; } = 1;
 
@@ -166,6 +211,7 @@ namespace Fujify.Models
 
     public class AuthUserDto
     {
+        [JsonConverter(typeof(FlexibleIntConverter))]
         [JsonPropertyName("id")]
         public int Id { get; set; }
 
@@ -181,6 +227,7 @@ namespace Fujify.Models
 
     public class UserLicenseDto
     {
+        [JsonConverter(typeof(FlexibleIntConverter))]
         [JsonPropertyName("id")]
         public int Id { get; set; }
 
@@ -196,9 +243,11 @@ namespace Fujify.Models
         [JsonPropertyName("status")]
         public string? Status { get; set; }
 
+        [JsonConverter(typeof(FlexibleIntConverter))]
         [JsonPropertyName("max_activations")]
         public int MaxActivations { get; set; } = 3;
 
+        [JsonConverter(typeof(FlexibleIntConverter))]
         [JsonPropertyName("used_activations")]
         public int UsedActivations { get; set; }
 
@@ -220,6 +269,7 @@ namespace Fujify.Models
         [JsonPropertyName("token_type")]
         public string? TokenType { get; set; }
 
+        [JsonConverter(typeof(FlexibleIntConverter))]
         [JsonPropertyName("expires_in")]
         public int ExpiresIn { get; set; }
 

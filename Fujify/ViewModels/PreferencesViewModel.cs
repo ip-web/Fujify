@@ -35,6 +35,9 @@ namespace Fujify.ViewModels
         private readonly ISettingsService _settingsService;
         private readonly ILicenseService _licenseService;
         private readonly IUpdateService _updateService;
+        private readonly IDialogService? _dialogService;
+
+        public Avalonia.Controls.Window? OwnerWindow { get; set; }
 
         private bool _isDarkTheme;
         private bool _embedOriginalRaw;
@@ -318,11 +321,16 @@ namespace Fujify.ViewModels
 
         public Action<bool>? CloseAction { get; set; }
 
-        public PreferencesViewModel(ISettingsService settingsService, ILicenseService? licenseService = null, IUpdateService? updateService = null)
+        public PreferencesViewModel(
+            ISettingsService settingsService,
+            ILicenseService? licenseService = null,
+            IUpdateService? updateService = null,
+            IDialogService? dialogService = null)
         {
             _settingsService = settingsService;
             _licenseService = licenseService ?? new LicenseService(_settingsService);
             _updateService = updateService ?? new UpdateService(_settingsService);
+            _dialogService = dialogService;
             var settings = _settingsService.Settings;
 
             _checkForUpdatesOnStartup = settings.CheckForUpdatesOnStartup;
@@ -390,15 +398,19 @@ namespace Fujify.ViewModels
 
                     if (res.Success)
                     {
-                        LicenseMessageText = res.ErrorMessage ?? "✔ Signed in with Google and license synced!";
+                        string msg = res.ErrorMessage ?? "Signed in with Google and license synced!";
+                        LicenseMessageText = $"✔ {msg}";
                         LicenseMessageColor = "#01D701";
                         HasLicenseMessage = true;
+                        await ShowResultDialogAsync("Google Sign-In Successful", msg, isSuccess: true);
                     }
                     else
                     {
-                        LicenseMessageText = res.ErrorMessage ?? "Google Sign-In failed.";
+                        string msg = res.ErrorMessage ?? "Google Sign-In failed.";
+                        LicenseMessageText = msg;
                         LicenseMessageColor = "#E74C3C";
                         HasLicenseMessage = true;
+                        await ShowResultDialogAsync("Google Sign-In Failed", msg, isSuccess: false);
                     }
                 }
                 finally
@@ -420,21 +432,27 @@ namespace Fujify.ViewModels
                     var res = await _licenseService.RetrieveLicenseFromAccountAsync();
                     if (res.Success && _licenseService.IsPro)
                     {
-                        LicenseMessageText = "✔ Pro license retrieved and activated!";
+                        string msg = res.ErrorMessage ?? "Pro license retrieved and activated on this device!";
+                        LicenseMessageText = $"✔ {msg}";
                         LicenseMessageColor = "#01D701";
                         HasLicenseMessage = true;
+                        await ShowResultDialogAsync("License Retrieved", msg, isSuccess: true);
                     }
                     else if (res.Success)
                     {
-                        LicenseMessageText = res.ErrorMessage ?? "Checked account. No active Pro license found on fujifier.cc.";
+                        string msg = res.ErrorMessage ?? "Checked account. No active Pro license found on fujifier.cc.";
+                        LicenseMessageText = msg;
                         LicenseMessageColor = "#F39C12";
                         HasLicenseMessage = true;
+                        await ShowResultDialogAsync("No Active License", msg, isSuccess: false);
                     }
                     else
                     {
-                        LicenseMessageText = res.ErrorMessage ?? "Failed to retrieve license.";
+                        string msg = res.ErrorMessage ?? "Failed to retrieve license.";
+                        LicenseMessageText = msg;
                         LicenseMessageColor = "#E74C3C";
                         HasLicenseMessage = true;
+                        await ShowResultDialogAsync("License Retrieval Failed", msg, isSuccess: false);
                     }
                 }
                 finally
@@ -450,6 +468,7 @@ namespace Fujify.ViewModels
                     LicenseMessageText = "Please enter both your account email and password.";
                     LicenseMessageColor = "#E74C3C";
                     HasLicenseMessage = true;
+                    await ShowResultDialogAsync("Sign-In Incomplete", "Please enter both your account email and password.", isSuccess: false);
                     return;
                 }
 
@@ -460,16 +479,20 @@ namespace Fujify.ViewModels
                 var res = await _licenseService.LoginWithAccountAsync(AccountEmailInput, AccountPasswordInput);
                 if (res.Success)
                 {
-                    LicenseMessageText = res.ErrorMessage ?? "✔ Signed in successfully and license synced!";
+                    string msg = res.ErrorMessage ?? "Signed in successfully and license synced!";
+                    LicenseMessageText = $"✔ {msg}";
                     LicenseMessageColor = "#01D701";
                     HasLicenseMessage = true;
                     AccountPasswordInput = string.Empty;
+                    await ShowResultDialogAsync("Sign-In Successful", msg, isSuccess: true);
                 }
                 else
                 {
-                    LicenseMessageText = res.ErrorMessage ?? "Authentication failed.";
+                    string msg = res.ErrorMessage ?? "Authentication failed.";
+                    LicenseMessageText = msg;
                     LicenseMessageColor = "#E74C3C";
                     HasLicenseMessage = true;
+                    await ShowResultDialogAsync("Sign-In Failed", msg, isSuccess: false);
                 }
             });
 
@@ -488,6 +511,7 @@ namespace Fujify.ViewModels
                     LicenseMessageText = "Please enter your license key (e.g. FUJI-XXXX-XXXX-XXXX).";
                     LicenseMessageColor = "#E74C3C";
                     HasLicenseMessage = true;
+                    await ShowResultDialogAsync("License Key Required", "Please enter your license key (e.g. FUJI-XXXX-XXXX-XXXX).", isSuccess: false);
                     return;
                 }
 
@@ -502,12 +526,15 @@ namespace Fujify.ViewModels
                     LicenseMessageColor = "#01D701";
                     HasLicenseMessage = true;
                     LicenseKeyInput = string.Empty;
+                    await ShowResultDialogAsync("Activation Successful", "Pro license has been verified and activated on this device!", isSuccess: true);
                 }
                 else
                 {
-                    LicenseMessageText = res.ErrorMessage ?? "Invalid license key.";
+                    string msg = res.ErrorMessage ?? "Invalid license key.";
+                    LicenseMessageText = msg;
                     LicenseMessageColor = "#E74C3C";
                     HasLicenseMessage = true;
+                    await ShowResultDialogAsync("Activation Failed", msg, isSuccess: false);
                 }
             });
 
@@ -602,6 +629,40 @@ namespace Fujify.ViewModels
             App.ApplyTheme(_themeMode);
 
             CloseAction?.Invoke(true);
+        }
+
+        private async Task ShowResultDialogAsync(string title, string message, bool isSuccess)
+        {
+            try
+            {
+                if (_dialogService != null)
+                {
+                    await _dialogService.ShowMessageAsync(OwnerWindow, title, message, isSuccess);
+                    return;
+                }
+
+                if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+                {
+                    var win = OwnerWindow ?? System.Linq.Enumerable.LastOrDefault(desktop.Windows, w => w.IsActive && w.IsVisible) ?? desktop.MainWindow;
+                    var dialog = new Views.MessageDialog(title, message, isSuccess);
+                    if (win != null)
+                    {
+                        await dialog.ShowDialog(win);
+                    }
+                    else
+                    {
+                        dialog.Show();
+                    }
+                }
+                else
+                {
+                    MainViewModel.Instance?.ShowMessageModal(title, message);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[PreferencesViewModel] Failed to display result dialog: {ex.Message}");
+            }
         }
     }
 }
