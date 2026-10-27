@@ -247,28 +247,45 @@ namespace Fujify.Services
                     errorMsg = $"Native conversion failed with exit code {result}";
                 }
 
-                // Upstream rawler/dnglab has mismatched Make strings for certain cameras
-                // (e.g. Pentax K200D and K20D where camera writes 'PENTAX Corporation' but rawler's toml defines 'PENTAX').
-                if (errorMsg.Contains("Unknown camera", StringComparison.OrdinalIgnoreCase) &&
-                    errorMsg.Contains("PENTAX Corporation", StringComparison.OrdinalIgnoreCase))
+                // Upstream rawler/dnglab has mismatched Make strings or missing model aliases for certain cameras
+                // (e.g. Pentax K200D/K20D where camera writes 'PENTAX Corporation', Leaf Aptus where camera writes 'Creo/Leaf',
+                // and Konica Minolta DYNAX/MAXXUM 5D which shares identical hardware/sensor with DYNAX 7D).
+                if (errorMsg.Contains("Unknown camera", StringComparison.OrdinalIgnoreCase))
                 {
-                    string? tempWithFixedMake = TryCreateTempWithNormalizedMake(inputPath);
-                    if (tempWithFixedMake != null)
+                    if (errorMsg.Contains("PENTAX Corporation", StringComparison.OrdinalIgnoreCase) ||
+                        errorMsg.Contains("Creo/Leaf", StringComparison.OrdinalIgnoreCase) ||
+                        errorMsg.Contains("DYNAX 5D", StringComparison.OrdinalIgnoreCase) ||
+                        errorMsg.Contains("MAXXUM 5D", StringComparison.OrdinalIgnoreCase) ||
+                        errorMsg.Contains("ALPHA-5 DIGITAL", StringComparison.OrdinalIgnoreCase))
                     {
-                        try
+                        var (tempWithFixedMake, is5d) = TryCreateTempWithNormalizedCamera(inputPath, errorMsg);
+                        if (tempWithFixedMake != null)
                         {
-                            byte[] retryErrorBuf = new byte[2048];
-                            int retryResult = dnglab_convert_file(tempWithFixedMake, outputPath, embedRaw, retryErrorBuf, (UIntPtr)retryErrorBuf.Length);
-                            if (retryResult == 0)
+                            try
                             {
-                                return (true, null);
+                                byte[] retryErrorBuf = new byte[2048];
+                                int retryResult = dnglab_convert_file(tempWithFixedMake, outputPath, embedRaw, retryErrorBuf, (UIntPtr)retryErrorBuf.Length);
+                                if (retryResult == 0)
+                                {
+                                    if (is5d && File.Exists(outputPath))
+                                    {
+                                        RestoreMinolta5DModelName(outputPath);
+                                    }
+                                    return (true, null);
+                                }
+                            }
+                            finally
+                            {
+                                try { if (File.Exists(tempWithFixedMake)) File.Delete(tempWithFixedMake); } catch { }
                             }
                         }
-                        finally
-                        {
-                            try { if (File.Exists(tempWithFixedMake)) File.Delete(tempWithFixedMake); } catch { }
-                        }
                     }
+                }
+
+                if (errorMsg.Contains("PowerShot Pro70", StringComparison.OrdinalIgnoreCase) ||
+                    errorMsg.Contains("PowerShot Pr070", StringComparison.OrdinalIgnoreCase))
+                {
+                    return (false, "Canon PowerShot Pro70 uses a legacy non-Bayer CYGM sensor which is unsupported for DNG conversion.");
                 }
 
                 return (false, errorMsg);
@@ -279,56 +296,129 @@ namespace Fujify.Services
             }
         }
 
-        private static string? TryCreateTempWithNormalizedMake(string inputPath)
+        private static (string? TempPath, bool Is5d) TryCreateTempWithNormalizedCamera(string inputPath, string errorMsg)
         {
             try
             {
-                if (!File.Exists(inputPath)) return null;
+                if (!File.Exists(inputPath)) return (null, false);
 
-                byte[] header = new byte[Math.Min(65536, new FileInfo(inputPath).Length)];
-                using (var fs = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                byte[] data = File.ReadAllBytes(inputPath);
+                bool modified = false;
+                bool is5d = false;
+
+                // 1. PENTAX Corporation -> PENTAX\0           
+                if (errorMsg.Contains("PENTAX Corporation", StringComparison.OrdinalIgnoreCase))
                 {
-                    fs.ReadExactly(header, 0, header.Length);
+                    byte[] target = Encoding.ASCII.GetBytes("PENTAX Corporation");
+                    byte[] replacement = Encoding.ASCII.GetBytes("PENTAX\0           ");
+                    int idx = FindBytes(data, target);
+                    if (idx >= 0)
+                    {
+                        Array.Copy(replacement, 0, data, idx, replacement.Length);
+                        modified = true;
+                    }
                 }
 
-                byte[] target = Encoding.ASCII.GetBytes("PENTAX Corporation");
-                int targetIndex = -1;
-                for (int i = 0; i <= header.Length - target.Length; i++)
+                // 2. Leaf MOS: <tiff:Make>Creo/Leaf</tiff:Make> -> <tiff:Make>Leaf</tiff:Make>     
+                if (errorMsg.Contains("Creo/Leaf", StringComparison.OrdinalIgnoreCase))
                 {
-                    bool match = true;
-                    for (int j = 0; j < target.Length; j++)
+                    byte[] target = Encoding.ASCII.GetBytes("<tiff:Make>Creo/Leaf</tiff:Make>");
+                    byte[] replacement = Encoding.ASCII.GetBytes("<tiff:Make>Leaf</tiff:Make>     ");
+                    int idx = FindBytes(data, target);
+                    if (idx >= 0)
                     {
-                        if (header[i + j] != target[j])
+                        Array.Copy(replacement, 0, data, idx, replacement.Length);
+                        modified = true;
+                    }
+                }
+
+                // 3. Konica Minolta 5D -> 7D
+                (string Target, string Replacement)[] pairs =
+                [
+                    ("DYNAX 5D", "DYNAX 7D"),
+                    ("MAXXUM 5D", "MAXXUM 7D"),
+                    ("ALPHA-5 DIGITAL", "ALPHA-7 DIGITAL")
+                ];
+
+                foreach (var (tgtStr, repStr) in pairs)
+                {
+                    if (errorMsg.Contains(tgtStr, StringComparison.OrdinalIgnoreCase))
+                    {
+                        byte[] target = Encoding.ASCII.GetBytes(tgtStr);
+                        byte[] replacement = Encoding.ASCII.GetBytes(repStr);
+                        int idx = FindBytes(data, target);
+                        if (idx >= 0)
                         {
-                            match = false;
-                            break;
+                            Array.Copy(replacement, 0, data, idx, replacement.Length);
+                            modified = true;
+                            is5d = true;
                         }
                     }
-                    if (match)
-                    {
-                        targetIndex = i;
-                        break;
-                    }
                 }
 
-                if (targetIndex < 0) return null;
+                if (!modified) return (null, false);
 
-                string tempPath = Path.Combine(Path.GetTempPath(), $"fujify_make_fix_{Guid.NewGuid():N}{Path.GetExtension(inputPath)}");
-                File.Copy(inputPath, tempPath, true);
-
-                using (var fs = new FileStream(tempPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
-                {
-                    fs.Seek(targetIndex, SeekOrigin.Begin);
-                    byte[] replacement = Encoding.ASCII.GetBytes("PENTAX\0           ");
-                    fs.Write(replacement, 0, replacement.Length);
-                }
-
-                return tempPath;
+                string tempPath = Path.Combine(Path.GetTempPath(), $"fujify_cam_fix_{Guid.NewGuid():N}{Path.GetExtension(inputPath)}");
+                File.WriteAllBytes(tempPath, data);
+                return (tempPath, is5d);
             }
             catch
             {
-                return null;
+                return (null, false);
             }
+        }
+
+        private static int FindBytes(byte[] source, byte[] pattern)
+        {
+            if (pattern.Length == 0 || source.Length < pattern.Length) return -1;
+            for (int i = 0; i <= source.Length - pattern.Length; i++)
+            {
+                bool match = true;
+                for (int j = 0; j < pattern.Length; j++)
+                {
+                    if (source[i + j] != pattern[j])
+                    {
+                        match = false;
+                        break;
+                    }
+                }
+                if (match) return i;
+            }
+            return -1;
+        }
+
+        private static void RestoreMinolta5DModelName(string dngPath)
+        {
+            try
+            {
+                if (!File.Exists(dngPath)) return;
+                byte[] data = File.ReadAllBytes(dngPath);
+                (string Target, string Replacement)[] pairs =
+                [
+                    ("DYNAX 7D", "DYNAX 5D"),
+                    ("MAXXUM 7D", "MAXXUM 5D"),
+                    ("ALPHA-7 DIGITAL", "ALPHA-5 DIGITAL")
+                ];
+
+                bool fixedAny = false;
+                foreach (var (targetStr, replStr) in pairs)
+                {
+                    byte[] target = Encoding.ASCII.GetBytes(targetStr);
+                    byte[] replacement = Encoding.ASCII.GetBytes(replStr);
+                    int idx = FindBytes(data, target);
+                    if (idx >= 0)
+                    {
+                        Array.Copy(replacement, 0, data, idx, replacement.Length);
+                        fixedAny = true;
+                    }
+                }
+
+                if (fixedAny)
+                {
+                    File.WriteAllBytes(dngPath, data);
+                }
+            }
+            catch { }
         }
 
         /// <summary>

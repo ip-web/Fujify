@@ -117,18 +117,21 @@ pub unsafe extern "C" fn dnglab_convert_file(
             Ok(_) => 0,
             Err(e) => {
                 let err_str = e.to_string();
-                if err_str.contains("Unknown camera") && err_str.contains("PENTAX Corporation") {
+                if err_str.contains("Unknown camera") {
                     drop(writer);
                     let _ = std::fs::remove_file(&out_path);
-                    if let Some(temp_path) = try_create_temp_with_normalized_make(&in_path) {
+                    if let Some(norm) = try_create_temp_with_normalized_camera(&in_path, &err_str) {
                         let retry_res = (|| -> Result<(), String> {
                             let file = File::create(&out_path).map_err(|e| e.to_string())?;
                             let mut retry_writer = BufWriter::new(file);
-                            convert_raw_file(&temp_path, &mut retry_writer, &params).map_err(|e| e.to_string())?;
+                            convert_raw_file(&norm.path, &mut retry_writer, &params).map_err(|e| e.to_string())?;
                             Ok(())
                         })();
-                        let _ = std::fs::remove_file(&temp_path);
+                        let _ = std::fs::remove_file(&norm.path);
                         if retry_res.is_ok() {
+                            if norm.is_5d_minolta {
+                                restore_minolta_5d_model(&out_path);
+                            }
                             return 0;
                         }
                     }
@@ -136,6 +139,12 @@ pub unsafe extern "C" fn dnglab_convert_file(
                     drop(writer);
                     let _ = std::fs::remove_file(&out_path);
                 }
+
+                if err_str.contains("PowerShot Pro70") || err_str.contains("PowerShot Pr070") {
+                    set_error(error_msg_buf, error_msg_buf_len, "Canon PowerShot Pro70 uses a legacy non-Bayer CYGM sensor which is unsupported for DNG conversion.");
+                    return -7;
+                }
+
                 set_error(error_msg_buf, error_msg_buf_len, &format!("Raw decode failed: {e}"));
                 -7
             }
@@ -159,7 +168,30 @@ pub unsafe extern "C" fn dnglab_convert_file(
             } else {
                 "Raw decode failed (internal decoder panic)".to_string()
             };
-            set_error(error_msg_buf, error_msg_buf_len, &msg);
+
+            let is_pro70 = if !input_path_ptr.is_null() {
+                if let Ok(s) = unsafe { CStr::from_ptr(input_path_ptr) }.to_str() {
+                    let p = std::path::Path::new(s);
+                    p.to_string_lossy().to_ascii_lowercase().contains("pro70")
+                        || std::fs::read(p).map_or(false, |b| {
+                            b.windows(15).any(|w| w == b"PowerShot Pro70" || w == b"PowerShot Pr070")
+                        })
+                } else {
+                    false
+                }
+            } else {
+                false
+            };
+
+            if is_pro70 || msg.contains("PowerShot Pro70") || msg.contains("PowerShot Pr070") {
+                set_error(
+                    error_msg_buf,
+                    error_msg_buf_len,
+                    "Canon PowerShot Pro70 uses a legacy non-Bayer CYGM sensor which is unsupported for DNG conversion.",
+                );
+            } else {
+                set_error(error_msg_buf, error_msg_buf_len, &msg);
+            }
             -99
         }
     }
@@ -177,20 +209,97 @@ fn set_error(buf: *mut c_char, len: usize, msg: &str) {
     }
 }
 
-fn try_create_temp_with_normalized_make(path: &std::path::Path) -> Option<PathBuf> {
+struct NormalizedCamera {
+    path: PathBuf,
+    is_5d_minolta: bool,
+}
+
+fn try_create_temp_with_normalized_camera(path: &std::path::Path, err_str: &str) -> Option<NormalizedCamera> {
     let mut data = std::fs::read(path).ok()?;
-    let target = b"PENTAX Corporation";
-    let pos = data.windows(target.len()).position(|w| w == target)?;
-    let replacement = b"PENTAX\0           ";
-    data[pos..pos + target.len()].copy_from_slice(replacement);
+    let mut modified = false;
+    let mut is_5d = false;
+
+    // 1. PENTAX Corporation -> PENTAX
+    let pentax_target = b"PENTAX Corporation";
+    if err_str.contains("PENTAX Corporation") || data.windows(pentax_target.len()).any(|w| w == pentax_target) {
+        let replacement = b"PENTAX\0           ";
+        for i in 0..data.len().saturating_sub(pentax_target.len()) {
+            if &data[i..i + pentax_target.len()] == pentax_target {
+                data[i..i + pentax_target.len()].copy_from_slice(replacement);
+                modified = true;
+            }
+        }
+    }
+
+    // 2. Leaf MOS: <tiff:Make>Creo/Leaf</tiff:Make> -> <tiff:Make>Leaf</tiff:Make>     
+    let creo_leaf_target = b"<tiff:Make>Creo/Leaf</tiff:Make>";
+    if err_str.contains("Creo/Leaf") || data.windows(creo_leaf_target.len()).any(|w| w == creo_leaf_target) {
+        let replacement = b"<tiff:Make>Leaf</tiff:Make>     ";
+        for i in 0..data.len().saturating_sub(creo_leaf_target.len()) {
+            if &data[i..i + creo_leaf_target.len()] == creo_leaf_target {
+                data[i..i + creo_leaf_target.len()].copy_from_slice(replacement);
+                modified = true;
+            }
+        }
+    }
+
+    // 3. Konica Minolta MRW: DYNAX 5D -> DYNAX 7D, MAXXUM 5D -> MAXXUM 7D, ALPHA-5 DIGITAL -> ALPHA-7 DIGITAL
+    let pairs: [(&[u8], &[u8]); 3] = [
+        (b"DYNAX 5D", b"DYNAX 7D"),
+        (b"MAXXUM 5D", b"MAXXUM 7D"),
+        (b"ALPHA-5 DIGITAL", b"ALPHA-7 DIGITAL"),
+    ];
+
+    for (target, replacement) in pairs {
+        if err_str.contains(std::str::from_utf8(target).unwrap_or("")) || data.windows(target.len()).any(|w| w == target) {
+            for i in 0..data.len().saturating_sub(target.len()) {
+                if &data[i..i + target.len()] == target {
+                    data[i..i + target.len()].copy_from_slice(replacement);
+                    modified = true;
+                    is_5d = true;
+                }
+            }
+        }
+    }
+
+    if !modified {
+        return None;
+    }
 
     let temp_dir = std::env::temp_dir();
+    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("raw");
     let temp_name = format!(
-        "fujify_fix_{}_{}.pef",
+        "fujify_fix_{}_{}.{}",
         std::process::id(),
-        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).ok()?.as_nanos()
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).ok()?.as_nanos(),
+        ext
     );
     let temp_path = temp_dir.join(temp_name);
     std::fs::write(&temp_path, &data).ok()?;
-    Some(temp_path)
+    Some(NormalizedCamera {
+        path: temp_path,
+        is_5d_minolta: is_5d,
+    })
+}
+
+fn restore_minolta_5d_model(path: &std::path::Path) {
+    if let Ok(mut dng_data) = std::fs::read(path) {
+        let pairs: [(&[u8], &[u8]); 3] = [
+            (b"DYNAX 7D", b"DYNAX 5D"),
+            (b"MAXXUM 7D", b"MAXXUM 5D"),
+            (b"ALPHA-7 DIGITAL", b"ALPHA-5 DIGITAL"),
+        ];
+        let mut fixed = false;
+        for (target, replacement) in pairs {
+            for i in 0..dng_data.len().saturating_sub(target.len()) {
+                if &dng_data[i..i + target.len()] == target {
+                    dng_data[i..i + target.len()].copy_from_slice(replacement);
+                    fixed = true;
+                }
+            }
+        }
+        if fixed {
+            let _ = std::fs::write(path, &dng_data);
+        }
+    }
 }

@@ -149,7 +149,14 @@ namespace Fujify.Services
                     if (!string.IsNullOrEmpty(jpegInfo)) return jpegInfo;
                 }
 
-                // 5. TIFF-based RAW (DNG, Sony ARW, Nikon NEF, Canon CR2, Olympus ORF, Panasonic RW2, Pentax PEF, etc.)
+                // 5. Minolta MRW check: starts with \0MRM (0x00, 0x4D, 0x52, 0x4D)
+                if (header[0] == 0x00 && header[1] == 0x4D && header[2] == 0x52 && header[3] == 0x4D)
+                {
+                    string? mrwInfo = ReadMinoltaMrwCameraInfo(fs);
+                    if (!string.IsNullOrEmpty(mrwInfo)) return mrwInfo;
+                }
+
+                // 6. TIFF-based RAW (DNG, Sony ARW, Nikon NEF, Canon CR2, Olympus ORF, Panasonic RW2, Pentax PEF, etc.)
                 bool isLittleEndian;
                 if (header[0] == 0x49 && header[1] == 0x49)
                 {
@@ -570,9 +577,16 @@ namespace Fujify.Services
             if (string.IsNullOrWhiteSpace(make) && string.IsNullOrWhiteSpace(model))
                 return null;
 
-            if (make != null && make.Equals("NIKON CORPORATION", StringComparison.OrdinalIgnoreCase))
+            if (make != null)
             {
-                make = "NIKON";
+                if (make.Equals("NIKON CORPORATION", StringComparison.OrdinalIgnoreCase))
+                    make = "NIKON";
+                else if (make.Equals("Minolta Co., Ltd.", StringComparison.OrdinalIgnoreCase))
+                    make = "MINOLTA";
+                else if (make.Equals("Konica Minolta Camera, Inc.", StringComparison.OrdinalIgnoreCase))
+                    make = "KONICA MINOLTA";
+                else if (make.Equals("PENTAX Corporation", StringComparison.OrdinalIgnoreCase))
+                    make = "PENTAX";
             }
 
             if (make != null && model != null && model.StartsWith(make, StringComparison.OrdinalIgnoreCase))
@@ -899,6 +913,125 @@ namespace Fujify.Services
             }
 
             return null;
+        }
+
+        internal static long? FindMinoltaTtwBase(Stream stream)
+        {
+            try
+            {
+                if (stream.Length < 16) return null;
+                long origPos = stream.Position;
+                stream.Seek(0, SeekOrigin.Begin);
+                byte[] header = new byte[8];
+                if (stream.Read(header, 0, 8) < 8) return null;
+
+                // Check for \0MRM (0x00, 0x4D, 0x52, 0x4D)
+                if (header[0] != 0x00 || header[1] != 0x4D || header[2] != 0x52 || header[3] != 0x4D)
+                    return null;
+
+                uint dataOffset = (uint)((header[4] << 24) | (header[5] << 16) | (header[6] << 8) | header[7]);
+                long headerEnd = Math.Min(dataOffset + 8, stream.Length);
+
+                byte[] blockHdr = new byte[8];
+                while (stream.Position + 8 <= headerEnd)
+                {
+                    if (stream.Read(blockHdr, 0, 8) < 8) break;
+                    uint blockLen = (uint)((blockHdr[4] << 24) | (blockHdr[5] << 16) | (blockHdr[6] << 8) | blockHdr[7]);
+
+                    // \0TTW (0x00, 0x54, 0x54, 0x57)
+                    if (blockHdr[0] == 0x00 && blockHdr[1] == 0x54 && blockHdr[2] == 0x54 && blockHdr[3] == 0x57)
+                    {
+                        return stream.Position;
+                    }
+
+                    if (blockLen == 0 || stream.Position + blockLen > stream.Length) break;
+                    stream.Seek(blockLen, SeekOrigin.Current);
+                }
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        internal static string? ReadMinoltaMrwCameraInfo(Stream stream)
+        {
+            try
+            {
+                long? ttwBaseOpt = FindMinoltaTtwBase(stream);
+                if (!ttwBaseOpt.HasValue) return null;
+                long ttwBase = ttwBaseOpt.Value;
+
+                if (ttwBase + 8 > stream.Length) return null;
+                stream.Seek(ttwBase, SeekOrigin.Begin);
+                byte[] tiffHdr = new byte[8];
+                if (stream.Read(tiffHdr, 0, 8) < 8) return null;
+
+                bool isLittleEndian;
+                if (tiffHdr[0] == 0x49 && tiffHdr[1] == 0x49) isLittleEndian = true;
+                else if (tiffHdr[0] == 0x4D && tiffHdr[1] == 0x4D) isLittleEndian = false;
+                else return null;
+
+                uint ifd0Offset = isLittleEndian
+                    ? (uint)(tiffHdr[4] | (tiffHdr[5] << 8) | (tiffHdr[6] << 16) | (tiffHdr[7] << 24))
+                    : (uint)((tiffHdr[4] << 24) | (tiffHdr[5] << 16) | (tiffHdr[6] << 8) | tiffHdr[7]);
+
+                if (ifd0Offset == 0 || ttwBase + ifd0Offset + 2 > stream.Length) return null;
+                stream.Seek(ttwBase + ifd0Offset, SeekOrigin.Begin);
+
+                byte[] countBuf = new byte[2];
+                if (stream.Read(countBuf, 0, 2) < 2) return null;
+                ushort count = isLittleEndian
+                    ? (ushort)(countBuf[0] | (countBuf[1] << 8))
+                    : (ushort)((countBuf[0] << 8) | countBuf[1]);
+
+                if (count == 0 || count > 500) return null;
+                byte[] entriesBuf = new byte[count * 12];
+                if (stream.Read(entriesBuf, 0, entriesBuf.Length) < entriesBuf.Length) return null;
+
+                string? make = null;
+                string? model = null;
+
+                for (int i = 0; i < count; i++)
+                {
+                    int off = i * 12;
+                    ushort tag = isLittleEndian
+                        ? (ushort)(entriesBuf[off] | (entriesBuf[off + 1] << 8))
+                        : (ushort)((entriesBuf[off] << 8) | entriesBuf[off + 1]);
+                    uint len = isLittleEndian
+                        ? (uint)(entriesBuf[off + 4] | (entriesBuf[off + 5] << 8) | (entriesBuf[off + 6] << 16) | (entriesBuf[off + 7] << 24))
+                        : (uint)((entriesBuf[off + 4] << 24) | (entriesBuf[off + 5] << 16) | (entriesBuf[off + 6] << 8) | entriesBuf[off + 7]);
+                    uint valOrOff = isLittleEndian
+                        ? (uint)(entriesBuf[off + 8] | (entriesBuf[off + 9] << 8) | (entriesBuf[off + 10] << 16) | (entriesBuf[off + 11] << 24))
+                        : (uint)((entriesBuf[off + 8] << 24) | (entriesBuf[off + 9] << 16) | (entriesBuf[off + 10] << 8) | entriesBuf[off + 11]);
+
+                    if (tag == TagMake && len > 0 && len < 256 && ttwBase + valOrOff + len <= stream.Length)
+                    {
+                        stream.Seek(ttwBase + valOrOff, SeekOrigin.Begin);
+                        byte[] strBuf = new byte[len];
+                        if (stream.Read(strBuf, 0, (int)len) == len)
+                        {
+                            make = Encoding.ASCII.GetString(strBuf).Trim('\0', ' ');
+                        }
+                    }
+                    else if (tag == TagModel && len > 0 && len < 256 && ttwBase + valOrOff + len <= stream.Length)
+                    {
+                        stream.Seek(ttwBase + valOrOff, SeekOrigin.Begin);
+                        byte[] strBuf = new byte[len];
+                        if (stream.Read(strBuf, 0, (int)len) == len)
+                        {
+                            model = Encoding.ASCII.GetString(strBuf).Trim('\0', ' ');
+                        }
+                    }
+                }
+
+                return FormatMakeAndModel(make, model);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         #endregion
