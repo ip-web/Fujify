@@ -125,6 +125,35 @@ namespace Fujify.Tests
         }
 
         [Fact]
+        public void RawMetadataReader_And_MetadataService_ShouldExtractExifDataFromRaw()
+        {
+            if (!File.Exists(_sampleArw)) return;
+
+            // 1. Test RawMetadataReader.TryGetExifData directly
+            var directExif = RawMetadataReader.TryGetExifData(_sampleArw);
+            Assert.NotNull(directExif);
+            Assert.Equal("E 28-75mm F2.8 A063", directExif.Lens);
+            Assert.Equal("2.8", directExif.Aperture);
+            Assert.Equal("1/500", directExif.ShutterSpeed);
+            Assert.Equal("100", directExif.Iso);
+            Assert.Equal("33 mm", directExif.FocalLength);
+            Assert.Equal("2026:08:03 12:17:15", directExif.DateTimeOriginal);
+            Assert.Equal("Rotate 270 CW", directExif.Orientation);
+
+            // 2. Test MetadataService.GetExifData
+            var service = new MetadataService();
+            var serviceExif = service.GetExifData(_sampleArw);
+            Assert.NotNull(serviceExif);
+            Assert.Equal("E 28-75mm F2.8 A063", serviceExif.Lens);
+            Assert.Equal("2.8", serviceExif.Aperture);
+            Assert.Equal("1/500", serviceExif.ShutterSpeed);
+            Assert.Equal("100", serviceExif.Iso);
+            Assert.Equal("33 mm", serviceExif.FocalLength);
+            Assert.Equal("2026:08:03 12:17:15", serviceExif.DateTimeOriginal);
+            Assert.Equal("Rotate 270 CW", serviceExif.Orientation);
+        }
+
+        [Fact]
         public void AppSettings_ShouldDefaultToFujifiedSuffix()
         {
             var settings = new AppSettings();

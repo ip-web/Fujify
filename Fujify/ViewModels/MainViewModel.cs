@@ -941,6 +941,10 @@ namespace Fujify.ViewModels
                                     Dispatcher.UIThread.Post(() =>
                                     {
                                         foreach (var item in currentBatch) Files.Add(item);
+                                        if (SelectedFile == null && Files.Count > 0)
+                                        {
+                                            SelectedFile = Files[0];
+                                        }
                                     });
                                 }
                             }
@@ -962,6 +966,10 @@ namespace Fujify.ViewModels
                         Dispatcher.UIThread.Post(() =>
                         {
                             foreach (var item in remaining) Files.Add(item);
+                            if (SelectedFile == null && Files.Count > 0)
+                            {
+                                SelectedFile = Files[0];
+                            }
                         });
                     }
                 });
