@@ -44,6 +44,11 @@ namespace Fujify.Android;
     new[] { Intent.ActionView },
     Categories = new[] { Intent.CategoryDefault, Intent.CategoryBrowsable },
     DataMimeType = "application/octet-stream")]
+[IntentFilter(
+    new[] { Intent.ActionView },
+    Categories = new[] { Intent.CategoryDefault, Intent.CategoryBrowsable },
+    DataScheme = "fujifier",
+    DataHost = "oauth-callback")]
 public class MainActivity : AvaloniaMainActivity<App>
 {
     protected override void OnCreate(Bundle? savedInstanceState)
@@ -208,6 +213,17 @@ public class MainActivity : AvaloniaMainActivity<App>
         }
         else if (action == Intent.ActionView)
         {
+            if (intent.Data != null && string.Equals(intent.Data.Scheme, "fujifier", StringComparison.OrdinalIgnoreCase))
+            {
+                string? code = intent.Data.GetQueryParameter("code");
+                string? state = intent.Data.GetQueryParameter("state");
+                if (!string.IsNullOrEmpty(code))
+                {
+                    LicenseService.OnOAuthCallbackReceived?.Invoke(code, state);
+                }
+                return;
+            }
+
             if (intent.Data != null)
             {
                 uris.Add(intent.Data);

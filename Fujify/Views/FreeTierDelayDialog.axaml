@@ -60,14 +60,29 @@
                 </StackPanel>
             </StackPanel>
 
-            <!-- Middle Links (Upgrade & Toggle License Key) -->
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16" Margin="0,12,0,14">
-                <Button Content="⭐ Upgrade to Pro ($19)" Click="Upgrade_Click" Classes="accent" 
-                        Height="36" Padding="16,0" CornerRadius="10"
-                        VerticalContentAlignment="Center" FontWeight="SemiBold"/>
-                <Button x:Name="ToggleKeyButton" Content="Enter License Key" Click="ToggleLicenseKey_Click" 
-                        Height="36" Padding="14,0" CornerRadius="10"
-                        VerticalContentAlignment="Center"/>
+            <!-- Middle Links (Upgrade, Google Sign In & License Key) -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="0,12,0,14">
+                <Button Content="⭐ Upgrade to Pro" Click="Upgrade_Click" Classes="accent" 
+                        Height="36" Padding="12,0" CornerRadius="10"
+                        VerticalContentAlignment="Center" FontWeight="SemiBold" FontSize="11.5"/>
+                <Button x:Name="GoogleSignInButton" Click="GoogleSignIn_Click" 
+                        Height="36" Padding="10,0" CornerRadius="10"
+                        VerticalContentAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Viewbox Width="14" Height="14" VerticalAlignment="Center">
+                            <Canvas Width="24" Height="24">
+                                <Path Fill="#4285F4" Data="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.04h3.87c2.26-2.09 3.67-5.17 3.67-9.14z"/>
+                                <Path Fill="#34A853" Data="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.87-3.04c-1.08.72-2.45 1.16-4.06 1.16-3.13 0-5.78-2.11-6.73-4.96H1.25v3.13C3.25 21.31 7.35 24 12 24z"/>
+                                <Path Fill="#FBBC05" Data="M5.27 14.25c-.25-.72-.38-1.49-.38-2.25s.13-1.53.38-2.25V6.62H1.25C.45 8.24 0 10.06 0 12s.45 3.76 1.25 5.38l4.02-3.13z"/>
+                                <Path Fill="#EA4335" Data="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.25 2.69 1.25 6.62l4.02 3.13c.95-2.85 3.6-4.96 6.73-4.96z"/>
+                            </Canvas>
+                        </Viewbox>
+                        <TextBlock Text="Google Sign-In" FontSize="11.5" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="ToggleKeyButton" Content="License Key" Click="ToggleLicenseKey_Click" 
+                        Height="36" Padding="10,0" CornerRadius="10"
+                        VerticalContentAlignment="Center" FontSize="11.5"/>
             </StackPanel>
 
             <!-- Bottom Action: Continue with Free Version (Disabled until timer finishes) -->

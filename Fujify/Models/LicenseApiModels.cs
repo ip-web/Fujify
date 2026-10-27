@@ -150,6 +150,18 @@ namespace Fujify.Models
 
         [JsonPropertyName("password")]
         public string Password { get; set; } = string.Empty;
+
+        [JsonPropertyName("google_id_token")]
+        public string? GoogleIdToken { get; set; }
+    }
+
+    public class PkceExchangeRequest
+    {
+        [JsonPropertyName("code")]
+        public string Code { get; set; } = string.Empty;
+
+        [JsonPropertyName("code_verifier")]
+        public string CodeVerifier { get; set; } = string.Empty;
     }
 
     public class AuthUserDto
