@@ -114,6 +114,71 @@ namespace Fujify.Tests
         }
 
         [Fact]
+        public async Task Concurrent_NativeConversions_ShouldNotCrash()
+        {
+            if (!File.Exists(_sampleArw)) return;
+            int count = 12;
+            var tasks = new System.Collections.Generic.List<Task<(bool Success, string? ErrorMessage)>>();
+            var tempFiles = new System.Collections.Generic.List<string>();
+            for (int i = 0; i < count; i++)
+            {
+                string temp = Path.Combine(Path.GetTempPath(), $"concurrent_test_{Guid.NewGuid():N}_{i}.dng");
+                tempFiles.Add(temp);
+                tasks.Add(Task.Run(() => DngLabNative.ConvertFile(_sampleArw, temp, false)));
+            }
+            var results = await Task.WhenAll(tasks);
+            foreach (var file in tempFiles)
+            {
+                try { if (File.Exists(file)) File.Delete(file); } catch { }
+            }
+            foreach (var r in results)
+            {
+                Assert.True(r.Success, $"Conversion failed: {r.ErrorMessage}");
+            }
+        }
+
+        [Fact]
+        public void DngLabNative_ShouldHandleCorruptFileGracefullyWithoutCrashing()
+        {
+            string corruptRaw = Path.Combine(Path.GetTempPath(), $"corrupt_{Guid.NewGuid():N}.raw");
+            string outDng = Path.Combine(Path.GetTempPath(), $"corrupt_{Guid.NewGuid():N}.dng");
+            try
+            {
+                File.WriteAllBytes(corruptRaw, new byte[] { 0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00 });
+                var (success, error) = DngLabNative.ConvertFile(corruptRaw, outDng, false);
+                Assert.False(success);
+                Assert.NotNull(error);
+                Assert.False(File.Exists(outDng));
+            }
+            finally
+            {
+                try { if (File.Exists(corruptRaw)) File.Delete(corruptRaw); } catch { }
+                try { if (File.Exists(outDng)) File.Delete(outDng); } catch { }
+            }
+        }
+
+        [Fact]
+        public void DngLabNative_ShouldHandlePanicInducingFileWithoutCrashing()
+        {
+            string panasonicRaw = @"D:\Users\isisk\Documents\test sony\test files\raws\panasonic\RAW_PANASONIC_DMC_LX3.RW2";
+            if (!File.Exists(panasonicRaw)) return;
+
+            string outDng = Path.Combine(Path.GetTempPath(), $"lx3_test_{Guid.NewGuid():N}.dng");
+            try
+            {
+                var (success, error) = DngLabNative.ConvertFile(panasonicRaw, outDng, false);
+                Assert.False(success);
+                Assert.NotNull(error);
+                Assert.Contains("Raw decode failed", error);
+                Assert.False(File.Exists(outDng));
+            }
+            finally
+            {
+                try { if (File.Exists(outDng)) File.Delete(outDng); } catch { }
+            }
+        }
+
+        [Fact]
         public void MetadataService_ShouldUseInProcessEditor()
         {
             var service = new MetadataService();
