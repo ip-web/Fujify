@@ -122,14 +122,23 @@ namespace Fujify.Views
                 LicenseKeySection.IsVisible = false;
                 ToggleKeyButton.IsVisible = false;
                 GoogleSignInButton.IsVisible = false;
+
+                var dlg = new MessageDialog("Pro Unlocked!", "Welcome to Fujifier Pro! All tier limits, countdown delays, and advertisements have been removed permanently.", isSuccess: true);
+                await dlg.ShowDialog(this);
             }
             else if (result.Success)
             {
-                CountdownStatusText.Text = result.ErrorMessage ?? "Signed in. No active Pro license found on fujifier.cc.";
+                string msg = result.ErrorMessage ?? "Signed in. No active Pro license found on fujifier.cc.";
+                CountdownStatusText.Text = msg;
+                var dlg = new MessageDialog("No Active License", msg, isSuccess: false);
+                await dlg.ShowDialog(this);
             }
             else
             {
-                CountdownStatusText.Text = result.ErrorMessage ?? "Google Sign-In failed.";
+                string msg = result.ErrorMessage ?? "Google Sign-In failed.";
+                CountdownStatusText.Text = msg;
+                var dlg = new MessageDialog("Google Sign-In Failed", msg, isSuccess: false);
+                await dlg.ShowDialog(this);
             }
         }
 

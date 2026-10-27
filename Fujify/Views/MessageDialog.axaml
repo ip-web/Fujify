@@ -12,10 +12,10 @@
     <Grid Background="{DynamicResource AppBackgroundBrush}">
         <Grid Margin="24" RowDefinitions="Auto,*,Auto" VerticalAlignment="Center">
             <!-- Icon -->
-            <Border Grid.Row="0" Width="48" Height="48" CornerRadius="24"
+            <Border x:Name="IconBorder" Grid.Row="0" Width="48" Height="48" CornerRadius="24"
                     Background="{DynamicResource AppGlassPillBrush}"
                     HorizontalAlignment="Center" Margin="0,0,0,12">
-                <TextBlock Text="✔" FontSize="24" Foreground="{DynamicResource AppAccentBrush}"
+                <TextBlock x:Name="IconText" Text="✔" FontSize="24" Foreground="{DynamicResource AppAccentBrush}"
                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Border>
 

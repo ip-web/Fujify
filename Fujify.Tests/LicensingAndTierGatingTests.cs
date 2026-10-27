@@ -543,5 +543,76 @@ namespace Fujify.Tests
 
             Assert.Equal("https://fujifier.cc", service.GetWebsiteBaseUrl());
         }
+
+        [Fact]
+        public async Task CompleteOAuthCallbackAsync_WhenResponseContainsStringIdsAndNumbers_DeserializesAndActivatesPro()
+        {
+            var settings = new MockSettingsService();
+
+            var handler = new MockHttpMessageHandler((req) =>
+            {
+                if (req.RequestUri!.AbsolutePath.EndsWith("/auth/exchange-token"))
+                {
+                    // Simulated raw JSON response with string IDs and numeric values from WordPress/MySQL
+                    string rawJson = @"{
+                        ""success"": true,
+                        ""access_token"": ""mock_token_123"",
+                        ""refresh_token"": ""mock_refresh_123"",
+                        ""token_type"": ""Bearer"",
+                        ""expires_in"": ""3600"",
+                        ""user"": {
+                            ""id"": ""42"",
+                            ""email"": ""photographer@fujifier.cc"",
+                            ""display_name"": ""Studio Pro""
+                        },
+                        ""licenses"": [
+                            {
+                                ""id"": ""101"",
+                                ""license_key"": ""FUJI-STR-ID-TEST-0001"",
+                                ""plan_type"": ""pro_lifetime"",
+                                ""status"": ""active"",
+                                ""max_activations"": ""3"",
+                                ""used_activations"": ""1"",
+                                ""expires_at"": null
+                            }
+                        ]
+                    }";
+
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(rawJson)
+                    };
+                }
+
+                if (req.RequestUri!.AbsolutePath.EndsWith("/license/activate"))
+                {
+                    string actJson = @"{
+                        ""success"": true,
+                        ""license_key"": ""FUJI-STR-ID-TEST-0001"",
+                        ""status"": ""active"",
+                        ""max_activations"": ""3"",
+                        ""used_activations"": ""1""
+                    }";
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(actJson)
+                    };
+                }
+
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            });
+
+            var httpClient = new HttpClient(handler);
+            var service = new LicenseService(settings, httpClient);
+
+            var result = await service.CompleteOAuthCallbackAsync("fuji_auth_code_str_test", "code_verifier_str_test");
+
+            Assert.True(result.Success, result.ErrorMessage);
+            Assert.True(service.IsPro);
+            Assert.True(service.IsAccountLoggedIn);
+            Assert.Equal("photographer@fujifier.cc", service.AccountEmail);
+            Assert.Equal("Studio Pro", settings.Settings.AccountDisplayName);
+            Assert.Equal("FUJI-STR-ID-TEST-0001", service.CurrentStatus.LicenseKey);
+        }
     }
 }
