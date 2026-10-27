@@ -414,6 +414,11 @@ namespace Fujify.ViewModels
 
             _licenseService.LicenseChanged += (s, status) =>
             {
+                if (status.IsPro)
+                {
+                    _losslessCompression = true;
+                    _maxConcurrentConversions = DefaultConcurrency;
+                }
                 OnPropertyChanged(nameof(IsPro));
                 OnPropertyChanged(nameof(LicenseStatusText));
                 OnPropertyChanged(nameof(LicenseDescriptionText));
