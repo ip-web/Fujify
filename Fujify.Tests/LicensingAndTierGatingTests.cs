@@ -172,6 +172,37 @@ namespace Fujify.Tests
         }
 
         [Fact]
+        public async Task LicenseActivation_ShouldAutomaticallySetLosslessDngAndHalfThreads()
+        {
+            var settings = new MockSettingsService();
+            settings.Settings.LosslessCompression = false;
+            settings.Settings.MaxConcurrentConversions = 1;
+
+            var licenseService = new LicenseService(settings);
+            var vm = new PreferencesViewModel(settings, licenseService);
+
+            // Initially Free tier: Lossless DNG disabled, concurrency locked to 1
+            Assert.False(licenseService.IsPro);
+            Assert.False(vm.LosslessCompression);
+            Assert.Equal(1, vm.MaxConcurrentConversions);
+
+            int expectedThreads = Math.Max(1, Environment.ProcessorCount / 2);
+
+            // Activate Pro license
+            var result = await licenseService.ActivateLicenseKeyAsync("FUJIFIER-PRO-DEV-OVERRIDE");
+            Assert.True(result.Success);
+            Assert.True(licenseService.IsPro);
+
+            // Verify settings were automatically configured
+            Assert.True(settings.Settings.LosslessCompression);
+            Assert.Equal(expectedThreads, settings.Settings.MaxConcurrentConversions);
+
+            // Verify PreferencesViewModel properties updated dynamically
+            Assert.True(vm.LosslessCompression);
+            Assert.Equal(expectedThreads, vm.MaxConcurrentConversions);
+        }
+
+        [Fact]
         public void MainViewModel_FreeTier_LosslessCompression_IsDisabled()
         {
             var settings = new MockSettingsService();
