@@ -20,6 +20,7 @@
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Media.Transformation;
 using Fujify.ViewModels;
 
@@ -129,8 +130,7 @@ namespace Fujify.Views
                 bool isOpen = vm.IsPreferencesModal;
                 _prefPanel.IsHitTestVisible = isOpen;
                 _prefPanel.Opacity = isOpen ? 1 : 0;
-                _prefPanel.RenderTransform = TransformOperations.Parse(
-                    isOpen ? "translateX(0px)" : $"translateX({width}px)");
+                _prefPanel.RenderTransform = new TranslateTransform(isOpen ? 0 : width, 0);
             }
 
             if (_aboutPanel != null)
@@ -138,19 +138,25 @@ namespace Fujify.Views
                 bool isOpen = vm.IsAboutModal;
                 _aboutPanel.IsHitTestVisible = isOpen;
                 _aboutPanel.Opacity = isOpen ? 1 : 0;
-                _aboutPanel.RenderTransform = TransformOperations.Parse(
-                    isOpen ? "translateX(0px)" : $"translateX({width}px)");
+                _aboutPanel.RenderTransform = new TranslateTransform(isOpen ? 0 : width, 0);
             }
         }
 
         protected override void OnSizeChanged(SizeChangedEventArgs e)
         {
             base.OnSizeChanged(e);
-            if (DataContext is MainViewModel vm)
+            try
             {
-                vm.UpdateLayoutMode(e.NewSize.Width, e.NewSize.Height);
+                if (DataContext is MainViewModel vm)
+                {
+                    vm.UpdateLayoutMode(e.NewSize.Width, e.NewSize.Height);
+                }
+                UpdateSlidePanels(animated: false);
             }
-            UpdateSlidePanels(animated: false);
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[MainView] OnSizeChanged handled exception: {ex}");
+            }
         }
 
         protected override void OnDataContextChanged(System.EventArgs e)
