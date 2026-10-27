@@ -410,5 +410,72 @@ namespace Fujify.Tests
             vm.SkipCommand.Execute(null);
             Assert.Equal(ConflictChoice.Skip, chosen.Choice);
         }
+
+        [Fact]
+        public void ReadCameraMakeAndModel_FujifilmRAF_ShouldExtractModelNotVersion()
+        {
+            // Synthetic Fujifilm RAF file:
+            // 0x00: "FUJIFILMCCD-RAW "
+            // 0x10: "0201"
+            // 0x14: "FA119501"
+            // 0x1C: "X100S\0\0\0..." (32 bytes)
+            // 0x3C: "0120" (Internal RAF version, previously erroneously read as model)
+            byte[] rafData = new byte[128];
+            System.Text.Encoding.ASCII.GetBytes("FUJIFILMCCD-RAW ").CopyTo(rafData, 0);
+            System.Text.Encoding.ASCII.GetBytes("0201").CopyTo(rafData, 16);
+            System.Text.Encoding.ASCII.GetBytes("FA119501").CopyTo(rafData, 20);
+            System.Text.Encoding.ASCII.GetBytes("X100S").CopyTo(rafData, 28);
+            System.Text.Encoding.ASCII.GetBytes("0120").CopyTo(rafData, 60);
+
+            string tempRaf = Path.Combine(Path.GetTempPath(), $"test_fuji_{Guid.NewGuid():N}.raf");
+            try
+            {
+                File.WriteAllBytes(tempRaf, rafData);
+
+                string? dngEditorResult = DngMetadataEditor.ReadCameraMakeAndModel(tempRaf);
+                Assert.Equal("FUJIFILM X100S", dngEditorResult);
+
+                string? rawReaderResult = RawMetadataReader.TryGetCameraMakeAndModel(tempRaf);
+                Assert.Equal("FUJIFILM X100S", rawReaderResult);
+
+                var metadataService = new MetadataService();
+                string svcResult = metadataService.GetCameraMakeAndModel(tempRaf);
+                Assert.Equal("FUJIFILM X100S", svcResult);
+            }
+            finally
+            {
+                if (File.Exists(tempRaf)) File.Delete(tempRaf);
+            }
+
+            // Also test real sample if present on test machine
+            string realSample = @"D:\Users\isisk\Documents\test sony\test files\raws\fuji\RAW_FUJIFILM_X100S.RAF";
+            if (File.Exists(realSample))
+            {
+                string? realModel = DngMetadataEditor.ReadCameraMakeAndModel(realSample);
+                Assert.Equal("FUJIFILM X100S", realModel);
+            }
+        }
+
+        [Fact]
+        public void ReadCameraMakeAndModel_CanonCiff_ShouldExtractMakeAndModel()
+        {
+            string realCiff = @"D:\Users\isisk\Documents\test sony\test files\raws\canon\pro70\RAW_CANON_PRO70_SRGB.CRW";
+            if (File.Exists(realCiff))
+            {
+                string? dngEditorResult = DngMetadataEditor.ReadCameraMakeAndModel(realCiff);
+                Assert.Equal("Canon PowerShot Pro70", dngEditorResult);
+
+                string? rawReaderResult = RawMetadataReader.TryGetCameraMakeAndModel(realCiff);
+                Assert.Equal("Canon PowerShot Pro70", rawReaderResult);
+
+                var metadataService = new MetadataService();
+                string svcResult = metadataService.GetCameraMakeAndModel(realCiff);
+                Assert.Equal("Canon PowerShot Pro70", svcResult);
+
+                var exif = RawMetadataReader.TryGetExifData(realCiff);
+                Assert.NotNull(exif);
+                Assert.NotNull(exif.DateTimeOriginal);
+            }
+        }
     }
 }

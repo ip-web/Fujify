@@ -106,43 +106,68 @@ namespace Fujify.Services
                 if (header[0] == 0x46 && header[1] == 0x55 && header[2] == 0x4A && header[3] == 0x49 &&
                     header[4] == 0x46 && header[5] == 0x49 && header[6] == 0x4C && header[7] == 0x4D)
                 {
-                    if (fs.Length >= 92)
+                    if (fs.Length >= 60)
                     {
-                        fs.Seek(0x3C, SeekOrigin.Begin);
+                        fs.Seek(0x1C, SeekOrigin.Begin);
                         byte[] modelBytes = new byte[32];
                         int modelRead = fs.Read(modelBytes, 0, 32);
                         if (modelRead > 0)
                         {
                             string rafModel = Encoding.ASCII.GetString(modelBytes, 0, modelRead).Trim('\0', ' ');
-                            return string.IsNullOrEmpty(rafModel) ? "FUJIFILM" : $"FUJIFILM {rafModel}".Trim();
+                            if (!string.IsNullOrEmpty(rafModel))
+                            {
+                                return rafModel.StartsWith("FUJIFILM", StringComparison.OrdinalIgnoreCase)
+                                    ? rafModel
+                                    : $"FUJIFILM {rafModel}".Trim();
+                            }
                         }
                     }
                     return "FUJIFILM";
                 }
 
-                // 2. Canon CR3 check: starts with ftyp
+                // 2. Canon CIFF (.CRW) check: "II" at 0..1 and "HEAPCCDR" / "HEAPCCDB" at 6..13
+                if (header[0] == 0x49 && header[1] == 0x49 && header.Length >= 14 &&
+                    header[6] == 0x48 && header[7] == 0x45 && header[8] == 0x41 && header[9] == 0x50 &&
+                    header[10] == 0x43 && header[11] == 0x43 && header[12] == 0x44 &&
+                    (header[13] == 0x52 || header[13] == 0x42))
+                {
+                    string? ciffInfo = ReadCanonCiffCameraInfo(fs);
+                    if (!string.IsNullOrEmpty(ciffInfo)) return ciffInfo;
+                }
+
+                // 3. Canon CR3 check: starts with ftyp
                 if (header[4] == 0x66 && header[5] == 0x74 && header[6] == 0x79 && header[7] == 0x70)
                 {
                     string? cr3Info = ReadCanonCr3CameraInfo(fs);
                     if (!string.IsNullOrEmpty(cr3Info)) return cr3Info;
                 }
 
-                // 3. JPEG check: 0xFF 0xD8
+                // 4. JPEG check: 0xFF 0xD8
                 if (header[0] == 0xFF && header[1] == 0xD8)
                 {
                     string? jpegInfo = ReadJpegExifCameraInfo(fs);
                     if (!string.IsNullOrEmpty(jpegInfo)) return jpegInfo;
                 }
 
-                // 4. TIFF-based RAW (DNG, Sony ARW, Nikon NEF, Canon CR2, Olympus ORF, etc.)
+                // 5. TIFF-based RAW (DNG, Sony ARW, Nikon NEF, Canon CR2, Olympus ORF, Panasonic RW2, Pentax PEF, etc.)
                 bool isLittleEndian;
-                if (header[0] == 0x49 && header[1] == 0x49 && header[2] == 0x2A && header[3] == 0x00)
+                if (header[0] == 0x49 && header[1] == 0x49)
                 {
                     isLittleEndian = true;
+                    ushort magic = (ushort)(header[2] | (header[3] << 8));
+                    if (magic != 42 && magic != 85 && magic != 0x4F52 && magic != 0x5352)
+                    {
+                        return null;
+                    }
                 }
-                else if (header[0] == 0x4D && header[1] == 0x4D && header[2] == 0x00 && header[3] == 0x2A)
+                else if (header[0] == 0x4D && header[1] == 0x4D)
                 {
                     isLittleEndian = false;
+                    ushort magic = (ushort)((header[2] << 8) | header[3]);
+                    if (magic != 42 && magic != 0x4F52 && magic != 0x524F)
+                    {
+                        return null;
+                    }
                 }
                 else
                 {
@@ -449,13 +474,17 @@ namespace Fujify.Services
             stream.Seek(0, SeekOrigin.Begin);
             if (stream.Read(header, 0, 8) < 8) return false;
 
-            if (header[0] == 0x49 && header[1] == 0x49 && header[2] == 0x2A && header[3] == 0x00)
+            if (header[0] == 0x49 && header[1] == 0x49)
             {
                 isLittleEndian = true;
+                ushort magic = (ushort)(header[2] | (header[3] << 8));
+                if (magic != 42 && magic != 85 && magic != 0x4F52 && magic != 0x5352) return false;
             }
-            else if (header[0] == 0x4D && header[1] == 0x4D && header[2] == 0x00 && header[3] == 0x2A)
+            else if (header[0] == 0x4D && header[1] == 0x4D)
             {
                 isLittleEndian = false;
+                ushort magic = (ushort)((header[2] << 8) | header[3]);
+                if (magic != 42 && magic != 0x4F52 && magic != 0x524F) return false;
             }
             else
             {
@@ -697,7 +726,7 @@ namespace Fujify.Services
 <?xpacket end='w'?>";
         }
 
-        private static string? ReadCanonCr3CameraInfo(Stream stream)
+        internal static string? ReadCanonCr3CameraInfo(Stream stream)
         {
             try
             {
@@ -777,6 +806,98 @@ namespace Fujify.Services
                 }
             }
             catch { }
+            return null;
+        }
+
+        internal static string? ReadCanonCiffCameraInfo(Stream stream)
+        {
+            try
+            {
+                long flen = stream.Length;
+                if (flen < 30) return null;
+
+                stream.Seek(flen - 4, SeekOrigin.Begin);
+                byte[] dirOffsetBuf = new byte[4];
+                if (stream.Read(dirOffsetBuf, 0, 4) < 4) return null;
+
+                uint dirOffset = (uint)(dirOffsetBuf[0] | (dirOffsetBuf[1] << 8) | (dirOffsetBuf[2] << 16) | (dirOffsetBuf[3] << 24));
+                return ParseCiffDirectory(stream, 26, dirOffset, (uint)(flen - 26), 0);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static string? ParseCiffDirectory(Stream stream, long blockBase, uint dirOffset, uint blockLen, int depth)
+        {
+            if (depth > 10 || dirOffset + 2 > blockLen) return null;
+
+            stream.Seek(blockBase + dirOffset, SeekOrigin.Begin);
+            byte[] countBuf = new byte[2];
+            if (stream.Read(countBuf, 0, 2) < 2) return null;
+
+            ushort count = (ushort)(countBuf[0] | (countBuf[1] << 8));
+            if (count > 256) return null;
+
+            byte[] entriesBuf = new byte[count * 10];
+            if (stream.Read(entriesBuf, 0, entriesBuf.Length) < entriesBuf.Length) return null;
+
+            for (int i = 0; i < count; i++)
+            {
+                int entryOff = i * 10;
+                ushort tag = (ushort)(entriesBuf[entryOff] | (entriesBuf[entryOff + 1] << 8));
+                uint length = (uint)(entriesBuf[entryOff + 2] | (entriesBuf[entryOff + 3] << 8) | (entriesBuf[entryOff + 4] << 16) | (entriesBuf[entryOff + 5] << 24));
+                uint offset = (uint)(entriesBuf[entryOff + 6] | (entriesBuf[entryOff + 7] << 8) | (entriesBuf[entryOff + 8] << 16) | (entriesBuf[entryOff + 9] << 24));
+
+                ushort tagId = (ushort)(tag & 0x3FFF);
+                ushort tagType = (ushort)(tag & 0x3800);
+
+                if (tagId == 0x080A) // CanonRawMakeModel
+                {
+                    if (offset + length <= blockLen)
+                    {
+                        stream.Seek(blockBase + offset, SeekOrigin.Begin);
+                        byte[] valBuf = new byte[length];
+                        int read = stream.Read(valBuf, 0, (int)length);
+                        if (read > 0)
+                        {
+                            string rawText = Encoding.ASCII.GetString(valBuf, 0, read);
+                            string[] parts = rawText.Split('\0', StringSplitOptions.RemoveEmptyEntries);
+                            if (parts.Length >= 2)
+                            {
+                                string make = parts[0].Trim();
+                                string model = parts[1].Trim();
+                                if (model.StartsWith(make, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    return model;
+                                }
+                                return $"{make} {model}".Trim();
+                            }
+                            else if (parts.Length == 1)
+                            {
+                                return parts[0].Trim();
+                            }
+                        }
+                    }
+                }
+                else if (tagType == 0x2800 || tagType == 0x3000) // Sub-directory
+                {
+                    if (length >= 4 && offset + length <= blockLen)
+                    {
+                        long subBase = blockBase + offset;
+                        stream.Seek(subBase + length - 4, SeekOrigin.Begin);
+                        byte[] subDirOffsetBuf = new byte[4];
+                        if (stream.Read(subDirOffsetBuf, 0, 4) == 4)
+                        {
+                            uint subDirOffset = (uint)(subDirOffsetBuf[0] | (subDirOffsetBuf[1] << 8) | (subDirOffsetBuf[2] << 16) | (subDirOffsetBuf[3] << 24));
+                            string? subResult = ParseCiffDirectory(stream, subBase, subDirOffset, length, depth + 1);
+                            if (subResult != null) return subResult;
+                        }
+                    }
+                }
+            }
+
             return null;
         }
 
