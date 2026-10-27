@@ -152,8 +152,8 @@ namespace Fujify.ViewModels
             _rawConverterService = rawConverterService ?? new RawConverterService();
             _metadataService = metadataService ?? new MetadataService();
             _settingsService = settingsService ?? new SettingsService();
-            _dialogService = dialogService ?? new DialogService(_settingsService);
             _licenseService = licenseService ?? new LicenseService(_settingsService);
+            _dialogService = dialogService ?? new DialogService(_settingsService, _licenseService);
 
             CancelCommand = new RelayCommand(Cancel);
             DoneCommand = new RelayCommand(Done);

@@ -23,10 +23,24 @@ namespace Fujify.Services
     {
         public string ThemeMode { get; set; } = "Automatic"; // "Automatic", "Dark", "Amoled", "Light"
 
+        [System.Text.Json.Serialization.JsonIgnore]
         public bool IsDarkTheme
         {
             get => !ThemeMode.Equals("Light", System.StringComparison.OrdinalIgnoreCase);
-            set => ThemeMode = value ? (ThemeMode.Equals("Amoled", System.StringComparison.OrdinalIgnoreCase) ? "Amoled" : "Dark") : "Light";
+            set
+            {
+                if (value)
+                {
+                    if (ThemeMode.Equals("Light", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        ThemeMode = "Dark";
+                    }
+                }
+                else
+                {
+                    ThemeMode = "Light";
+                }
+            }
         }
         public double WindowHeight { get; set; } = 770;
         public double WindowWidth { get; set; } = 700;

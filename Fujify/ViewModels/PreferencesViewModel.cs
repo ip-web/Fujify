@@ -206,15 +206,21 @@ namespace Fujify.ViewModels
             get => _themeMode;
             set
             {
-                if (SetProperty(ref _themeMode, value))
+                string normalized = value?.Trim() ?? "Automatic";
+                if (normalized.Equals("Light", StringComparison.OrdinalIgnoreCase)) normalized = "Light";
+                else if (normalized.Equals("Amoled", StringComparison.OrdinalIgnoreCase)) normalized = "Amoled";
+                else if (normalized.Equals("Dark", StringComparison.OrdinalIgnoreCase)) normalized = "Dark";
+                else normalized = "Automatic";
+
+                if (SetProperty(ref _themeMode, normalized))
                 {
-                    _isDarkTheme = value != "Light";
+                    _isDarkTheme = !normalized.Equals("Light", StringComparison.OrdinalIgnoreCase);
                     OnPropertyChanged(nameof(IsDarkTheme));
                     OnPropertyChanged(nameof(IsAutoThemeSelected));
                     OnPropertyChanged(nameof(IsDarkThemeSelected));
                     OnPropertyChanged(nameof(IsAmoledThemeSelected));
                     OnPropertyChanged(nameof(IsLightThemeSelected));
-                    App.ApplyTheme(value);
+                    App.ApplyTheme(normalized);
                 }
             }
         }
@@ -237,10 +243,53 @@ namespace Fujify.ViewModels
             }
         }
 
-        public bool IsAutoThemeSelected => _themeMode.Equals("Automatic", StringComparison.OrdinalIgnoreCase) || _themeMode.Equals("Auto", StringComparison.OrdinalIgnoreCase);
-        public bool IsDarkThemeSelected => _themeMode.Equals("Dark", StringComparison.OrdinalIgnoreCase);
-        public bool IsAmoledThemeSelected => _themeMode.Equals("Amoled", StringComparison.OrdinalIgnoreCase);
-        public bool IsLightThemeSelected => _themeMode.Equals("Light", StringComparison.OrdinalIgnoreCase);
+        public bool IsAutoThemeSelected
+        {
+            get => _themeMode.Equals("Automatic", StringComparison.OrdinalIgnoreCase) || _themeMode.Equals("Auto", StringComparison.OrdinalIgnoreCase);
+            set
+            {
+                if (value)
+                {
+                    ThemeMode = "Automatic";
+                }
+            }
+        }
+
+        public bool IsDarkThemeSelected
+        {
+            get => _themeMode.Equals("Dark", StringComparison.OrdinalIgnoreCase);
+            set
+            {
+                if (value)
+                {
+                    ThemeMode = "Dark";
+                }
+            }
+        }
+
+        public bool IsAmoledThemeSelected
+        {
+            get => _themeMode.Equals("Amoled", StringComparison.OrdinalIgnoreCase);
+            set
+            {
+                if (value)
+                {
+                    ThemeMode = "Amoled";
+                }
+            }
+        }
+
+        public bool IsLightThemeSelected
+        {
+            get => _themeMode.Equals("Light", StringComparison.OrdinalIgnoreCase);
+            set
+            {
+                if (value)
+                {
+                    ThemeMode = "Light";
+                }
+            }
+        }
 
         public bool EmbedOriginalRaw
         {
@@ -632,7 +681,6 @@ namespace Fujify.ViewModels
         {
             var s = _settingsService.Settings;
             s.ThemeMode = _themeMode;
-            s.IsDarkTheme = _themeMode != "Light";
             s.EmbedOriginalRaw = _embedOriginalRaw;
             s.SkipThumbnailGeneration = _skipThumbnailGeneration;
             s.LosslessCompression = _licenseService.IsPro && _losslessCompression;

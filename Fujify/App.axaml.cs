@@ -52,10 +52,7 @@ public partial class App : Application
         {
             scb.Color = color;
         }
-        else
-        {
-            Current.Resources[key] = new Avalonia.Media.SolidColorBrush(color);
-        }
+        Current.Resources[key] = new Avalonia.Media.SolidColorBrush(color);
     }
 
     public static bool SupportsMica => System.OperatingSystem.IsWindows() && System.Environment.OSVersion.Version.Build >= 22000;
@@ -63,6 +60,12 @@ public partial class App : Application
     public static void ApplyTheme(string themeMode)
     {
         if (Current == null) return;
+
+        if (!Avalonia.Threading.Dispatcher.UIThread.CheckAccess())
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => ApplyTheme(themeMode));
+            return;
+        }
 
         bool isAuto = themeMode.Equals("Automatic", System.StringComparison.OrdinalIgnoreCase) ||
                       themeMode.Equals("Auto", System.StringComparison.OrdinalIgnoreCase);

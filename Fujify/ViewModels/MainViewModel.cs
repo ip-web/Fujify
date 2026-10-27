@@ -84,8 +84,8 @@ namespace Fujify.ViewModels
             _metadataService = metadataService ?? new MetadataService();
             _thumbnailService = thumbnailService ?? new ThumbnailService();
             _settingsService = settingsService ?? new SettingsService();
-            _dialogService = dialogService ?? new DialogService(_settingsService);
             _licenseService = licenseService ?? new LicenseService(_settingsService);
+            _dialogService = dialogService ?? new DialogService(_settingsService, _licenseService);
             _updateService = updateService ?? new UpdateService(_settingsService);
             _adService = adService ?? new AdService(_licenseService);
             Instance = this;
@@ -629,7 +629,7 @@ namespace Fujify.ViewModels
         {
             Dispatcher.UIThread.Post(() =>
             {
-                Preferences = new PreferencesViewModel(_settingsService)
+                Preferences = new PreferencesViewModel(_settingsService, _licenseService)
                 {
                     CloseAction = ok =>
                     {
@@ -683,6 +683,10 @@ namespace Fujify.ViewModels
 
         public void CloseModal()
         {
+            if (ModalType == "Preferences")
+            {
+                App.ApplyTheme(_settingsService.Settings.ThemeMode);
+            }
             IsModalOpen = false;
             ModalType = "None";
             _conflictTcs?.TrySetResult(new FileConflictResolution(ConflictChoice.Skip, false));
