@@ -116,8 +116,26 @@ pub unsafe extern "C" fn dnglab_convert_file(
         match convert_raw_file(&in_path, &mut writer, &params) {
             Ok(_) => 0,
             Err(e) => {
-                drop(writer);
-                let _ = std::fs::remove_file(&out_path);
+                let err_str = e.to_string();
+                if err_str.contains("Unknown camera") && err_str.contains("PENTAX Corporation") {
+                    drop(writer);
+                    let _ = std::fs::remove_file(&out_path);
+                    if let Some(temp_path) = try_create_temp_with_normalized_make(&in_path) {
+                        let retry_res = (|| -> Result<(), String> {
+                            let file = File::create(&out_path).map_err(|e| e.to_string())?;
+                            let mut retry_writer = BufWriter::new(file);
+                            convert_raw_file(&temp_path, &mut retry_writer, &params).map_err(|e| e.to_string())?;
+                            Ok(())
+                        })();
+                        let _ = std::fs::remove_file(&temp_path);
+                        if retry_res.is_ok() {
+                            return 0;
+                        }
+                    }
+                } else {
+                    drop(writer);
+                    let _ = std::fs::remove_file(&out_path);
+                }
                 set_error(error_msg_buf, error_msg_buf_len, &format!("Raw decode failed: {e}"));
                 -7
             }
@@ -157,4 +175,22 @@ fn set_error(buf: *mut c_char, len: usize, msg: &str) {
         std::ptr::copy_nonoverlapping(bytes.as_ptr() as *const c_char, buf, copy_len);
         *buf.add(copy_len) = 0;
     }
+}
+
+fn try_create_temp_with_normalized_make(path: &std::path::Path) -> Option<PathBuf> {
+    let mut data = std::fs::read(path).ok()?;
+    let target = b"PENTAX Corporation";
+    let pos = data.windows(target.len()).position(|w| w == target)?;
+    let replacement = b"PENTAX\0           ";
+    data[pos..pos + target.len()].copy_from_slice(replacement);
+
+    let temp_dir = std::env::temp_dir();
+    let temp_name = format!(
+        "fujify_fix_{}_{}.pef",
+        std::process::id(),
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).ok()?.as_nanos()
+    );
+    let temp_path = temp_dir.join(temp_name);
+    std::fs::write(&temp_path, &data).ok()?;
+    Some(temp_path)
 }

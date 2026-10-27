@@ -246,11 +246,88 @@ namespace Fujify.Services
                 {
                     errorMsg = $"Native conversion failed with exit code {result}";
                 }
+
+                // Upstream rawler/dnglab has mismatched Make strings for certain cameras
+                // (e.g. Pentax K200D and K20D where camera writes 'PENTAX Corporation' but rawler's toml defines 'PENTAX').
+                if (errorMsg.Contains("Unknown camera", StringComparison.OrdinalIgnoreCase) &&
+                    errorMsg.Contains("PENTAX Corporation", StringComparison.OrdinalIgnoreCase))
+                {
+                    string? tempWithFixedMake = TryCreateTempWithNormalizedMake(inputPath);
+                    if (tempWithFixedMake != null)
+                    {
+                        try
+                        {
+                            byte[] retryErrorBuf = new byte[2048];
+                            int retryResult = dnglab_convert_file(tempWithFixedMake, outputPath, embedRaw, retryErrorBuf, (UIntPtr)retryErrorBuf.Length);
+                            if (retryResult == 0)
+                            {
+                                return (true, null);
+                            }
+                        }
+                        finally
+                        {
+                            try { if (File.Exists(tempWithFixedMake)) File.Delete(tempWithFixedMake); } catch { }
+                        }
+                    }
+                }
+
                 return (false, errorMsg);
             }
             catch (Exception ex)
             {
                 return (false, $"Native call exception: {ex.Message}");
+            }
+        }
+
+        private static string? TryCreateTempWithNormalizedMake(string inputPath)
+        {
+            try
+            {
+                if (!File.Exists(inputPath)) return null;
+
+                byte[] header = new byte[Math.Min(65536, new FileInfo(inputPath).Length)];
+                using (var fs = new FileStream(inputPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    fs.ReadExactly(header, 0, header.Length);
+                }
+
+                byte[] target = Encoding.ASCII.GetBytes("PENTAX Corporation");
+                int targetIndex = -1;
+                for (int i = 0; i <= header.Length - target.Length; i++)
+                {
+                    bool match = true;
+                    for (int j = 0; j < target.Length; j++)
+                    {
+                        if (header[i + j] != target[j])
+                        {
+                            match = false;
+                            break;
+                        }
+                    }
+                    if (match)
+                    {
+                        targetIndex = i;
+                        break;
+                    }
+                }
+
+                if (targetIndex < 0) return null;
+
+                string tempPath = Path.Combine(Path.GetTempPath(), $"fujify_make_fix_{Guid.NewGuid():N}{Path.GetExtension(inputPath)}");
+                File.Copy(inputPath, tempPath, true);
+
+                using (var fs = new FileStream(tempPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+                {
+                    fs.Seek(targetIndex, SeekOrigin.Begin);
+                    byte[] replacement = Encoding.ASCII.GetBytes("PENTAX\0           ");
+                    fs.Write(replacement, 0, replacement.Length);
+                }
+
+                return tempPath;
+            }
+            catch
+            {
+                return null;
             }
         }
 
