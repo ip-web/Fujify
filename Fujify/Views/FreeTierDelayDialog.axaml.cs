@@ -97,7 +97,40 @@ namespace Fujify.Views
 
         private void Upgrade_Click(object? sender, RoutedEventArgs e)
         {
-            CrossPlatformLauncher.OpenUrl("https://fujifier.net/pro");
+            CrossPlatformLauncher.OpenUrl("https://fujifier.cc/pro");
+        }
+
+        private async void GoogleSignIn_Click(object? sender, RoutedEventArgs e)
+        {
+            CountdownStatusText.Text = "Signing in with Google...";
+            var result = await _licenseService.LoginWithGoogleOAuthAsync(msg =>
+            {
+                CountdownStatusText.Text = msg;
+            });
+
+            if (result.Success && _licenseService.IsPro)
+            {
+                _isUnlocked = true;
+                _timer.Stop();
+                TitleText.Text = "✔ Pro Unlocked!";
+                MessageText.Text = "Welcome to Fujifier Pro! All tier limits, countdown delays, and advertisements have been removed permanently.";
+                ContinueButton.IsEnabled = true;
+                ContinueButton.Content = "Start Using Fujifier Pro";
+                ContinueButton.Classes.Add("accent");
+                CountdownProgressBar.Value = 15;
+                CountdownStatusText.Text = "Pro license active.";
+                LicenseKeySection.IsVisible = false;
+                ToggleKeyButton.IsVisible = false;
+                GoogleSignInButton.IsVisible = false;
+            }
+            else if (result.Success)
+            {
+                CountdownStatusText.Text = result.ErrorMessage ?? "Signed in. No active Pro license found on fujifier.cc.";
+            }
+            else
+            {
+                CountdownStatusText.Text = result.ErrorMessage ?? "Google Sign-In failed.";
+            }
         }
 
         private void ToggleLicenseKey_Click(object? sender, RoutedEventArgs e)

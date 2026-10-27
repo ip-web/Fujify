@@ -18,6 +18,7 @@
  */
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Fujify.Services
@@ -84,6 +85,10 @@ namespace Fujify.Services
         void Initialize();
         Task<LicenseActivationResult> ActivateLicenseKeyAsync(string licenseKey);
         Task<LicenseActivationResult> LoginWithAccountAsync(string email, string password);
+        Task<LicenseActivationResult> LoginWithGoogleOAuthAsync(Action<string>? statusCallback = null, CancellationToken cancellationToken = default);
+        Task<LicenseActivationResult> LoginWithGoogleIdTokenAsync(string googleIdToken);
+        Task<LicenseActivationResult> RetrieveLicenseFromAccountAsync();
+        Task<LicenseActivationResult> CompleteOAuthCallbackAsync(string code, string? codeVerifier = null, string? state = null);
         Task<bool> DeactivateLicenseAsync();
         Task<bool> LogoutAccountAsync();
         Task<LicenseActivationResult> VerifyCurrentLicenseAsync(bool forceNetwork = false);

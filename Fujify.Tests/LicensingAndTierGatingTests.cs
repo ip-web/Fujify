@@ -320,5 +320,228 @@ namespace Fujify.Tests
             Assert.Equal("photographer@ipweb.dev", service.AccountEmail);
             Assert.Equal(2, service.UsedActivations);
         }
+
+        [Fact]
+        public async Task RetrieveLicenseFromAccountAsync_WhenLoggedInWithActiveLicense_ActivatesPro()
+        {
+            var settings = new MockSettingsService();
+            settings.Settings.AccessToken = "valid_jwt_access_token";
+            settings.Settings.AccountEmail = "pro-user@fujifier.cc";
+
+            var handler = new MockHttpMessageHandler((req) =>
+            {
+                if (req.RequestUri!.AbsolutePath.EndsWith("/auth/me"))
+                {
+                    Assert.Equal("Bearer", req.Headers.Authorization?.Scheme);
+                    Assert.Equal("valid_jwt_access_token", req.Headers.Authorization?.Parameter);
+
+                    var meResponse = new AuthMeResponse
+                    {
+                        Success = true,
+                        User = new AuthUserDto
+                        {
+                            Id = 42,
+                            Email = "pro-user@fujifier.cc",
+                            DisplayName = "Pro Photographer"
+                        },
+                        Licenses = new List<UserLicenseDto>
+                        {
+                            new()
+                            {
+                                Id = 101,
+                                LicenseKey = "FUJI-RETRIEVE-KEY-1234",
+                                Status = "active",
+                                PlanType = "pro_lifetime",
+                                MaxActivations = 3,
+                                UsedActivations = 1
+                            }
+                        }
+                    };
+
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(meResponse))
+                    };
+                }
+
+                if (req.RequestUri!.AbsolutePath.EndsWith("/license/activate"))
+                {
+                    var actResponse = new LicenseActivationResponse
+                    {
+                        Success = true,
+                        LicenseKey = "FUJI-RETRIEVE-KEY-1234",
+                        Status = "active",
+                        UsedActivations = 2,
+                        MaxActivations = 3
+                    };
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(actResponse))
+                    };
+                }
+
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            });
+
+            var httpClient = new HttpClient(handler);
+            var service = new LicenseService(settings, httpClient);
+
+            var result = await service.RetrieveLicenseFromAccountAsync();
+
+            Assert.True(result.Success, result.ErrorMessage);
+            Assert.True(service.IsPro);
+            Assert.Equal("pro-user@fujifier.cc", service.AccountEmail);
+            Assert.Equal("Pro Photographer", settings.Settings.AccountDisplayName);
+            Assert.Equal("FUJI-RETRIEVE-KEY-1234", service.CurrentStatus.LicenseKey);
+        }
+
+        [Fact]
+        public async Task LoginWithGoogleIdTokenAsync_WhenTokenIsValid_AuthenticatesAndActivatesPro()
+        {
+            var settings = new MockSettingsService();
+
+            var handler = new MockHttpMessageHandler((req) =>
+            {
+                if (req.RequestUri!.AbsolutePath.EndsWith("/auth/login"))
+                {
+                    var loginResponse = new AuthLoginResponse
+                    {
+                        Success = true,
+                        AccessToken = "google_jwt_access_token",
+                        RefreshToken = "google_jwt_refresh_token",
+                        User = new AuthUserDto
+                        {
+                            Id = 88,
+                            Email = "google-photographer@gmail.com",
+                            DisplayName = "Google Artist"
+                        },
+                        Licenses = new List<UserLicenseDto>
+                        {
+                            new()
+                            {
+                                Id = 202,
+                                LicenseKey = "FUJI-GOOGLE-KEY-5678",
+                                Status = "active",
+                                PlanType = "pro_lifetime"
+                            }
+                        }
+                    };
+
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(loginResponse))
+                    };
+                }
+
+                if (req.RequestUri!.AbsolutePath.EndsWith("/license/activate"))
+                {
+                    var actResponse = new LicenseActivationResponse
+                    {
+                        Success = true,
+                        LicenseKey = "FUJI-GOOGLE-KEY-5678",
+                        Status = "active",
+                        UsedActivations = 1,
+                        MaxActivations = 3
+                    };
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(actResponse))
+                    };
+                }
+
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            });
+
+            var httpClient = new HttpClient(handler);
+            var service = new LicenseService(settings, httpClient);
+
+            var result = await service.LoginWithGoogleIdTokenAsync("mock_google_id_token_xyz");
+
+            Assert.True(result.Success, result.ErrorMessage);
+            Assert.True(service.IsPro);
+            Assert.True(service.IsAccountLoggedIn);
+            Assert.Equal("google-photographer@gmail.com", service.AccountEmail);
+            Assert.Equal("Google Artist", settings.Settings.AccountDisplayName);
+            Assert.Equal("FUJI-GOOGLE-KEY-5678", service.CurrentStatus.LicenseKey);
+        }
+
+        [Fact]
+        public async Task CompleteOAuthCallbackAsync_WhenCodeExchanged_AuthenticatesAndActivatesPro()
+        {
+            var settings = new MockSettingsService();
+
+            var handler = new MockHttpMessageHandler((req) =>
+            {
+                if (req.RequestUri!.AbsolutePath.EndsWith("/auth/exchange-token"))
+                {
+                    var exchangeResponse = new AuthLoginResponse
+                    {
+                        Success = true,
+                        AccessToken = "oauth_exchange_access_token",
+                        RefreshToken = "oauth_exchange_refresh_token",
+                        User = new AuthUserDto
+                        {
+                            Id = 99,
+                            Email = "oauth-user@fujifier.cc",
+                            DisplayName = "OAuth User"
+                        },
+                        Licenses = new List<UserLicenseDto>
+                        {
+                            new()
+                            {
+                                Id = 303,
+                                LicenseKey = "FUJI-OAUTH-KEY-9999",
+                                Status = "active"
+                            }
+                        }
+                    };
+
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(exchangeResponse))
+                    };
+                }
+
+                if (req.RequestUri!.AbsolutePath.EndsWith("/license/activate"))
+                {
+                    var actResponse = new LicenseActivationResponse
+                    {
+                        Success = true,
+                        LicenseKey = "FUJI-OAUTH-KEY-9999",
+                        Status = "active",
+                        UsedActivations = 1,
+                        MaxActivations = 3
+                    };
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(actResponse))
+                    };
+                }
+
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            });
+
+            var httpClient = new HttpClient(handler);
+            var service = new LicenseService(settings, httpClient);
+
+            var result = await service.CompleteOAuthCallbackAsync("fuji_auth_test_code_123", "test_code_verifier_abc");
+
+            Assert.True(result.Success, result.ErrorMessage);
+            Assert.True(service.IsPro);
+            Assert.True(service.IsAccountLoggedIn);
+            Assert.Equal("oauth-user@fujifier.cc", service.AccountEmail);
+            Assert.Equal("FUJI-OAUTH-KEY-9999", service.CurrentStatus.LicenseKey);
+        }
+
+        [Fact]
+        public void LicenseService_DefaultsToFujifierCc_AndMigratesOldDomain()
+        {
+            var settings = new MockSettingsService();
+            settings.Settings.LicenseApiBaseUrl = "https://fujifier.net/wp-json/fujifier/v1";
+
+            var service = new LicenseService(settings);
+
+            Assert.Equal("https://fujifier.cc", service.GetWebsiteBaseUrl());
+        }
     }
 }

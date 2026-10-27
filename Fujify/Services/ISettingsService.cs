@@ -51,7 +51,7 @@ namespace Fujify.Services
         public string? AccountDisplayName { get; set; }
         public int MaxActivations { get; set; } = 3;
         public int UsedActivations { get; set; } = 0;
-        public string LicenseApiBaseUrl { get; set; } = "https://fujifier.net/wp-json/fujifier/v1";
+        public string LicenseApiBaseUrl { get; set; } = "https://fujifier.cc/wp-json/fujifier/v1";
         public bool CheckForUpdatesOnStartup { get; set; } = true;
         public string? SkippedVersion { get; set; }
         public System.DateTime? LastUpdateCheck { get; set; }

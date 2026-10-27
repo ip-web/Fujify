@@ -57,6 +57,8 @@ namespace Fujify.ViewModels
         private string _accountEmailInput = string.Empty;
         private string _accountPasswordInput = string.Empty;
         private bool _isAccountTabActive = false;
+        private bool _isGoogleLoggingIn = false;
+        private bool _isRetrievingLicense = false;
         private string _licenseMessageText = string.Empty;
         private string _licenseMessageColor = "#A0A0AC";
         private bool _hasLicenseMessage = false;
@@ -111,6 +113,20 @@ namespace Fujify.ViewModels
         public bool IsAccountLoggedIn => _licenseService.IsAccountLoggedIn;
 
         public string AccountDisplayText => _licenseService.AccountEmail ?? "Not connected";
+
+        public string? AccountDisplayName => _settingsService.Settings.AccountDisplayName;
+
+        public bool IsGoogleLoggingIn
+        {
+            get => _isGoogleLoggingIn;
+            set => SetProperty(ref _isGoogleLoggingIn, value);
+        }
+
+        public bool IsRetrievingLicense
+        {
+            get => _isRetrievingLicense;
+            set => SetProperty(ref _isRetrievingLicense, value);
+        }
 
         public string SlotInfoText => _licenseService.SlotInfoText;
 
@@ -295,6 +311,8 @@ namespace Fujify.ViewModels
         public ICommand CheckForUpdatesCommand { get; }
         public ICommand AccountLoginCommand { get; }
         public ICommand LogoutAccountCommand { get; }
+        public ICommand LoginWithGoogleCommand { get; }
+        public ICommand RetrieveLicenseCommand { get; }
         public ICommand SetKeyTabCommand { get; }
         public ICommand SetAccountTabCommand { get; }
 
@@ -317,6 +335,7 @@ namespace Fujify.ViewModels
                 OnPropertyChanged(nameof(IsWindowsContextMenuEnabled));
                 OnPropertyChanged(nameof(IsAccountLoggedIn));
                 OnPropertyChanged(nameof(AccountDisplayText));
+                OnPropertyChanged(nameof(AccountDisplayName));
                 OnPropertyChanged(nameof(SlotInfoText));
             };
 
@@ -346,11 +365,83 @@ namespace Fujify.ViewModels
 
             UpgradeToProCommand = new RelayCommand(() =>
             {
-                CrossPlatformLauncher.OpenUrl("https://fujifier.net/pro");
+                CrossPlatformLauncher.OpenUrl("https://fujifier.cc/pro");
             });
 
             SetKeyTabCommand = new RelayCommand(() => IsAccountTabActive = false);
             SetAccountTabCommand = new RelayCommand(() => IsAccountTabActive = true);
+
+            LoginWithGoogleCommand = new AsyncRelayCommand(async () =>
+            {
+                if (IsGoogleLoggingIn) return;
+                IsGoogleLoggingIn = true;
+                LicenseMessageText = "Opening browser for Google Sign-In...";
+                LicenseMessageColor = "#A0A0AC";
+                HasLicenseMessage = true;
+
+                try
+                {
+                    var res = await _licenseService.LoginWithGoogleOAuthAsync(msg =>
+                    {
+                        LicenseMessageText = msg;
+                        LicenseMessageColor = "#A0A0AC";
+                        HasLicenseMessage = true;
+                    });
+
+                    if (res.Success)
+                    {
+                        LicenseMessageText = res.ErrorMessage ?? "✔ Signed in with Google and license synced!";
+                        LicenseMessageColor = "#01D701";
+                        HasLicenseMessage = true;
+                    }
+                    else
+                    {
+                        LicenseMessageText = res.ErrorMessage ?? "Google Sign-In failed.";
+                        LicenseMessageColor = "#E74C3C";
+                        HasLicenseMessage = true;
+                    }
+                }
+                finally
+                {
+                    IsGoogleLoggingIn = false;
+                }
+            });
+
+            RetrieveLicenseCommand = new AsyncRelayCommand(async () =>
+            {
+                if (IsRetrievingLicense) return;
+                IsRetrievingLicense = true;
+                LicenseMessageText = "Retrieving license from fujifier.cc...";
+                LicenseMessageColor = "#A0A0AC";
+                HasLicenseMessage = true;
+
+                try
+                {
+                    var res = await _licenseService.RetrieveLicenseFromAccountAsync();
+                    if (res.Success && _licenseService.IsPro)
+                    {
+                        LicenseMessageText = "✔ Pro license retrieved and activated!";
+                        LicenseMessageColor = "#01D701";
+                        HasLicenseMessage = true;
+                    }
+                    else if (res.Success)
+                    {
+                        LicenseMessageText = res.ErrorMessage ?? "Checked account. No active Pro license found on fujifier.cc.";
+                        LicenseMessageColor = "#F39C12";
+                        HasLicenseMessage = true;
+                    }
+                    else
+                    {
+                        LicenseMessageText = res.ErrorMessage ?? "Failed to retrieve license.";
+                        LicenseMessageColor = "#E74C3C";
+                        HasLicenseMessage = true;
+                    }
+                }
+                finally
+                {
+                    IsRetrievingLicense = false;
+                }
+            });
 
             AccountLoginCommand = new AsyncRelayCommand(async () =>
             {
@@ -362,7 +453,7 @@ namespace Fujify.ViewModels
                     return;
                 }
 
-                LicenseMessageText = "Signing in to fujifier.net...";
+                LicenseMessageText = "Signing in to fujifier.cc...";
                 LicenseMessageColor = "#A0A0AC";
                 HasLicenseMessage = true;
 
@@ -427,7 +518,7 @@ namespace Fujify.ViewModels
                 HasLicenseMessage = true;
 
                 await _licenseService.DeactivateLicenseAsync();
-                LicenseMessageText = "License deactivated. Device slot freed on fujifier.net.";
+                LicenseMessageText = "License deactivated. Device slot freed on fujifier.cc.";
                 LicenseMessageColor = "#A0A0AC";
                 HasLicenseMessage = true;
             });

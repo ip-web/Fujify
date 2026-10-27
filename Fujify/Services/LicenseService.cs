@@ -19,8 +19,10 @@
 
 using System;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -58,6 +60,11 @@ namespace Fujify.Services
         public int UsedActivations => _currentStatus.UsedActivations;
         public int MaxActivations => _currentStatus.MaxActivations;
         public string SlotInfoText => $"{UsedActivations} of {MaxActivations} device slots active";
+
+        public static Action<string, string?>? OnOAuthCallbackReceived { get; set; }
+
+        private string? _pendingCodeVerifier;
+        private string? _pendingExpectedState;
 
         public event EventHandler<LicenseStatus>? LicenseChanged;
 
@@ -296,6 +303,358 @@ namespace Fujify.Services
                 Debug.WriteLine($"[LicenseService] Login network error: {ex.Message}");
                 return new LicenseActivationResult(false, $"Connection error: {ex.Message}");
             }
+        }
+
+        public async Task<LicenseActivationResult> LoginWithGoogleOAuthAsync(Action<string>? statusCallback = null, CancellationToken cancellationToken = default)
+        {
+            byte[] verifierBytes = new byte[32];
+            RandomNumberGenerator.Fill(verifierBytes);
+            string codeVerifier = Base64UrlEncode(verifierBytes);
+
+            using var sha256 = SHA256.Create();
+            string codeChallenge = Base64UrlEncode(sha256.ComputeHash(Encoding.ASCII.GetBytes(codeVerifier)));
+            string expectedState = Guid.NewGuid().ToString("N");
+
+            _pendingCodeVerifier = codeVerifier;
+            _pendingExpectedState = expectedState;
+
+            string redirectUri;
+            HttpListener? listener = null;
+
+            if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
+            {
+                redirectUri = "fujifier://oauth-callback";
+            }
+            else
+            {
+                try
+                {
+                    int port = GetAvailableLoopbackPort();
+                    redirectUri = $"http://127.0.0.1:{port}/callback";
+                    listener = new HttpListener();
+                    listener.Prefixes.Add($"http://127.0.0.1:{port}/callback/");
+                    listener.Start();
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"[LicenseService] Could not start HttpListener: {ex.Message}");
+                    listener = null;
+                    redirectUri = "fujifier://oauth-callback";
+                }
+            }
+
+            var tcs = new TaskCompletionSource<(string Code, string? State)>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            OnOAuthCallbackReceived = (code, state) => tcs.TrySetResult((code, state));
+
+            if (listener != null)
+            {
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        var ctx = await listener.GetContextAsync();
+                        string? code = ctx.Request.QueryString["code"];
+                        string? state = ctx.Request.QueryString["state"];
+
+                        string responseHtml = @"<!DOCTYPE html><html><head><meta charset='utf-8'><title>Fujifier - Authorized</title><style>body{background:#09090B;color:#F4F4F6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}.card{background:#121216;border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:40px;max-width:420px;width:90%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,0.6);}.badge{display:inline-block;background:rgba(0,154,102,0.15);color:#00C781;border:1px solid rgba(0,154,102,0.3);border-radius:999px;padding:6px 16px;font-weight:600;font-size:13px;margin-bottom:16px;}h2{margin:0 0 10px;font-size:22px;}p{color:#8E8E93;font-size:14px;line-height:1.5;margin:0;}</style></head><body><div class='card'><div class='badge'>✔ Authorized</div><h2>Welcome to Fujifier</h2><p>You have signed in to Fujifier.<br>You can now close this tab and return to the application.</p></div></body></html>";
+                        byte[] buffer = Encoding.UTF8.GetBytes(responseHtml);
+                        ctx.Response.ContentType = "text/html; charset=utf-8";
+                        ctx.Response.ContentLength64 = buffer.Length;
+                        await ctx.Response.OutputStream.WriteAsync(buffer, 0, buffer.Length);
+                        ctx.Response.OutputStream.Close();
+
+                        tcs.TrySetResult((code ?? string.Empty, state));
+                    }
+                    catch { }
+                });
+            }
+
+            try
+            {
+                string authUrl = $"{GetWebsiteBaseUrl()}/auth/app-handoff?redirect_uri={Uri.EscapeDataString(redirectUri)}&code_challenge={codeChallenge}&state={expectedState}";
+                statusCallback?.Invoke("Opening browser for authentication...");
+                CrossPlatformLauncher.OpenUrl(authUrl);
+
+                using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+                using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+                using (linkedCts.Token.Register(() => tcs.TrySetCanceled()))
+                {
+                    var (code, state) = await tcs.Task;
+
+                    if (string.IsNullOrWhiteSpace(code))
+                    {
+                        return new LicenseActivationResult(false, "Authorization cancelled or no code received.");
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(state) && !string.Equals(state, expectedState, StringComparison.Ordinal))
+                    {
+                        return new LicenseActivationResult(false, "Security state mismatch. Authorization rejected.");
+                    }
+
+                    statusCallback?.Invoke("Exchanging authorization code...");
+                    return await CompleteOAuthCallbackAsync(code, codeVerifier, state);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                return new LicenseActivationResult(false, "Google Sign-In timed out or was cancelled.");
+            }
+            finally
+            {
+                OnOAuthCallbackReceived = null;
+                try
+                {
+                    listener?.Stop();
+                    listener?.Close();
+                }
+                catch { }
+            }
+        }
+
+        public async Task<LicenseActivationResult> CompleteOAuthCallbackAsync(string code, string? codeVerifier = null, string? state = null)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                return new LicenseActivationResult(false, "Authorization code is required.");
+            }
+
+            string verifier = codeVerifier ?? _pendingCodeVerifier ?? string.Empty;
+
+            try
+            {
+                var exchangePayload = new PkceExchangeRequest
+                {
+                    Code = code.Trim(),
+                    CodeVerifier = verifier
+                };
+
+                string url = $"{GetApiBaseUrl()}/auth/exchange-token";
+                using var request = new HttpRequestMessage(HttpMethod.Post, url);
+                request.Content = new StringContent(JsonSerializer.Serialize(exchangePayload), Encoding.UTF8, "application/json");
+
+                using var response = await _httpClient.SendAsync(request);
+                string responseJson = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorMsg = ParseApiErrorMessage(responseJson) ?? $"Token exchange failed (HTTP {(int)response.StatusCode}).";
+                    return new LicenseActivationResult(false, errorMsg);
+                }
+
+                var authRes = JsonSerializer.Deserialize<AuthLoginResponse>(responseJson);
+                if (authRes == null || !authRes.Success)
+                {
+                    return new LicenseActivationResult(false, authRes?.Message ?? "Authorization exchange failed.");
+                }
+
+                // Store account tokens and user details
+                _settingsService.Settings.AccessToken = authRes.AccessToken;
+                _settingsService.Settings.RefreshToken = authRes.RefreshToken;
+                _settingsService.Settings.AccountEmail = authRes.User?.Email;
+                _settingsService.Settings.AccountDisplayName = authRes.User?.DisplayName;
+                _settingsService.Settings.LicenseeEmail = authRes.User?.Email;
+                _settingsService.Save();
+
+                // Check for active license
+                UserLicenseDto? activeLicense = null;
+                if (authRes.Licenses != null && authRes.Licenses.Count > 0)
+                {
+                    activeLicense = authRes.Licenses.Find(l => string.Equals(l.Status, "active", StringComparison.OrdinalIgnoreCase))
+                                 ?? authRes.Licenses[0];
+                }
+
+                if (activeLicense != null && !string.IsNullOrWhiteSpace(activeLicense.LicenseKey))
+                {
+                    return await ActivateLicenseKeyAsync(activeLicense.LicenseKey);
+                }
+
+                SetFreeState();
+                LicenseChanged?.Invoke(this, _currentStatus);
+                return new LicenseActivationResult(true, $"Signed in as {authRes.User?.Email}. No active Pro license found on fujifier.cc.", _currentStatus);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[LicenseService] Token exchange error: {ex.Message}");
+                return new LicenseActivationResult(false, $"Connection error during authorization: {ex.Message}");
+            }
+        }
+
+        public async Task<LicenseActivationResult> LoginWithGoogleIdTokenAsync(string googleIdToken)
+        {
+            if (string.IsNullOrWhiteSpace(googleIdToken))
+            {
+                return new LicenseActivationResult(false, "Google ID token is required.");
+            }
+
+            try
+            {
+                var payload = new AuthLoginRequest
+                {
+                    GoogleIdToken = googleIdToken.Trim()
+                };
+
+                string url = $"{GetApiBaseUrl()}/auth/login";
+                using var request = new HttpRequestMessage(HttpMethod.Post, url);
+                request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+                using var response = await _httpClient.SendAsync(request);
+                string responseJson = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorMsg = ParseApiErrorMessage(responseJson) ?? "Google authentication failed.";
+                    return new LicenseActivationResult(false, errorMsg);
+                }
+
+                var loginRes = JsonSerializer.Deserialize<AuthLoginResponse>(responseJson);
+                if (loginRes == null || !loginRes.Success)
+                {
+                    return new LicenseActivationResult(false, loginRes?.Message ?? "Google login failed.");
+                }
+
+                _settingsService.Settings.AccessToken = loginRes.AccessToken;
+                _settingsService.Settings.RefreshToken = loginRes.RefreshToken;
+                _settingsService.Settings.AccountEmail = loginRes.User?.Email;
+                _settingsService.Settings.AccountDisplayName = loginRes.User?.DisplayName;
+                _settingsService.Settings.LicenseeEmail = loginRes.User?.Email;
+                _settingsService.Save();
+
+                UserLicenseDto? activeLicense = null;
+                if (loginRes.Licenses != null && loginRes.Licenses.Count > 0)
+                {
+                    activeLicense = loginRes.Licenses.Find(l => string.Equals(l.Status, "active", StringComparison.OrdinalIgnoreCase))
+                                 ?? loginRes.Licenses[0];
+                }
+
+                if (activeLicense != null && !string.IsNullOrWhiteSpace(activeLicense.LicenseKey))
+                {
+                    return await ActivateLicenseKeyAsync(activeLicense.LicenseKey);
+                }
+
+                SetFreeState();
+                LicenseChanged?.Invoke(this, _currentStatus);
+                return new LicenseActivationResult(true, $"Signed in with Google as {loginRes.User?.Email}. No active Pro license found on fujifier.cc.", _currentStatus);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[LicenseService] Google ID token login error: {ex.Message}");
+                return new LicenseActivationResult(false, $"Connection error: {ex.Message}");
+            }
+        }
+
+        public async Task<LicenseActivationResult> RetrieveLicenseFromAccountAsync()
+        {
+            if (string.IsNullOrWhiteSpace(_settingsService.Settings.AccessToken))
+            {
+                return new LicenseActivationResult(false, "You are not signed in to a Fujifier account.");
+            }
+
+            try
+            {
+                string url = $"{GetApiBaseUrl()}/auth/me";
+                using var request = new HttpRequestMessage(HttpMethod.Get, url);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _settingsService.Settings.AccessToken);
+
+                using var response = await _httpClient.SendAsync(request);
+                string responseJson = await response.Content.ReadAsStringAsync();
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    bool refreshed = await TryRefreshTokenAsync();
+                    if (refreshed)
+                    {
+                        return await RetrieveLicenseFromAccountAsync();
+                    }
+                    return new LicenseActivationResult(false, "Session expired. Please sign in again.");
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorMsg = ParseApiErrorMessage(responseJson) ?? $"Failed to retrieve account details (HTTP {(int)response.StatusCode}).";
+                    return new LicenseActivationResult(false, errorMsg);
+                }
+
+                var meRes = JsonSerializer.Deserialize<AuthMeResponse>(responseJson);
+                if (meRes == null || !meRes.Success)
+                {
+                    return new LicenseActivationResult(false, meRes?.Message ?? "Could not read account details.");
+                }
+
+                if (meRes.User != null)
+                {
+                    _settingsService.Settings.AccountEmail = meRes.User.Email;
+                    _settingsService.Settings.AccountDisplayName = meRes.User.DisplayName;
+                    _settingsService.Settings.LicenseeEmail = meRes.User.Email;
+                    _settingsService.Save();
+                }
+
+                UserLicenseDto? activeLicense = null;
+                if (meRes.Licenses != null && meRes.Licenses.Count > 0)
+                {
+                    activeLicense = meRes.Licenses.Find(l => string.Equals(l.Status, "active", StringComparison.OrdinalIgnoreCase))
+                                 ?? meRes.Licenses[0];
+                }
+
+                if (activeLicense != null && !string.IsNullOrWhiteSpace(activeLicense.LicenseKey))
+                {
+                    return await ActivateLicenseKeyAsync(activeLicense.LicenseKey);
+                }
+
+                SetFreeState();
+                LicenseChanged?.Invoke(this, _currentStatus);
+                return new LicenseActivationResult(true, $"Signed in as {_settingsService.Settings.AccountEmail}. No active Pro license found on fujifier.cc.", _currentStatus);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[LicenseService] Retrieve license network error: {ex.Message}");
+                return new LicenseActivationResult(false, $"Connection error: {ex.Message}");
+            }
+        }
+
+        private async Task<bool> TryRefreshTokenAsync()
+        {
+            string? refreshToken = _settingsService.Settings.RefreshToken;
+            if (string.IsNullOrWhiteSpace(refreshToken)) return false;
+
+            try
+            {
+                string url = $"{GetApiBaseUrl()}/auth/refresh";
+                using var request = new HttpRequestMessage(HttpMethod.Post, url);
+                var payload = new { refresh_token = refreshToken };
+                request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+                using var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode) return false;
+
+                string json = await response.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.TryGetProperty("access_token", out var tokenProp))
+                {
+                    _settingsService.Settings.AccessToken = tokenProp.GetString();
+                    _settingsService.Save();
+                    return true;
+                }
+            }
+            catch { }
+            return false;
+        }
+
+        private static string Base64UrlEncode(byte[] input)
+        {
+            return Convert.ToBase64String(input)
+                .TrimEnd('=')
+                .Replace('+', '-')
+                .Replace('/', '_');
+        }
+
+        private static int GetAvailableLoopbackPort()
+        {
+            var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            int port = ((IPEndPoint)listener.LocalEndpoint).Port;
+            listener.Stop();
+            return port;
         }
 
         public async Task<bool> DeactivateLicenseAsync()
@@ -564,12 +923,30 @@ namespace Fujify.Services
             _settingsService.Save();
         }
 
+        public string GetWebsiteBaseUrl()
+        {
+            string api = GetApiBaseUrl();
+            if (api.StartsWith("https://fujifier.cc", StringComparison.OrdinalIgnoreCase))
+            {
+                return "https://fujifier.cc";
+            }
+            try
+            {
+                var uri = new Uri(api);
+                return $"{uri.Scheme}://{uri.Authority}";
+            }
+            catch
+            {
+                return "https://fujifier.cc";
+            }
+        }
+
         private string GetApiBaseUrl()
         {
             string url = _settingsService.Settings.LicenseApiBaseUrl;
-            if (string.IsNullOrWhiteSpace(url))
+            if (string.IsNullOrWhiteSpace(url) || url.Contains("fujifier.net"))
             {
-                url = "https://fujifier.net/wp-json/fujifier/v1";
+                url = "https://fujifier.cc/wp-json/fujifier/v1";
             }
             return url.TrimEnd('/');
         }
@@ -596,7 +973,7 @@ namespace Fujify.Services
                     }
                     if (code == "license_inactive" || code == "license_expired")
                     {
-                        return "This license is inactive or expired. Please check your account on fujifier.net.";
+                        return "This license is inactive or expired. Please check your account on fujifier.cc.";
                     }
                 }
 

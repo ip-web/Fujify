@@ -187,30 +187,68 @@
                                     <Button Grid.Column="1" Content="Deactivate Device" Command="{Binding DeactivateLicenseCommand}" IsVisible="{Binding IsPro}" Height="32" Padding="12,0" CornerRadius="8" VerticalContentAlignment="Center"/>
                                 </Grid>
 
-                                <!-- Activation Options when in Free Tier -->
-                                <StackPanel Spacing="10" IsVisible="{Binding !IsPro}">
+                                <!-- Connected Account Section (Visible when user is signed in) -->
+                                <Border Background="{DynamicResource AppSurfaceSecondaryBrush}" CornerRadius="10" Padding="12" Margin="0,2,0,0" IsVisible="{Binding IsAccountLoggedIn}">
+                                    <Grid ColumnDefinitions="*,Auto,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                            <TextBlock Text="Fujifier Account" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource AppAccentBrush}"/>
+                                            <TextBlock Text="{Binding AccountDisplayText}" FontSize="12.5" FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="🔄 Retrieve License" Command="{Binding RetrieveLicenseCommand}" IsEnabled="{Binding !IsRetrievingLicense}" Height="30" Padding="10,0" CornerRadius="6" VerticalContentAlignment="Center" Margin="0,0,8,0" FontSize="11.5"/>
+                                        <Button Grid.Column="2" Content="Sign Out" Command="{Binding LogoutAccountCommand}" Height="30" Padding="10,0" CornerRadius="6" VerticalContentAlignment="Center" FontSize="11.5"/>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Activation Options when in Free Tier and not signed in -->
+                                <StackPanel Spacing="10" IsVisible="{Binding !IsAccountLoggedIn}">
                                     <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
                                     
-                                    <!-- Tabs for Activation Mode: Key vs Account -->
+                                    <!-- Tabs for Activation Mode: Account/Google vs Key -->
                                     <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <RadioButton Content="Sign In (Google / Account)" IsChecked="{Binding IsAccountTabActive, Mode=OneWay}" Command="{Binding SetAccountTabCommand}" GroupName="ActivationMode" FontSize="12"/>
                                         <RadioButton Content="Enter License Key" IsChecked="{Binding IsKeyTabActive, Mode=OneWay}" Command="{Binding SetKeyTabCommand}" GroupName="ActivationMode" FontSize="12"/>
-                                        <RadioButton Content="Sign In to Fujifier Account" IsChecked="{Binding IsAccountTabActive, Mode=OneWay}" Command="{Binding SetAccountTabCommand}" GroupName="ActivationMode" FontSize="12"/>
                                     </StackPanel>
 
-                                    <!-- Option A: Direct License Key Input -->
-                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsKeyTabActive}">
-                                        <TextBox Grid.Column="0" Text="{Binding LicenseKeyInput, Mode=TwoWay}" Watermark="Enter license key (FUJI-XXXX-XXXX-XXXX)" Height="32" CornerRadius="8" FontSize="12" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
-                                        <Button Grid.Column="1" Content="Activate Key" Command="{Binding ActivateLicenseCommand}" Classes="accent" Height="32" Padding="14,0" CornerRadius="8" VerticalContentAlignment="Center"/>
-                                    </Grid>
+                                    <!-- Option A: Google OAuth & Account Sign In -->
+                                    <StackPanel Spacing="10" IsVisible="{Binding IsAccountTabActive}">
+                                        <!-- Google Sign-In Button -->
+                                        <Button Command="{Binding LoginWithGoogleCommand}" IsEnabled="{Binding !IsGoogleLoggingIn}"
+                                                Height="36" CornerRadius="8" Padding="14,0" HorizontalAlignment="Stretch"
+                                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                Background="#1C1C22" BorderBrush="#383844" BorderThickness="1">
+                                            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                                <Viewbox Width="16" Height="16" VerticalAlignment="Center">
+                                                    <Canvas Width="24" Height="24">
+                                                        <Path Fill="#4285F4" Data="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.04h3.87c2.26-2.09 3.67-5.17 3.67-9.14z"/>
+                                                        <Path Fill="#34A853" Data="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.87-3.04c-1.08.72-2.45 1.16-4.06 1.16-3.13 0-5.78-2.11-6.73-4.96H1.25v3.13C3.25 21.31 7.35 24 12 24z"/>
+                                                        <Path Fill="#FBBC05" Data="M5.27 14.25c-.25-.72-.38-1.49-.38-2.25s.13-1.53.38-2.25V6.62H1.25C.45 8.24 0 10.06 0 12s.45 3.76 1.25 5.38l4.02-3.13z"/>
+                                                        <Path Fill="#EA4335" Data="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.25 2.69 1.25 6.62l4.02 3.13c.95-2.85 3.6-4.96 6.73-4.96z"/>
+                                                    </Canvas>
+                                                </Viewbox>
+                                                <TextBlock Text="Continue with Google" FontWeight="SemiBold" FontSize="12.5" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
 
-                                    <!-- Option B: Account Sign In -->
-                                    <StackPanel Spacing="8" IsVisible="{Binding IsAccountTabActive}">
+                                        <!-- Divider -->
+                                        <Grid ColumnDefinitions="*,Auto,*" Margin="0,2">
+                                            <Separator Grid.Column="0" Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="1" Text="or sign in with fujifier.cc account" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="8,0" VerticalAlignment="Center"/>
+                                            <Separator Grid.Column="2" Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}" VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <!-- Email and Password -->
                                         <Grid ColumnDefinitions="*,*" Margin="0,2,0,0">
                                             <TextBox Grid.Column="0" Text="{Binding AccountEmailInput, Mode=TwoWay}" Watermark="Account Email" Height="32" CornerRadius="8" FontSize="12" VerticalContentAlignment="Center" Margin="0,0,6,0"/>
                                             <TextBox Grid.Column="1" Text="{Binding AccountPasswordInput, Mode=TwoWay}" PasswordChar="●" Watermark="Account Password" Height="32" CornerRadius="8" FontSize="12" VerticalContentAlignment="Center" Margin="6,0,0,0"/>
                                         </Grid>
-                                        <Button Content="Sign In &amp; Activate License" Command="{Binding AccountLoginCommand}" Classes="accent" HorizontalAlignment="Right" Height="32" Padding="14,0" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                        <Button Content="Sign In &amp; Sync License" Command="{Binding AccountLoginCommand}" Classes="accent" HorizontalAlignment="Right" Height="32" Padding="14,0" CornerRadius="8" VerticalContentAlignment="Center"/>
                                     </StackPanel>
+
+                                    <!-- Option B: Direct License Key Input -->
+                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsKeyTabActive}">
+                                        <TextBox Grid.Column="0" Text="{Binding LicenseKeyInput, Mode=TwoWay}" Watermark="Enter license key (FUJI-XXXX-XXXX-XXXX)" Height="32" CornerRadius="8" FontSize="12" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                                        <Button Grid.Column="1" Content="Activate Key" Command="{Binding ActivateLicenseCommand}" Classes="accent" Height="32" Padding="14,0" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                    </Grid>
                                 </StackPanel>
 
                                 <!-- Live Status Feedback Message -->
