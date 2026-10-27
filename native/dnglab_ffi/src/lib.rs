@@ -5,9 +5,22 @@ use std::ffi::CStr;
 use std::fs::File;
 use std::io::BufWriter;
 use std::os::raw::c_char;
+use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::path::PathBuf;
+use std::sync::Once;
 use rawler::dng::convert::{ConvertParams, convert_raw_file};
 use rawler::decoders::supported_extensions;
+
+static INIT_HOOK: Once = Once::new();
+
+fn ensure_panic_hook_installed() {
+    INIT_HOOK.call_once(|| {
+        std::panic::set_hook(Box::new(|_info| {
+            // Suppress default multi-thread stderr dumping.
+            // The panic message is safely caught by catch_unwind and returned in error_msg_buf.
+        }));
+    });
+}
 
 /// Returns the library version string.
 #[unsafe(no_mangle)]
@@ -18,16 +31,21 @@ pub extern "C" fn dnglab_version() -> *const c_char {
 /// Checks if an extension (e.g. "raf", "arw", "cr2") is supported by the rawler engine.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn dnglab_is_extension_supported(ext_ptr: *const c_char) -> bool {
-    if ext_ptr.is_null() {
-        return false;
-    }
-    let ext_str = match unsafe { CStr::from_ptr(ext_ptr) }.to_str() {
-        Ok(s) => s.trim_start_matches('.').to_lowercase(),
-        Err(_) => return false,
-    };
+    ensure_panic_hook_installed();
+    let result = catch_unwind(AssertUnwindSafe(|| {
+        if ext_ptr.is_null() {
+            return false;
+        }
+        let ext_str = match unsafe { CStr::from_ptr(ext_ptr) }.to_str() {
+            Ok(s) => s.trim_start_matches('.').to_lowercase(),
+            Err(_) => return false,
+        };
 
-    let supported = supported_extensions();
-    supported.iter().any(|&e| e.eq_ignore_ascii_case(&ext_str))
+        let supported = supported_extensions();
+        supported.iter().any(|&e| e.eq_ignore_ascii_case(&ext_str))
+    }));
+
+    result.unwrap_or(false)
 }
 
 /// Converts a RAW camera file to DNG.
@@ -43,62 +61,88 @@ pub unsafe extern "C" fn dnglab_convert_file(
     error_msg_buf: *mut c_char,
     error_msg_buf_len: usize,
 ) -> i32 {
-    if input_path_ptr.is_null() || output_path_ptr.is_null() {
-        set_error(error_msg_buf, error_msg_buf_len, "Null pointer passed for input or output path");
-        return -1;
-    }
+    ensure_panic_hook_installed();
 
-    let input_str = match unsafe { CStr::from_ptr(input_path_ptr) }.to_str() {
-        Ok(s) => s,
-        Err(_) => {
-            set_error(error_msg_buf, error_msg_buf_len, "Input path is not valid UTF-8");
-            return -2;
+    let result = catch_unwind(AssertUnwindSafe(|| {
+        if input_path_ptr.is_null() || output_path_ptr.is_null() {
+            set_error(error_msg_buf, error_msg_buf_len, "Null pointer passed for input or output path");
+            return -1;
         }
-    };
 
-    let output_str = match unsafe { CStr::from_ptr(output_path_ptr) }.to_str() {
-        Ok(s) => s,
-        Err(_) => {
-            set_error(error_msg_buf, error_msg_buf_len, "Output path is not valid UTF-8");
-            return -3;
+        let input_str = match unsafe { CStr::from_ptr(input_path_ptr) }.to_str() {
+            Ok(s) => s,
+            Err(_) => {
+                set_error(error_msg_buf, error_msg_buf_len, "Input path is not valid UTF-8");
+                return -2;
+            }
+        };
+
+        let output_str = match unsafe { CStr::from_ptr(output_path_ptr) }.to_str() {
+            Ok(s) => s,
+            Err(_) => {
+                set_error(error_msg_buf, error_msg_buf_len, "Output path is not valid UTF-8");
+                return -3;
+            }
+        };
+
+        let in_path = PathBuf::from(input_str);
+        let out_path = PathBuf::from(output_str);
+
+        if !in_path.exists() {
+            set_error(error_msg_buf, error_msg_buf_len, &format!("Input file does not exist: {}", in_path.display()));
+            return -4;
         }
-    };
 
-    let in_path = PathBuf::from(input_str);
-    let out_path = PathBuf::from(output_str);
-
-    if !in_path.exists() {
-        set_error(error_msg_buf, error_msg_buf_len, &format!("Input file does not exist: {}", in_path.display()));
-        return -4;
-    }
-
-    if out_path.exists() {
-        if let Err(e) = std::fs::remove_file(&out_path) {
-            set_error(error_msg_buf, error_msg_buf_len, &format!("Cannot overwrite existing file {}: {e}", out_path.display()));
-            return -5;
+        if out_path.exists() {
+            if let Err(e) = std::fs::remove_file(&out_path) {
+                set_error(error_msg_buf, error_msg_buf_len, &format!("Cannot overwrite existing file {}: {e}", out_path.display()));
+                return -5;
+            }
         }
-    }
 
-    let file = match File::create(&out_path) {
-        Ok(f) => f,
-        Err(e) => {
-            set_error(error_msg_buf, error_msg_buf_len, &format!("Failed to create destination file {}: {e}", out_path.display()));
-            return -6;
+        let file = match File::create(&out_path) {
+            Ok(f) => f,
+            Err(e) => {
+                set_error(error_msg_buf, error_msg_buf_len, &format!("Failed to create destination file {}: {e}", out_path.display()));
+                return -6;
+            }
+        };
+        let mut writer = BufWriter::new(file);
+
+        let mut params = ConvertParams::default();
+        params.embedded = embed_raw;
+        params.software = "Fujifier / DNGLab Native".into();
+
+        match convert_raw_file(&in_path, &mut writer, &params) {
+            Ok(_) => 0,
+            Err(e) => {
+                drop(writer);
+                let _ = std::fs::remove_file(&out_path);
+                set_error(error_msg_buf, error_msg_buf_len, &format!("Raw decode failed: {e}"));
+                -7
+            }
         }
-    };
-    let mut writer = BufWriter::new(file);
+    }));
 
-    let mut params = ConvertParams::default();
-    params.embedded = embed_raw;
-    params.software = "Fujifier / DNGLab Native".into();
+    match result {
+        Ok(code) => code,
+        Err(panic_err) => {
+            // Remove incomplete output file on panic
+            if !output_path_ptr.is_null() {
+                if let Ok(s) = unsafe { CStr::from_ptr(output_path_ptr) }.to_str() {
+                    let _ = std::fs::remove_file(s);
+                }
+            }
 
-    match convert_raw_file(&in_path, &mut writer, &params) {
-        Ok(_) => 0,
-        Err(e) => {
-            drop(writer);
-            let _ = std::fs::remove_file(&out_path);
-            set_error(error_msg_buf, error_msg_buf_len, &format!("Raw decode failed: {e}"));
-            -7
+            let msg = if let Some(s) = panic_err.downcast_ref::<&str>() {
+                format!("Raw decode failed (decoder panic): {s}")
+            } else if let Some(s) = panic_err.downcast_ref::<String>() {
+                format!("Raw decode failed (decoder panic): {s}")
+            } else {
+                "Raw decode failed (internal decoder panic)".to_string()
+            };
+            set_error(error_msg_buf, error_msg_buf_len, &msg);
+            -99
         }
     }
 }

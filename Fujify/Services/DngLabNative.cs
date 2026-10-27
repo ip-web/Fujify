@@ -148,17 +148,17 @@ namespace Fujify.Services
             return IntPtr.Zero;
         }
 
-        [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
         private static extern IntPtr dnglab_version();
 
-        [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
         [return: MarshalAs(UnmanagedType.I1)]
-        private static extern bool dnglab_is_extension_supported(string ext);
+        private static extern bool dnglab_is_extension_supported([MarshalAs(UnmanagedType.LPUTF8Str)] string ext);
 
-        [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi)]
+        [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
         private static extern int dnglab_convert_file(
-            string inPath,
-            string outPath,
+            [MarshalAs(UnmanagedType.LPUTF8Str)] string inPath,
+            [MarshalAs(UnmanagedType.LPUTF8Str)] string outPath,
             [MarshalAs(UnmanagedType.I1)] bool embedRaw,
             byte[] errBuf,
             UIntPtr errBufLen);
