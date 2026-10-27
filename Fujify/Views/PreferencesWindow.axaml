@@ -52,12 +52,18 @@
                                 <!-- Concurrency Slider -->
                                 <StackPanel Spacing="8">
                                     <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Grid.Column="0" Text="Concurrent Conversions" FontWeight="SemiBold" FontSize="13"
-                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <TextBlock Text="Concurrent Conversions" FontWeight="SemiBold" FontSize="13"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="4" Padding="5,1" IsVisible="{Binding !IsPro}" VerticalAlignment="Center">
+                                                <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="White"/>
+                                            </Border>
+                                        </StackPanel>
                                         <TextBlock Grid.Column="1" Text="{Binding MaxConcurrentConversions}" FontWeight="Bold" FontSize="14"
                                                    Foreground="{DynamicResource AppAccentBrush}"/>
                                     </Grid>
                                     <Slider Minimum="1" Maximum="{Binding TotalThreads}" Value="{Binding MaxConcurrentConversions}" 
+                                            IsEnabled="{Binding IsPro}"
                                             IsSnapToTickEnabled="True" TickFrequency="1"/>
                                     <TextBlock Text="{Binding ConcurrencyHint}" FontSize="11" 
                                                Foreground="{DynamicResource AppTextSecondaryBrush}"/>
@@ -114,12 +120,17 @@
                                 <!-- Lossless Compression -->
                                 <Grid ColumnDefinitions="*,Auto">
                                     <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
-                                        <TextBlock Text="Lossless DNG Compression" FontWeight="SemiBold" FontSize="13"
-                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                        <TextBlock Text="Reduces DNG file size with zero image quality loss" FontSize="11"
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <TextBlock Text="Lossless DNG Compression" FontWeight="SemiBold" FontSize="13"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="4" Padding="5,1" IsVisible="{Binding !IsPro}" VerticalAlignment="Center">
+                                                <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="White"/>
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="Reduces DNG file size with zero image quality loss (Pro only)" FontSize="11"
                                                    Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                     </StackPanel>
-                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding LosslessCompression}" OnContent="" OffContent=""/>
+                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding LosslessCompression}" IsEnabled="{Binding IsPro}" OnContent="" OffContent=""/>
                                 </Grid>
 
                                 <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>

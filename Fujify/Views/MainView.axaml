@@ -909,13 +909,19 @@
                                 <StackPanel Spacing="12">
                                     <!-- Concurrent Conversions -->
                                     <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Grid.Column="0" Text="Concurrent Conversions" FontWeight="SemiBold" FontSize="14"
-                                                   Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,8,0"/>
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,8,0">
+                                            <TextBlock Text="Concurrent Conversions" FontWeight="SemiBold" FontSize="14"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
+                                            <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="4" Padding="5,1" IsVisible="{Binding !Preferences.IsPro}" VerticalAlignment="Center">
+                                                <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="White"/>
+                                            </Border>
+                                        </StackPanel>
                                         <TextBlock Grid.Column="1" Text="{Binding Preferences.MaxConcurrentConversions}" FontWeight="Bold" FontSize="14"
                                                    Foreground="{DynamicResource AppAccentBrush}" VerticalAlignment="Center"/>
                                     </Grid>
                                     <Slider Minimum="1" Maximum="{Binding Preferences.TotalThreads}"
                                             Value="{Binding Preferences.MaxConcurrentConversions}"
+                                            IsEnabled="{Binding Preferences.IsPro}"
                                             IsSnapToTickEnabled="True" TickFrequency="1"/>
                                     <TextBlock Text="{Binding Preferences.ConcurrencyHint}" FontSize="11"
                                                Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
@@ -972,12 +978,17 @@
                                     <!-- Lossless Compression Toggle -->
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
-                                            <TextBlock Text="Lossless DNG Compression" FontSize="14" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
-                                            <TextBlock Text="Lossless compression produces smaller files with no quality loss" FontSize="11"
+                                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                <TextBlock Text="Lossless DNG Compression" FontSize="14" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
+                                                <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="4" Padding="5,1" IsVisible="{Binding !Preferences.IsPro}" VerticalAlignment="Center">
+                                                    <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="White"/>
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="Lossless compression produces smaller files with no quality loss (Pro only)" FontSize="11"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                         </StackPanel>
-                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding Preferences.LosslessCompression}" OnContent="" OffContent="" VerticalAlignment="Center"/>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding Preferences.LosslessCompression}" IsEnabled="{Binding Preferences.IsPro}" OnContent="" OffContent="" VerticalAlignment="Center"/>
                                     </Grid>
 
                                     <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>

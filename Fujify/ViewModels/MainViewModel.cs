@@ -93,6 +93,7 @@ namespace Fujify.ViewModels
             _licenseService.LicenseChanged += (s, status) =>
             {
                 OnPropertyChanged(nameof(IsPro));
+                OnPropertyChanged(nameof(LosslessCompression));
             };
 
             ProcessCommand = new AsyncRelayCommand(ExecuteProcessOrStopAsync);
@@ -431,9 +432,15 @@ namespace Fujify.ViewModels
 
         public bool LosslessCompression
         {
-            get => _settingsService.Settings.LosslessCompression;
+            get => _licenseService.IsPro && _settingsService.Settings.LosslessCompression;
             set
             {
+                if (value && !_licenseService.IsPro)
+                {
+                    OnPropertyChanged(nameof(LosslessCompression));
+                    return;
+                }
+
                 if (_settingsService.Settings.LosslessCompression != value)
                 {
                     _settingsService.Settings.LosslessCompression = value;
@@ -1036,6 +1043,12 @@ namespace Fujify.ViewModels
             int maxConcurrency = (configuredConcurrency > 0 && configuredConcurrency <= Environment.ProcessorCount)
                 ? configuredConcurrency
                 : Math.Max(1, Environment.ProcessorCount / 2);
+
+            // Free tier restriction: sequential conversion (1 thread at a time)
+            if (!_licenseService.IsPro)
+            {
+                maxConcurrency = 1;
+            }
             int processedCount = 0;
 
             bool cancelled = false;
@@ -1284,11 +1297,12 @@ namespace Fujify.ViewModels
                     targetDngForConversion = Path.Combine(sourceDir, $"{Path.GetFileNameWithoutExtension(filePath)}_tmp_{Guid.NewGuid():N}.dng");
                 }
 
+                bool useLossless = _licenseService.IsPro && _settingsService.Settings.LosslessCompression;
                 var convResult = await Task.Run(() => _rawConverterService.ConvertToDng(
                     filePath,
                     embedOriginalRaw,
                     targetDngForConversion,
-                    _settingsService.Settings.LosslessCompression), ct);
+                    useLossless), ct);
                 if (!convResult.Success || string.IsNullOrEmpty(convResult.OutputDngPath))
                 {
                     string err = convResult.ErrorMessage ?? "Conversion failed";
