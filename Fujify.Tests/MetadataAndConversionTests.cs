@@ -497,5 +497,97 @@ namespace Fujify.Tests
                 if (File.Exists(outDng)) File.Delete(outDng);
             }
         }
+
+        [Fact]
+        public void ReadCameraMakeAndModel_MinoltaMrw_ShouldExtractMakeModelAndExif()
+        {
+            string mrwPath = @"D:\Users\isisk\Documents\test sony\test files\raws\minolta\5d\RAW_MINOLTA_5D.MRW";
+            if (!File.Exists(mrwPath)) return;
+
+            string? dngEditorResult = DngMetadataEditor.ReadCameraMakeAndModel(mrwPath);
+            Assert.Equal("KONICA MINOLTA DYNAX 5D", dngEditorResult);
+
+            string? rawReaderResult = RawMetadataReader.TryGetCameraMakeAndModel(mrwPath);
+            Assert.Equal("KONICA MINOLTA DYNAX 5D", rawReaderResult);
+
+            var metadataService = new MetadataService();
+            string svcResult = metadataService.GetCameraMakeAndModel(mrwPath);
+            Assert.Equal("KONICA MINOLTA DYNAX 5D", svcResult);
+
+            int? orientation = RawMetadataReader.TryGetOrientation(mrwPath);
+            Assert.Equal(1, orientation);
+
+            var exif = RawMetadataReader.TryGetExifData(mrwPath);
+            Assert.NotNull(exif);
+            Assert.Equal("100", exif.Iso);
+            Assert.Equal("8", exif.Aperture);
+            Assert.Equal("1/320", exif.ShutterSpeed);
+            Assert.Equal("110 mm", exif.FocalLength);
+            Assert.Equal("2006:10:01 13:21:28", exif.DateTimeOriginal);
+        }
+
+        [Fact]
+        public async Task DngLabNative_ConvertFile_ShouldSucceedForMinolta5D()
+        {
+            string mrwPath = @"D:\Users\isisk\Documents\test sony\test files\raws\minolta\5d\RAW_MINOLTA_5D.MRW";
+            if (!File.Exists(mrwPath)) return;
+
+            string outDng = Path.Combine(Path.GetTempPath(), $"minolta_5d_test_{Guid.NewGuid():N}.dng");
+            try
+            {
+                var (success, error) = await DngLabNative.ConvertFileAsync(mrwPath, outDng, false);
+                Assert.True(success, $"Minolta 5D conversion failed: {error}");
+                Assert.True(File.Exists(outDng));
+                Assert.True(new FileInfo(outDng).Length > 2_000_000);
+
+                string? convertedModel = DngMetadataEditor.ReadCameraMakeAndModel(outDng);
+                Assert.NotNull(convertedModel);
+                Assert.Contains("DYNAX 5D", convertedModel);
+            }
+            finally
+            {
+                if (File.Exists(outDng)) File.Delete(outDng);
+            }
+        }
+
+        [Fact]
+        public async Task DngLabNative_ConvertFile_ShouldSucceedForLeafAptus22()
+        {
+            string mosPath = @"D:\Users\isisk\Documents\test sony\test files\raws\leaf\aptus22\RAW_LEAF_APTUS_22.MOS";
+            if (!File.Exists(mosPath)) return;
+
+            string outDng = Path.Combine(Path.GetTempPath(), $"leaf_aptus_test_{Guid.NewGuid():N}.dng");
+            try
+            {
+                var (success, error) = await DngLabNative.ConvertFileAsync(mosPath, outDng, false);
+                Assert.True(success, $"Leaf Aptus 22 conversion failed: {error}");
+                Assert.True(File.Exists(outDng));
+                Assert.True(new FileInfo(outDng).Length > 10_000_000);
+            }
+            finally
+            {
+                if (File.Exists(outDng)) File.Delete(outDng);
+            }
+        }
+
+        [Fact]
+        public async Task DngLabNative_ConvertFile_CanonPro70_ShouldReturnClearCygmError()
+        {
+            string pro70Path = @"D:\Users\isisk\Documents\test sony\test files\raws\canon\pro70\RAW_CANON_PRO70_SRGB.CRW";
+            if (!File.Exists(pro70Path)) return;
+
+            string outDng = Path.Combine(Path.GetTempPath(), $"canon_pro70_test_{Guid.NewGuid():N}.dng");
+            try
+            {
+                var (success, error) = await DngLabNative.ConvertFileAsync(pro70Path, outDng, false);
+                Assert.False(success);
+                Assert.NotNull(error);
+                Assert.Contains("CYGM", error);
+            }
+            finally
+            {
+                if (File.Exists(outDng)) File.Delete(outDng);
+            }
+        }
     }
 }

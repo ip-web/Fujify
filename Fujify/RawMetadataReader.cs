@@ -82,7 +82,14 @@ namespace Fujify
                     if (!string.IsNullOrEmpty(cr3Model)) return cr3Model;
                 }
 
-                // 4. Check for TIFF-based RAW (DNG, ARW, CR2, NEF, ORF, PEF, RW2, etc.)
+                // 4. Check for Minolta MRW: starts with \0MRM (0x00, 0x4D, 0x52, 0x4D)
+                if (header[0] == 0x00 && header[1] == 0x4D && header[2] == 0x52 && header[3] == 0x4D)
+                {
+                    string? mrwModel = DngMetadataEditor.ReadMinoltaMrwCameraInfo(fs);
+                    if (!string.IsNullOrEmpty(mrwModel)) return mrwModel;
+                }
+
+                // 5. Check for TIFF-based RAW (DNG, ARW, CR2, NEF, ORF, PEF, RW2, etc.)
                 bool isLittleEndian;
                 if (header[0] == 0x49 && header[1] == 0x49)
                 {
@@ -147,9 +154,16 @@ namespace Fujify
 
                 if (!string.IsNullOrWhiteSpace(make) || !string.IsNullOrWhiteSpace(model))
                 {
-                    if (make != null && make.Equals("NIKON CORPORATION", StringComparison.OrdinalIgnoreCase))
+                    if (make != null)
                     {
-                        make = "NIKON";
+                        if (make.Equals("NIKON CORPORATION", StringComparison.OrdinalIgnoreCase))
+                            make = "NIKON";
+                        else if (make.Equals("Minolta Co., Ltd.", StringComparison.OrdinalIgnoreCase))
+                            make = "MINOLTA";
+                        else if (make.Equals("Konica Minolta Camera, Inc.", StringComparison.OrdinalIgnoreCase))
+                            make = "KONICA MINOLTA";
+                        else if (make.Equals("PENTAX Corporation", StringComparison.OrdinalIgnoreCase))
+                            make = "PENTAX";
                     }
                     if (make != null && model != null && model.StartsWith(make, StringComparison.OrdinalIgnoreCase))
                     {
@@ -215,6 +229,55 @@ namespace Fujify
                     header[10] == 0x43 && header[11] == 0x43 && header[12] == 0x44 &&
                     (header[13] == 0x52 || header[13] == 0x42))
                 {
+                    return 1;
+                }
+
+                // Minolta MRW: starts with \0MRM (0x00, 0x4D, 0x52, 0x4D)
+                if (header[0] == 0x00 && header[1] == 0x4D && header[2] == 0x52 && header[3] == 0x4D)
+                {
+                    long? ttwBaseOpt = DngMetadataEditor.FindMinoltaTtwBase(fs);
+                    if (ttwBaseOpt.HasValue)
+                    {
+                        long ttwBase = ttwBaseOpt.Value;
+                        if (ttwBase + 8 <= fs.Length)
+                        {
+                            fs.Seek(ttwBase, SeekOrigin.Begin);
+                            byte[] tiffHdr = new byte[8];
+                            if (fs.Read(tiffHdr, 0, 8) == 8)
+                            {
+                                bool isLittle = tiffHdr[0] == 0x49;
+                                uint ifd0Off = isLittle
+                                    ? (uint)(tiffHdr[4] | (tiffHdr[5] << 8) | (tiffHdr[6] << 16) | (tiffHdr[7] << 24))
+                                    : (uint)((tiffHdr[4] << 24) | (tiffHdr[5] << 16) | (tiffHdr[6] << 8) | tiffHdr[7]);
+                                if (ifd0Off > 0 && ttwBase + ifd0Off + 2 <= fs.Length)
+                                {
+                                    fs.Seek(ttwBase + ifd0Off, SeekOrigin.Begin);
+                                    byte[] cBuf = new byte[2];
+                                    if (fs.Read(cBuf, 0, 2) == 2)
+                                    {
+                                        ushort cnt = isLittle ? (ushort)(cBuf[0] | (cBuf[1] << 8)) : (ushort)((cBuf[0] << 8) | cBuf[1]);
+                                        if (cnt > 0 && cnt < 500 && ttwBase + ifd0Off + 2 + cnt * 12 <= fs.Length)
+                                        {
+                                            byte[] mrwEntries = new byte[cnt * 12];
+                                            if (fs.Read(mrwEntries, 0, mrwEntries.Length) == mrwEntries.Length)
+                                            {
+                                                for (int i = 0; i < cnt; i++)
+                                                {
+                                                    int o = i * 12;
+                                                    ushort tag = isLittle ? (ushort)(mrwEntries[o] | (mrwEntries[o + 1] << 8)) : (ushort)((mrwEntries[o] << 8) | mrwEntries[o + 1]);
+                                                    if (tag == 0x0112)
+                                                    {
+                                                        ushort val = isLittle ? (ushort)(mrwEntries[o + 8] | (mrwEntries[o + 9] << 8)) : (ushort)((mrwEntries[o + 8] << 8) | mrwEntries[o + 9]);
+                                                        if (val >= 1 && val <= 8) return val;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     return 1;
                 }
 
@@ -459,7 +522,18 @@ namespace Fujify
                     return TryGetExifFromCanonCiff(fs);
                 }
 
-                // 5. TIFF-based RAW (DNG, ARW, CR2, NEF, ORF, PEF, RW2, etc.)
+                // 5. Minolta MRW: starts with \0MRM (0x00, 0x4D, 0x52, 0x4D)
+                if (header[0] == 0x00 && header[1] == 0x4D && header[2] == 0x52 && header[3] == 0x4D)
+                {
+                    long? ttwBaseOpt = DngMetadataEditor.FindMinoltaTtwBase(fs);
+                    if (ttwBaseOpt.HasValue)
+                    {
+                        return ReadExifFromTiff(fs, ttwBaseOpt.Value, forceLittleEndian: false);
+                    }
+                    return null;
+                }
+
+                // 6. TIFF-based RAW (DNG, ARW, CR2, NEF, ORF, PEF, RW2, etc.)
                 bool isLittleEndian;
                 if (header[0] == 0x49 && header[1] == 0x49)
                 {
