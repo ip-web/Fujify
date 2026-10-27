@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Fujify.Models;
 using Fujify.Services;
 using Fujify.ViewModels;
 using Xunit;
@@ -304,6 +305,45 @@ namespace Fujify.Tests
             {
                 if (File.Exists(tempSettingsPath)) File.Delete(tempSettingsPath);
             }
+        }
+
+        [Fact]
+        public async Task PromptFileConflictAsync_ShouldExecuteFromBackgroundThreadWithoutThrowing()
+        {
+            var dialogService = new DialogService();
+            // Call from background thread pool thread, simulating Parallel.ForEachAsync execution
+            var resolution = await Task.Run(async () =>
+            {
+                return await dialogService.PromptFileConflictAsync(null, "test_output.dng");
+            });
+
+            Assert.NotNull(resolution);
+            Assert.Equal(ConflictChoice.Skip, resolution.Choice);
+        }
+
+        [Fact]
+        public void FileConflictDialogViewModel_Commands_ShouldReturnExpectedChoices()
+        {
+            string path = @"C:\Photos\Test.dng";
+            var vm = new FileConflictDialogViewModel(path);
+            Assert.Equal("Test.dng", vm.FileName);
+
+            FileConflictResolution? chosen = null;
+            vm.CloseAction = res => chosen = res;
+
+            vm.ApplyToAll = true;
+            vm.UseUniqueNameCommand.Execute(null);
+            Assert.NotNull(chosen);
+            Assert.Equal(ConflictChoice.UseUniqueName, chosen!.Choice);
+            Assert.True(chosen.ApplyToAll);
+
+            vm.ApplyToAll = false;
+            vm.OverwriteCommand.Execute(null);
+            Assert.Equal(ConflictChoice.Overwrite, chosen.Choice);
+            Assert.False(chosen.ApplyToAll);
+
+            vm.SkipCommand.Execute(null);
+            Assert.Equal(ConflictChoice.Skip, chosen.Choice);
         }
     }
 }

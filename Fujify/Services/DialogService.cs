@@ -26,6 +26,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Fujify.Models;
 using Fujify.ViewModels;
 using Fujify.Views;
@@ -156,6 +157,13 @@ namespace Fujify.Services
 
         public async Task ShowMessageAsync(Window? owner, string title, string message, bool isSuccess = true)
         {
+            if (Application.Current == null) return;
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                await Dispatcher.UIThread.InvokeAsync(() => ShowMessageAsync(owner, title, message, isSuccess));
+                return;
+            }
+
             if (IsMobileOrSingleView || (owner == null && (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow == null))
             {
                 MainViewModel.Instance?.ShowMessageModal(title, message);
@@ -163,13 +171,15 @@ namespace Fujify.Services
             }
 
             var dialog = new MessageDialog(title, message, isSuccess);
-            if (owner != null)
+            var targetOwner = owner ?? (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+            if (targetOwner != null)
             {
-                await dialog.ShowDialog(owner);
-            }
-            else if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
-            {
-                await dialog.ShowDialog(desktop.MainWindow);
+                if (targetOwner.WindowState == WindowState.Minimized)
+                {
+                    targetOwner.WindowState = WindowState.Normal;
+                }
+                targetOwner.Activate();
+                await dialog.ShowDialog(targetOwner);
             }
             else
             {
@@ -179,6 +189,12 @@ namespace Fujify.Services
 
         public async Task<FileConflictResolution> PromptFileConflictAsync(Window? owner, string destinationFilePath)
         {
+            if (Application.Current == null) return new FileConflictResolution(ConflictChoice.Skip, false);
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                return await Dispatcher.UIThread.InvokeAsync(() => PromptFileConflictAsync(owner, destinationFilePath));
+            }
+
             if (IsMobileOrSingleView || (owner == null && (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow == null))
             {
                 if (MainViewModel.Instance != null)
@@ -191,20 +207,39 @@ namespace Fujify.Services
             var vm = new FileConflictDialogViewModel(destinationFilePath);
             var dialog = new FileConflictDialog(vm);
 
-            if (owner != null)
+            var targetOwner = owner ?? (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+            if (targetOwner != null)
             {
-                await dialog.ShowDialog(owner);
+                if (targetOwner.WindowState == WindowState.Minimized)
+                {
+                    targetOwner.WindowState = WindowState.Normal;
+                }
+                targetOwner.Activate();
+                await dialog.ShowDialog(targetOwner);
             }
             else
             {
+                var tcs = new TaskCompletionSource<FileConflictResolution>();
+                vm.CloseAction = res =>
+                {
+                    dialog.Close(res);
+                    tcs.TrySetResult(res);
+                };
                 dialog.Show();
+                return await tcs.Task;
             }
 
-            return dialog.Result;
+            return dialog.Result ?? new FileConflictResolution(ConflictChoice.Skip, false);
         }
 
         public async Task<IReadOnlyList<string>> ShowOpenFileDialogAsync(Window? owner, string title, bool allowMultiple = true)
         {
+            if (Application.Current == null) return Array.Empty<string>();
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                return await Dispatcher.UIThread.InvokeAsync(() => ShowOpenFileDialogAsync(owner, title, allowMultiple));
+            }
+
             try
             {
                 var storage = GetStorageProvider(owner);
@@ -314,6 +349,12 @@ namespace Fujify.Services
 
         public async Task<string?> ShowFolderBrowserDialogAsync(Window? owner, string title)
         {
+            if (Application.Current == null) return null;
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                return await Dispatcher.UIThread.InvokeAsync(() => ShowFolderBrowserDialogAsync(owner, title));
+            }
+
             var storage = GetStorageProvider(owner);
             if (storage == null) return null;
 
@@ -336,6 +377,13 @@ namespace Fujify.Services
 
         public async Task ShowPreferencesDialogAsync(Window? owner)
         {
+            if (Application.Current == null) return;
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                await Dispatcher.UIThread.InvokeAsync(() => ShowPreferencesDialogAsync(owner));
+                return;
+            }
+
             if (IsMobileOrSingleView || (owner == null && (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow == null))
             {
                 MainViewModel.Instance?.ShowPreferencesModal();
@@ -345,9 +393,15 @@ namespace Fujify.Services
             var vm = new PreferencesViewModel(_settingsService, _licenseService, dialogService: this);
             var dialog = new PreferencesWindow(vm);
 
-            if (owner != null)
+            var targetOwner = owner ?? (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+            if (targetOwner != null)
             {
-                await dialog.ShowDialog(owner);
+                if (targetOwner.WindowState == WindowState.Minimized)
+                {
+                    targetOwner.WindowState = WindowState.Normal;
+                }
+                targetOwner.Activate();
+                await dialog.ShowDialog(targetOwner);
             }
             else
             {
@@ -357,6 +411,13 @@ namespace Fujify.Services
 
         public async Task ShowAboutDialogAsync(Window? owner)
         {
+            if (Application.Current == null) return;
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                await Dispatcher.UIThread.InvokeAsync(() => ShowAboutDialogAsync(owner));
+                return;
+            }
+
             if (IsMobileOrSingleView || (owner == null && (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow == null))
             {
                 MainViewModel.Instance?.ShowAboutModal();
@@ -364,9 +425,15 @@ namespace Fujify.Services
             }
 
             var dialog = new AboutWindow();
-            if (owner != null)
+            var targetOwner = owner ?? (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+            if (targetOwner != null)
             {
-                await dialog.ShowDialog(owner);
+                if (targetOwner.WindowState == WindowState.Minimized)
+                {
+                    targetOwner.WindowState = WindowState.Normal;
+                }
+                targetOwner.Activate();
+                await dialog.ShowDialog(targetOwner);
             }
             else
             {
