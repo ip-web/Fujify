@@ -42,33 +42,65 @@ namespace Fujify
                 int read = fs.Read(header, 0, 16);
                 if (read < 16) return null;
 
-                // Check for Fujifilm RAF: starts with "FUJIFILM"
+                // 1. Check for Fujifilm RAF: starts with "FUJIFILM"
                 if (header[0] == 0x46 && header[1] == 0x55 && header[2] == 0x4A && header[3] == 0x49 &&
                     header[4] == 0x46 && header[5] == 0x49 && header[6] == 0x4C && header[7] == 0x4D)
                 {
-                    if (fs.Length >= 92)
+                    if (fs.Length >= 60)
                     {
-                        fs.Seek(0x3C, SeekOrigin.Begin);
+                        fs.Seek(0x1C, SeekOrigin.Begin);
                         byte[] modelBytes = new byte[32];
                         int modelRead = fs.Read(modelBytes, 0, 32);
                         if (modelRead > 0)
                         {
                             string rafModel = Encoding.ASCII.GetString(modelBytes, 0, modelRead).Trim('\0', ' ');
-                            return string.IsNullOrEmpty(rafModel) ? "FUJIFILM" : $"FUJIFILM {rafModel}".Trim();
+                            if (!string.IsNullOrEmpty(rafModel))
+                            {
+                                return rafModel.StartsWith("FUJIFILM", StringComparison.OrdinalIgnoreCase)
+                                    ? rafModel
+                                    : $"FUJIFILM {rafModel}".Trim();
+                            }
                         }
                     }
                     return "FUJIFILM";
                 }
 
-                // Check for TIFF-based RAW (DNG, ARW, CR2, NEF, ORF, PEF, etc.)
+                // 2. Check for Canon CIFF (.CRW): starts with "II" (or "MM") and "HEAPCCDR" / "HEAPCCDB" at offset 6
+                if (header[0] == 0x49 && header[1] == 0x49 && header.Length >= 14 &&
+                    header[6] == 0x48 && header[7] == 0x45 && header[8] == 0x41 && header[9] == 0x50 &&
+                    header[10] == 0x43 && header[11] == 0x43 && header[12] == 0x44 &&
+                    (header[13] == 0x52 || header[13] == 0x42))
+                {
+                    string? ciffModel = DngMetadataEditor.ReadCanonCiffCameraInfo(fs);
+                    if (!string.IsNullOrEmpty(ciffModel)) return ciffModel;
+                }
+
+                // 3. Check for Canon CR3: starts with ftyp
+                if (header.Length >= 8 && header[4] == 0x66 && header[5] == 0x74 && header[6] == 0x79 && header[7] == 0x70)
+                {
+                    string? cr3Model = DngMetadataEditor.ReadCanonCr3CameraInfo(fs);
+                    if (!string.IsNullOrEmpty(cr3Model)) return cr3Model;
+                }
+
+                // 4. Check for TIFF-based RAW (DNG, ARW, CR2, NEF, ORF, PEF, RW2, etc.)
                 bool isLittleEndian;
-                if (header[0] == 0x49 && header[1] == 0x49 && header[2] == 0x2A && header[3] == 0x00)
+                if (header[0] == 0x49 && header[1] == 0x49)
                 {
                     isLittleEndian = true;
+                    ushort magic = ReadUInt16(header, 2, true);
+                    if (magic != 42 && magic != 85 && magic != 0x4F52 && magic != 0x5352)
+                    {
+                        return null;
+                    }
                 }
-                else if (header[0] == 0x4D && header[1] == 0x4D && header[2] == 0x00 && header[3] == 0x2A)
+                else if (header[0] == 0x4D && header[1] == 0x4D)
                 {
                     isLittleEndian = false;
+                    ushort magic = ReadUInt16(header, 2, false);
+                    if (magic != 42 && magic != 0x4F52 && magic != 0x524F)
+                    {
+                        return null;
+                    }
                 }
                 else
                 {
@@ -177,15 +209,34 @@ namespace Fujify
                     return TryGetOrientationFromJpegStream(fs);
                 }
 
+                // Canon CIFF (.CRW)
+                if (header[0] == 0x49 && header[1] == 0x49 && header.Length >= 14 &&
+                    header[6] == 0x48 && header[7] == 0x45 && header[8] == 0x41 && header[9] == 0x50 &&
+                    header[10] == 0x43 && header[11] == 0x43 && header[12] == 0x44 &&
+                    (header[13] == 0x52 || header[13] == 0x42))
+                {
+                    return 1;
+                }
+
                 // 3. TIFF-based RAW (DNG, ARW, CR2, NEF, ORF, PEF, RW2, etc.)
                 bool isLittleEndian;
-                if (header[0] == 0x49 && header[1] == 0x49 && header[2] == 0x2A && header[3] == 0x00)
+                if (header[0] == 0x49 && header[1] == 0x49)
                 {
                     isLittleEndian = true;
+                    ushort magic = ReadUInt16(header, 2, true);
+                    if (magic != 42 && magic != 85 && magic != 0x4F52 && magic != 0x5352)
+                    {
+                        return null;
+                    }
                 }
-                else if (header[0] == 0x4D && header[1] == 0x4D && header[2] == 0x00 && header[3] == 0x2A)
+                else if (header[0] == 0x4D && header[1] == 0x4D)
                 {
                     isLittleEndian = false;
+                    ushort magic = ReadUInt16(header, 2, false);
+                    if (magic != 42 && magic != 0x4F52 && magic != 0x524F)
+                    {
+                        return null;
+                    }
                 }
                 else
                 {
@@ -399,7 +450,16 @@ namespace Fujify
                     return TryGetExifFromCanonCr3(fs);
                 }
 
-                // 4. TIFF-based RAW (DNG, ARW, CR2, NEF, ORF, PEF, RW2, etc.)
+                // 4. Canon CIFF (.CRW): starts with "II" and "HEAPCCDR" / "HEAPCCDB" at offset 6
+                if (header[0] == 0x49 && header[1] == 0x49 && header.Length >= 14 &&
+                    header[6] == 0x48 && header[7] == 0x45 && header[8] == 0x41 && header[9] == 0x50 &&
+                    header[10] == 0x43 && header[11] == 0x43 && header[12] == 0x44 &&
+                    (header[13] == 0x52 || header[13] == 0x42))
+                {
+                    return TryGetExifFromCanonCiff(fs);
+                }
+
+                // 5. TIFF-based RAW (DNG, ARW, CR2, NEF, ORF, PEF, RW2, etc.)
                 bool isLittleEndian;
                 if (header[0] == 0x49 && header[1] == 0x49)
                 {
@@ -414,7 +474,7 @@ namespace Fujify
                 {
                     isLittleEndian = false;
                     ushort magic = ReadUInt16(header, 2, false);
-                    if (magic != 42)
+                    if (magic != 42 && magic != 0x4F52 && magic != 0x524F)
                     {
                         return null;
                     }
@@ -578,6 +638,91 @@ namespace Fujify
             }
             catch { }
             return null;
+        }
+
+        private static ExifData? TryGetExifFromCanonCiff(Stream stream)
+        {
+            try
+            {
+                long flen = stream.Length;
+                if (flen < 30) return null;
+
+                stream.Seek(flen - 4, SeekOrigin.Begin);
+                byte[] dirOffsetBuf = new byte[4];
+                if (stream.Read(dirOffsetBuf, 0, 4) < 4) return null;
+
+                uint dirOffset = (uint)(dirOffsetBuf[0] | (dirOffsetBuf[1] << 8) | (dirOffsetBuf[2] << 16) | (dirOffsetBuf[3] << 24));
+                string? dateTimeOriginal = null;
+                ScanCiffForExif(stream, 26, dirOffset, (uint)(flen - 26), 0, ref dateTimeOriginal);
+
+                if (!string.IsNullOrEmpty(dateTimeOriginal))
+                {
+                    return new ExifData(null, null, null, null, null, dateTimeOriginal, "1");
+                }
+            }
+            catch { }
+            return null;
+        }
+
+        private static void ScanCiffForExif(Stream stream, long blockBase, uint dirOffset, uint blockLen, int depth, ref string? dateTimeOriginal)
+        {
+            if (depth > 10 || dirOffset + 2 > blockLen) return;
+
+            stream.Seek(blockBase + dirOffset, SeekOrigin.Begin);
+            byte[] countBuf = new byte[2];
+            if (stream.Read(countBuf, 0, 2) < 2) return;
+
+            ushort count = (ushort)(countBuf[0] | (countBuf[1] << 8));
+            if (count > 256) return;
+
+            byte[] entriesBuf = new byte[count * 10];
+            if (stream.Read(entriesBuf, 0, entriesBuf.Length) < entriesBuf.Length) return;
+
+            for (int i = 0; i < count; i++)
+            {
+                int entryOff = i * 10;
+                ushort tag = (ushort)(entriesBuf[entryOff] | (entriesBuf[entryOff + 1] << 8));
+                uint length = (uint)(entriesBuf[entryOff + 2] | (entriesBuf[entryOff + 3] << 8) | (entriesBuf[entryOff + 4] << 16) | (entriesBuf[entryOff + 5] << 24));
+                uint offset = (uint)(entriesBuf[entryOff + 6] | (entriesBuf[entryOff + 7] << 8) | (entriesBuf[entryOff + 8] << 16) | (entriesBuf[entryOff + 9] << 24));
+
+                ushort tagId = (ushort)(tag & 0x3FFF);
+                ushort tagType = (ushort)(tag & 0x3800);
+
+                if (tagId == 0x180E && length >= 4 && dateTimeOriginal == null) // TimeStamp
+                {
+                    if (offset + 4 <= blockLen)
+                    {
+                        stream.Seek(blockBase + offset, SeekOrigin.Begin);
+                        byte[] tsBuf = new byte[4];
+                        if (stream.Read(tsBuf, 0, 4) == 4)
+                        {
+                            uint unixSecs = (uint)(tsBuf[0] | (tsBuf[1] << 8) | (tsBuf[2] << 16) | (tsBuf[3] << 24));
+                            if (unixSecs > 0)
+                            {
+                                try
+                                {
+                                    dateTimeOriginal = DateTimeOffset.FromUnixTimeSeconds(unixSecs).DateTime.ToString("yyyy:MM:dd HH:mm:ss", CultureInfo.InvariantCulture);
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                }
+                else if (tagType == 0x2800 || tagType == 0x3000) // Sub-directory
+                {
+                    if (length >= 4 && offset + length <= blockLen)
+                    {
+                        long subBase = blockBase + offset;
+                        stream.Seek(subBase + length - 4, SeekOrigin.Begin);
+                        byte[] subDirOffsetBuf = new byte[4];
+                        if (stream.Read(subDirOffsetBuf, 0, 4) == 4)
+                        {
+                            uint subDirOffset = (uint)(subDirOffsetBuf[0] | (subDirOffsetBuf[1] << 8) | (subDirOffsetBuf[2] << 16) | (subDirOffsetBuf[3] << 24));
+                            ScanCiffForExif(stream, subBase, subDirOffset, length, depth + 1, ref dateTimeOriginal);
+                        }
+                    }
+                }
+            }
         }
 
         private static ExifData? ReadExifFromTiff(Stream stream, long tiffBase, bool? forceLittleEndian = null)
