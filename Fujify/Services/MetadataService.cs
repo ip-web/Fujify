@@ -114,8 +114,17 @@ namespace Fujify.Services
 
         public ExifData? GetExifData(string filePath)
         {
+            // 1. Fast managed in-memory EXIF reader (TIFF RAWs, RAF, CR3, JPEG) without external processes
+            var directExif = RawMetadataReader.TryGetExifData(filePath);
             var runner = FindExifToolRunner();
-            if (runner == null) return null;
+
+            // If we have managed EXIF data and either no external exiftool runner is present, or lens is already resolved, return immediately
+            if (directExif != null && (runner == null || !string.IsNullOrWhiteSpace(directExif.Lens)))
+            {
+                return directExif;
+            }
+
+            if (runner == null) return directExif;
 
             try
             {
@@ -147,26 +156,41 @@ namespace Fujify.Services
                         int? direct = RawMetadataReader.TryGetOrientation(filePath);
                         orientation = direct switch
                         {
+                            1 => "Horizontal (normal)",
+                            2 => "Mirror horizontal",
                             3 => "Rotate 180",
+                            4 => "Mirror vertical",
+                            5 => "Mirror horizontal and rotate 270 CW",
                             6 => "Rotate 90 CW",
+                            7 => "Mirror horizontal and rotate 90 CW",
                             8 => "Rotate 270 CW",
                             _ => null
                         };
                     }
 
+                    string? resolvedLens = !lens.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? lens : directExif?.Lens;
+                    string? resolvedAperture = !aperture.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? aperture : directExif?.Aperture;
+                    string? resolvedShutter = !shutter.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? shutter : directExif?.ShutterSpeed;
+                    string? resolvedIso = !iso.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? iso : directExif?.Iso;
+                    string? resolvedFocal = !focal.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? focal : directExif?.FocalLength;
+                    string? resolvedDt = !dt.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? dt : directExif?.DateTimeOriginal;
+                    string? resolvedOrientation = (orientation != null && !orientation.Equals("Unknown", StringComparison.OrdinalIgnoreCase))
+                        ? orientation
+                        : directExif?.Orientation;
+
                     return new ExifData(
-                        lens.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? null : lens,
-                        aperture.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? null : aperture,
-                        shutter.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? null : shutter,
-                        iso.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? null : iso,
-                        focal.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? null : focal,
-                        dt.Equals("Unknown", StringComparison.OrdinalIgnoreCase) ? null : dt,
-                        orientation?.Equals("Unknown", StringComparison.OrdinalIgnoreCase) == true ? null : orientation
+                        resolvedLens,
+                        resolvedAperture,
+                        resolvedShutter,
+                        resolvedIso,
+                        resolvedFocal,
+                        resolvedDt,
+                        resolvedOrientation
                     );
                 }
             }
             catch { }
-            return null;
+            return directExif;
         }
 
         public MetadataResult InjectFujifilmMetadata(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null, string targetUniqueCameraModel = "Fujifilm X-T5")
