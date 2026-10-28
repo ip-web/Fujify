@@ -47,32 +47,35 @@
                     BorderThickness="0"
                     Height="34"
                     Padding="16,0,0,0"
-                    ZIndex="100"
-                    PointerPressed="TitleBar_PointerPressed"
-                    DoubleTapped="TitleBar_DoubleTapped">
+                    ZIndex="100">
                 <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Stretch">
-                    <!-- Left: Studio Logo & Title -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" IsHitTestVisible="False">
-                        <Image Source="/Assets/images/logoXL.png" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
-                        <TextBlock Text="Fujifier — Film simulation engine" FontSize="11" Foreground="#8C8A9F" VerticalAlignment="Center"/>
+                    <!-- Left: Studio Logo & Title (Draggable) -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                                Background="Transparent"
+                                PointerPressed="TitleBar_PointerPressed"
+                                DoubleTapped="TitleBar_DoubleTapped">
+                        <Image Source="/Assets/images/logoXL.png" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                        <TextBlock Text="Fujifier — Film simulation engine" FontSize="11" Foreground="#8C8A9F" VerticalAlignment="Center" IsHitTestVisible="False"/>
                     </StackPanel>
 
                     <!-- Center: Draggable Spacer -->
-                    <Panel Grid.Column="1" Background="Transparent" IsHitTestVisible="False"/>
+                    <Panel Grid.Column="1" Background="Transparent"
+                           PointerPressed="TitleBar_PointerPressed"
+                           DoubleTapped="TitleBar_DoubleTapped"/>
 
                     <!-- Right: Custom Functional Minimize, Maximize, Close Buttons matching standard Windows controls -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="0" VerticalAlignment="Stretch" HorizontalAlignment="Right">
                         <!-- Minimize Button -->
                         <Button Classes="win-caption" Click="TitleBar_Minimize_Click" ToolTip.Tip="Minimize">
-                            <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                         <!-- Maximize / Restore Button -->
                         <Button Classes="win-caption" Click="TitleBar_Maximize_Click" ToolTip.Tip="Maximize">
-                            <TextBlock Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <TextBlock Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                         <!-- Close Button -->
                         <Button Classes="win-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="Close">
-                            <TextBlock Text="&#x2715;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            <TextBlock Text="&#x2715;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                     </StackPanel>
                 </Grid>
@@ -229,7 +232,7 @@
                                 <Button Grid.Row="3" Classes="nav" Command="{Binding OpenAboutCommand}"
                                         HorizontalAlignment="Center" Margin="0,0,0,14" ToolTip.Tip="About &amp; Info">
                                     <StackPanel Spacing="5" HorizontalAlignment="Center">
-                                        <PathIcon Data="M 12 2 A 10 10 0 1 0 12 22 A 10 10 0 1 0 12 2 M 12 16 v -4 M 12 8 h 0.01" Width="18" Height="18" HorizontalAlignment="Center"/>
+                                        <PathIcon Data="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" Width="18" Height="18" HorizontalAlignment="Center"/>
                                         <TextBlock Text="About" FontSize="9" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
@@ -573,7 +576,7 @@
                                                     </DataGridTemplateColumn>
 
                                                     <!-- Remove Action Button Column (Small cross without rounded background) -->
-                                                    <DataGridTemplateColumn Width="40" CanUserResize="False">
+                                                    <DataGridTemplateColumn Width="52" CanUserResize="False">
                                                         <DataGridTemplateColumn.CellTemplate>
                                                             <DataTemplate x:DataType="models:FileItem">
                                                                 <Button Content="✕"
@@ -581,6 +584,7 @@
                                                                         CommandParameter="{Binding}"
                                                                         Width="20" Height="20"
                                                                         Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                                        HorizontalAlignment="Right" Margin="0,0,14,0"
                                                                         Background="Transparent"
                                                                         Foreground="{DynamicResource AppTextSecondaryBrush}"
                                                                         BorderThickness="0"
@@ -896,11 +900,12 @@
                                                 <!-- Photo Info Details -->
                                                 <StackPanel IsVisible="{Binding SelectedFile, Converter={x:Static ObjectConverters.IsNotNull}}" Spacing="12">
                                                     <!-- Image Preview (Full-width card with small margin, cleanly contained) -->
-                                                    <Border Height="210" CornerRadius="12" ClipToBounds="True"
+                                                    <Border MaxWidth="259" Height="175" CornerRadius="12" ClipToBounds="True"
                                                             Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                             BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
-                                                            HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="0,0,0,8">
+                                                            HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,8">
                                                         <Image Source="{Binding SelectedFile.Thumbnail}" Stretch="Uniform"
+                                                               MaxWidth="259" MaxHeight="175"
                                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     </Border>
 
