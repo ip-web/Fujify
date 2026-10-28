@@ -118,7 +118,7 @@ public partial class App : Application
                 ? Avalonia.Media.Color.Parse("#FFF2F2F7")
                 : (isAmoled ? Avalonia.Media.Color.Parse("#FF000000") : Avalonia.Media.Color.Parse("#FF14151E")));
 
-        var text1Color = isLight ? Avalonia.Media.Color.Parse("#000000") : Avalonia.Media.Color.Parse("#F2F2F8");
+        var text1Color = isLight ? Avalonia.Media.Color.Parse("#000000") : Avalonia.Media.Color.Parse("#EDE8F5");
         var text2Color = isLight ? Avalonia.Media.Color.Parse("#6E6E78") : Avalonia.Media.Color.Parse("#A6A7B8");
         var glassPill = isLight ? Avalonia.Media.Color.Parse("#12000000") : Avalonia.Media.Color.Parse("#1AFFFFFF");
 

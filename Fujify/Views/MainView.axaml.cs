@@ -260,5 +260,49 @@ namespace Fujify.Views
                 vm.OpenFileCommand.Execute(vm.SelectedFile);
             }
         }
+
+        private void TitleBar_PointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            {
+                (VisualRoot as Window)?.BeginMoveDrag(e);
+            }
+        }
+
+        private void TitleBar_DoubleTapped(object? sender, TappedEventArgs e)
+        {
+            if (VisualRoot is Window window)
+            {
+                window.WindowState = window.WindowState == WindowState.Maximized
+                    ? WindowState.Normal
+                    : WindowState.Maximized;
+            }
+        }
+
+        private void TitleBar_Minimize_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (VisualRoot is Window window)
+            {
+                window.WindowState = WindowState.Minimized;
+            }
+        }
+
+        private void TitleBar_Maximize_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (VisualRoot is Window window)
+            {
+                window.WindowState = window.WindowState == WindowState.Maximized
+                    ? WindowState.Normal
+                    : WindowState.Maximized;
+            }
+        }
+
+        private void TitleBar_Close_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        {
+            if (VisualRoot is Window window)
+            {
+                window.Close();
+            }
+        }
     }
 }
