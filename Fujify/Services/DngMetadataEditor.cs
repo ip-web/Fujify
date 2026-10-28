@@ -544,7 +544,7 @@ namespace Fujify.Services
             return list;
         }
 
-        private static string? ReadTagString(Stream stream, List<TiffEntry> entries, ushort tag, bool isLittleEndian)
+        private static string? ReadTagString(Stream stream, List<TiffEntry> entries, ushort tag, bool isLittleEndian, long baseOffset = 0)
         {
             var entry = entries.FirstOrDefault(e => e.Tag == tag);
             if (entry == null || entry.Count == 0 || entry.Count > 1024) return null;
@@ -561,9 +561,10 @@ namespace Fujify.Services
             }
             else
             {
-                if (entry.ValueOrOffset + entry.Count > stream.Length) return null;
+                long targetOffset = baseOffset + entry.ValueOrOffset;
+                if (targetOffset < 0 || targetOffset + entry.Count > stream.Length) return null;
                 long saved = stream.Position;
-                stream.Seek(entry.ValueOrOffset, SeekOrigin.Begin);
+                stream.Seek(targetOffset, SeekOrigin.Begin);
                 int read = stream.Read(bytes, 0, (int)entry.Count);
                 stream.Seek(saved, SeekOrigin.Begin);
                 if (read < entry.Count) return null;
@@ -740,38 +741,180 @@ namespace Fujify.Services
 <?xpacket end='w'?>";
         }
 
-        internal static string? ReadCanonCr3CameraInfo(Stream stream)
+        public static string? ReadCanonCr3CameraInfo(Stream stream)
         {
             try
             {
-                // Scan the first 64KB for CMT1 or standard TIFF header
-                int scanLen = (int)Math.Min(stream.Length, 65536);
+                // 1. Box traversal: locate CMT1 box
+                long cmt1Offset = FindCanonCr3Cmt1Offset(stream);
+                if (cmt1Offset > 0)
+                {
+                    string? res = ReadTiffInfoAt(stream, cmt1Offset);
+                    if (!string.IsNullOrEmpty(res) && !res.Equals("CCDT", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return res;
+                    }
+                }
+
+                // 2. Buffer scan: scan first 512KB for "CMT1"
+                int scanLen = (int)Math.Min(stream.Length, 524288);
                 byte[] buf = new byte[scanLen];
                 stream.Seek(0, SeekOrigin.Begin);
                 int read = stream.Read(buf, 0, scanLen);
 
+                for (int i = 0; i < read - 12; i++)
+                {
+                    if (buf[i] == 0x43 && buf[i + 1] == 0x4D && buf[i + 2] == 0x54 && buf[i + 3] == 0x31) // "CMT1"
+                    {
+                        long tiffOffset = i + 4;
+                        string? res = ReadTiffInfoAt(stream, tiffOffset);
+                        if (!string.IsNullOrEmpty(res) && !res.Equals("CCDT", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return res;
+                        }
+                    }
+                }
+
+                // 3. Fallback buffer scan: standard TIFF header (II*\0 or MM\0*)
                 for (int i = 0; i < read - 16; i++)
                 {
-                    // Check for TIFF header: II*\0 or MM\0*
                     if ((buf[i] == 0x49 && buf[i + 1] == 0x49 && buf[i + 2] == 0x2A && buf[i + 3] == 0x00) ||
                         (buf[i] == 0x4D && buf[i + 1] == 0x4D && buf[i + 2] == 0x00 && buf[i + 3] == 0x2A))
                     {
-                        bool isLittle = buf[i] == 0x49;
-                        uint relIfd = ReadUInt32(buf, i + 4, isLittle);
-                        long absIfd = i + relIfd;
-                        if (absIfd > 0 && absIfd + 2 < stream.Length)
+                        string? res = ReadTiffInfoAt(stream, i);
+                        if (!string.IsNullOrEmpty(res) && !res.Equals("CCDT", StringComparison.OrdinalIgnoreCase))
                         {
-                            var entries = ReadIfdEntries(stream, (uint)absIfd, isLittle);
-                            string? make = ReadTagString(stream, entries, TagMake, isLittle);
-                            string? model = ReadTagString(stream, entries, TagModel, isLittle);
-                            string? res = FormatMakeAndModel(make, model);
-                            if (!string.IsNullOrEmpty(res)) return res;
+                            return res;
                         }
                     }
                 }
             }
             catch { }
             return null;
+        }
+
+        private static long FindCanonCr3Cmt1Offset(Stream stream)
+        {
+            try
+            {
+                long length = Math.Min(stream.Length, 15 * 1024 * 1024);
+                byte[] hdr = new byte[8];
+                stream.Seek(0, SeekOrigin.Begin);
+
+                while (stream.Position < length - 8)
+                {
+                    long boxStart = stream.Position;
+                    if (stream.Read(hdr, 0, 8) < 8) break;
+
+                    uint boxSize = (uint)((hdr[0] << 24) | (hdr[1] << 16) | (hdr[2] << 8) | hdr[3]);
+                    string boxType = Encoding.ASCII.GetString(hdr, 4, 4);
+
+                    long boxDataSize = boxSize;
+                    long headerLen = 8;
+                    if (boxSize == 1)
+                    {
+                        byte[] largeSizeBuf = new byte[8];
+                        if (stream.Read(largeSizeBuf, 0, 8) < 8) break;
+                        boxDataSize = (long)(((ulong)largeSizeBuf[0] << 56) | ((ulong)largeSizeBuf[1] << 48) |
+                                             ((ulong)largeSizeBuf[2] << 40) | ((ulong)largeSizeBuf[3] << 32) |
+                                             ((ulong)largeSizeBuf[4] << 24) | ((ulong)largeSizeBuf[5] << 16) |
+                                             ((ulong)largeSizeBuf[6] << 8) | (ulong)largeSizeBuf[7]);
+                        headerLen = 16;
+                    }
+                    else if (boxSize == 0)
+                    {
+                        boxDataSize = stream.Length - boxStart;
+                    }
+
+                    if (boxDataSize < headerLen) break;
+
+                    if (boxType == "moov")
+                    {
+                        long moovEnd = boxStart + boxDataSize;
+                        while (stream.Position < moovEnd - 8)
+                        {
+                            long subBoxStart = stream.Position;
+                            if (stream.Read(hdr, 0, 8) < 8) break;
+                            uint subBoxSize = (uint)((hdr[0] << 24) | (hdr[1] << 16) | (hdr[2] << 8) | hdr[3]);
+                            string subType = Encoding.ASCII.GetString(hdr, 4, 4);
+                            if (subBoxSize < 8 || subBoxStart + subBoxSize > moovEnd) break;
+
+                            if (subType == "uuid")
+                            {
+                                byte[] uuid = new byte[16];
+                                if (stream.Read(uuid, 0, 16) == 16)
+                                {
+                                    // Canon metadata UUID starts with 85 c0 b6 87
+                                    if (uuid[0] == 0x85 && uuid[1] == 0xC0 && uuid[2] == 0xB6 && uuid[3] == 0x87)
+                                    {
+                                        long cmtEnd = subBoxStart + subBoxSize;
+                                        while (stream.Position < cmtEnd - 8)
+                                        {
+                                            long cmtBoxStart = stream.Position;
+                                            if (stream.Read(hdr, 0, 8) < 8) break;
+                                            uint cmtSize = (uint)((hdr[0] << 24) | (hdr[1] << 16) | (hdr[2] << 8) | hdr[3]);
+                                            string cmtType = Encoding.ASCII.GetString(hdr, 4, 4);
+                                            if (cmtSize < 8 || cmtBoxStart + cmtSize > cmtEnd) break;
+
+                                            if (cmtType == "CMT1")
+                                            {
+                                                return stream.Position;
+                                            }
+
+                                            stream.Seek(cmtBoxStart + cmtSize, SeekOrigin.Begin);
+                                        }
+                                    }
+                                }
+                            }
+
+                            stream.Seek(subBoxStart + subBoxSize, SeekOrigin.Begin);
+                        }
+                        break;
+                    }
+
+                    stream.Seek(boxStart + boxDataSize, SeekOrigin.Begin);
+                }
+            }
+            catch { }
+            return -1;
+        }
+
+        private static string? ReadTiffInfoAt(Stream stream, long tiffOffset)
+        {
+            try
+            {
+                if (tiffOffset <= 0 || tiffOffset + 8 > stream.Length) return null;
+                stream.Seek(tiffOffset, SeekOrigin.Begin);
+                byte[] header = new byte[8];
+                if (stream.Read(header, 0, 8) < 8) return null;
+
+                bool isLittle;
+                if (header[0] == 0x49 && header[1] == 0x49 && header[2] == 0x2A && header[3] == 0x00)
+                {
+                    isLittle = true;
+                }
+                else if (header[0] == 0x4D && header[1] == 0x4D && header[2] == 0x00 && header[3] == 0x2A)
+                {
+                    isLittle = false;
+                }
+                else
+                {
+                    return null;
+                }
+
+                uint relIfd = ReadUInt32(header, 4, isLittle);
+                long absIfd = tiffOffset + relIfd;
+                if (absIfd <= 0 || absIfd + 2 >= stream.Length) return null;
+
+                var entries = ReadIfdEntries(stream, (uint)absIfd, isLittle);
+                string? make = ReadTagString(stream, entries, TagMake, isLittle, tiffOffset);
+                string? model = ReadTagString(stream, entries, TagModel, isLittle, tiffOffset);
+                return FormatMakeAndModel(make, model);
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static string? ReadJpegExifCameraInfo(Stream stream)
@@ -802,8 +945,8 @@ namespace Fujify.Services
                             if (TryReadTiffHeader(stream, out bool isLittle, out uint ifdOffset))
                             {
                                 var entries = ReadIfdEntries(stream, (uint)(tiffBase + ifdOffset), isLittle);
-                                string? make = ReadTagString(stream, entries, TagMake, isLittle);
-                                string? model = ReadTagString(stream, entries, TagModel, isLittle);
+                                string? make = ReadTagString(stream, entries, TagMake, isLittle, tiffBase);
+                                string? model = ReadTagString(stream, entries, TagModel, isLittle, tiffBase);
                                 return FormatMakeAndModel(make, model);
                             }
                         }

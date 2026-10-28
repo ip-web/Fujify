@@ -91,5 +91,15 @@ namespace Fujify.Tests
                 WindowsContextMenuService.UnregisterContextMenu();
             }
         }
+
+        [Fact]
+        public void ContextMenuCommands_NullOrEmptyHandling_ShouldNotThrow()
+        {
+            var ex1 = Record.Exception(() => CrossPlatformLauncher.ShowFileProperties(""));
+            Assert.Null(ex1);
+
+            var ex2 = Record.Exception(() => CrossPlatformLauncher.OpenWith(""));
+            Assert.Null(ex2);
+        }
     }
 }
