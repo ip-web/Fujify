@@ -119,6 +119,7 @@ namespace Fujify.ViewModels
                 OnPropertyChanged(nameof(IsStep1Current));
                 OnPropertyChanged(nameof(IsStep2Current));
                 OnPropertyChanged(nameof(IsStep3Current));
+                OnPropertyChanged(nameof(IsStep4Current));
                 (ClearCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
                 (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
             };
@@ -314,12 +315,14 @@ namespace Fujify.ViewModels
             {
                 if (Files.Count == 0) return "1";
                 if (IsProcessing) return "3";
+                if (Files.Count > 0 && Files.All(f => f.IsCompleted)) return "4";
                 return "2";
             }
         }
         public bool IsStep1Current => ActiveStep == "1";
         public bool IsStep2Current => ActiveStep == "2";
         public bool IsStep3Current => ActiveStep == "3";
+        public bool IsStep4Current => ActiveStep == "4";
 
         private bool _isDragOver;
         public bool IsDragOver
@@ -1051,6 +1054,7 @@ namespace Fujify.ViewModels
                     OnPropertyChanged(nameof(IsStep1Current));
                     OnPropertyChanged(nameof(IsStep2Current));
                     OnPropertyChanged(nameof(IsStep3Current));
+                    OnPropertyChanged(nameof(IsStep4Current));
                     (ClearCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
                     (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
                 }
@@ -1425,6 +1429,12 @@ namespace Fujify.ViewModels
             else
             {
                 SortFilesByStatus();
+
+                OnPropertyChanged(nameof(ActiveStep));
+                OnPropertyChanged(nameof(IsStep1Current));
+                OnPropertyChanged(nameof(IsStep2Current));
+                OnPropertyChanged(nameof(IsStep3Current));
+                OnPropertyChanged(nameof(IsStep4Current));
 
                 ProcessingCompleted?.Invoke();
 

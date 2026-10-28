@@ -22,19 +22,6 @@ public partial class App : Application
 
     public static Avalonia.Media.Color GetEffectiveAccentColor()
     {
-        try
-        {
-            if (Current?.PlatformSettings != null)
-            {
-                var colorValues = Current.PlatformSettings.GetColorValues();
-                if (colorValues.AccentColor1 is { } accent && accent.A > 0)
-                {
-                    return accent;
-                }
-            }
-        }
-        catch { }
-
         return FallbackAccentPurple;
     }
 

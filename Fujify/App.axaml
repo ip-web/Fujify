@@ -26,9 +26,22 @@
         <SolidColorBrush x:Key="AppEdgeBrush" Color="#26FFFFFF"/>
         <SolidColorBrush x:Key="AppPrimaryBtnBgBrush" Color="#FFFAF9FC"/>
         <SolidColorBrush x:Key="AppPrimaryBtnFgBrush" Color="#FF252332"/>
-        <SolidColorBrush x:Key="AppSelectedRowBrush" Color="#14CCB6FF"/>
-        <SolidColorBrush x:Key="AppSelectedBorderBrush" Color="#2ECCB6FF"/>
+        <SolidColorBrush x:Key="AppSelectedRowBrush" Color="#1ECCB6FF"/>
+        <SolidColorBrush x:Key="AppSelectedBorderBrush" Color="#4ECCB6FF"/>
         <x:Double x:Key="DataGridSortIconMinWidth">0</x:Double>
+
+        <!-- Global FluentTheme Accent Color Overrides: Constant Purple Palette -->
+        <Color x:Key="SystemAccentColor">#FFC2ACEB</Color>
+        <Color x:Key="SystemAccentColorLight1">#FFE3D6FF</Color>
+        <Color x:Key="SystemAccentColorLight2">#FFF0E8FF</Color>
+        <Color x:Key="SystemAccentColorLight3">#FFF8F4FF</Color>
+        <Color x:Key="SystemAccentColorDark1">#FF9679BC</Color>
+        <Color x:Key="SystemAccentColorDark2">#FF7351B5</Color>
+        <Color x:Key="SystemAccentColorDark3">#FF523886</Color>
+        <SolidColorBrush x:Key="SystemControlHighlightAccentBrush" Color="#FFC2ACEB"/>
+        <SolidColorBrush x:Key="SystemControlHighlightListAccentLowBrush" Color="#1ECCB6FF"/>
+        <SolidColorBrush x:Key="SystemControlHighlightListAccentMediumBrush" Color="#2ECCB6FF"/>
+        <SolidColorBrush x:Key="SystemControlHighlightListAccentHighBrush" Color="#4ECCB6FF"/>
     </Application.Resources>
 
     <Application.Styles>
@@ -82,30 +95,87 @@
             <Setter Property="Background" Value="{DynamicResource AppGlassPillBrush}"/>
         </Style>
 
+        <!-- DataGrid Cell Styling (No Focus Border Adorner) -->
         <Style Selector="DataGridCell">
             <Setter Property="Padding" Value="6,4"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="DataGridCell /template/ Rectangle#FocusBounds">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <Style Selector="DataGridCell:focus /template/ Rectangle#FocusBounds">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <Style Selector="DataGridCell /template/ Grid#FocusBounds">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <Style Selector="DataGridCell:focus /template/ Grid#FocusBounds">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <Style Selector="DataGridCell /template/ Border#FocusBounds">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <Style Selector="DataGridCell:focus /template/ Border#FocusBounds">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <Style Selector="DataGridCell:focus">
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="DataGridCell:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="DataGridCell:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
         </Style>
 
+        <!-- DataGrid Row Styling (Floating Pill Shape matching Mockup) -->
         <Style Selector="DataGridRow">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="Margin" Value="0,3"/>
+            <Setter Property="Margin" Value="8,2.5"/>
+            <Setter Property="Padding" Value="4,0"/>
             <Setter Property="MinHeight" Value="66"/>
+            <Setter Property="ClipToBounds" Value="True"/>
+        </Style>
+        <Style Selector="DataGridRow /template/ Rectangle#BackgroundRectangle">
+            <Setter Property="RadiusX" Value="12"/>
+            <Setter Property="RadiusY" Value="12"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+            <Setter Property="Stroke" Value="Transparent"/>
+            <Setter Property="Fill" Value="Transparent"/>
         </Style>
         <Style Selector="DataGridRow:pointerover">
-            <Setter Property="Background" Value="#08FFFFFF"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Background" Value="#0AFFFFFF"/>
+            <Setter Property="BorderBrush" Value="#18FFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="DataGridRow:pointerover /template/ Rectangle#BackgroundRectangle">
+            <Setter Property="Fill" Value="#0AFFFFFF"/>
+            <Setter Property="Stroke" Value="#18FFFFFF"/>
         </Style>
         <Style Selector="DataGridRow:selected">
-            <Setter Property="Background" Value="{DynamicResource AppSelectedRowBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource AppSelectedBorderBrush}"/>
+            <Setter Property="Background" Value="#1ECCB6FF"/>
+            <Setter Property="BorderBrush" Value="#4ECCB6FF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+            <Setter Property="Fill" Value="#1ECCB6FF"/>
+            <Setter Property="Stroke" Value="#4ECCB6FF"/>
         </Style>
         <Style Selector="DataGridRow:selected:pointerover">
-            <Setter Property="Background" Value="#1ECCB6FF"/>
-            <Setter Property="BorderBrush" Value="#44CCB6FF"/>
+            <Setter Property="Background" Value="#2ECCB6FF"/>
+            <Setter Property="BorderBrush" Value="#6ECCB6FF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="DataGridRow:selected:pointerover /template/ Rectangle#BackgroundRectangle">
+            <Setter Property="Fill" Value="#2ECCB6FF"/>
+            <Setter Property="Stroke" Value="#6ECCB6FF"/>
         </Style>
 
         <!-- View Mode Segmented Toggle Buttons (List vs Grid) -->
@@ -123,32 +193,22 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
 
-        <!-- Micro-interactions & Smooth Transitions -->
-        <Style Selector="Button">
-            <Setter Property="Transitions">
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.15" Easing="CubicEaseOut"/>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut"/>
-                </Transitions>
-            </Setter>
-        </Style>
-        <Style Selector="Button:pointerover">
-            <Setter Property="Opacity" Value="0.90"/>
-        </Style>
-        <Style Selector="Button:pressed">
-            <Setter Property="RenderTransform" Value="scale(0.97)"/>
-            <Setter Property="Opacity" Value="0.75"/>
-        </Style>
-
-        <!-- Studio Primary Action Button (White/Cream Pill with Dark Text) -->
+        <!-- Studio Primary Action Button (White/Cream Pill with Dark Text, Uncompromised White Hover) -->
         <Style Selector="Button.primary">
-            <Setter Property="Background" Value="{DynamicResource AppPrimaryBtnBgBrush}"/>
-            <Setter Property="Foreground" Value="{DynamicResource AppPrimaryBtnFgBrush}"/>
+            <Setter Property="Background" Value="#FFFAF9FC"/>
+            <Setter Property="Foreground" Value="#FF252332"/>
             <Setter Property="BorderBrush" Value="#B3FFFFFF"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="22"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Padding" Value="18,10"/>
+        </Style>
+        <Style Selector="Button.primary /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#FFFAF9FC"/>
+            <Setter Property="Foreground" Value="#FF252332"/>
+            <Setter Property="BorderBrush" Value="#B3FFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="22"/>
             <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Property="Background" Duration="0:0:0.18" Easing="CubicEaseOut"/>
@@ -156,9 +216,26 @@
                 </Transitions>
             </Setter>
         </Style>
+        <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#FFFFFFFF"/>
+            <Setter Property="Foreground" Value="#FF252332"/>
+            <Setter Property="BorderBrush" Value="#FFFFFFFF"/>
+            <Setter Property="RenderTransform" Value="translateY(-1px)"/>
+        </Style>
         <Style Selector="Button.primary:pointerover">
             <Setter Property="Background" Value="#FFFFFFFF"/>
-            <Setter Property="RenderTransform" Value="translateY(-1px)"/>
+            <Setter Property="Foreground" Value="#FF252332"/>
+            <Setter Property="BorderBrush" Value="#FFFFFFFF"/>
+        </Style>
+        <Style Selector="Button.primary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#FFE5E3F3"/>
+            <Setter Property="Foreground" Value="#FF252332"/>
+            <Setter Property="RenderTransform" Value="scale(0.98)"/>
+        </Style>
+        <Style Selector="Button.primary:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#80FAF9FC"/>
+            <Setter Property="Foreground" Value="#66252332"/>
+            <Setter Property="Opacity" Value="0.6"/>
         </Style>
 
         <!-- Studio Secondary Action Button (Translucent Pill) -->
@@ -170,6 +247,13 @@
             <Setter Property="CornerRadius" Value="22"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Padding" Value="18,10"/>
+        </Style>
+        <Style Selector="Button.secondary /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#10FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppEdgeBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextPrimaryBrush}"/>
+            <Setter Property="CornerRadius" Value="22"/>
             <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Property="Background" Duration="0:0:0.18" Easing="CubicEaseOut"/>
@@ -177,9 +261,16 @@
                 </Transitions>
             </Setter>
         </Style>
-        <Style Selector="Button.secondary:pointerover">
-            <Setter Property="Background" Value="#1AFFFFFF"/>
+        <Style Selector="Button.secondary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#22FFFFFF"/>
+            <Setter Property="Foreground" Value="#FFFFFFFF"/>
+            <Setter Property="BorderBrush" Value="#44FFFFFF"/>
             <Setter Property="RenderTransform" Value="translateY(-1px)"/>
+        </Style>
+        <Style Selector="Button.secondary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#0DFFFFFF"/>
+            <Setter Property="Foreground" Value="#FFFFFFFF"/>
+            <Setter Property="RenderTransform" Value="scale(0.98)"/>
         </Style>
 
         <!-- Accent Button -->
@@ -191,35 +282,38 @@
             <Setter Property="FontWeight" Value="Bold"/>
         </Style>
 
-        <!-- Custom Titlebar Dot Buttons matching mockup -->
-        <Style Selector="Button.titlebar-dot">
-            <Setter Property="Width" Value="12"/>
-            <Setter Property="Height" Value="12"/>
-            <Setter Property="CornerRadius" Value="6"/>
+        <!-- Windows Standard Caption Buttons (Minimize, Maximize, Close) -->
+        <Style Selector="Button.win-caption">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="34"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="Background" Value="#0DFFFFFF"/>
-            <Setter Property="BorderBrush" Value="#33FFFFFF"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Foreground" Value="Transparent"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextSecondaryBrush}"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Transitions">
-                <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.15" Easing="CubicEaseOut"/>
-                    <BrushTransition Property="Foreground" Duration="0:0:0.15" Easing="CubicEaseOut"/>
-                </Transitions>
-            </Setter>
         </Style>
-        <Style Selector="Button.titlebar-dot:pointerover">
-            <Setter Property="Background" Value="#26FFFFFF"/>
-            <Setter Property="BorderBrush" Value="#66FFFFFF"/>
-            <Setter Property="Foreground" Value="#C2ACEB"/>
+        <Style Selector="Button.win-caption /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="BorderThickness" Value="0"/>
         </Style>
-        <Style Selector="Button.titlebar-dot.close:pointerover">
-            <Setter Property="Background" Value="#66FF5555"/>
-            <Setter Property="BorderBrush" Value="#99FF5555"/>
-            <Setter Property="Foreground" Value="#FFFFFF"/>
+        <Style Selector="Button.win-caption:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#22FFFFFF"/>
+            <Setter Property="Foreground" Value="#FFFFFFFF"/>
+        </Style>
+        <Style Selector="Button.win-caption:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#33FFFFFF"/>
+        </Style>
+        <Style Selector="Button.win-caption.close:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#E81123"/>
+            <Setter Property="Foreground" Value="#FFFFFFFF"/>
+        </Style>
+        <Style Selector="Button.win-caption.close:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#C4101E"/>
+            <Setter Property="Foreground" Value="#FFFFFFFF"/>
         </Style>
 
         <!-- Navigation Rail Buttons -->
@@ -299,11 +393,25 @@
             <Setter Property="Padding" Value="0,0,0,12"/>
             <Setter Property="Cursor" Value="Hand"/>
         </Style>
-        <Style Selector="Button.tab-btn:pointerover /template/ ContentPresenter">
+        <Style Selector="Button.tab-btn /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
         </Style>
-        <Style Selector="Button.tab-btn:pressed /template/ ContentPresenter">
+        <Style Selector="Button.tab-btn:pointerover">
             <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.tab-btn:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.tab-btn:pressed">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.tab-btn:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
         </Style>
         <Style Selector="Button.tab-btn TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource AppTextSecondaryBrush}"/>
@@ -371,36 +479,43 @@
             <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}"/>
         </Style>
 
-        <!-- ToggleSwitch Solid Grey Off / Purple On Aesthetic -->
+        <!-- ToggleSwitch Solid Grey Off / Purple On Aesthetic with Light Grey Border -->
         <Style Selector="ToggleSwitch /template/ Border#SwitchKnobBounds">
             <Setter Property="Background" Value="#353745"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#525466"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="10"/>
         </Style>
         <Style Selector="ToggleSwitch:unchecked /template/ Border#SwitchKnobBounds">
             <Setter Property="Background" Value="#353745"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#525466"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style Selector="ToggleSwitch:unchecked:pointerover /template/ Border#SwitchKnobBounds">
             <Setter Property="Background" Value="#3F4152"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#6A6C80"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style Selector="ToggleSwitch:pointerover /template/ Border#SwitchKnobBounds">
             <Setter Property="Background" Value="#3F4152"/>
-            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="#6A6C80"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
             <Setter Property="Background" Value="#8474AC"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#BFA6ED"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
         <Style Selector="ToggleSwitch:checked:pointerover /template/ Border#SwitchKnobBounds">
             <Setter Property="Background" Value="#9679BC"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#D5BDFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="ToggleSwitch /template/ Ellipse#SwitchKnobOff">
+            <Setter Property="Fill" Value="#D1CCE0"/>
+        </Style>
+        <Style Selector="ToggleSwitch:checked /template/ Ellipse#SwitchKnobOn">
+            <Setter Property="Fill" Value="#FFFFFF"/>
         </Style>
 
         <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
