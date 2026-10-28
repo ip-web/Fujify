@@ -48,7 +48,7 @@ namespace Fujify.Views
             _aboutPanel = this.FindControl<Grid>("AboutSlidePanel");
 
             var topLevel = TopLevel.GetTopLevel(this);
-            if (topLevel != null)
+            if (topLevel != null && (System.OperatingSystem.IsAndroid() || System.OperatingSystem.IsIOS()))
             {
                 TopLevel.SetAutoSafeAreaPadding(this, false);
                 TopLevel.SetAutoSafeAreaPadding(topLevel, false);
@@ -60,7 +60,7 @@ namespace Fujify.Views
                     ApplySafeArea(mgr.SafeAreaPadding);
                     mgr.SafeAreaChanged += (s, args) => ApplySafeArea(args.SafeAreaPadding);
                 }
-                else if (System.OperatingSystem.IsAndroid() || System.OperatingSystem.IsIOS())
+                else
                 {
                     ApplySafeArea(new Avalonia.Thickness(0, 47, 0, 24));
                 }

@@ -309,8 +309,81 @@ public partial class App : Application
                 Avalonia.Threading.Dispatcher.UIThread.Post(async () => await vm.AddFilesAsync(startupFiles));
             }
 
-            // Free Tier Launch Delay Modal
-            if (!licenseService.IsPro)
+            // Automated verification screenshot captures
+            if (System.Environment.GetEnvironmentVariable("FUJIFIER_SCREENSHOT_MAIN") is { Length: > 0 } mainPath)
+            {
+                mainWindow.Loaded += async (s, e) =>
+                {
+                    await System.Threading.Tasks.Task.Delay(1000);
+                    int mw = System.Math.Max(1180, (int)mainWindow.Bounds.Width);
+                    int mh = System.Math.Max(800, (int)mainWindow.Bounds.Height);
+                    var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(mw, mh), new Avalonia.Vector(96, 96));
+                    rtb.Render(mainWindow);
+                    rtb.Save(mainPath);
+                    System.Environment.Exit(0);
+                };
+            }
+            else if (System.Environment.GetEnvironmentVariable("FUJIFIER_SCREENSHOT_PHOTOINFO") is { Length: > 0 } piPath)
+            {
+                mainWindow.Loaded += async (s, e) =>
+                {
+                    await System.Threading.Tasks.Task.Delay(1000);
+                    vm.SelectInspectorInfoTabCommand.Execute(null);
+                    if (vm.Files.Count > 0)
+                    {
+                        vm.SelectedFile = vm.Files[0];
+                    }
+                    await System.Threading.Tasks.Task.Delay(500);
+                    int mw = System.Math.Max(1180, (int)mainWindow.Bounds.Width);
+                    int mh = System.Math.Max(800, (int)mainWindow.Bounds.Height);
+                    var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(mw, mh), new Avalonia.Vector(96, 96));
+                    rtb.Render(mainWindow);
+                    rtb.Save(piPath);
+                    System.Environment.Exit(0);
+                };
+            }
+            else if (System.Environment.GetEnvironmentVariable("FUJIFIER_SCREENSHOT_PREFS") is { Length: > 0 } prefsPath)
+            {
+                mainWindow.Loaded += async (s, e) =>
+                {
+                    await System.Threading.Tasks.Task.Delay(500);
+                    var prefsWin = new PreferencesWindow
+                    {
+                        DataContext = new ViewModels.PreferencesViewModel(settingsService, licenseService, updateService: null, dialogService)
+                    };
+                    prefsWin.Loaded += async (s2, e2) =>
+                    {
+                        await System.Threading.Tasks.Task.Delay(800);
+                        int pw = System.Math.Max(660, (int)prefsWin.Bounds.Width);
+                        int ph = System.Math.Max(700, (int)prefsWin.Bounds.Height);
+                        var prtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(pw, ph), new Avalonia.Vector(96, 96));
+                        prtb.Render(prefsWin);
+                        prtb.Save(prefsPath);
+                        System.Environment.Exit(0);
+                    };
+                    prefsWin.Show(mainWindow);
+                };
+            }
+            else if (System.Environment.GetEnvironmentVariable("FUJIFIER_SCREENSHOT_ABOUT") is { Length: > 0 } aboutPath)
+            {
+                mainWindow.Loaded += async (s, e) =>
+                {
+                    await System.Threading.Tasks.Task.Delay(500);
+                    var aboutWin = new AboutWindow();
+                    aboutWin.Loaded += async (s2, e2) =>
+                    {
+                        await System.Threading.Tasks.Task.Delay(800);
+                        int aw = System.Math.Max(440, (int)aboutWin.Bounds.Width);
+                        int ah = System.Math.Max(470, (int)aboutWin.Bounds.Height);
+                        var artb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(aw, ah), new Avalonia.Vector(96, 96));
+                        artb.Render(aboutWin);
+                        artb.Save(aboutPath);
+                        System.Environment.Exit(0);
+                    };
+                    aboutWin.Show(mainWindow);
+                };
+            }
+            else if (!licenseService.IsPro)
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
                 {

@@ -60,11 +60,14 @@
                     <!-- Functional Link Buttons -->
                     <Grid ColumnDefinitions="*,*,*">
                         <Button Grid.Column="0" Content="Website" Click="Website_Click" Classes="secondary"
-                                HorizontalAlignment="Center" FontSize="10.5" Height="28" Padding="10,0" CornerRadius="14"/>
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                FontSize="11" Height="30" Padding="0" CornerRadius="15" Margin="0,0,4,0"/>
                         <Button Grid.Column="1" Content="GitHub" Click="GitHub_Click" Classes="secondary"
-                                HorizontalAlignment="Center" FontSize="10.5" Height="28" Padding="10,0" CornerRadius="14"/>
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                FontSize="11" Height="30" Padding="0" CornerRadius="15" Margin="2,0,2,0"/>
                         <Button Grid.Column="2" Content="Updates" Click="Releases_Click" Classes="secondary"
-                                HorizontalAlignment="Center" FontSize="10.5" Height="28" Padding="10,0" CornerRadius="14"/>
+                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                FontSize="11" Height="30" Padding="0" CornerRadius="15" Margin="4,0,0,0"/>
                     </Grid>
 
                     <Separator Margin="0,2" Background="{DynamicResource AppEdgeBrush}"/>
@@ -76,7 +79,7 @@
             </Border>
 
             <!-- Footer -->
-            <Button Grid.Row="2" Content="Close" Click="Close_Click" Classes="primary" Height="34" Padding="24,0" CornerRadius="17"
+            <Button Grid.Row="2" Content="Close" Click="Close_Click" Classes="primary" Height="34" Width="90" Padding="0" CornerRadius="17"
                     HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="0,14,0,0"/>
         </Grid>
     </Border>

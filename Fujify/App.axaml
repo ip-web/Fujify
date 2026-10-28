@@ -234,6 +234,32 @@
             <Setter Property="Stroke" Value="#6ECCB6FF"/>
         </Style>
 
+        <!-- Global Interactive Controls Pointer & Content Alignment -->
+        <Style Selector="Button">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="ToggleSwitch">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="CheckBox">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="RadioButton">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Slider">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="MenuItem">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="DataGridRow">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
         <!-- View Mode Segmented Toggle Buttons (List vs Grid) -->
         <Style Selector="Button.view-toggle">
             <Setter Property="Background" Value="Transparent"/>
@@ -258,6 +284,8 @@
             <Setter Property="CornerRadius" Value="22"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Padding" Value="18,10"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
         <Style Selector="Button.primary /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="#FFFAF9FC"/>
@@ -300,6 +328,8 @@
             <Setter Property="CornerRadius" Value="22"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Padding" Value="18,10"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
         <Style Selector="Button.secondary /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="#10FFFFFF"/>
@@ -330,6 +360,8 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="CornerRadius" Value="22"/>
             <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
         <!-- Windows Standard Caption Buttons (Minimize, Maximize, Close) -->
