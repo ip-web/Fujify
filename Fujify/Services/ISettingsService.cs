@@ -72,6 +72,7 @@ namespace Fujify.Services
         public int UsedActivations { get; set; } = 0;
         public string LicenseApiBaseUrl { get; set; } = "https://fujifier.cc/wp-json/fujifier/v1";
         public bool CheckForUpdatesOnStartup { get; set; } = true;
+        public bool IsQuickSettingsExpanded { get; set; } = true;
         public string? SkippedVersion { get; set; }
         public System.DateTime? LastUpdateCheck { get; set; }
     }

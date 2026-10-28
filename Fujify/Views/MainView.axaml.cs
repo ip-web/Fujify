@@ -82,6 +82,17 @@ namespace Fujify.Views
                 bottomInset = 24;
             }
 
+            // On Android version, add extra padding on top (camera punch hole / status bar) and bottom (navigation / ad banner)
+            if (System.OperatingSystem.IsAndroid())
+            {
+                topInset += 12;
+                bottomInset += 54;
+            }
+            else if (System.OperatingSystem.IsIOS() && (Fujify.Services.AdService.Instance?.ShouldShowAds ?? false))
+            {
+                bottomInset += 50;
+            }
+
             var header = this.FindControl<Border>("HeaderBar");
             if (header != null)
             {

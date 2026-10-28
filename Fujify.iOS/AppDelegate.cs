@@ -138,6 +138,9 @@ public class AppDelegate : AvaloniaAppDelegate<App>
                 Window.BackgroundColor = UIColor.FromRGB(24, 24, 27);
             }
 
+            // Initialize Google Mobile Ads (Banner, Splash Video, Interstitial)
+            AdManager.Instance.Initialize(Window);
+
             if (launchOptions != null && launchOptions.ContainsKey(UIApplication.LaunchOptionsUrlKey))
             {
                 var launchUrl = launchOptions[UIApplication.LaunchOptionsUrlKey] as NSUrl;

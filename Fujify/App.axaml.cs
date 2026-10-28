@@ -367,6 +367,7 @@ public partial class App : Application
             // Free Tier Launch Delay Modal for mobile
             if (!licenseService.IsPro)
             {
+                vm.ShowSplashAd();
                 Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
                 {
                     await Views.FreeTierDelayDialog.ShowDelayDialogAsync(null, licenseService, isPostConversion: false);

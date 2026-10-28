@@ -127,6 +127,8 @@ namespace Fujify.ViewModels
             OpenUpdateCommand = new AsyncRelayCommand(ExecuteOpenUpdateAsync);
             ReportBugCommand = new RelayCommand(ExecuteReportBug);
             OpenWebsiteCommand = new RelayCommand(ExecuteOpenWebsite);
+            ToggleQuickSettingsCommand = new RelayCommand(() => IsQuickSettingsExpanded = !IsQuickSettingsExpanded);
+            _isQuickSettingsExpanded = _settingsService.Settings.IsQuickSettingsExpanded;
 
             RemoveFileCommand = new RelayCommand<object>(param =>
             {
@@ -231,6 +233,7 @@ namespace Fujify.ViewModels
         public ICommand ClearOutputFolderCommand { get; }
         public ICommand OpenWithCommand { get; }
         public ICommand ResetStatusCommand { get; }
+        public ICommand ToggleQuickSettingsCommand { get; }
 
         private bool _isDragOver;
         public bool IsDragOver
@@ -380,6 +383,7 @@ namespace Fujify.ViewModels
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(SuffixPreview));
                     OnPropertyChanged(nameof(SuffixLabelContent));
+                    OnPropertyChanged(nameof(QuickSettingsSummary));
                 }
             }
         }
@@ -396,6 +400,7 @@ namespace Fujify.ViewModels
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(SuffixPreview));
                     OnPropertyChanged(nameof(SuffixLabelContent));
+                    OnPropertyChanged(nameof(QuickSettingsSummary));
                 }
             }
         }
@@ -417,6 +422,7 @@ namespace Fujify.ViewModels
                     _settingsService.Save();
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(SubfolderPreview));
+                    OnPropertyChanged(nameof(QuickSettingsSummary));
                     if (_preferences != null)
                     {
                         _preferences.CreateSubfolder = value;
@@ -436,6 +442,7 @@ namespace Fujify.ViewModels
                     _settingsService.Save();
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(SubfolderPreview));
+                    OnPropertyChanged(nameof(QuickSettingsSummary));
                     if (_preferences != null)
                     {
                         _preferences.SubfolderUseOriginalName = value;
@@ -455,6 +462,7 @@ namespace Fujify.ViewModels
                     _settingsService.Save();
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(SubfolderPreview));
+                    OnPropertyChanged(nameof(QuickSettingsSummary));
                     if (_preferences != null)
                     {
                         _preferences.SubfolderSuffix = value;
@@ -474,6 +482,7 @@ namespace Fujify.ViewModels
                     _settingsService.Save();
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(SubfolderPreview));
+                    OnPropertyChanged(nameof(QuickSettingsSummary));
                     if (_preferences != null)
                     {
                         _preferences.SubfolderCustomName = value;
@@ -515,6 +524,7 @@ namespace Fujify.ViewModels
                     {
                         _preferences.AutoOpenInLightroom = value;
                     }
+                    OnPropertyChanged(nameof(QuickSettingsSummary));
                 }
             }
         }
@@ -533,9 +543,40 @@ namespace Fujify.ViewModels
                     {
                         _preferences.AutoOpenOutputFolder = value;
                     }
+                    OnPropertyChanged(nameof(QuickSettingsSummary));
                 }
             }
         }
+
+        private bool _isQuickSettingsExpanded = true;
+        public bool IsQuickSettingsExpanded
+        {
+            get => _isQuickSettingsExpanded;
+            set
+            {
+                if (SetProperty(ref _isQuickSettingsExpanded, value))
+                {
+                    _settingsService.Settings.IsQuickSettingsExpanded = value;
+                    _settingsService.Save();
+                }
+            }
+        }
+
+        public string QuickSettingsSummary
+        {
+            get
+            {
+                var parts = new List<string>();
+                if (CreateBackup) parts.Add("Backup");
+                if (AppendSuffix) parts.Add("Suffix");
+                if (CreateSubfolder) parts.Add("Subfolder");
+                if (AutoOpenOutputFolder) parts.Add("Open Folder");
+                if (IsOpenInLightroomSupported && AutoOpenInLightroom) parts.Add("Lightroom");
+                return parts.Count > 0 ? string.Join(" • ", parts) : "Default";
+            }
+        }
+
+        public void ShowSplashAd() => _adService.ShowSplashAd();
 
         public bool LosslessCompression
         {
@@ -894,7 +935,13 @@ namespace Fujify.ViewModels
         public bool CreateBackup
         {
             get => _createBackup;
-            set => SetProperty(ref _createBackup, value);
+            set
+            {
+                if (SetProperty(ref _createBackup, value))
+                {
+                    OnPropertyChanged(nameof(QuickSettingsSummary));
+                }
+            }
         }
 
         public bool IsProcessing

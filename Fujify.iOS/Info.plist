@@ -14,6 +14,15 @@
     <string>1</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon.png</string>
+    <key>GADApplicationIdentifier</key>
+    <string>ca-app-pub-7034111600506292~2070313807</string>
+    <key>SKAdNetworkItems</key>
+    <array>
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>cstr6suwn9.skadnetwork</string>
+        </dict>
+    </array>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>MinimumOSVersion</key>
