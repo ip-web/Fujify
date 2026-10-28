@@ -164,16 +164,7 @@ namespace Fujify.ViewModels
             OpenWithCommand = new RelayCommand<FileItem>(ExecuteOpenWith);
             ResetStatusCommand = new RelayCommand<object>(ExecuteResetStatus);
 
-            OpenOutputFolderCommand = new RelayCommand(() =>
-            {
-                string folder = !string.IsNullOrEmpty(OutputFolderPath) && Directory.Exists(OutputFolderPath)
-                    ? OutputFolderPath
-                    : (Files.Count > 0 ? (Path.GetDirectoryName(Files[0].FilePath) ?? "") : "");
-                if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
-                {
-                    CrossPlatformLauncher.OpenFolder(folder);
-                }
-            });
+            OpenOutputFolderCommand = new RelayCommand(ExecuteOpenOutputFolder);
             ClearOutputFolderCommand = new RelayCommand(() => OutputFolderPath = null);
 
             OpenCameraPickerCommand = new RelayCommand(() =>
@@ -219,7 +210,8 @@ namespace Fujify.ViewModels
         private readonly List<string> _recentlyConvertedDngFiles = new();
         public IReadOnlyList<string> RecentlyConvertedDngFiles => _recentlyConvertedDngFiles;
         public bool HasRecentlyConvertedFiles => _recentlyConvertedDngFiles.Count > 0;
-        public bool CanOpenInLightroom => HasRecentlyConvertedFiles && ModalTitle == "Processing completed";
+        public bool IsOpenInLightroomSupported => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
+        public bool CanOpenInLightroom => IsOpenInLightroomSupported && HasRecentlyConvertedFiles && ModalTitle == "Processing completed";
 
         #region Properties
 
@@ -412,6 +404,101 @@ namespace Fujify.ViewModels
 
         public string SuffixLabelContent => $"Add Suffix ({(string.IsNullOrWhiteSpace(Suffix) ? "-fujified" : Suffix.Trim())})";
 
+        public bool CreateSubfolder
+        {
+            get => _settingsService.Settings.CreateSubfolder;
+            set
+            {
+                if (_settingsService.Settings.CreateSubfolder != value)
+                {
+                    _settingsService.Settings.CreateSubfolder = value;
+                    _settingsService.Save();
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(SubfolderPreview));
+                    if (_preferences != null)
+                    {
+                        _preferences.CreateSubfolder = value;
+                    }
+                }
+            }
+        }
+
+        public bool SubfolderUseOriginalName
+        {
+            get => _settingsService.Settings.SubfolderUseOriginalName;
+            set
+            {
+                if (_settingsService.Settings.SubfolderUseOriginalName != value)
+                {
+                    _settingsService.Settings.SubfolderUseOriginalName = value;
+                    _settingsService.Save();
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(SubfolderPreview));
+                    if (_preferences != null)
+                    {
+                        _preferences.SubfolderUseOriginalName = value;
+                    }
+                }
+            }
+        }
+
+        public string SubfolderSuffix
+        {
+            get => _settingsService.Settings.SubfolderSuffix;
+            set
+            {
+                if (_settingsService.Settings.SubfolderSuffix != value)
+                {
+                    _settingsService.Settings.SubfolderSuffix = value;
+                    _settingsService.Save();
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(SubfolderPreview));
+                    if (_preferences != null)
+                    {
+                        _preferences.SubfolderSuffix = value;
+                    }
+                }
+            }
+        }
+
+        public string SubfolderCustomName
+        {
+            get => _settingsService.Settings.SubfolderCustomName;
+            set
+            {
+                if (_settingsService.Settings.SubfolderCustomName != value)
+                {
+                    _settingsService.Settings.SubfolderCustomName = value;
+                    _settingsService.Save();
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(SubfolderPreview));
+                    if (_preferences != null)
+                    {
+                        _preferences.SubfolderCustomName = value;
+                    }
+                }
+            }
+        }
+
+        public string SubfolderPreview
+        {
+            get
+            {
+                if (!CreateSubfolder) return string.Empty;
+
+                string folderSample = Files.Count > 0
+                    ? (Path.GetFileName(Path.GetDirectoryName(Files[0].FilePath)) ?? "Photos")
+                    : "Photos";
+                if (string.IsNullOrWhiteSpace(folderSample)) folderSample = "Photos";
+
+                string subfolderName = SubfolderUseOriginalName
+                    ? $"{folderSample}{(string.IsNullOrWhiteSpace(SubfolderSuffix) ? "" : SubfolderSuffix.Trim())}"
+                    : (string.IsNullOrWhiteSpace(SubfolderCustomName) ? "Fujified" : SubfolderCustomName.Trim());
+
+                return $"{folderSample}/{subfolderName}/";
+            }
+        }
+
         public bool AutoOpenInLightroom
         {
             get => _settingsService.Settings.AutoOpenInLightroom;
@@ -425,6 +512,24 @@ namespace Fujify.ViewModels
                     if (_preferences != null)
                     {
                         _preferences.AutoOpenInLightroom = value;
+                    }
+                }
+            }
+        }
+
+        public bool AutoOpenOutputFolder
+        {
+            get => _settingsService.Settings.AutoOpenOutputFolder;
+            set
+            {
+                if (_settingsService.Settings.AutoOpenOutputFolder != value)
+                {
+                    _settingsService.Settings.AutoOpenOutputFolder = value;
+                    _settingsService.Save();
+                    OnPropertyChanged();
+                    if (_preferences != null)
+                    {
+                        _preferences.AutoOpenOutputFolder = value;
                     }
                 }
             }
@@ -508,7 +613,14 @@ namespace Fujify.ViewModels
             OnPropertyChanged(nameof(Suffix));
             OnPropertyChanged(nameof(SuffixPreview));
             OnPropertyChanged(nameof(SuffixLabelContent));
+            OnPropertyChanged(nameof(CreateSubfolder));
+            OnPropertyChanged(nameof(SubfolderUseOriginalName));
+            OnPropertyChanged(nameof(SubfolderSuffix));
+            OnPropertyChanged(nameof(SubfolderCustomName));
+            OnPropertyChanged(nameof(SubfolderPreview));
             OnPropertyChanged(nameof(AutoOpenInLightroom));
+            OnPropertyChanged(nameof(IsOpenInLightroomSupported));
+            OnPropertyChanged(nameof(AutoOpenOutputFolder));
             OnPropertyChanged(nameof(LosslessCompression));
             OnPropertyChanged(nameof(OverallStatusText));
             OnPropertyChanged(nameof(ProgressSummaryText));
@@ -709,22 +821,6 @@ namespace Fujify.ViewModels
             if (PlatformOpenInLightroomCallback != null)
             {
                 PlatformOpenInLightroomCallback(targetFiles);
-            }
-            else
-            {
-                // Fallback for desktop: open with default system viewer or Lightroom
-                foreach (var file in targetFiles)
-                {
-                    try
-                    {
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                        {
-                            FileName = file,
-                            UseShellExecute = true
-                        });
-                    }
-                    catch { }
-                }
             }
         }
 
@@ -1138,6 +1234,8 @@ namespace Fujify.ViewModels
             }
             else
             {
+                SortFilesByStatus();
+
                 ProcessingCompleted?.Invoke();
 
                 string message = hasProcessingErrors
@@ -1150,9 +1248,14 @@ namespace Fujify.ViewModels
                     convertedToOpen = _recentlyConvertedDngFiles.ToList();
                 }
 
-                if (_settingsService.Settings.AutoOpenInLightroom && convertedToOpen.Count > 0)
+                if (IsOpenInLightroomSupported && _settingsService.Settings.AutoOpenInLightroom && convertedToOpen.Count > 0)
                 {
                     OpenInLightroom(convertedToOpen);
+                }
+
+                if (_settingsService.Settings.AutoOpenOutputFolder)
+                {
+                    ExecuteOpenOutputFolder();
                 }
 
                 await _dialogService.ShowMessageAsync(OwnerWindow, "Processing completed", message);
@@ -1162,6 +1265,79 @@ namespace Fujify.ViewModels
                     _adService.ShowInterstitialAd();
                     await FreeTierDelayDialog.ShowDelayDialogAsync(OwnerWindow, _licenseService, isPostConversion: true);
                 }
+            }
+        }
+
+        public void ExecuteOpenOutputFolder()
+        {
+            string folder = string.Empty;
+            lock (_recentlyConvertedDngFiles)
+            {
+                if (_recentlyConvertedDngFiles.Count > 0)
+                {
+                    var dir = Path.GetDirectoryName(_recentlyConvertedDngFiles[0]);
+                    if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                    {
+                        folder = dir;
+                    }
+                }
+            }
+
+            if (string.IsNullOrEmpty(folder))
+            {
+                folder = !string.IsNullOrEmpty(OutputFolderPath) && Directory.Exists(OutputFolderPath)
+                    ? OutputFolderPath
+                    : (Files.Count > 0 ? (Path.GetDirectoryName(Files[0].FilePath) ?? "") : "");
+            }
+
+            if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
+            {
+                CrossPlatformLauncher.OpenFolder(folder);
+            }
+        }
+
+        public void SortFilesByStatus()
+        {
+            void PerformSort()
+            {
+                if (Files.Count <= 1) return;
+
+                int GetStatusPriority(FileItem item)
+                {
+                    if (item.IsError) return 0;
+                    if (!item.IsCompleted && item.Status != "✔" && item.Status != "✓") return 1;
+                    return 2;
+                }
+
+                var sorted = Files
+                    .Select((item, index) => (item, index))
+                    .OrderBy(x => GetStatusPriority(x.item))
+                    .ThenBy(x => x.index)
+                    .Select(x => x.item)
+                    .ToList();
+
+                for (int i = 0; i < sorted.Count; i++)
+                {
+                    int currentIndex = Files.IndexOf(sorted[i]);
+                    if (currentIndex != i)
+                    {
+                        Files.Move(currentIndex, i);
+                    }
+                }
+
+                if (sorted.Count > 0 && sorted[0].IsError)
+                {
+                    SelectedFile = sorted[0];
+                }
+            }
+
+            if (Dispatcher.UIThread.CheckAccess())
+            {
+                PerformSort();
+            }
+            else
+            {
+                Dispatcher.UIThread.Post(PerformSort);
             }
         }
 
@@ -1207,11 +1383,12 @@ namespace Fujify.ViewModels
                 baseFileName += _settingsService.Settings.Suffix.Trim();
             }
 
-            string initialDestFilePath = !string.IsNullOrEmpty(outputFolder)
-                ? Path.Combine(outputFolder, baseFileName + ".dng")
-                : Path.Combine(Path.GetDirectoryName(filePath) ?? string.Empty, baseFileName + ".dng");
+            string initialDestFilePath = OutputLocationHelper.ComputeInitialDestinationFilePath(
+                filePath,
+                outputFolder,
+                _settingsService.Settings);
 
-            bool isSameFileInPlace = isOriginallyDng && string.IsNullOrEmpty(outputFolder) && !appendSuffix;
+            bool isSameFileInPlace = isOriginallyDng && string.IsNullOrEmpty(outputFolder) && !appendSuffix && !_settingsService.Settings.CreateSubfolder;
             bool fileAlreadyExists;
             lock (reservedOutputPaths)
             {
@@ -1293,7 +1470,7 @@ namespace Fujify.ViewModels
                 bool embedOriginalRaw = _settingsService.Settings.EmbedOriginalRaw;
 
                 string targetDngForConversion;
-                if (string.IsNullOrEmpty(outputFolder))
+                if (string.IsNullOrEmpty(outputFolder) && !_settingsService.Settings.CreateSubfolder)
                 {
                     targetDngForConversion = finalDestFilePath;
                 }
@@ -1323,6 +1500,15 @@ namespace Fujify.ViewModels
             string? customOutputPath = (!string.IsNullOrEmpty(outputFolder) || finalDestFilePath != dngFilePath)
                 ? finalDestFilePath
                 : null;
+
+            if (!string.IsNullOrEmpty(customOutputPath))
+            {
+                string? destDir = Path.GetDirectoryName(customOutputPath);
+                if (!string.IsNullOrEmpty(destDir) && !Directory.Exists(destDir))
+                {
+                    Directory.CreateDirectory(destDir);
+                }
+            }
 
             var metaResult = await Task.Run(() => _metadataService.InjectFujifilmMetadata(
                 dngFilePath,

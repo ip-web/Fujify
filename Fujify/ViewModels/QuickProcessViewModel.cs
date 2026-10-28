@@ -332,21 +332,9 @@ namespace Fujify.ViewModels
 
                 CanOpenFolder = !string.IsNullOrEmpty(effectiveFolder) && Directory.Exists(effectiveFolder);
 
-                // Auto-open in Lightroom if enabled in user preferences
-                if (_settingsService.Settings.AutoOpenInLightroom && _convertedDngFiles.Count > 0)
+                if (_settingsService.Settings.AutoOpenOutputFolder && !string.IsNullOrEmpty(effectiveFolder) && Directory.Exists(effectiveFolder))
                 {
-                    foreach (var file in _convertedDngFiles)
-                    {
-                        try
-                        {
-                            Process.Start(new ProcessStartInfo
-                            {
-                                FileName = file,
-                                UseShellExecute = true
-                            });
-                        }
-                        catch { }
-                    }
+                    CrossPlatformLauncher.OpenFolder(effectiveFolder);
                 }
 
                 // Free Tier Post-Conversion 15s Delay Modal
@@ -390,11 +378,12 @@ namespace Fujify.ViewModels
                 baseFileName += _settingsService.Settings.Suffix.Trim();
             }
 
-            string initialDestFilePath = !string.IsNullOrEmpty(outputFolder)
-                ? Path.Combine(outputFolder, baseFileName + ".dng")
-                : Path.Combine(Path.GetDirectoryName(filePath) ?? string.Empty, baseFileName + ".dng");
+            string initialDestFilePath = OutputLocationHelper.ComputeInitialDestinationFilePath(
+                filePath,
+                outputFolder,
+                _settingsService.Settings);
 
-            bool isSameFileInPlace = isOriginallyDng && string.IsNullOrEmpty(outputFolder) && !appendSuffix;
+            bool isSameFileInPlace = isOriginallyDng && string.IsNullOrEmpty(outputFolder) && !appendSuffix && !_settingsService.Settings.CreateSubfolder;
             string finalDestFilePath = initialDestFilePath;
 
             lock (_reservedOutputPaths)
@@ -415,7 +404,7 @@ namespace Fujify.ViewModels
                 bool embedOriginalRaw = _settingsService.Settings.EmbedOriginalRaw;
 
                 string targetDngForConversion;
-                if (string.IsNullOrEmpty(outputFolder))
+                if (string.IsNullOrEmpty(outputFolder) && !_settingsService.Settings.CreateSubfolder)
                 {
                     targetDngForConversion = finalDestFilePath;
                 }
@@ -443,6 +432,15 @@ namespace Fujify.ViewModels
             string? customOutputPath = (!string.IsNullOrEmpty(outputFolder) || finalDestFilePath != dngFilePath)
                 ? finalDestFilePath
                 : null;
+
+            if (!string.IsNullOrEmpty(customOutputPath))
+            {
+                string? destDir = Path.GetDirectoryName(customOutputPath);
+                if (!string.IsNullOrEmpty(destDir) && !Directory.Exists(destDir))
+                {
+                    Directory.CreateDirectory(destDir);
+                }
+            }
 
             var metaResult = await Task.Run(() => _metadataService.InjectFujifilmMetadata(
                 dngFilePath,

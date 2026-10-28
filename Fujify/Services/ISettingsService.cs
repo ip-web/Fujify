@@ -51,6 +51,11 @@ namespace Fujify.Services
         public bool AutoOpenInLightroom { get; set; } = false;
         public bool AppendSuffix { get; set; } = false;
         public string Suffix { get; set; } = "-fujified";
+        public bool CreateSubfolder { get; set; } = false;
+        public bool SubfolderUseOriginalName { get; set; } = true;
+        public string SubfolderSuffix { get; set; } = "-fujified";
+        public string SubfolderCustomName { get; set; } = "Fujified";
+        public bool AutoOpenOutputFolder { get; set; } = false;
         public bool LosslessCompression { get; set; } = true;
         public bool EnableWindowsContextMenu { get; set; } = false;
         public string? LicenseKey { get; set; }
