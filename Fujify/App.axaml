@@ -193,7 +193,7 @@
             <Setter Property="BorderBrush" Value="{DynamicResource AppEdgeBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="23"/>
-            <Setter Property="BoxShadow" Value="0 8px 24px #00000028"/>
+            <Setter Property="BoxShadow" Value="0 8 24 0 #28000000"/>
         </Style>
 
         <Style Selector="Border.card">
