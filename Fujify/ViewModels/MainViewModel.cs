@@ -491,6 +491,11 @@ namespace Fujify.ViewModels
 
         public bool IsTabletOrDesktopLayout => !_isPhoneLayout;
 
+        public bool ShowCaptionButtons =>
+            !OperatingSystem.IsAndroid() &&
+            !OperatingSystem.IsIOS() &&
+            !(Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ISingleViewApplicationLifetime);
+
         private bool _isTabletLayout;
         public bool IsTabletLayout
         {

@@ -128,7 +128,12 @@ public partial class App : Application
         SetOrUpdateBrush("AppTextPrimaryBrush", text1Color);
         SetOrUpdateBrush("AppTextSecondaryBrush", text2Color);
         SetOrUpdateBrush("AppGlassPillBrush", glassPill);
-        SetOrUpdateBrush("AppEdgeBrush", Avalonia.Media.Color.Parse("#26FFFFFF"));
+        var edgeColor = isLight ? Avalonia.Media.Color.Parse("#1E000000") : Avalonia.Media.Color.Parse("#26FFFFFF");
+        var primaryBtnBg = isLight ? Avalonia.Media.Color.Parse("#1F1E26") : Avalonia.Media.Color.Parse("#FFFAF9FC");
+        var primaryBtnFg = isLight ? Avalonia.Media.Color.Parse("#FFFFFF") : Avalonia.Media.Color.Parse("#FF252332");
+        SetOrUpdateBrush("AppEdgeBrush", edgeColor);
+        SetOrUpdateBrush("AppPrimaryBtnBgBrush", primaryBtnBg);
+        SetOrUpdateBrush("AppPrimaryBtnFgBrush", primaryBtnFg);
         SetOrUpdateBrush("AppAccentLightBrush", Avalonia.Media.Color.Parse("#E3D6FF"));
         UpdateAccentBrush();
     }

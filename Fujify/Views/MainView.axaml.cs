@@ -101,6 +101,18 @@ namespace Fujify.Views
                 header.Padding = new Avalonia.Thickness(16 + leftInset, 4 + topInset, 16 + rightInset, 6);
             }
 
+            var phoneTop = this.FindControl<Border>("PhoneTopBar");
+            if (phoneTop != null)
+            {
+                phoneTop.Padding = new Avalonia.Thickness(16 + leftInset, 8 + topInset, 16 + rightInset, 6);
+            }
+
+            var mobileSheet = this.FindControl<Border>("MobileSidebarSheet");
+            if (mobileSheet != null)
+            {
+                mobileSheet.Padding = new Avalonia.Thickness(0, 0, 0, bottomInset);
+            }
+
             var phoneBottom = this.FindControl<Border>("PhoneBottomBar");
             if (phoneBottom != null)
             {
