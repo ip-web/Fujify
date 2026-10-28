@@ -8,6 +8,9 @@
         Width="1180" Height="800"
         MinWidth="380" MinHeight="420"
         WindowStartupLocation="CenterScreen"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="35"
         TransparencyLevelHint="Mica, AcrylicBlur"
         Background="Transparent"
         Icon="/Assets/images/logo.ico">

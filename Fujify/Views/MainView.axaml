@@ -13,24 +13,32 @@
     </UserControl.KeyBindings>
 
     <Grid Background="{DynamicResource AppBackgroundBrush}" ClipToBounds="True">
-        <!-- AMBIENT PURPLE & TEAL GLOW ACCENTS (Matching HTML Mockup) -->
+        <!-- AMBIENT PURPLE & TEAL GLOW ACCENTS (Smooth & Large without Banding) -->
         <Canvas IsHitTestVisible="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <!-- Top-Right Purple Ambient Glow -->
-            <Ellipse Width="650" Height="420" Canvas.Right="-120" Canvas.Top="-150" Opacity="0.14">
+            <!-- Top-Right Smooth Ambient Glow (Large, Non-banding) -->
+            <Ellipse Width="1400" Height="950" Canvas.Right="-250" Canvas.Top="-300">
                 <Ellipse.Fill>
                     <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" RadiusX="50%" RadiusY="50%">
-                        <GradientStop Color="#C2ACEB" Offset="0"/>
-                        <GradientStop Color="#7351B5" Offset="0.5"/>
-                        <GradientStop Color="Transparent" Offset="1"/>
+                        <GradientStop Color="#406B49A8" Offset="0.0"/>
+                        <GradientStop Color="#365F4095" Offset="0.12"/>
+                        <GradientStop Color="#2C523682" Offset="0.25"/>
+                        <GradientStop Color="#22442C6E" Offset="0.38"/>
+                        <GradientStop Color="#1937235A" Offset="0.52"/>
+                        <GradientStop Color="#102A1A47" Offset="0.67"/>
+                        <GradientStop Color="#091E1333" Offset="0.80"/>
+                        <GradientStop Color="#04140D22" Offset="0.91"/>
+                        <GradientStop Color="#000E1016" Offset="1.0"/>
                     </RadialGradientBrush>
                 </Ellipse.Fill>
             </Ellipse>
             <!-- Bottom-Left Subtle Teal Ambient Glow -->
-            <Ellipse Width="550" Height="360" Canvas.Left="-100" Canvas.Bottom="-100" Opacity="0.08">
+            <Ellipse Width="850" Height="600" Canvas.Left="-180" Canvas.Bottom="-180" Opacity="0.12">
                 <Ellipse.Fill>
                     <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" RadiusX="50%" RadiusY="50%">
-                        <GradientStop Color="#276E69" Offset="0"/>
-                        <GradientStop Color="Transparent" Offset="1"/>
+                        <GradientStop Color="#FF1F4844" Offset="0.0"/>
+                        <GradientStop Color="#B31A3D39" Offset="0.35"/>
+                        <GradientStop Color="#66142F2D" Offset="0.65"/>
+                        <GradientStop Color="#000E1016" Offset="1.0"/>
                     </RadialGradientBrush>
                 </Ellipse.Fill>
             </Ellipse>
@@ -39,32 +47,38 @@
         <!-- BASE APP INTERFACE -->
         <Grid RowDefinitions="Auto,*">
 
-            <!-- 1. TOP TITLEBAR (Custom Reduced-Glass Studio Titlebar) -->
+            <!-- 1. TOP TITLEBAR (Custom Seamless Studio Titlebar) -->
             <Border x:Name="HeaderBar" Grid.Row="0"
-                    Background="{DynamicResource AppHeaderBrush}"
+                    Background="Transparent"
                     BorderThickness="0"
                     Height="35"
-                    Padding="21,0">
+                    Padding="21,0"
+                    PointerPressed="TitleBar_PointerPressed"
+                    DoubleTapped="TitleBar_DoubleTapped">
                 <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
                     <!-- Left: Studio Logo & Title -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <TextBlock Text="⋈" FontSize="13" Foreground="{DynamicResource AppAccentBrush}" VerticalAlignment="Center"/>
-                        <TextBlock Text="Fujifier — Film simulation engine" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" IsHitTestVisible="False">
+                        <Image Source="/Assets/images/logoXL.png" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                        <TextBlock Text="Fujifier — Film simulation engine" FontSize="11" Foreground="#8C8A9F" VerticalAlignment="Center"/>
                     </StackPanel>
 
-                    <!-- Right: Studio Dots & Action Shortcut -->
+                    <!-- Center: Draggable Spacer -->
+                    <Panel Grid.Column="1" Background="Transparent" IsHitTestVisible="False"/>
+
+                    <!-- Right: Custom Functional Minimize, Maximize, Close Buttons matching mockup dots -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <!-- Pro Active Pill if applicable -->
-                        <Border Background="#1AC2ACEB" BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
-                                CornerRadius="8" Padding="6,2" VerticalAlignment="Center">
-                            <TextBlock Text="STUDIO" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource AppAccentLightBrush}"/>
-                        </Border>
-                        <!-- Subtle Window Dots -->
-                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                            <Ellipse Width="7" Height="7" Fill="#15FFFFFF" Stroke="#26FFFFFF" StrokeThickness="1"/>
-                            <Ellipse Width="7" Height="7" Fill="#15FFFFFF" Stroke="#26FFFFFF" StrokeThickness="1"/>
-                            <Ellipse Width="7" Height="7" Fill="#15FFFFFF" Stroke="#26FFFFFF" StrokeThickness="1"/>
-                        </StackPanel>
+                        <!-- Minimize Button -->
+                        <Button Classes="titlebar-dot" Click="TitleBar_Minimize_Click" ToolTip.Tip="Minimize">
+                            <TextBlock Text="—" FontSize="7" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+                        <!-- Maximize / Restore Button -->
+                        <Button Classes="titlebar-dot" Click="TitleBar_Maximize_Click" ToolTip.Tip="Maximize">
+                            <TextBlock Text="▢" FontSize="7" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
+                        <!-- Close Button -->
+                        <Button Classes="titlebar-dot close" Click="TitleBar_Close_Click" ToolTip.Tip="Close">
+                            <TextBlock Text="✕" FontSize="7" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Button>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -185,136 +199,102 @@
                 </Grid>
 
 
-                <!-- B. BATCH STUDIO LAYOUT: Left Rail + Main Studio Area (Heading, Queue, Inspector, Footer) -->
-                <Grid IsVisible="{Binding !IsPhoneLayout}" ColumnDefinitions="88,*">
+                <!-- B. BATCH STUDIO LAYOUT: Left Rail + Main Studio Area (Heading, Queue, Inspector) on top, Full-width Footer on bottom -->
+                <Grid IsVisible="{Binding !IsPhoneLayout}" RowDefinitions="*,Auto">
 
-                    <!-- 1. LEFT NAVIGATION RAIL -->
-                    <Border Grid.Column="0" Background="Transparent"
-                            BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,1,0"
-                            Padding="11,16">
-                        <Grid RowDefinitions="Auto,Auto,*,Auto,Auto">
-                            <!-- Rail Logo (Emblem) -->
-                            <Button Grid.Row="0" Command="{Binding NavHomeCommand}"
-                                    Width="42" Height="42" CornerRadius="14" Padding="0"
-                                    Background="#10C9FFDF" BorderBrush="#24B4FFDC" BorderThickness="1"
-                                    HorizontalAlignment="Center" Margin="0,0,0,22" ToolTip.Tip="Fujifier Batch Studio">
-                                <TextBlock Text="⋈" FontSize="24" Foreground="#C6F1DB"
+                    <!-- TOP SHELL: Left Rail + Main Workspace -->
+                    <Grid Grid.Row="0" ColumnDefinitions="88,*">
+
+                        <!-- 1. LEFT NAVIGATION RAIL -->
+                        <Border Grid.Column="0" Background="Transparent"
+                                BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,1,0"
+                                Padding="11,16">
+                            <Grid RowDefinitions="Auto,*,Auto,Auto">
+                                <!-- Rail Logo (Fujifier Emblem) -->
+                                <Border Grid.Row="0" Width="41" Height="41" CornerRadius="14"
+                                        Background="#10C9FFDF" BorderBrush="#24B4FFDC" BorderThickness="1"
+                                        HorizontalAlignment="Center" Margin="0,0,0,22" ToolTip.Tip="Fujifier">
+                                    <Image Source="/Assets/images/logoXL.png" Width="26" Height="26" Stretch="Uniform"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Button>
+                                </Border>
 
-                            <!-- Navigation Buttons -->
-                            <StackPanel Grid.Row="1" Spacing="8" HorizontalAlignment="Center">
-                                <!-- Home Nav -->
-                                <Button Classes="nav" Command="{Binding NavHomeCommand}"
-                                        Classes.active="{Binding ActiveNavTab, Converter={x:Static ObjectConverters.Equal}, ConverterParameter='home'}"
-                                        ToolTip.Tip="Studio Overview">
+                                <!-- Spacer -->
+                                <Panel Grid.Row="1"/>
+
+                                <!-- Settings Button -->
+                                <Button Grid.Row="2" Classes="nav" Command="{Binding OpenPreferencesCommand}"
+                                        HorizontalAlignment="Center" Margin="0,0,0,10" ToolTip.Tip="Settings &amp; License">
                                     <StackPanel Spacing="5" HorizontalAlignment="Center">
-                                        <PathIcon Data="M 3 10 L 12 3 L 21 10 V 20 H 3 Z M 9 20 V 13 H 15 V 20" Width="18" Height="18" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="Home" FontSize="9" HorizontalAlignment="Center"/>
+                                        <PathIcon Data="M 4 7 h 16 M 4 17 h 16 M 7 7 A 2 2 0 1 0 11 7 A 2 2 0 1 0 7 7 M 13 17 A 2 2 0 1 0 17 17 A 2 2 0 1 0 13 17" Width="18" Height="18" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Settings" FontSize="9" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
 
-                                <!-- Photos / Queue Nav (Active by default) -->
-                                <Button Classes="nav" Command="{Binding NavPhotosCommand}"
-                                        Classes.active="{Binding ActiveNavTab, Converter={x:Static ObjectConverters.Equal}, ConverterParameter='photos'}"
-                                        ToolTip.Tip="Photo Batch Queue">
-                                    <StackPanel Spacing="5" HorizontalAlignment="Center">
-                                        <PathIcon Data="M 3 3 H 21 V 21 H 3 Z M 8 8 A 1.5 1.5 0 1 0 8 5 A 1.5 1.5 0 1 0 8 8 M 3 17 L 9 11 L 13 15 L 16 12 L 21 17" Width="18" Height="18" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="Photos" FontSize="9" HorizontalAlignment="Center"/>
-                                    </StackPanel>
+                                <!-- Avatar Circle (Account / Pro Status) -->
+                                <Button Grid.Row="3" Command="{Binding OpenPreferencesCommand}"
+                                        Width="30" Height="30" CornerRadius="15" Padding="0"
+                                        BorderBrush="#33FFFFFF" BorderThickness="1" HorizontalAlignment="Center"
+                                        ToolTip.Tip="Account / Plan Status">
+                                    <Button.Background>
+                                        <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                            <GradientStop Color="#BDD4BC" Offset="0"/>
+                                            <GradientStop Color="#9B8DD0" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Button.Background>
+                                    <TextBlock Text="{Binding AvatarInitials}" FontSize="9" FontWeight="Bold"
+                                               Foreground="#253B36" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Button>
-
-                                <!-- Presets Nav -->
-                                <Button Classes="nav" Command="{Binding NavPresetsCommand}"
-                                        Classes.active="{Binding ActiveNavTab, Converter={x:Static ObjectConverters.Equal}, ConverterParameter='presets'}"
-                                        ToolTip.Tip="Film Simulation Profiles">
-                                    <StackPanel Spacing="5" HorizontalAlignment="Center">
-                                        <PathIcon Data="M 12 3 L 21 8 L 12 13 L 3 8 Z M 3 12 L 12 17 L 21 12 M 3 16 L 12 21 L 21 16" Width="18" Height="18" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="Presets" FontSize="9" HorizontalAlignment="Center"/>
-                                    </StackPanel>
-                                </Button>
-                            </StackPanel>
-
-                            <!-- Spacer -->
-                            <Border Grid.Row="2"/>
-
-                            <!-- Settings Button -->
-                            <Button Grid.Row="3" Classes="nav" Command="{Binding OpenPreferencesCommand}"
-                                    HorizontalAlignment="Center" Margin="0,0,0,10" ToolTip.Tip="Settings &amp; License">
-                                <StackPanel Spacing="5" HorizontalAlignment="Center">
-                                    <PathIcon Data="M 4 7 h 16 M 4 17 h 16 M 7 7 A 2 2 0 1 0 11 7 A 2 2 0 1 0 7 7 M 13 17 A 2 2 0 1 0 17 17 A 2 2 0 1 0 13 17" Width="18" Height="18" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Settings" FontSize="9" HorizontalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-
-                            <!-- Avatar Circle (Account / Pro Status) -->
-                            <Button Grid.Row="4" Command="{Binding OpenPreferencesCommand}"
-                                    Width="30" Height="30" CornerRadius="15" Padding="0"
-                                    BorderBrush="#33FFFFFF" BorderThickness="1" HorizontalAlignment="Center"
-                                    ToolTip.Tip="Account / Plan Status">
-                                <Button.Background>
-                                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                        <GradientStop Color="#BDD4BC" Offset="0"/>
-                                        <GradientStop Color="#9B8DD0" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Button.Background>
-                                <TextBlock Text="{Binding AvatarInitials}" FontSize="9" FontWeight="Bold"
-                                           Foreground="#253B36" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Button>
-                        </Grid>
-                    </Border>
-
-
-                    <!-- 2. MAIN WORKSPACE AREA -->
-                    <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
-
-                        <!-- Top Heading & Step Workflow Indicators -->
-                        <Border Grid.Row="0" Padding="25,20,25,12" Background="Transparent">
-                            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                                <!-- Studio Heading -->
-                                <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                                    <TextBlock Text="A LITTLE CHARACTER. EVERY FILE." FontSize="9.5" FontWeight="SemiBold"
-                                               Foreground="#9D96B6" LetterSpacing="1.8"/>
-                                    <TextBlock Text="Batch studio" FontSize="26" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource AppTextPrimaryBrush}" LetterSpacing="-0.8"/>
-                                    <TextBlock Text="Import your photos. Configure your output. Make it yours." FontSize="11"
-                                               Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                                </StackPanel>
-
-                                <!-- Step Workflow Indicators -->
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
-                                    <!-- Step 1: Import -->
-                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                        <Border Width="19" Height="19" CornerRadius="10"
-                                                Background="{DynamicResource AppGlassPillBrush}" BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1">
-                                            <TextBlock Text="1" FontSize="9" Foreground="{DynamicResource AppTextSecondaryBrush}"
-                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                        <TextBlock Text="Import" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
-                                    </StackPanel>
-
-                                    <!-- Step 2: Configure (Current / Active Accent) -->
-                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                        <Border Width="19" Height="19" CornerRadius="10"
-                                                Background="#22B89BE4" BorderBrush="#33D4B9FF" BorderThickness="1">
-                                            <TextBlock Text="2" FontSize="9" FontWeight="SemiBold" Foreground="{DynamicResource AppAccentLightBrush}"
-                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                        <TextBlock Text="Configure" FontSize="10" FontWeight="SemiBold" Foreground="{DynamicResource AppAccentLightBrush}" VerticalAlignment="Center"/>
-                                    </StackPanel>
-
-                                    <!-- Step 3: Export -->
-                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                        <Border Width="19" Height="19" CornerRadius="10"
-                                                Background="{DynamicResource AppGlassPillBrush}" BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1">
-                                            <TextBlock Text="3" FontSize="9" Foreground="{DynamicResource AppTextSecondaryBrush}"
-                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                        <TextBlock Text="Export" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </StackPanel>
                             </Grid>
                         </Border>
+
+
+                        <!-- 2. MAIN WORKSPACE AREA -->
+                        <Grid Grid.Column="1" RowDefinitions="Auto,*">
+
+                            <!-- Top Heading & Step Workflow Indicators -->
+                            <Border Grid.Row="0" Padding="25,20,25,12" Background="Transparent">
+                                <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                                    <!-- Studio Heading -->
+                                    <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                                        <TextBlock Text="FUJIFILM PICTURE PROFILES FOR EVERYONE" FontSize="9.5" FontWeight="SemiBold"
+                                                   Foreground="#9D96B6" LetterSpacing="1.8"/>
+                                        <TextBlock Text="Fujifier" FontSize="26" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource AppTextPrimaryBrush}" LetterSpacing="-0.8"/>
+                                        <TextBlock Text="Import your RAW photos. Choose your film simulations. Process your batch." FontSize="11"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    </StackPanel>
+
+                                    <!-- Step Workflow Indicators -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center">
+                                        <!-- Step 1: Import -->
+                                        <StackPanel Classes="step-item" Classes.current="{Binding IsStep1Current}"
+                                                    Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <Border Classes="step-badge" Width="19" Height="19" CornerRadius="10">
+                                                <TextBlock Text="1" FontSize="9" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <TextBlock Text="Import" FontSize="10" VerticalAlignment="Center"/>
+                                        </StackPanel>
+
+                                        <!-- Step 2: Configure -->
+                                        <StackPanel Classes="step-item" Classes.current="{Binding IsStep2Current}"
+                                                    Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <Border Classes="step-badge" Width="19" Height="19" CornerRadius="10">
+                                                <TextBlock Text="2" FontSize="9" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <TextBlock Text="Configure" FontSize="10" VerticalAlignment="Center"/>
+                                        </StackPanel>
+
+                                        <!-- Step 3: Process -->
+                                        <StackPanel Classes="step-item" Classes.current="{Binding IsStep3Current}"
+                                                    Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <Border Classes="step-badge" Width="19" Height="19" CornerRadius="10">
+                                                <TextBlock Text="3" FontSize="9" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <TextBlock Text="Process" FontSize="10" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
 
 
                         <!-- Central Workspace (Queue + Inspector) -->
@@ -323,22 +303,14 @@
                             <!-- CENTER: Photo Queue Panel -->
                             <Grid Grid.Column="0" RowDefinitions="Auto,*" Margin="0,0,16,0">
 
-                                <!-- Queue Top Section Header -->
-                                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,14" VerticalAlignment="Center">
-                                    <!-- Count Info -->
-                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Files.Count, StringFormat='{}{0} photos in your batch'}"
-                                                   FontSize="13" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
-                                    </StackPanel>
-
-                                    <!-- Action Buttons -->
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                <!-- Queue Top Section Header (Action buttons without "X photos in queue" sentence) -->
+                                <Grid Grid.Row="0" Margin="0,0,0,14" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" VerticalAlignment="Center">
                                         <!-- Primary + Add Files -->
                                         <Button Classes="primary" Command="{Binding AddFilesCommand}"
                                                 ToolTip.Tip="Import RAW photos from computer">
                                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                <PathIcon Data="M 12 5 v 14 M 5 12 h 14" Width="13" Height="13" Foreground="{DynamicResource AppPrimaryBtnFgBrush}"/>
+                                                <PathIcon Data="M 12 5 v 14 M 5 12 h 14" Width="12" Height="12" Foreground="{DynamicResource AppPrimaryBtnFgBrush}"/>
                                                 <TextBlock Text="Add files" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource AppPrimaryBtnFgBrush}" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
@@ -347,7 +319,7 @@
                                         <Button Classes="secondary" Command="{Binding AddFolderCommand}"
                                                 ToolTip.Tip="Import folder containing RAW photos">
                                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                <PathIcon Data="M 3 7 V 5 h 7 l 2 3 h 9 v 12 H 3 Z" Width="13" Height="13" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                                <PathIcon Data="M 3 7 V 5 h 7 l 2 3 h 9 v 12 H 3 Z" Width="12" Height="12" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                 <TextBlock Text="Add folder" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
@@ -380,14 +352,14 @@
                                                     </Border>
                                                 </StackPanel>
 
-                                                <!-- Segmented View Toggle (List vs Grid) -->
+                                                <!-- Segmented View Toggle (List vs Grid) with Icons -->
                                                 <Border Grid.Column="1" Background="#101118" BorderBrush="#15FFFFFF" BorderThickness="1"
                                                         CornerRadius="10" Padding="3" VerticalAlignment="Center">
                                                     <StackPanel Orientation="Horizontal" Spacing="2">
                                                         <Button Classes="view-toggle" Classes.active="{Binding IsListView}"
                                                                 Command="{Binding SetListViewCommand}" ToolTip.Tip="List View">
                                                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                                <PathIcon Data="M 8 5 h 13 M 8 12 h 13 M 8 19 h 13 M 3 5 h 1 M 3 12 h 1 M 3 19 h 1" Width="11" Height="11"/>
+                                                                <PathIcon Data="M 8 4.5 h 13 v 1.5 H 8 Z M 8 11.25 h 13 v 1.5 H 8 Z M 8 18 h 13 v 1.5 H 8 Z M 3 4.5 h 2.5 v 1.5 H 3 Z M 3 11.25 h 2.5 v 1.5 H 3 Z M 3 18 h 2.5 v 1.5 H 3 Z" Width="11" Height="11"/>
                                                                 <TextBlock Text="List" VerticalAlignment="Center"/>
                                                             </StackPanel>
                                                         </Button>
@@ -445,14 +417,14 @@
                                                 </StackPanel>
                                             </Border>
 
-                                            <!-- 1. List View (DataGrid with Reduced-Glass Rows) -->
+                                            <!-- 1. List View (DataGrid with Reduced-Glass Rows & Pills) -->
                                             <DataGrid x:Name="QueueDataGrid"
                                                       IsVisible="{Binding IsListView}" ItemsSource="{Binding Files}"
                                                       SelectedItem="{Binding SelectedFile, Mode=TwoWay}"
                                                       AutoGenerateColumns="False" CanUserResizeColumns="True" CanUserSortColumns="True"
                                                       HorizontalScrollBarVisibility="Disabled"
                                                       VerticalScrollBarVisibility="Auto"
-                                                      IsReadOnly="True" GridLinesVisibility="Horizontal" SelectionMode="Extended"
+                                                      IsReadOnly="True" GridLinesVisibility="None" SelectionMode="Extended"
                                                       Background="Transparent" BorderThickness="0" Margin="14,8,14,8"
                                                       DoubleTapped="DataGrid_DoubleTapped">
                                                 <DataGrid.KeyBindings>
@@ -461,41 +433,52 @@
                                                 </DataGrid.KeyBindings>
                                                 <DataGrid.Styles>
                                                     <Style Selector="DataGridRow" x:DataType="models:FileItem">
-                                                        <Setter Property="Background" Value="{Binding ErrorBackground}"/>
                                                         <Setter Property="ContextMenu">
                                                             <ContextMenu>
                                                                 <MenuItem Header="Open Image"
                                                                           Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).OpenFileCommand}"
                                                                           CommandParameter="{Binding}">
-                                                                    <MenuItem.Icon><TextBlock Text="🖼" FontSize="13"/></MenuItem.Icon>
+                                                                    <MenuItem.Icon>
+                                                                        <PathIcon Data="M 3 3 h 18 v 18 H 3 Z M 8 8 A 1.5 1.5 0 1 0 8 11 A 1.5 1.5 0 1 0 8 8 M 3 17 l 6 -6 l 4 4 l 3 -3 l 5 5" Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}"/>
+                                                                    </MenuItem.Icon>
                                                                 </MenuItem>
                                                                 <MenuItem Header="Open With..."
                                                                           Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).OpenWithCommand}"
                                                                           CommandParameter="{Binding}">
-                                                                    <MenuItem.Icon><TextBlock Text="↗" FontSize="13"/></MenuItem.Icon>
+                                                                    <MenuItem.Icon>
+                                                                        <PathIcon Data="M 18 13 v 6 a 2 2 0 0 1 -2 2 H 5 a 2 2 0 0 1 -2 -2 V 8 a 2 2 0 0 1 2 -2 h 6 M 15 3 h 6 v 6 M 10 14 L 21 3" Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}"/>
+                                                                    </MenuItem.Icon>
                                                                 </MenuItem>
                                                                 <MenuItem Header="Open Containing Folder"
                                                                           Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).OpenFolderCommand}"
                                                                           CommandParameter="{Binding}">
-                                                                    <MenuItem.Icon><TextBlock Text="📁" FontSize="13"/></MenuItem.Icon>
+                                                                    <MenuItem.Icon>
+                                                                        <PathIcon Data="M 3 7 V 5 h 7 l 2 3 h 9 v 12 H 3 Z" Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}"/>
+                                                                    </MenuItem.Icon>
                                                                 </MenuItem>
                                                                 <Separator/>
                                                                 <MenuItem Header="Reset to Pending"
                                                                           Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).ResetStatusCommand}"
                                                                           CommandParameter="{Binding #QueueDataGrid.SelectedItems}">
-                                                                    <MenuItem.Icon><TextBlock Text="↺" FontSize="13"/></MenuItem.Icon>
+                                                                    <MenuItem.Icon>
+                                                                        <PathIcon Data="M 1 4 v 6 h 6 M 23 20 v -6 h -6 M 20.49 9 A 9 9 0 0 0 5.64 5.64 L 1 10 M 23 14 l -4.64 4.36 A 9 9 0 0 1 3.51 15" Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}"/>
+                                                                    </MenuItem.Icon>
                                                                 </MenuItem>
                                                                 <Separator/>
                                                                 <MenuItem Header="Properties"
                                                                           Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).ShowPropertiesCommand}"
                                                                           CommandParameter="{Binding}">
-                                                                    <MenuItem.Icon><TextBlock Text="ℹ" FontSize="13"/></MenuItem.Icon>
+                                                                    <MenuItem.Icon>
+                                                                        <PathIcon Data="M 12 2 A 10 10 0 1 0 12 22 A 10 10 0 1 0 12 2 M 12 16 v -4 M 12 8 h 0.01" Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}"/>
+                                                                    </MenuItem.Icon>
                                                                 </MenuItem>
                                                                 <Separator/>
                                                                 <MenuItem Header="Remove from Selection"
                                                                           Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).RemoveFileCommand}"
                                                                           CommandParameter="{Binding #QueueDataGrid.SelectedItems}">
-                                                                    <MenuItem.Icon><TextBlock Text="✕" FontSize="13" Foreground="#E74C3C"/></MenuItem.Icon>
+                                                                    <MenuItem.Icon>
+                                                                        <PathIcon Data="M 18 6 L 6 18 M 6 6 l 12 12" Width="12" Height="12" Foreground="#FF8F8A"/>
+                                                                    </MenuItem.Icon>
                                                                 </MenuItem>
                                                             </ContextMenu>
                                                         </Setter>
@@ -503,14 +486,21 @@
                                                 </DataGrid.Styles>
 
                                                 <DataGrid.Columns>
-                                                    <!-- Thumbnail Column -->
-                                                    <DataGridTemplateColumn Width="56" CanUserResize="False">
+                                                    <!-- Thumbnail Column with Pill Accent Indicator on Selection -->
+                                                    <DataGridTemplateColumn Width="66" CanUserResize="False">
                                                         <DataGridTemplateColumn.CellTemplate>
                                                             <DataTemplate x:DataType="models:FileItem">
-                                                                <Border Width="41" Height="39" CornerRadius="7" ClipToBounds="True"
-                                                                        Background="{DynamicResource AppSurfaceSecondaryBrush}" VerticalAlignment="Center">
-                                                                    <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
-                                                                </Border>
+                                                                <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center" Margin="6,0,0,0">
+                                                                    <!-- Purple accent indicator bar for selected row matching mockup -->
+                                                                    <Border Grid.Column="0" Width="3" Height="26" CornerRadius="2"
+                                                                            Background="#CDBBFF" Margin="0,0,8,0"
+                                                                            IsVisible="{Binding $parent[DataGridRow].IsSelected}"/>
+                                                                    <!-- Thumbnail -->
+                                                                    <Border Grid.Column="1" Width="41" Height="39" CornerRadius="7" ClipToBounds="True"
+                                                                            Background="{DynamicResource AppSurfaceSecondaryBrush}" VerticalAlignment="Center">
+                                                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
+                                                                    </Border>
+                                                                </Grid>
                                                             </DataTemplate>
                                                         </DataGridTemplateColumn.CellTemplate>
                                                     </DataGridTemplateColumn>
@@ -529,8 +519,16 @@
                                                         </DataGridTemplateColumn.CellTemplate>
                                                     </DataGridTemplateColumn>
 
-                                                    <!-- Detected Camera Column -->
-                                                    <DataGridTextColumn Header="Detected camera" Binding="{Binding CameraMakeAndModel}" Width="150" MinWidth="100"/>
+                                                    <!-- Detected Camera Column (Matching Font Size) -->
+                                                    <DataGridTemplateColumn Header="Detected camera" Width="150" MinWidth="100" SortMemberPath="CameraMakeAndModel">
+                                                        <DataGridTemplateColumn.CellTemplate>
+                                                            <DataTemplate x:DataType="models:FileItem">
+                                                                <TextBlock Text="{Binding CameraMakeAndModel}" FontSize="11"
+                                                                           Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                                            </DataTemplate>
+                                                        </DataGridTemplateColumn.CellTemplate>
+                                                    </DataGridTemplateColumn>
 
                                                     <!-- Status Column (Center Aligned Single Icon) -->
                                                     <DataGridTemplateColumn Width="90" MinWidth="60" SortMemberPath="Status">
@@ -562,18 +560,28 @@
                                                         </DataGridTemplateColumn.CellTemplate>
                                                     </DataGridTemplateColumn>
 
-                                                    <!-- Remove Action Button Column -->
-                                                    <DataGridTemplateColumn Width="46" CanUserResize="False">
+                                                    <!-- Remove Action Button Column (Small cross without rounded background) -->
+                                                    <DataGridTemplateColumn Width="40" CanUserResize="False">
                                                         <DataGridTemplateColumn.CellTemplate>
                                                             <DataTemplate x:DataType="models:FileItem">
                                                                 <Button Content="✕"
                                                                         Command="{Binding RemoveCommand}"
                                                                         CommandParameter="{Binding}"
-                                                                        Width="24" Height="24" CornerRadius="12"
+                                                                        Width="20" Height="20"
                                                                         Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                                                        Background="{DynamicResource AppGlassPillBrush}"
+                                                                        Background="Transparent"
                                                                         Foreground="{DynamicResource AppTextSecondaryBrush}"
-                                                                        BorderThickness="0"/>
+                                                                        BorderThickness="0"
+                                                                        FontSize="11"
+                                                                        Cursor="Hand"
+                                                                        ToolTip.Tip="Remove from batch">
+                                                                    <Button.Styles>
+                                                                        <Style Selector="Button:pointerover">
+                                                                            <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}"/>
+                                                                            <Setter Property="Background" Value="Transparent"/>
+                                                                        </Style>
+                                                                    </Button.Styles>
+                                                                </Button>
                                                             </DataTemplate>
                                                         </DataGridTemplateColumn.CellTemplate>
                                                     </DataGridTemplateColumn>
@@ -619,10 +627,17 @@
                                                                                    VerticalAlignment="Center"
                                                                                    Margin="24,0,24,0"/>
                                                                         <Button HorizontalAlignment="Right" Content="✕" Command="{Binding RemoveCommand}" CommandParameter="{Binding}"
-                                                                                Width="22" Height="22" CornerRadius="11" Padding="0"
+                                                                                Width="20" Height="20" Padding="0"
                                                                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                                                                Background="{DynamicResource AppGlassPillBrush}" Foreground="{DynamicResource AppTextSecondaryBrush}"
-                                                                                BorderThickness="0"/>
+                                                                                Background="Transparent" Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                                                                BorderThickness="0" FontSize="11" Cursor="Hand" ToolTip.Tip="Remove from batch">
+                                                                            <Button.Styles>
+                                                                                <Style Selector="Button:pointerover">
+                                                                                    <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}"/>
+                                                                                    <Setter Property="Background" Value="Transparent"/>
+                                                                                </Style>
+                                                                            </Button.Styles>
+                                                                        </Button>
                                                                     </Grid>
                                                                 </Grid>
                                                             </Border>
@@ -637,7 +652,7 @@
 
 
                             <!-- RIGHT: Inspector Panel (Settings | Photo info Tabs) -->
-                            <Border Grid.Column="1" Classes="panel" Width="295" ClipToBounds="True">
+                            <Border Grid.Column="1" Classes="inspector" Width="295" ClipToBounds="True" Background="Transparent" BorderThickness="0">
                                 <Grid RowDefinitions="Auto,*">
 
                                     <!-- Inspector Top Tabs -->
@@ -646,26 +661,22 @@
                                         <Grid ColumnDefinitions="*,*">
                                             <!-- Settings Tab Button -->
                                             <Button Grid.Column="0" Command="{Binding SelectInspectorSettingsTabCommand}"
-                                                    Background="Transparent" BorderThickness="0" Padding="0,0,0,12"
+                                                    Classes="tab-btn" Classes.active="{Binding IsInspectorSettingsTab}"
                                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
                                                 <StackPanel Spacing="6" HorizontalAlignment="Center">
-                                                    <TextBlock Text="Settings" FontSize="11" FontWeight="SemiBold"
-                                                               Foreground="{Binding IsInspectorSettingsTab, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=True, Converter={x:Null}}"
-                                                               HorizontalAlignment="Center"/>
-                                                    <Border Height="2" Width="40" Background="{DynamicResource AppAccentBrush}"
+                                                    <TextBlock Text="Settings" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                                    <Border Height="2" Width="48" Background="{DynamicResource AppAccentBrush}"
                                                             IsVisible="{Binding IsInspectorSettingsTab}"/>
                                                 </StackPanel>
                                             </Button>
 
                                             <!-- Photo info Tab Button -->
                                             <Button Grid.Column="1" Command="{Binding SelectInspectorInfoTabCommand}"
-                                                    Background="Transparent" BorderThickness="0" Padding="0,0,0,12"
+                                                    Classes="tab-btn" Classes.active="{Binding IsInspectorInfoTab}"
                                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
                                                 <StackPanel Spacing="6" HorizontalAlignment="Center">
-                                                    <TextBlock Text="Photo info" FontSize="11" FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource AppTextSecondaryBrush}"
-                                                               HorizontalAlignment="Center"/>
-                                                    <Border Height="2" Width="40" Background="{DynamicResource AppAccentBrush}"
+                                                    <TextBlock Text="Photo info" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                                    <Border Height="2" Width="48" Background="{DynamicResource AppAccentBrush}"
                                                             IsVisible="{Binding IsInspectorInfoTab}"/>
                                                 </StackPanel>
                                             </Button>
@@ -701,7 +712,7 @@
 
                                                         <Button Grid.Column="1" Content="✕" Command="{Binding ClearOutputFolderCommand}"
                                                                 IsVisible="{Binding HasCustomOutputFolder}"
-                                                                Width="28" Height="28" CornerRadius="14" Margin="4,0,0,0" Padding="0"
+                                                                Width="24" Height="24" CornerRadius="12" Margin="6,0,0,0" Padding="0"
                                                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                                                 Background="{DynamicResource AppGlassPillBrush}" Foreground="{DynamicResource AppTextSecondaryBrush}"
                                                                 BorderThickness="0" ToolTip.Tip="Reset to source folder"/>
@@ -748,18 +759,43 @@
                                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateSubfolder}" OnContent="" OffContent=""/>
                                                     </Grid>
 
-                                                    <!-- Inline Subfolder Settings -->
-                                                    <StackPanel Spacing="6" Margin="0,-4,0,2" IsVisible="{Binding CreateSubfolder}">
+                                                    <!-- Expandable Subfolder Settings -->
+                                                    <StackPanel Spacing="8" Margin="8,0,0,4" IsVisible="{Binding CreateSubfolder}">
+                                                        <!-- Keep original folder name switch -->
+                                                        <Grid ColumnDefinitions="*,Auto">
+                                                            <TextBlock Grid.Column="0" Text="Keep original folder name" FontSize="10"
+                                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
+                                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding SubfolderUseOriginalName}" OnContent="" OffContent=""/>
+                                                        </Grid>
+
+                                                        <!-- Dir suffix (when using original name) -->
+                                                        <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding SubfolderUseOriginalName}">
+                                                            <TextBlock Grid.Column="0" Text="Dir suffix:" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
+                                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                                            <TextBox Grid.Column="1" Text="{Binding SubfolderSuffix}"
+                                                                     Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                                     Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                                     BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
+                                                                     Watermark="_fujified" FontSize="10" Height="26"
+                                                                     CornerRadius="7" VerticalContentAlignment="Center"/>
+                                                        </Grid>
+
+                                                        <!-- Custom folder name (when NOT using original name) -->
                                                         <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
-                                                            <TextBlock Grid.Column="0" Text="Folder:" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
+                                                            <TextBlock Grid.Column="0" Text="Folder name:" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
                                                                        Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                                             <TextBox Grid.Column="1" Text="{Binding SubfolderCustomName}"
                                                                      Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                                      Foreground="{DynamicResource AppTextPrimaryBrush}"
                                                                      BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                                     Watermark="fujified" FontSize="11" Height="28"
-                                                                     CornerRadius="8" VerticalContentAlignment="Center"/>
+                                                                     Watermark="fujified" FontSize="10" Height="26"
+                                                                     CornerRadius="7" VerticalContentAlignment="Center"/>
                                                         </Grid>
+
+                                                        <!-- Subfolder Preview -->
+                                                        <TextBlock Text="{Binding SubfolderPreview, StringFormat='Preview: {0}'}"
+                                                                   FontSize="9" Foreground="{DynamicResource AppAccentBrush}"
+                                                                   TextTrimming="CharacterEllipsis"/>
                                                     </StackPanel>
 
                                                     <!-- Open Folder When Done Switch -->
@@ -815,25 +851,6 @@
                                                         </Border>
                                                     </WrapPanel>
                                                 </StackPanel>
-
-                                                <!-- Selected Photo Mini Card Preview -->
-                                                <Border Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                        BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
-                                                        CornerRadius="12" Padding="10" Margin="0,10,0,0"
-                                                        IsVisible="{Binding SelectedFile, Converter={x:Static ObjectConverters.IsNotNull}}">
-                                                    <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
-                                                        <Border Grid.Column="0" Width="42" Height="42" CornerRadius="8"
-                                                                ClipToBounds="True" Background="{DynamicResource AppSurfaceBrush}" Margin="0,0,10,0">
-                                                            <Image Source="{Binding SelectedFile.Thumbnail}" Stretch="UniformToFill"/>
-                                                        </Border>
-                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                                            <TextBlock Text="{Binding SelectedFile.FileName}" FontSize="10" FontWeight="SemiBold"
-                                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
-                                                            <TextBlock Text="{Binding SelectedFile.FormattedFileSize, StringFormat='Selected photo · {0}'}" FontSize="8.5"
-                                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
-                                                        </StackPanel>
-                                                    </Grid>
-                                                </Border>
                                             </StackPanel>
 
 
@@ -847,11 +864,13 @@
 
                                                 <!-- Photo Info Details -->
                                                 <StackPanel IsVisible="{Binding SelectedFile, Converter={x:Static ObjectConverters.IsNotNull}}" Spacing="12">
-                                                    <!-- Large Image Preview -->
-                                                    <Border Height="170" CornerRadius="13" ClipToBounds="True"
+                                                    <!-- Image Preview (Uniform fit without overflow) -->
+                                                    <Border MaxHeight="160" CornerRadius="12" ClipToBounds="True"
                                                             Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                            BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1">
-                                                        <Image Source="{Binding SelectedFile.Thumbnail}" Stretch="UniformToFill"/>
+                                                            BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
+                                                            HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,6">
+                                                        <Image Source="{Binding SelectedFile.Thumbnail}" Stretch="Uniform"
+                                                               MaxHeight="160" MaxWidth="255" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                     </Border>
 
                                                     <!-- Photo Title & Camera Subhead -->
@@ -864,8 +883,8 @@
 
                                                     <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
 
-                                                    <!-- 2-Column Metadata Grid -->
-                                                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" Margin="0,4">
+                                                    <!-- 2-Column Metadata Grid with EXIF and Date Taken -->
+                                                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,4">
                                                         <!-- Aperture -->
                                                         <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,12">
                                                             <TextBlock Text="Aperture" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
@@ -895,14 +914,21 @@
                                                         </StackPanel>
 
                                                         <!-- ISO -->
-                                                        <StackPanel Grid.Row="2" Grid.Column="0">
+                                                        <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,12">
                                                             <TextBlock Text="ISO" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
                                                             <TextBlock Text="{Binding SelectedFile.Iso, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                         </StackPanel>
 
+                                                        <!-- Date Taken (EXIF) -->
+                                                        <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,12">
+                                                            <TextBlock Text="Date taken" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                            <TextBlock Text="{Binding SelectedFile.DateTimeOriginal, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
+                                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                        </StackPanel>
+
                                                         <!-- Status -->
-                                                        <StackPanel Grid.Row="2" Grid.Column="1">
+                                                        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
                                                             <TextBlock Text="Status" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
                                                             <TextBlock Text="{Binding SelectedFile.Status, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                        Foreground="{DynamicResource AppAccentLightBrush}"/>
@@ -915,47 +941,54 @@
                                 </Grid>
                             </Border>
                         </Grid>
-
-
-                        <!-- BOTTOM BAR: Studio Sticky Footer with Glowing Status & Process Button -->
-                        <Border x:Name="DesktopBottomStatusBar" Grid.Row="2"
-                                Background="{DynamicResource AppFooterBrush}"
-                                BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,1,0,0"
-                                Height="73" Padding="25,0">
-                            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-                                <!-- Left: Glowing Status Indicator Dot & Details -->
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                                    <Ellipse Width="6" Height="6" Fill="#A5D5B7" VerticalAlignment="Center"/>
-                                    <StackPanel Spacing="3" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding OverallStatusText}" FontSize="11" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                        <TextBlock Text="{Binding OutputDestinationSummary}" FontSize="9"
-                                                   Foreground="{DynamicResource AppTextSecondaryBrush}" MaxWidth="280" TextTrimming="CharacterEllipsis"/>
-                                    </StackPanel>
-                                </StackPanel>
-
-                                <!-- Center: Spacer / Centered Progress Line -->
-                                <ProgressBar Grid.Column="1" Minimum="0" Maximum="100"
-                                             Value="{Binding ProgressValue}"
-                                             IsVisible="{Binding IsProgressVisible}"
-                                             Height="4" CornerRadius="2"
-                                             Margin="40,0"
-                                             HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
-
-                                <!-- Right: Protection Notice & Primary Process Action -->
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
-                                    <TextBlock Text="Original files stay protected" FontSize="10"
-                                               Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
-
-                                    <!-- Studio Process Batch Action Button -->
-                                    <Button Content="{Binding ProcessButtonContent}" Command="{Binding ProcessCommand}"
-                                            IsEnabled="{Binding CanProcessOrStop}" Classes="primary"
-                                            Height="42" Padding="20,0" FontSize="12" FontWeight="SemiBold" CornerRadius="21"
-                                            VerticalAlignment="Center" ToolTip.Tip="Process batch with Fujifilm simulation profiles"/>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
                     </Grid>
+                </Grid>
+
+                <!-- BOTTOM BAR: Studio Sticky Footer with Glowing Status & Process Button (Full width spanning across the entire window!) -->
+                    <Border x:Name="DesktopBottomStatusBar" Grid.Row="1"
+                            Background="{DynamicResource AppFooterBrush}"
+                            BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,1,0,0"
+                            Height="73" Padding="25,0">
+                        <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                            <!-- Left: Glowing Status Indicator Dot & Details -->
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <Ellipse Width="6" Height="6" Fill="#A5D5B7" VerticalAlignment="Center"/>
+                                <StackPanel Spacing="3" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding OverallStatusText}" FontSize="11" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                    <TextBlock Text="{Binding OutputDestinationSummary}" FontSize="9"
+                                               Foreground="{DynamicResource AppTextSecondaryBrush}" MaxWidth="280" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Center: Spacer / Centered Progress Line -->
+                            <ProgressBar Grid.Column="1" Minimum="0" Maximum="100"
+                                         Value="{Binding ProgressValue}"
+                                         IsVisible="{Binding IsProgressVisible}"
+                                         Height="4" CornerRadius="2"
+                                         Margin="40,0"
+                                         HorizontalAlignment="Stretch" VerticalAlignment="Center"/>
+
+                            <!-- Right: Protection Notice & Primary Process Action -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
+                                <TextBlock Text="Original files stay protected" FontSize="10"
+                                           Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
+
+                                <!-- Studio Process Batch Action Button with centered text and ↗ icon -->
+                                <Button Command="{Binding ProcessCommand}"
+                                        IsEnabled="{Binding CanProcessOrStop}" Classes="primary"
+                                        Height="42" Padding="20,0" CornerRadius="21"
+                                        VerticalAlignment="Center" ToolTip.Tip="Process batch with Fujifilm simulation profiles">
+                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" HorizontalAlignment="Center">
+                                        <TextBlock Text="{Binding ProcessButtonContent}" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource AppPrimaryBtnFgBrush}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="↗" FontSize="14" FontWeight="Bold"
+                                                   Foreground="{DynamicResource AppPrimaryBtnFgBrush}" VerticalAlignment="Center" Margin="0,-2,0,0"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
                 </Grid>
             </Grid>
         </Grid>
