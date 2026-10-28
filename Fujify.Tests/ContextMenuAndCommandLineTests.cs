@@ -187,5 +187,95 @@ namespace Fujify.Tests
             bool isOver = Views.MainWindow.IsPointerOverCaptionButtons(clientX, clientY, clientWidth, scaling);
             Assert.Equal(expectedIsOverButtons, isOver);
         }
+
+        [Fact]
+        public void MainViewModel_MobileSidebar_ToggleAndClose_ShouldWorkProperly()
+        {
+            var settings = new MockSettingsService();
+            var vm = new ViewModels.MainViewModel(settingsService: settings);
+
+            // Default state
+            Assert.False(vm.IsMobileSidebarOpen);
+            Assert.Equal("▲", vm.MobileSidebarChevron);
+
+            // Toggle open
+            vm.ToggleMobileSidebarCommand.Execute(null);
+            Assert.True(vm.IsMobileSidebarOpen);
+            Assert.Equal("▼", vm.MobileSidebarChevron);
+
+            // Toggle close
+            vm.ToggleMobileSidebarCommand.Execute(null);
+            Assert.False(vm.IsMobileSidebarOpen);
+            Assert.Equal("▲", vm.MobileSidebarChevron);
+
+            // Explicit open & close commands
+            vm.OpenMobileSidebarCommand.Execute(null);
+            Assert.True(vm.IsMobileSidebarOpen);
+            Assert.Equal("▼", vm.MobileSidebarChevron);
+
+            vm.CloseMobileSidebarCommand.Execute(null);
+            Assert.False(vm.IsMobileSidebarOpen);
+            Assert.Equal("▲", vm.MobileSidebarChevron);
+        }
+
+        [Fact]
+        public void MainViewModel_MobileSidebar_ShouldCloseWhenSwitchingToDesktop()
+        {
+            var settings = new MockSettingsService();
+            var vm = new ViewModels.MainViewModel(settingsService: settings);
+
+            vm.UpdateLayoutMode(400, 700);
+            Assert.True(vm.IsPhoneLayout);
+
+            vm.OpenMobileSidebarCommand.Execute(null);
+            Assert.True(vm.IsMobileSidebarOpen);
+
+            // Switch to desktop width
+            vm.UpdateLayoutMode(1000, 700);
+            Assert.False(vm.IsPhoneLayout);
+            Assert.False(vm.IsMobileSidebarOpen);
+        }
+
+        [Fact]
+        public void MainViewModel_SelectInspectorInfoTab_ShouldAutoSelectFirstFileIfNoneSelected()
+        {
+            var settings = new MockSettingsService();
+            var vm = new ViewModels.MainViewModel(settingsService: settings);
+            var file = new Models.FileItem { FilePath = "C:\\test\\photo.arw" };
+
+            // Start with empty files
+            vm.SelectInspectorSettingsTabCommand.Execute(null);
+            Assert.True(vm.IsInspectorSettingsTab);
+
+            // Add file (auto-selected by collection changed)
+            vm.Files.Add(file);
+            Assert.Equal(file, vm.SelectedFile);
+
+            // Switch to info tab
+            vm.SelectInspectorInfoTabCommand.Execute(null);
+            Assert.True(vm.IsInspectorInfoTab);
+            Assert.Equal(file, vm.SelectedFile);
+        }
+
+        [Fact]
+        public async System.Threading.Tasks.Task MainViewModel_OpenPreferences_InPhoneLayout_ShouldShowPreferencesModal()
+        {
+            var settings = new MockSettingsService();
+            var vm = new ViewModels.MainViewModel(settingsService: settings);
+            vm.UpdateLayoutMode(450, 700);
+            Assert.True(vm.IsPhoneLayout);
+
+            if (vm.OpenPreferencesCommand is CommunityToolkit.Mvvm.Input.IAsyncRelayCommand asyncCmd)
+            {
+                await asyncCmd.ExecuteAsync(null);
+            }
+            else
+            {
+                vm.OpenPreferencesCommand.Execute(null);
+            }
+
+            Assert.True(vm.IsPreferencesModal);
+            Assert.True(vm.IsModalOpen);
+        }
     }
 }

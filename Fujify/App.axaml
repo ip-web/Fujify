@@ -234,8 +234,8 @@
             <Setter Property="Stroke" Value="#6ECCB6FF"/>
         </Style>
 
-        <!-- Grid View Card Selection and Hover Styles -->
-        <Style Selector="Border.grid-card">
+        <!-- Grid View & Mobile Card Selection and Hover Styles -->
+        <Style Selector="Border.grid-card, Border.mobile-card">
             <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Property="Background" Duration="0:0:0.15" Easing="CubicEaseOut"/>
@@ -243,14 +243,14 @@
                 </Transitions>
             </Setter>
         </Style>
-        <Style Selector="Border.grid-card:pointerover">
+        <Style Selector="Border.grid-card:pointerover, Border.mobile-card:pointerover">
             <Setter Property="BorderBrush" Value="#44FFFFFF"/>
         </Style>
-        <Style Selector="Border.grid-card.selected">
+        <Style Selector="Border.grid-card.selected, Border.mobile-card.selected">
             <Setter Property="Background" Value="#1ECCB6FF"/>
             <Setter Property="BorderBrush" Value="#4ECCB6FF"/>
         </Style>
-        <Style Selector="Border.grid-card.selected:pointerover">
+        <Style Selector="Border.grid-card.selected:pointerover, Border.mobile-card.selected:pointerover">
             <Setter Property="Background" Value="#2ECCB6FF"/>
             <Setter Property="BorderBrush" Value="#6ECCB6FF"/>
         </Style>

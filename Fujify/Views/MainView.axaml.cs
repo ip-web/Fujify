@@ -286,6 +286,45 @@ namespace Fujify.Views
             }
         }
 
+        private void MobileCard_PointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (sender is Control control && control.DataContext is FileItem item && DataContext is MainViewModel vm)
+            {
+                vm.SelectedFile = item;
+
+                if (e.GetCurrentPoint(control).Properties.IsRightButtonPressed)
+                {
+                    var targetBorder = control as Border ?? control.FindAncestorOfType<Border>();
+                    if (targetBorder?.ContextMenu != null)
+                    {
+                        targetBorder.ContextMenu.Open(targetBorder);
+                        e.Handled = true;
+                    }
+                }
+            }
+        }
+
+        private void MobileCard_DoubleTapped(object? sender, TappedEventArgs e)
+        {
+            if (sender is Control control && control.DataContext is FileItem item && DataContext is MainViewModel vm)
+            {
+                vm.SelectedFile = item;
+                vm.OpenFileCommand.Execute(item);
+            }
+            else if (DataContext is MainViewModel vm2 && vm2.SelectedFile != null)
+            {
+                vm2.OpenFileCommand.Execute(vm2.SelectedFile);
+            }
+        }
+
+        private void OnMobileSidebarBackdropPointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                vm.IsMobileSidebarOpen = false;
+            }
+        }
+
         private void TitleBar_PointerPressed(object? sender, PointerPressedEventArgs e)
         {
             if (e.Source is Button || (e.Source is Avalonia.Visual visual && visual.FindAncestorOfType<Button>() != null))
