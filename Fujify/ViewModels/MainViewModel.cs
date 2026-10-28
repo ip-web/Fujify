@@ -596,8 +596,8 @@ namespace Fujify.ViewModels
                 if (string.IsNullOrWhiteSpace(folderSample)) folderSample = "Photos";
 
                 string subfolderName = SubfolderUseOriginalName
-                    ? $"{folderSample}{(string.IsNullOrWhiteSpace(SubfolderSuffix) ? "" : SubfolderSuffix.Trim())}"
-                    : (string.IsNullOrWhiteSpace(SubfolderCustomName) ? "Fujified" : SubfolderCustomName.Trim());
+                    ? $"{folderSample}{(string.IsNullOrEmpty(SubfolderSuffix) ? "" : SubfolderSuffix)}"
+                    : (string.IsNullOrWhiteSpace(SubfolderCustomName) ? "Fujified" : SubfolderCustomName);
 
                 return $"{folderSample}/{subfolderName}/";
             }
@@ -934,7 +934,7 @@ namespace Fujify.ViewModels
                         CloseModal();
                     }
                 };
-                ModalTitle = "Preferences";
+                ModalTitle = "Settings";
                 ModalType = "Preferences";
                 IsModalOpen = true;
             });

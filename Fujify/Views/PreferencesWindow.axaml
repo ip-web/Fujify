@@ -3,7 +3,7 @@
         xmlns:vm="using:Fujify.ViewModels"
         x:Class="Fujify.Views.PreferencesWindow"
         x:DataType="vm:PreferencesViewModel"
-        Title="Preferences"
+        Title="Settings"
         Width="520" Height="680"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
@@ -27,7 +27,7 @@
 
         <Grid Margin="24" RowDefinitions="Auto,*,Auto">
             <!-- Header -->
-            <TextBlock Grid.Row="0" Text="Preferences" FontWeight="SemiBold" FontSize="20"
+            <TextBlock Grid.Row="0" Text="Settings" FontWeight="SemiBold" FontSize="20"
                        Foreground="{DynamicResource AppTextPrimaryBrush}" Margin="4,0,0,16"/>
 
             <!-- Settings Options Grouped by Category -->
