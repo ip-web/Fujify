@@ -817,7 +817,7 @@ namespace Fujify.ViewModels
                 }
                 else
                 {
-                    MainViewModel.Instance?.ShowMessageModal(title, message);
+                    MainViewModel.Instance?.ShowMessageModal(title, message, isSuccess);
                 }
             }
             catch (Exception ex)
