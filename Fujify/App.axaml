@@ -42,6 +42,38 @@
         <SolidColorBrush x:Key="SystemControlHighlightListAccentLowBrush" Color="#1ECCB6FF"/>
         <SolidColorBrush x:Key="SystemControlHighlightListAccentMediumBrush" Color="#2ECCB6FF"/>
         <SolidColorBrush x:Key="SystemControlHighlightListAccentHighBrush" Color="#4ECCB6FF"/>
+
+        <!-- ToggleSwitch Theme Palette (Solid Grey Track & Lighter Thin Border when Off) -->
+        <SolidColorBrush x:Key="ToggleSwitchFillOff" Color="#FF353745"/>
+        <SolidColorBrush x:Key="ToggleSwitchStrokeOff" Color="#FF5A5C70"/>
+        <SolidColorBrush x:Key="ToggleSwitchFillOffPointerOver" Color="#FF404254"/>
+        <SolidColorBrush x:Key="ToggleSwitchStrokeOffPointerOver" Color="#FF72748C"/>
+        <SolidColorBrush x:Key="ToggleSwitchFillOffPressed" Color="#FF2E303D"/>
+        <SolidColorBrush x:Key="ToggleSwitchStrokeOffPressed" Color="#FF5A5C70"/>
+        <SolidColorBrush x:Key="ToggleSwitchFillOffDisabled" Color="#FF282933"/>
+        <SolidColorBrush x:Key="ToggleSwitchStrokeOffDisabled" Color="#FF404250"/>
+
+        <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="#FF8474AC"/>
+        <SolidColorBrush x:Key="ToggleSwitchStrokeOn" Color="#FFBFA6ED"/>
+        <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver" Color="#FF9679BC"/>
+        <SolidColorBrush x:Key="ToggleSwitchStrokeOnPointerOver" Color="#FFD5BDFF"/>
+        <SolidColorBrush x:Key="ToggleSwitchFillOnPressed" Color="#FF735FA0"/>
+        <SolidColorBrush x:Key="ToggleSwitchStrokeOnPressed" Color="#FFBFA6ED"/>
+        <SolidColorBrush x:Key="ToggleSwitchFillOnDisabled" Color="#FF52466E"/>
+        <SolidColorBrush x:Key="ToggleSwitchStrokeOnDisabled" Color="#FF756598"/>
+
+        <SolidColorBrush x:Key="ToggleSwitchKnobFillOff" Color="#FFD1CCE0"/>
+        <SolidColorBrush x:Key="ToggleSwitchKnobFillOffPointerOver" Color="#FFFFFFFF"/>
+        <SolidColorBrush x:Key="ToggleSwitchKnobFillOffPressed" Color="#FFB8B4C8"/>
+        <SolidColorBrush x:Key="ToggleSwitchKnobFillOffDisabled" Color="#FF706C7A"/>
+
+        <SolidColorBrush x:Key="ToggleSwitchKnobFillOn" Color="#FFFFFFFF"/>
+        <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPointerOver" Color="#FFFFFFFF"/>
+        <SolidColorBrush x:Key="ToggleSwitchKnobFillOnPressed" Color="#FFE0DEE8"/>
+        <SolidColorBrush x:Key="ToggleSwitchKnobFillOnDisabled" Color="#FFC0B8D0"/>
+
+        <Thickness x:Key="ToggleSwitchOuterBorderStrokeThickness">1</Thickness>
+        <Thickness x:Key="ToggleSwitchOnStrokeThickness">1</Thickness>
     </Application.Resources>
 
     <Application.Styles>
@@ -212,7 +244,6 @@
             <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Property="Background" Duration="0:0:0.18" Easing="CubicEaseOut"/>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18" Easing="CubicEaseOut"/>
                 </Transitions>
             </Setter>
         </Style>
@@ -220,7 +251,6 @@
             <Setter Property="Background" Value="#FFFFFFFF"/>
             <Setter Property="Foreground" Value="#FF252332"/>
             <Setter Property="BorderBrush" Value="#FFFFFFFF"/>
-            <Setter Property="RenderTransform" Value="translateY(-1px)"/>
         </Style>
         <Style Selector="Button.primary:pointerover">
             <Setter Property="Background" Value="#FFFFFFFF"/>
@@ -230,7 +260,6 @@
         <Style Selector="Button.primary:pressed /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="#FFE5E3F3"/>
             <Setter Property="Foreground" Value="#FF252332"/>
-            <Setter Property="RenderTransform" Value="scale(0.98)"/>
         </Style>
         <Style Selector="Button.primary:disabled /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="#80FAF9FC"/>
@@ -257,7 +286,6 @@
             <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Property="Background" Duration="0:0:0.18" Easing="CubicEaseOut"/>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18" Easing="CubicEaseOut"/>
                 </Transitions>
             </Setter>
         </Style>
@@ -265,12 +293,10 @@
             <Setter Property="Background" Value="#22FFFFFF"/>
             <Setter Property="Foreground" Value="#FFFFFFFF"/>
             <Setter Property="BorderBrush" Value="#44FFFFFF"/>
-            <Setter Property="RenderTransform" Value="translateY(-1px)"/>
         </Style>
         <Style Selector="Button.secondary:pressed /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="#0DFFFFFF"/>
             <Setter Property="Foreground" Value="#FFFFFFFF"/>
-            <Setter Property="RenderTransform" Value="scale(0.98)"/>
         </Style>
 
         <!-- Accent Button -->
@@ -480,31 +506,56 @@
         </Style>
 
         <!-- ToggleSwitch Solid Grey Off / Purple On Aesthetic with Light Grey Border -->
-        <Style Selector="ToggleSwitch /template/ Border#SwitchKnobBounds">
+        <Style Selector="ToggleSwitch /template/ Border#OuterBorder">
             <Setter Property="Background" Value="#353745"/>
-            <Setter Property="BorderBrush" Value="#525466"/>
+            <Setter Property="BorderBrush" Value="#5A5C70"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="10"/>
         </Style>
-        <Style Selector="ToggleSwitch:unchecked /template/ Border#SwitchKnobBounds">
+        <Style Selector="ToggleSwitch:unchecked /template/ Border#OuterBorder">
             <Setter Property="Background" Value="#353745"/>
-            <Setter Property="BorderBrush" Value="#525466"/>
+            <Setter Property="BorderBrush" Value="#5A5C70"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+        </Style>
+        <Style Selector="ToggleSwitch:unchecked:pointerover /template/ Border#OuterBorder">
+            <Setter Property="Background" Value="#404254"/>
+            <Setter Property="BorderBrush" Value="#72748C"/>
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
-        <Style Selector="ToggleSwitch:unchecked:pointerover /template/ Border#SwitchKnobBounds">
-            <Setter Property="Background" Value="#3F4152"/>
-            <Setter Property="BorderBrush" Value="#6A6C80"/>
+        <Style Selector="ToggleSwitch:pointerover /template/ Border#OuterBorder">
+            <Setter Property="Background" Value="#404254"/>
+            <Setter Property="BorderBrush" Value="#72748C"/>
             <Setter Property="BorderThickness" Value="1"/>
         </Style>
-        <Style Selector="ToggleSwitch:pointerover /template/ Border#SwitchKnobBounds">
-            <Setter Property="Background" Value="#3F4152"/>
-            <Setter Property="BorderBrush" Value="#6A6C80"/>
+        <Style Selector="ToggleSwitch:checked /template/ Border#OuterBorder">
+            <Setter Property="Background" Value="#8474AC"/>
+            <Setter Property="BorderBrush" Value="#BFA6ED"/>
             <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+        </Style>
+        <Style Selector="ToggleSwitch:checked:pointerover /template/ Border#OuterBorder">
+            <Setter Property="Background" Value="#9679BC"/>
+            <Setter Property="BorderBrush" Value="#D5BDFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="ToggleSwitch:disabled /template/ Border#OuterBorder">
+            <Setter Property="Opacity" Value="0.5"/>
+        </Style>
+
+        <Style Selector="ToggleSwitch /template/ Border#SwitchKnobBounds">
+            <Setter Property="CornerRadius" Value="10"/>
+        </Style>
+        <Style Selector="ToggleSwitch:unchecked /template/ Border#SwitchKnobBounds">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
         </Style>
         <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
             <Setter Property="Background" Value="#8474AC"/>
             <Setter Property="BorderBrush" Value="#BFA6ED"/>
             <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
         </Style>
         <Style Selector="ToggleSwitch:checked:pointerover /template/ Border#SwitchKnobBounds">
             <Setter Property="Background" Value="#9679BC"/>
@@ -513,6 +564,9 @@
         </Style>
         <Style Selector="ToggleSwitch /template/ Ellipse#SwitchKnobOff">
             <Setter Property="Fill" Value="#D1CCE0"/>
+        </Style>
+        <Style Selector="ToggleSwitch:pointerover /template/ Ellipse#SwitchKnobOff">
+            <Setter Property="Fill" Value="#FFFFFF"/>
         </Style>
         <Style Selector="ToggleSwitch:checked /template/ Ellipse#SwitchKnobOn">
             <Setter Property="Fill" Value="#FFFFFF"/>
