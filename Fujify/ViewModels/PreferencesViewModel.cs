@@ -47,6 +47,11 @@ namespace Fujify.ViewModels
         private bool _autoOpenInLightroom;
         private bool _appendSuffix;
         private string _suffix = "-fujified";
+        private bool _createSubfolder;
+        private bool _subfolderUseOriginalName = true;
+        private string _subfolderSuffix = "-fujified";
+        private string _subfolderCustomName = "Fujified";
+        private bool _autoOpenOutputFolder;
         private bool _isWindowsContextMenuEnabled;
         private string _themeMode = "Automatic";
         private bool _checkForUpdatesOnStartup = true;
@@ -180,6 +185,68 @@ namespace Fujify.ViewModels
             get => _suffix;
             set => SetProperty(ref _suffix, value);
         }
+
+        public bool CreateSubfolder
+        {
+            get => _createSubfolder;
+            set
+            {
+                if (SetProperty(ref _createSubfolder, value))
+                {
+                    OnPropertyChanged(nameof(SubfolderPreview));
+                }
+            }
+        }
+
+        public bool SubfolderUseOriginalName
+        {
+            get => _subfolderUseOriginalName;
+            set
+            {
+                if (SetProperty(ref _subfolderUseOriginalName, value))
+                {
+                    OnPropertyChanged(nameof(SubfolderPreview));
+                }
+            }
+        }
+
+        public string SubfolderSuffix
+        {
+            get => _subfolderSuffix;
+            set
+            {
+                if (SetProperty(ref _subfolderSuffix, value))
+                {
+                    OnPropertyChanged(nameof(SubfolderPreview));
+                }
+            }
+        }
+
+        public string SubfolderCustomName
+        {
+            get => _subfolderCustomName;
+            set
+            {
+                if (SetProperty(ref _subfolderCustomName, value))
+                {
+                    OnPropertyChanged(nameof(SubfolderPreview));
+                }
+            }
+        }
+
+        public string SubfolderPreview => CreateSubfolder
+            ? (SubfolderUseOriginalName
+                ? $"Photos → Photos/{(!string.IsNullOrWhiteSpace(_subfolderSuffix) ? "Photos" + _subfolderSuffix.Trim() : "Photos")}/"
+                : $"Photos → Photos/{(!string.IsNullOrWhiteSpace(_subfolderCustomName) ? _subfolderCustomName.Trim() : "Fujified")}/")
+            : string.Empty;
+
+        public bool AutoOpenOutputFolder
+        {
+            get => _autoOpenOutputFolder;
+            set => SetProperty(ref _autoOpenOutputFolder, value);
+        }
+
+        public bool IsOpenInLightroomSupported => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
 
         public bool IsWindows => OperatingSystem.IsWindows();
 
@@ -442,6 +509,11 @@ namespace Fujify.ViewModels
             _losslessCompression = settings.LosslessCompression;
             _appendSuffix = settings.AppendSuffix;
             _suffix = string.IsNullOrWhiteSpace(settings.Suffix) ? "-fujified" : settings.Suffix;
+            _createSubfolder = settings.CreateSubfolder;
+            _subfolderUseOriginalName = settings.SubfolderUseOriginalName;
+            _subfolderSuffix = string.IsNullOrWhiteSpace(settings.SubfolderSuffix) ? "-fujified" : settings.SubfolderSuffix;
+            _subfolderCustomName = string.IsNullOrWhiteSpace(settings.SubfolderCustomName) ? "Fujified" : settings.SubfolderCustomName;
+            _autoOpenOutputFolder = settings.AutoOpenOutputFolder;
             _isWindowsContextMenuEnabled = OperatingSystem.IsWindows() && _licenseService.IsPro &&
                 (WindowsContextMenuService.IsContextMenuRegistered() || settings.EnableWindowsContextMenu);
 
@@ -693,6 +765,11 @@ namespace Fujify.ViewModels
             s.AutoOpenInLightroom = _autoOpenInLightroom;
             s.AppendSuffix = _appendSuffix;
             s.Suffix = string.IsNullOrWhiteSpace(_suffix) ? "-fujified" : _suffix.Trim();
+            s.CreateSubfolder = _createSubfolder;
+            s.SubfolderUseOriginalName = _subfolderUseOriginalName;
+            s.SubfolderSuffix = _subfolderSuffix;
+            s.SubfolderCustomName = string.IsNullOrWhiteSpace(_subfolderCustomName) ? "Fujified" : _subfolderCustomName.Trim();
+            s.AutoOpenOutputFolder = _autoOpenOutputFolder;
             s.CheckForUpdatesOnStartup = _checkForUpdatesOnStartup;
 
             if (OperatingSystem.IsWindows())

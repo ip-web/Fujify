@@ -18,6 +18,8 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -79,7 +81,7 @@ namespace Fujify.Services
             string? dngLabPath = FindDngLabPath();
             if (string.IsNullOrEmpty(dngLabPath) || !File.Exists(dngLabPath))
             {
-                return new ConversionResult(false, null, "DNGLab executable or native library not found.");
+                return new ConversionResult(false, null, GetMissingDngLabErrorMessage());
             }
 
             return ConvertWithCli(dngLabPath, filePath, dngFilePath, embedOriginalRaw, losslessCompression);
@@ -89,8 +91,8 @@ namespace Fujify.Services
         {
             string dngFilePath = !string.IsNullOrEmpty(targetDngPath) ? targetDngPath : Path.ChangeExtension(filePath, ".dng");
 
-            // 1. On Linux: Prefer system-installed dnglab dependency first to leverage the latest installed version
-            if (OperatingSystem.IsLinux())
+            // 1. On Linux / macOS: Prefer system-installed dnglab dependency first to leverage the latest installed version
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && !OperatingSystem.IsIOS())
             {
                 string? systemDngLab = FindSystemDngLabPath();
                 if (!string.IsNullOrEmpty(systemDngLab))
@@ -129,7 +131,7 @@ namespace Fujify.Services
             string? dngLabPath = FindDngLabPath();
             if (string.IsNullOrEmpty(dngLabPath) || !File.Exists(dngLabPath))
             {
-                return new ConversionResult(false, null, "DNGLab executable or native library not found.");
+                return new ConversionResult(false, null, GetMissingDngLabErrorMessage());
             }
 
             return await ConvertWithCliAsync(dngLabPath, filePath, dngFilePath, embedOriginalRaw, losslessCompression, cancellationToken);
@@ -152,6 +154,11 @@ namespace Fujify.Services
                 if (exitCode != 0 || output.Contains("ERROR", StringComparison.OrdinalIgnoreCase) || !File.Exists(dngFilePath))
                 {
                     string errorMsg = !string.IsNullOrWhiteSpace(error) ? error : output;
+                    if (errorMsg.Contains("Bad CPU type", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string arch = RuntimeInformation.ProcessArchitecture == Architecture.X64 ? "Intel Mac (x86_64)" : "Apple Silicon (ARM64)";
+                        errorMsg += $". The binary at '{dngLabPath}' is not compatible with {arch}. On macOS, please install a compatible DNGLab binary using 'brew install dnglab' or 'cargo install dnglab'.";
+                    }
                     return new ConversionResult(false, null, $"Conversion failed: {errorMsg}");
                 }
 
@@ -159,7 +166,13 @@ namespace Fujify.Services
             }
             catch (Exception ex)
             {
-                return new ConversionResult(false, null, $"Exception during conversion: {ex.Message}");
+                string msg = ex.Message;
+                if (msg.Contains("Bad CPU type", StringComparison.OrdinalIgnoreCase))
+                {
+                    string arch = RuntimeInformation.ProcessArchitecture == Architecture.X64 ? "Intel Mac (x86_64)" : "Apple Silicon (ARM64)";
+                    msg += $". The binary at '{dngLabPath}' is not compatible with {arch}. On macOS, please install a compatible DNGLab binary using 'brew install dnglab' or 'cargo install dnglab'.";
+                }
+                return new ConversionResult(false, null, $"Exception during conversion: {msg}");
             }
         }
 
@@ -180,6 +193,11 @@ namespace Fujify.Services
                 if (exitCode != 0 || output.Contains("ERROR", StringComparison.OrdinalIgnoreCase) || !File.Exists(dngFilePath))
                 {
                     string errorMsg = !string.IsNullOrWhiteSpace(error) ? error : output;
+                    if (errorMsg.Contains("Bad CPU type", StringComparison.OrdinalIgnoreCase))
+                    {
+                        string arch = RuntimeInformation.ProcessArchitecture == Architecture.X64 ? "Intel Mac (x86_64)" : "Apple Silicon (ARM64)";
+                        errorMsg += $". The binary at '{dngLabPath}' is not compatible with {arch}. On macOS, please install a compatible DNGLab binary using 'brew install dnglab' or 'cargo install dnglab'.";
+                    }
                     return new ConversionResult(false, null, $"Conversion failed: {errorMsg}");
                 }
 
@@ -191,39 +209,194 @@ namespace Fujify.Services
             }
             catch (Exception ex)
             {
-                return new ConversionResult(false, null, $"Exception during conversion: {ex.Message}");
+                string msg = ex.Message;
+                if (msg.Contains("Bad CPU type", StringComparison.OrdinalIgnoreCase))
+                {
+                    string arch = RuntimeInformation.ProcessArchitecture == Architecture.X64 ? "Intel Mac (x86_64)" : "Apple Silicon (ARM64)";
+                    msg += $". The binary at '{dngLabPath}' is not compatible with {arch}. On macOS, please install a compatible DNGLab binary using 'brew install dnglab' or 'cargo install dnglab'.";
+                }
+                return new ConversionResult(false, null, $"Exception during conversion: {msg}");
+            }
+        }
+
+        private static string GetMissingDngLabErrorMessage()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                string archName = RuntimeInformation.ProcessArchitecture == Architecture.X64 ? "Intel Mac (x86_64)" : "Apple Silicon (ARM64)";
+                return $"DNGLab executable compatible with {archName} not found. On macOS, you can install DNGLab via Homebrew ('brew install dnglab') or Cargo ('cargo install dnglab'), or ensure an {archName} compatible 'dnglab' binary is located in the application's 'libs' folder.";
+            }
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                return "DNGLab executable or native library not found. On Linux, you can install DNGLab via your package manager or Cargo ('cargo install dnglab'), or ensure 'dnglab' is located in the 'libs' folder.";
+            }
+            return "DNGLab executable or native library not found.";
+        }
+
+        private static bool IsExecutableCompatibleWithCurrentArchitecture(string filePath)
+        {
+            if (!File.Exists(filePath)) return false;
+
+            // Only Mach-O binaries on macOS need architecture validation against CPU
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                return true;
+            }
+
+            try
+            {
+                using var fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                if (fs.Length < 8) return false;
+
+                byte[] header = new byte[8];
+                int bytesRead = fs.Read(header, 0, 8);
+                if (bytesRead < 8) return false;
+
+                // Shell script or text wrapper (starts with #!)
+                if (header[0] == '#' && header[1] == '!')
+                {
+                    return true;
+                }
+
+                // Mach-O Fat / Universal binary: 0xCAFEBABE or 0xCAFEBABF (big/little endian)
+                uint magicBigEndian = ((uint)header[0] << 24) | ((uint)header[1] << 16) | ((uint)header[2] << 8) | header[3];
+                uint magicLittleEndian = BitConverter.ToUInt32(header, 0);
+
+                if (magicBigEndian == 0xCAFEBABE || magicBigEndian == 0xCAFEBABF ||
+                    magicLittleEndian == 0xCAFEBABE || magicLittleEndian == 0xCAFEBABF)
+                {
+                    return true;
+                }
+
+                // Mach-O 64-bit binary: 0xFEEDFACF (little endian: CF FA ED FE)
+                if (magicLittleEndian == 0xFEEDFACF)
+                {
+                    uint cpuType = BitConverter.ToUInt32(header, 4);
+                    // CPU_TYPE_X86_64 = 0x01000007
+                    // CPU_TYPE_ARM64  = 0x0100000C
+                    if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+                    {
+                        // On Intel Mac, only x86_64 binaries can run. ARM64 binaries will fail with "Bad CPU type".
+                        return cpuType == 0x01000007;
+                    }
+                    else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                    {
+                        // On Apple Silicon Mac, ARM64 runs natively, and x86_64 can run under Rosetta 2
+                        return true;
+                    }
+                }
+
+                // Mach-O 64-bit big endian: 0xFEEDFACF
+                if (magicBigEndian == 0xFEEDFACF)
+                {
+                    uint cpuType = ((uint)header[4] << 24) | ((uint)header[5] << 16) | ((uint)header[6] << 8) | header[7];
+                    if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+                    {
+                        return cpuType == 0x01000007;
+                    }
+                    else if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                    {
+                        return true;
+                    }
+                }
+
+                return true;
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
+        private static void EnsureExecutablePermission(string filePath)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) || !File.Exists(filePath))
+            {
+                return;
+            }
+
+            try
+            {
+                var mode = File.GetUnixFileMode(filePath);
+                var needed = UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;
+                if ((mode & needed) != needed)
+                {
+                    File.SetUnixFileMode(filePath, mode | needed);
+                }
+            }
+            catch
+            {
+                try
+                {
+                    using var proc = Process.Start(new ProcessStartInfo("chmod", $"+x \"{filePath}\"")
+                    {
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    });
+                    proc?.WaitForExit(1000);
+                }
+                catch { }
             }
         }
 
         private static string? FindSystemDngLabPath()
         {
-            string binaryName = "dnglab";
+            string binaryName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "dnglab.exe" : "dnglab";
+            var standardPaths = new System.Collections.Generic.List<string>();
 
-            // Check well-known Linux system and user package paths
-            string[] standardPaths =
-            [
-                "/usr/bin/dnglab",
-                "/usr/local/bin/dnglab",
-                "/snap/bin/dnglab",
-                "/opt/homebrew/bin/dnglab",
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cargo", "bin", "dnglab")
-            ];
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                standardPaths.Add("/opt/homebrew/bin/dnglab");
+                standardPaths.Add("/usr/local/bin/dnglab");
+                standardPaths.Add("/opt/local/bin/dnglab");
+                standardPaths.Add("/usr/bin/dnglab");
+                standardPaths.Add("/bin/dnglab");
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                standardPaths.Add("/usr/bin/dnglab");
+                standardPaths.Add("/usr/local/bin/dnglab");
+                standardPaths.Add("/snap/bin/dnglab");
+                standardPaths.Add("/opt/homebrew/bin/dnglab");
+            }
+
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                string userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                if (!string.IsNullOrEmpty(userHome))
+                {
+                    standardPaths.Add(Path.Combine(userHome, ".cargo", "bin", binaryName));
+                    standardPaths.Add(Path.Combine(userHome, ".local", "bin", binaryName));
+                    standardPaths.Add(Path.Combine(userHome, "bin", binaryName));
+                }
+            }
 
             foreach (var path in standardPaths)
             {
-                if (File.Exists(path)) return path;
+                if (File.Exists(path) && IsExecutableCompatibleWithCurrentArchitecture(path))
+                {
+                    EnsureExecutablePermission(path);
+                    return path;
+                }
             }
 
             // Check system PATH
             var pathEnv = Environment.GetEnvironmentVariable("PATH");
             if (!string.IsNullOrEmpty(pathEnv))
             {
-                foreach (var dir in pathEnv.Split(':'))
+                char sep = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ';' : ':';
+                foreach (var dir in pathEnv.Split(sep))
                 {
                     try
                     {
-                        string fullPath = Path.Combine(dir.Trim(), binaryName);
-                        if (File.Exists(fullPath)) return fullPath;
+                        string trimmed = dir.Trim().Trim('\"');
+                        if (string.IsNullOrEmpty(trimmed)) continue;
+                        string fullPath = Path.Combine(trimmed, binaryName);
+                        if (File.Exists(fullPath) && IsExecutableCompatibleWithCurrentArchitecture(fullPath))
+                        {
+                            EnsureExecutablePermission(fullPath);
+                            return fullPath;
+                        }
                     }
                     catch { }
                 }
@@ -235,41 +408,73 @@ namespace Fujify.Services
         private static string? FindDngLabPath()
         {
             string binaryName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "dnglab.exe" : "dnglab";
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
-            // On Linux, prioritize system-installed dnglab
-            if (OperatingSystem.IsLinux())
+            // 1. Check local / bundled application directories
+            var localCandidates = new System.Collections.Generic.List<string>();
+
+            // Architecture-specific bundled subdirectories
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                string? systemPath = FindSystemDngLabPath();
-                if (!string.IsNullOrEmpty(systemPath)) return systemPath;
-
-                // Fall back to bundled binary in libs
-                string localPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "libs", binaryName);
-                if (File.Exists(localPath)) return localPath;
+                if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+                {
+                    localCandidates.Add(Path.Combine(baseDir, "libs", "osx-x64", binaryName));
+                }
+                else
+                {
+                    localCandidates.Add(Path.Combine(baseDir, "libs", "osx-arm64", binaryName));
+                }
+                localCandidates.Add(Path.Combine(baseDir, "libs", binaryName));
+                localCandidates.Add(Path.Combine(baseDir, binaryName));
+                localCandidates.Add(Path.Combine(baseDir, "libs", "mac", binaryName));
+                // macOS .app bundle structure: Contents/Resources, Contents/MacOS
+                localCandidates.Add(Path.Combine(baseDir, "..", "Resources", "libs", binaryName));
+                localCandidates.Add(Path.Combine(baseDir, "..", "Resources", binaryName));
+                localCandidates.Add(Path.Combine(baseDir, "..", "MacOS", "libs", binaryName));
+                localCandidates.Add(Path.Combine(baseDir, "..", "MacOS", binaryName));
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                localCandidates.Add(Path.Combine(baseDir, "libs", "linux-x64", binaryName));
+                localCandidates.Add(Path.Combine(baseDir, "libs", "linux-arm64", binaryName));
+                localCandidates.Add(Path.Combine(baseDir, "libs", binaryName));
+                localCandidates.Add(Path.Combine(baseDir, binaryName));
             }
             else
             {
-                // On Windows/macOS: check local libs directory first
-                string localPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "libs", binaryName);
-                if (File.Exists(localPath)) return localPath;
+                localCandidates.Add(Path.Combine(baseDir, "libs", binaryName));
+                localCandidates.Add(Path.Combine(baseDir, binaryName));
+            }
 
-                // Then check system PATH
-                var pathEnv = Environment.GetEnvironmentVariable("PATH");
-                if (!string.IsNullOrEmpty(pathEnv))
+            // RuntimeIdentifier native folder
+            localCandidates.Add(Path.Combine(baseDir, "runtimes", RuntimeInformation.RuntimeIdentifier, "native", binaryName));
+
+            // Dev / debug fallback relative paths
+            if (RuntimeInformation.ProcessArchitecture == Architecture.X64)
+            {
+                localCandidates.Add(Path.Combine(baseDir, "..", "..", "..", "Fujify", "libs", "osx-x64", binaryName));
+            }
+            else
+            {
+                localCandidates.Add(Path.Combine(baseDir, "..", "..", "..", "Fujify", "libs", "osx-arm64", binaryName));
+            }
+            localCandidates.Add(Path.Combine(baseDir, "..", "..", "..", "Fujify", "libs", "linux-x64", binaryName));
+            localCandidates.Add(Path.Combine(baseDir, "..", "..", "..", "Fujify", "libs", binaryName));
+            localCandidates.Add(Path.Combine(baseDir, "..", "..", "..", "build_assets", "tools", "mac", binaryName));
+            localCandidates.Add(Path.Combine(baseDir, "..", "..", "..", "build_assets", "tools", binaryName));
+            localCandidates.Add(Path.Combine(baseDir, "..", "..", "..", "..", "build_assets", "tools", "mac", binaryName));
+
+            foreach (var candidate in localCandidates)
+            {
+                if (File.Exists(candidate) && IsExecutableCompatibleWithCurrentArchitecture(candidate))
                 {
-                    char sep = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? ';' : ':';
-                    foreach (var dir in pathEnv.Split(sep))
-                    {
-                        try
-                        {
-                            string fullPath = Path.Combine(dir.Trim(), binaryName);
-                            if (File.Exists(fullPath)) return fullPath;
-                        }
-                        catch { }
-                    }
+                    EnsureExecutablePermission(candidate);
+                    return candidate;
                 }
             }
 
-            return null;
+            // 2. Fall back to system / package manager / PATH lookup
+            return FindSystemDngLabPath();
         }
     }
 }

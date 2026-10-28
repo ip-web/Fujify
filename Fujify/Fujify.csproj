@@ -17,7 +17,7 @@
   <ItemGroup>
     <Folder Include="Models\" />
     <AvaloniaResource Include="Assets\**" />
-    <Content Include="libs\**\*.*" Condition="'$(TargetPlatformIdentifier)' == ''">
+    <Content Include="libs\**" Condition="'$(TargetPlatformIdentifier)' == ''">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

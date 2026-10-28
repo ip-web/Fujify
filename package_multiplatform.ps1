@@ -33,17 +33,23 @@ Remove-Item -Path (Join-Path $linuxLibs "dnglab_ffi.dll") -Force -ErrorAction Si
 # Copy Linux dnglab binary
 Copy-Item -Path "$repoRoot\build_assets\tools\dnglab_linux_x64" -Destination (Join-Path $linuxLibs "dnglab") -Force
 
-# Create Linux exiftool launcher script
+# Create cross-platform exiftool launcher script
 $exifToolScript = @"
 #!/bin/sh
 if command -v exiftool >/dev/null 2>&1; then
     exec exiftool "`$@"
 fi
-if [ -x /usr/bin/exiftool ]; then
-    exec /usr/bin/exiftool "`$@"
+if [ -x /opt/homebrew/bin/exiftool ]; then
+    exec /opt/homebrew/bin/exiftool "`$@"
 fi
 if [ -x /usr/local/bin/exiftool ]; then
     exec /usr/local/bin/exiftool "`$@"
+fi
+if [ -x /usr/bin/exiftool ]; then
+    exec /usr/bin/exiftool "`$@"
+fi
+if [ -x /opt/local/bin/exiftool ]; then
+    exec /opt/local/bin/exiftool "`$@"
 fi
 exec exiftool "`$@"
 "@
@@ -100,10 +106,23 @@ Copy-Item -Path "$publishDir\osx-arm64\*" -Destination $macOsDir -Recurse -Force
 
 # Setup Mac native binaries in libs
 $macLibs = Join-Path $macOsDir "libs"
+New-Item -ItemType Directory -Force -Path $macLibs | Out-Null
 Remove-Item -Path (Join-Path $macLibs "dnglab_ffi.dll") -Force -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force -Path (Join-Path $macLibs "linux-x64") -ErrorAction SilentlyContinue
 
-Copy-Item -Path "$repoRoot\build_assets\tools\mac\dnglab" -Destination (Join-Path $macLibs "dnglab") -Force
+$macDngLab = if (Test-Path "$repoRoot\Fujify\libs\osx-arm64\dnglab") {
+    "$repoRoot\Fujify\libs\osx-arm64\dnglab"
+} elseif (Test-Path "$repoRoot\build_assets\tools\mac\dnglab") {
+    "$repoRoot\build_assets\tools\mac\dnglab"
+} else {
+    $null
+}
+if ($macDngLab) {
+    Copy-Item -Path $macDngLab -Destination (Join-Path $macLibs "dnglab") -Force
+    Copy-Item -Path $macDngLab -Destination (Join-Path $macOsDir "dnglab") -Force
+}
 [IO.File]::WriteAllText((Join-Path $macLibs "exiftool"), $exifToolScript.Replace("`r`n", "`n"))
+[IO.File]::WriteAllText((Join-Path $macOsDir "exiftool"), $exifToolScript.Replace("`r`n", "`n"))
 
 # Info.plist
 $infoPlist = @"
@@ -166,11 +185,52 @@ New-Item -ItemType Directory -Force -Path $intelResourcesDir | Out-Null
 Copy-Item -Path "$publishDir\osx-x64\*" -Destination $intelMacOsDir -Recurse -Force
 
 $intelMacLibs = Join-Path $intelMacOsDir "libs"
+New-Item -ItemType Directory -Force -Path $intelMacLibs | Out-Null
 Remove-Item -Path (Join-Path $intelMacLibs "dnglab_ffi.dll") -Force -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force -Path (Join-Path $intelMacLibs "linux-x64") -ErrorAction SilentlyContinue
+Remove-Item -Recurse -Force -Path (Join-Path $intelMacLibs "osx-arm64") -ErrorAction SilentlyContinue
 
-# For Intel Mac, dnglab can be installed via brew or used via system PATH, or Rosetta 2
-Copy-Item -Path "$repoRoot\build_assets\tools\mac\dnglab" -Destination (Join-Path $intelMacLibs "dnglab") -Force
+# For Intel Mac: DO NOT copy ARM64 binary into intelMacLibs or intelMacOsDir!
+$macIntelDngLab = if (Test-Path "$repoRoot\Fujify\libs\osx-x64\dnglab") {
+    "$repoRoot\Fujify\libs\osx-x64\dnglab"
+} elseif (Test-Path "$repoRoot\build_assets\tools\mac_x64\dnglab") {
+    "$repoRoot\build_assets\tools\mac_x64\dnglab"
+} else {
+    $null
+}
+
+if ($macIntelDngLab) {
+    Copy-Item -Path $macIntelDngLab -Destination (Join-Path $intelMacLibs "dnglab") -Force
+    Copy-Item -Path $macIntelDngLab -Destination (Join-Path $intelMacOsDir "dnglab") -Force
+} else {
+    # If no standalone x86_64 binary is bundled, provide an intelligent launcher script
+    # that delegates to the system-installed dnglab (from Homebrew or Cargo)
+    # without failing with "Bad CPU type in executable".
+    $dngLabLauncherScript = @"
+#!/bin/sh
+if command -v dnglab >/dev/null 2>&1; then
+    exec dnglab "`$@"
+fi
+if [ -x /usr/local/bin/dnglab ]; then
+    exec /usr/local/bin/dnglab "`$@"
+fi
+if [ -x "`$HOME/.cargo/bin/dnglab" ]; then
+    exec "`$HOME/.cargo/bin/dnglab" "`$@"
+fi
+if [ -x /usr/bin/dnglab ]; then
+    exec /usr/bin/dnglab "`$@"
+fi
+if [ -x /opt/homebrew/bin/dnglab ]; then
+    exec /opt/homebrew/bin/dnglab "`$@"
+fi
+echo "Error: dnglab not found on system. On Intel Mac, please run: brew install dnglab" >&2
+exit 127
+"@
+    [IO.File]::WriteAllText((Join-Path $intelMacLibs "dnglab"), $dngLabLauncherScript.Replace("`r`n", "`n"))
+    [IO.File]::WriteAllText((Join-Path $intelMacOsDir "dnglab"), $dngLabLauncherScript.Replace("`r`n", "`n"))
+}
 [IO.File]::WriteAllText((Join-Path $intelMacLibs "exiftool"), $exifToolScript.Replace("`r`n", "`n"))
+[IO.File]::WriteAllText((Join-Path $intelMacOsDir "exiftool"), $exifToolScript.Replace("`r`n", "`n"))
 
 [IO.File]::WriteAllText((Join-Path $intelContentsDir "Info.plist"), $infoPlist.Replace("`r`n", "`n"))
 Copy-Item -Path "$repoRoot\Fujify\Assets\images\logo.ico" -Destination (Join-Path $intelResourcesDir "logo.ico") -Force

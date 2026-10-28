@@ -38,18 +38,46 @@ jobs:
         run: |
           dotnet publish Fujify/Fujify.csproj -f net10.0 -c Release -r linux-x64 --self-contained true -o ./publish/linux-x64
 
-      - name: Publish macOS Desktop arm64
-        run: |
-          dotnet publish Fujify/Fujify.csproj -f net10.0 -c Release -r osx-arm64 --self-contained true -o ./publish/osx-arm64
-
-      - name: Upload Desktop Artifacts
+      - name: Upload Desktop Artifacts (Windows & Linux)
         uses: actions/upload-artifact@v4
         with:
           name: fujify-desktop-builds
           path: ./publish/
 
   # -------------------------------------------------------------
-  # 2. Android App (APK & AAB)
+  # 2. macOS Desktop (Apple Silicon & Intel with Native dnglab_ffi)
+  # -------------------------------------------------------------
+  build-macos:
+    name: Build macOS Desktop (Apple Silicon & Intel)
+    runs-on: macos-15
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Build Native Libraries & Package macOS Apps
+        run: |
+          chmod +x ./package_macos.sh
+          ./package_macos.sh
+
+      - name: Upload macOS Apple Silicon Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Fujifier-v2.1.0-macOS-AppleSilicon
+          path: release/Fujifier-v2.1.0-macOS-AppleSilicon.zip
+
+      - name: Upload macOS Intel Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Fujifier-v2.1.0-macOS-Intel
+          path: release/Fujifier-v2.1.0-macOS-Intel.zip
+
+  # -------------------------------------------------------------
+  # 3. Android App (APK & AAB)
   # -------------------------------------------------------------
   build-android:
     name: Build Android App (APK)

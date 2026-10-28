@@ -126,16 +126,50 @@ namespace Fujify.Services
                 // Fall through to file system candidate search
             }
 
-            // 3. Candidate locations (including iOS Frameworks and app bundle)
-            string[] searchPaths =
-            [
+            // 3. Candidate locations (including iOS / macOS Frameworks and app bundle)
+            var searchPaths = new System.Collections.Generic.List<string>
+            {
                 Path.Combine(baseDir, fileName),
                 Path.Combine(baseDir, "Frameworks", fileName),
                 Path.Combine(baseDir, "Frameworks", $"{LibraryName}.framework", LibraryName),
                 Path.Combine(baseDir, "libs", fileName),
-                Path.Combine(baseDir, "runtimes", RuntimeInformation.RuntimeIdentifier, "native", fileName),
-                Path.Combine(baseDir, "..", "..", "..", "Fujify", "libs", fileName)
-            ];
+                Path.Combine(baseDir, "runtimes", RuntimeInformation.RuntimeIdentifier, "native", fileName)
+            };
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || OperatingSystem.IsIOS() || OperatingSystem.IsMacCatalyst())
+            {
+                // macOS app bundle: Contents/Frameworks, Contents/Resources
+                searchPaths.Add(Path.Combine(baseDir, "..", "Frameworks", fileName));
+                searchPaths.Add(Path.Combine(baseDir, "..", "Frameworks", $"{LibraryName}.framework", LibraryName));
+                searchPaths.Add(Path.Combine(baseDir, "..", "Resources", fileName));
+                searchPaths.Add(Path.Combine(baseDir, "..", "Resources", "libs", fileName));
+                // Standard macOS Homebrew / system paths
+                searchPaths.Add(Path.Combine("/opt/homebrew/lib", fileName));
+                searchPaths.Add(Path.Combine("/usr/local/lib", fileName));
+                searchPaths.Add(Path.Combine("/usr/lib", fileName));
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                searchPaths.Add(Path.Combine("/usr/lib", fileName));
+                searchPaths.Add(Path.Combine("/usr/local/lib", fileName));
+            }
+
+            // User library folders on Unix-like OSes
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                string userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                if (!string.IsNullOrEmpty(userHome))
+                {
+                    searchPaths.Add(Path.Combine(userHome, ".local", "lib", fileName));
+                    searchPaths.Add(Path.Combine(userHome, "lib", fileName));
+                }
+            }
+
+            // Developer / source tree fallbacks
+            searchPaths.Add(Path.Combine(baseDir, "..", "..", "..", "Fujify", "libs", fileName));
+            searchPaths.Add(Path.Combine(baseDir, "..", "..", "..", "Fujify", "libs", RuntimeInformation.RuntimeIdentifier, fileName));
+            searchPaths.Add(Path.Combine(baseDir, "..", "..", "..", "native", "dnglab_ffi", "target", "release", fileName));
+            searchPaths.Add(Path.Combine(baseDir, "..", "..", "..", "..", "native", "dnglab_ffi", "target", "release", fileName));
 
             foreach (var path in searchPaths)
             {

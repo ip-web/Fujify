@@ -117,6 +117,65 @@
 
                                 <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
 
+                                <!-- Subfolder Option -->
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="Save Converted Photos in Subfolder" FontWeight="SemiBold" FontSize="13"
+                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        <TextBlock Text="Creates a subfolder for converted DNGs instead of saving directly in source folder" FontSize="11"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateSubfolder}" OnContent="" OffContent=""/>
+                                </Grid>
+
+                                <StackPanel Spacing="8" Margin="0,4,0,2" IsVisible="{Binding CreateSubfolder}">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                            <TextBlock Text="Keep Original Directory Name" FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <TextBlock Text="Uses the source directory name as base for the subfolder" FontSize="11"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding SubfolderUseOriginalName}" OnContent="" OffContent=""/>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding SubfolderUseOriginalName}">
+                                        <TextBlock Grid.Column="0" Text="Directory Suffix:" VerticalAlignment="Center" FontSize="12" Margin="0,0,10,0"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                        <TextBox Grid.Column="1" Text="{Binding SubfolderSuffix}"
+                                                 Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                 Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                 BorderThickness="0" Watermark="-fujified" FontSize="12" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
+                                        <TextBlock Grid.Column="0" Text="Subfolder Name:" VerticalAlignment="Center" FontSize="12" Margin="0,0,10,0"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                        <TextBox Grid.Column="1" Text="{Binding SubfolderCustomName}"
+                                                 Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                 Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                 BorderThickness="0" Watermark="Fujified" FontSize="12" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                    </Grid>
+
+                                    <TextBlock Text="{Binding SubfolderPreview, StringFormat='Example: {0}'}" FontSize="11"
+                                               Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,2"/>
+                                </StackPanel>
+
+                                <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
+
+                                <!-- Auto-Open Destination Folder -->
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="Open Destination Folder After Conversion" FontWeight="SemiBold" FontSize="13"
+                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        <TextBlock Text="Automatically opens the destination folder in file manager when processing finishes" FontSize="11"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenOutputFolder}" OnContent="" OffContent=""/>
+                                </Grid>
+
+                                <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
+
                                 <!-- Lossless Compression -->
                                 <Grid ColumnDefinitions="*,Auto">
                                     <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
@@ -146,10 +205,10 @@
                                     <ToggleSwitch Grid.Column="1" IsChecked="{Binding EmbedOriginalRaw}" OnContent="" OffContent=""/>
                                 </Grid>
 
-                                <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
+                                <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}" IsVisible="{Binding IsOpenInLightroomSupported}"/>
 
                                 <!-- Auto-open in Lightroom -->
-                                <Grid ColumnDefinitions="*,Auto">
+                                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsOpenInLightroomSupported}">
                                     <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
                                         <TextBlock Text="Auto-Open Converted Photos in Lightroom" FontWeight="SemiBold" FontSize="13"
                                                    Foreground="{DynamicResource AppTextPrimaryBrush}"/>

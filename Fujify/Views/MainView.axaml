@@ -147,40 +147,44 @@
                                     <DataTemplate x:DataType="models:FileItem">
                                         <Border Margin="0,5" Padding="12" CornerRadius="16"
                                                 Background="{DynamicResource AppSurfaceBrush}"
-                                                BorderThickness="0">
-                                            <Grid ColumnDefinitions="Auto,*,Auto">
-                                                <!-- Thumbnail -->
-                                                <Border Grid.Column="0" Width="64" Height="64" CornerRadius="10"
-                                                        ClipToBounds="True" Background="{DynamicResource AppSurfaceSecondaryBrush}" VerticalAlignment="Center">
-                                                    <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
-                                                </Border>
-
-                                                <!-- File Info -->
-                                                <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center" Spacing="4">
-                                                    <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" FontSize="14"
-                                                               Foreground="{DynamicResource AppTextPrimaryBrush}"
-                                                               TextTrimming="CharacterEllipsis"/>
-                                                    <TextBlock Text="{Binding CameraMakeAndModel}" FontSize="12"
-                                                               Foreground="{DynamicResource AppTextSecondaryBrush}"
-                                                               TextTrimming="CharacterEllipsis"/>
-                                                    <Border HorizontalAlignment="Left" CornerRadius="6" Padding="8,3"
-                                                            Background="{DynamicResource AppSurfaceSecondaryBrush}">
-                                                        <TextBlock Text="{Binding Status}" FontSize="10" FontWeight="SemiBold"
-                                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                                BorderBrush="{Binding ErrorBorderBrush}"
+                                                BorderThickness="{Binding ErrorBorderThickness}">
+                                            <Panel>
+                                                <Border Background="{Binding ErrorBackground}" IsHitTestVisible="False" Margin="-12" CornerRadius="16"/>
+                                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                                    <!-- Thumbnail -->
+                                                    <Border Grid.Column="0" Width="64" Height="64" CornerRadius="10"
+                                                            ClipToBounds="True" Background="{DynamicResource AppSurfaceSecondaryBrush}" VerticalAlignment="Center">
+                                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
                                                     </Border>
-                                                </StackPanel>
 
-                                                <!-- Remove Action -->
-                                                <Button Grid.Column="2" Content="✕"
-                                                        Command="{Binding RemoveCommand}"
-                                                        CommandParameter="{Binding}"
-                                                        Width="32" Height="32" CornerRadius="16"
-                                                        Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                                        VerticalAlignment="Center"
-                                                        Background="{DynamicResource AppGlassPillBrush}"
-                                                        Foreground="{DynamicResource AppTextSecondaryBrush}"
-                                                        BorderThickness="0"/>
-                                            </Grid>
+                                                    <!-- File Info -->
+                                                    <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center" Spacing="4">
+                                                        <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" FontSize="14"
+                                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                        <TextBlock Text="{Binding CameraMakeAndModel}" FontSize="12"
+                                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                                                   TextTrimming="CharacterEllipsis"/>
+                                                        <Border HorizontalAlignment="Left" CornerRadius="6" Padding="8,3"
+                                                                Background="{DynamicResource AppSurfaceSecondaryBrush}">
+                                                            <TextBlock Text="{Binding Status}" FontSize="10" FontWeight="SemiBold"
+                                                                       Foreground="{Binding StatusColor}"/>
+                                                        </Border>
+                                                    </StackPanel>
+
+                                                    <!-- Remove Action -->
+                                                    <Button Grid.Column="2" Content="✕"
+                                                            Command="{Binding RemoveCommand}"
+                                                            CommandParameter="{Binding}"
+                                                            Width="32" Height="32" CornerRadius="16"
+                                                            Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                            VerticalAlignment="Center"
+                                                            Background="{DynamicResource AppGlassPillBrush}"
+                                                            Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                                            BorderThickness="0"/>
+                                                </Grid>
+                                            </Panel>
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -228,8 +232,57 @@
                                                  CornerRadius="8" VerticalContentAlignment="Center"/>
                                     </Grid>
 
-                                    <!-- Open in Lightroom Switch -->
+                                    <!-- Subfolder Switch -->
                                     <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
+                                            <TextBlock Text="Save in Subfolder" FontSize="13"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding SubfolderPreview}" FontSize="11"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                                       IsVisible="{Binding CreateSubfolder}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateSubfolder}" OnContent="" OffContent=""/>
+                                    </Grid>
+
+                                    <!-- Inline Subfolder Settings -->
+                                    <StackPanel Spacing="6" Margin="0,-2,0,2" IsVisible="{Binding CreateSubfolder}">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Grid.Column="0" Text="Keep original folder name" FontSize="12"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding SubfolderUseOriginalName}" OnContent="" OffContent=""/>
+                                        </Grid>
+
+                                        <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding SubfolderUseOriginalName}">
+                                            <TextBlock Grid.Column="0" Text="Dir Suffix:" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                            <TextBox Grid.Column="1" Text="{Binding SubfolderSuffix}"
+                                                     Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                     Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                     BorderThickness="0" Watermark="-fujified" FontSize="12" Height="32"
+                                                     CornerRadius="8" VerticalContentAlignment="Center"/>
+                                        </Grid>
+
+                                        <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
+                                            <TextBlock Grid.Column="0" Text="Subfolder:" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                            <TextBox Grid.Column="1" Text="{Binding SubfolderCustomName}"
+                                                     Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                     Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                     BorderThickness="0" Watermark="Fujified" FontSize="12" Height="32"
+                                                     CornerRadius="8" VerticalContentAlignment="Center"/>
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <!-- Auto-Open Destination Folder Switch -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="Open folder when done" FontSize="13"
+                                                   Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"
+                                                   TextWrapping="Wrap" Margin="0,0,10,0"/>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenOutputFolder}" OnContent="" OffContent=""/>
+                                    </Grid>
+
+                                    <!-- Open in Lightroom Switch -->
+                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsOpenInLightroomSupported}">
                                         <TextBlock Grid.Column="0" Text="Open in Lightroom after convert" FontSize="13"
                                                    Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"
                                                    TextWrapping="Wrap" Margin="0,0,10,0"/>
@@ -357,8 +410,56 @@
                                                              CornerRadius="8" VerticalContentAlignment="Center"/>
                                                 </Grid>
 
-                                                <!-- Open in Lightroom Switch -->
+                                                <!-- Subfolder Switch -->
                                                 <Grid ColumnDefinitions="*,Auto">
+                                                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                                        <TextBlock Text="Save in Subfolder" FontSize="12"
+                                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                                        <TextBlock Text="{Binding SubfolderPreview}" FontSize="10"
+                                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                                                   IsVisible="{Binding CreateSubfolder}"/>
+                                                    </StackPanel>
+                                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateSubfolder}" OnContent="" OffContent=""/>
+                                                </Grid>
+
+                                                <!-- Inline Subfolder Settings -->
+                                                <StackPanel Spacing="6" Margin="0,-4,0,2" IsVisible="{Binding CreateSubfolder}">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBlock Grid.Column="0" Text="Keep original folder name" FontSize="11"
+                                                                   Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
+                                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding SubfolderUseOriginalName}" OnContent="" OffContent=""/>
+                                                    </Grid>
+
+                                                    <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding SubfolderUseOriginalName}">
+                                                        <TextBlock Grid.Column="0" Text="Dir Suffix:" VerticalAlignment="Center" FontSize="11" Margin="0,0,6,0"
+                                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                                        <TextBox Grid.Column="1" Text="{Binding SubfolderSuffix}"
+                                                                 Background="{DynamicResource AppSurfaceBrush}"
+                                                                 Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                                 BorderThickness="0" Watermark="-fujified" FontSize="12" Height="30"
+                                                                 CornerRadius="8" VerticalContentAlignment="Center"/>
+                                                    </Grid>
+
+                                                    <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
+                                                        <TextBlock Grid.Column="0" Text="Subfolder:" VerticalAlignment="Center" FontSize="11" Margin="0,0,6,0"
+                                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                                        <TextBox Grid.Column="1" Text="{Binding SubfolderCustomName}"
+                                                                 Background="{DynamicResource AppSurfaceBrush}"
+                                                                 Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                                 BorderThickness="0" Watermark="Fujified" FontSize="12" Height="30"
+                                                                 CornerRadius="8" VerticalContentAlignment="Center"/>
+                                                    </Grid>
+                                                </StackPanel>
+
+                                                <!-- Auto-Open Destination Folder Switch -->
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0" Text="Open folder when done" FontSize="12"
+                                                               Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenOutputFolder}" OnContent="" OffContent=""/>
+                                                </Grid>
+
+                                                <!-- Open in Lightroom Switch (Mobile only) -->
+                                                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsOpenInLightroomSupported}">
                                                     <TextBlock Grid.Column="0" Text="Open in Lightroom" FontSize="12"
                                                                Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                     <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenInLightroom}" OnContent="" OffContent=""/>
@@ -484,6 +585,7 @@
                                         </DataGrid.KeyBindings>
                                         <DataGrid.Styles>
                                             <Style Selector="DataGridRow" x:DataType="models:FileItem">
+                                                <Setter Property="Background" Value="{Binding ErrorBackground}"/>
                                                 <Setter Property="ContextMenu">
                                                     <ContextMenu>
                                                         <MenuItem Header="Open Image"
@@ -542,8 +644,8 @@
                                                 <DataGridTemplateColumn.CellTemplate>
                                                     <DataTemplate x:DataType="models:FileItem">
                                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="4">
-                                                            <TextBlock Text="{Binding StatusIcon}" VerticalAlignment="Center" FontSize="12"/>
-                                                            <TextBlock Text="{Binding Status}" VerticalAlignment="Center" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Text="{Binding StatusIcon}" VerticalAlignment="Center" FontSize="12" Foreground="{Binding StatusColor}"/>
+                                                            <TextBlock Text="{Binding Status}" VerticalAlignment="Center" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{Binding StatusColor}"/>
                                                         </StackPanel>
                                                     </DataTemplate>
                                                 </DataGridTemplateColumn.CellTemplate>
@@ -578,7 +680,9 @@
                                                 <DataTemplate x:DataType="models:FileItem">
                                                     <Border Width="150" Height="185" Margin="6" Padding="8"
                                                             CornerRadius="14" Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                            BorderThickness="0" ClipToBounds="True">
+                                                            BorderBrush="{Binding ErrorBorderBrush}"
+                                                            BorderThickness="{Binding ErrorBorderThickness}"
+                                                            ClipToBounds="True">
                                                         <Border.ContextMenu>
                                                             <ContextMenu>
                                                                 <MenuItem Header="Open Image"
@@ -617,36 +721,39 @@
                                                             </ContextMenu>
                                                         </Border.ContextMenu>
 
-                                                        <Grid RowDefinitions="*,Auto,Auto">
-                                                            <!-- Thumbnail Button (Click to Select, Double-Click to Open) -->
-                                                            <Button Grid.Row="0"
-                                                                    Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).SelectFileCommand}"
-                                                                    CommandParameter="{Binding}"
-                                                                    DoubleTapped="GridItem_DoubleTapped"
-                                                                    Background="Transparent" BorderThickness="0" Padding="0"
-                                                                    HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                                                                <Border CornerRadius="8" ClipToBounds="True" Background="{DynamicResource AppSurfaceBrush}">
-                                                                    <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
-                                                                </Border>
-                                                            </Button>
+                                                        <Panel>
+                                                            <Border Background="{Binding ErrorBackground}" IsHitTestVisible="False" Margin="-8" CornerRadius="14"/>
+                                                            <Grid RowDefinitions="*,Auto,Auto">
+                                                                <!-- Thumbnail Button (Click to Select, Double-Click to Open) -->
+                                                                <Button Grid.Row="0"
+                                                                        Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).SelectFileCommand}"
+                                                                        CommandParameter="{Binding}"
+                                                                        DoubleTapped="GridItem_DoubleTapped"
+                                                                        Background="Transparent" BorderThickness="0" Padding="0"
+                                                                        HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                                    <Border CornerRadius="8" ClipToBounds="True" Background="{DynamicResource AppSurfaceBrush}">
+                                                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
+                                                                    </Border>
+                                                                </Button>
 
-                                                            <!-- File Name -->
-                                                            <TextBlock Grid.Row="1" Text="{Binding FileName}" FontWeight="SemiBold" FontSize="12"
-                                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" Margin="0,6,0,2"
-                                                                       TextTrimming="CharacterEllipsis"/>
+                                                                <!-- File Name -->
+                                                                <TextBlock Grid.Row="1" Text="{Binding FileName}" FontWeight="SemiBold" FontSize="12"
+                                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" Margin="0,6,0,2"
+                                                                           TextTrimming="CharacterEllipsis"/>
 
-                                                            <!-- Status & Remove Button -->
-                                                            <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
-                                                                <TextBlock Grid.Column="0" Text="{Binding Status}" FontSize="10"
-                                                                           Foreground="{DynamicResource AppTextSecondaryBrush}" TextTrimming="CharacterEllipsis"
-                                                                           VerticalAlignment="Center"/>
-                                                                <Button Grid.Column="1" Content="✕" Command="{Binding RemoveCommand}" CommandParameter="{Binding}"
-                                                                        Width="22" Height="22" CornerRadius="11" Padding="0"
-                                                                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                                                        Background="{DynamicResource AppGlassPillBrush}" Foreground="{DynamicResource AppTextSecondaryBrush}"
-                                                                        BorderThickness="0"/>
+                                                                <!-- Status & Remove Button -->
+                                                                <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                                                                    <TextBlock Grid.Column="0" Text="{Binding Status}" FontSize="10"
+                                                                               Foreground="{Binding StatusColor}" TextTrimming="CharacterEllipsis"
+                                                                               VerticalAlignment="Center"/>
+                                                                    <Button Grid.Column="1" Content="✕" Command="{Binding RemoveCommand}" CommandParameter="{Binding}"
+                                                                            Width="22" Height="22" CornerRadius="11" Padding="0"
+                                                                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                                            Background="{DynamicResource AppGlassPillBrush}" Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                                                            BorderThickness="0"/>
+                                                                </Grid>
                                                             </Grid>
-                                                        </Grid>
+                                                        </Panel>
                                                     </Border>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
@@ -976,6 +1083,70 @@
 
                                     <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
 
+                                    <!-- Subfolder Option -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
+                                            <TextBlock Text="Save in Subfolder" FontSize="14" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
+                                            <TextBlock Text="Creates a subfolder for converted photos instead of saving in the source directory" FontSize="11"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding Preferences.CreateSubfolder}" OnContent="" OffContent="" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <StackPanel Spacing="8" Margin="0,4,0,2" IsVisible="{Binding Preferences.CreateSubfolder}">
+                                        <!-- Keep original directory name -->
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                <TextBlock Text="Keep Original Directory Name" FontSize="13" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
+                                                <TextBlock Text="Uses the source directory name as the base for the subfolder" FontSize="11"
+                                                           Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding Preferences.SubfolderUseOriginalName}" OnContent="" OffContent="" VerticalAlignment="Center"/>
+                                        </Grid>
+
+                                        <!-- Folder suffix input -->
+                                        <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding Preferences.SubfolderUseOriginalName}">
+                                            <TextBlock Grid.Column="0" Text="Directory Suffix:" VerticalAlignment="Center" FontSize="12" Margin="0,0,10,0"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Preferences.SubfolderSuffix}"
+                                                     Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                     Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                     BorderThickness="0" Watermark="-fujified" FontSize="13" Height="36"
+                                                     CornerRadius="10" VerticalContentAlignment="Center"/>
+                                        </Grid>
+
+                                        <!-- Custom subfolder name input -->
+                                        <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !Preferences.SubfolderUseOriginalName}">
+                                            <TextBlock Grid.Column="0" Text="Subfolder Name:" VerticalAlignment="Center" FontSize="12" Margin="0,0,10,0"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                            <TextBox Grid.Column="1" Text="{Binding Preferences.SubfolderCustomName}"
+                                                     Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                     Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                     BorderThickness="0" Watermark="Fujified" FontSize="13" Height="36"
+                                                     CornerRadius="10" VerticalContentAlignment="Center"/>
+                                        </Grid>
+
+                                        <TextBlock Text="{Binding Preferences.SubfolderPreview, StringFormat='Example: {0}'}" FontSize="11"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,4" TextWrapping="Wrap"/>
+                                    </StackPanel>
+
+                                    <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
+
+                                    <!-- Auto-Open Destination Folder -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
+                                            <TextBlock Text="Open Destination Folder After Conversion" FontSize="14" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
+                                            <TextBlock Text="Automatically opens destination folder in file manager when finished" FontSize="11"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding Preferences.AutoOpenOutputFolder}" OnContent="" OffContent="" VerticalAlignment="Center"/>
+                                    </Grid>
+
+                                    <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
+
                                     <!-- Lossless Compression Toggle -->
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
@@ -1005,10 +1176,10 @@
                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding Preferences.EmbedOriginalRaw}" OnContent="" OffContent="" VerticalAlignment="Center"/>
                                     </Grid>
 
-                                    <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
+                                    <Separator Height="1" Background="{DynamicResource AppSurfaceSecondaryBrush}" IsVisible="{Binding Preferences.IsOpenInLightroomSupported}"/>
 
                                     <!-- Lightroom Toggle -->
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding Preferences.IsOpenInLightroomSupported}">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,12,0">
                                             <TextBlock Text="Auto-Open in Lightroom" FontSize="14" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>

@@ -59,9 +59,13 @@ namespace Fujify.Models
                     _status = value;
                     OnPropertyChanged(nameof(Status));
                     OnPropertyChanged(nameof(StatusIcon));
+                    OnPropertyChanged(nameof(StatusColor));
                     OnPropertyChanged(nameof(IsCompleted));
                     OnPropertyChanged(nameof(IsError));
                     OnPropertyChanged(nameof(IsActive));
+                    OnPropertyChanged(nameof(ErrorBackground));
+                    OnPropertyChanged(nameof(ErrorBorderBrush));
+                    OnPropertyChanged(nameof(ErrorBorderThickness));
                 }
             }
         }
@@ -250,13 +254,20 @@ namespace Fujify.Models
         }
 
         public bool IsCompleted => _status.Contains("Done", System.StringComparison.OrdinalIgnoreCase) 
-            || _status.Contains("Complete", System.StringComparison.OrdinalIgnoreCase);
+            || _status.Contains("Complete", System.StringComparison.OrdinalIgnoreCase)
+            || _status == "✔" || _status == "✓";
 
         public bool IsError => _status.Contains("Error", System.StringComparison.OrdinalIgnoreCase) 
-            || _status.Contains("Fail", System.StringComparison.OrdinalIgnoreCase);
+            || _status.Contains("Fail", System.StringComparison.OrdinalIgnoreCase)
+            || _status.Contains("Invalid", System.StringComparison.OrdinalIgnoreCase);
 
         public bool IsActive => _status.Contains("...", System.StringComparison.OrdinalIgnoreCase) 
             || _status.Contains("Converting", System.StringComparison.OrdinalIgnoreCase);
+
+        public string StatusColor => IsError ? "#E74C3C" : (IsCompleted ? "#01D701" : "#A0A0AC");
+        public string ErrorBackground => IsError ? "#22E74C3C" : "Transparent";
+        public string ErrorBorderBrush => IsError ? "#80E74C3C" : "Transparent";
+        public double ErrorBorderThickness => IsError ? 1.0 : 0.0;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
