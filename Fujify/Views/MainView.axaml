@@ -1592,7 +1592,7 @@
                 </Transitions>
             </Grid.Transitions>
 
-            <Grid RowDefinitions="Auto,*" DataContext="{Binding Preferences}">
+            <Grid x:Name="PreferencesRootGrid" RowDefinitions="Auto,*" DataContext="{Binding Preferences}">
                 <!-- Navigation Top Bar -->
                 <Border x:Name="PreferencesHeaderBar" Grid.Row="0"
                         Background="{DynamicResource AppSolidHeaderBrush}"
@@ -1618,9 +1618,8 @@
 
                 <!-- Scrollable Settings Body -->
                 <ScrollViewer x:Name="PreferencesScrollViewer" Grid.Row="1"
-                              HorizontalScrollBarVisibility="Disabled"
-                              Padding="16,12">
-                    <StackPanel Spacing="16" MaxWidth="600" HorizontalAlignment="Stretch">
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel x:Name="PreferencesContentStack" Spacing="16" MaxWidth="600" HorizontalAlignment="Stretch" Margin="16,12,16,24">
 
                         <!-- 1. THEME -->
                         <Border Classes="panel" ClipToBounds="True">
@@ -2014,8 +2013,8 @@
                                     Height="40" CornerRadius="20" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="8,0,0,0"/>
                         </Grid>
 
-                        <!-- Extra Bottom Inset Clearance for Mobile Gesture Navigation Bar -->
-                        <Border Height="140"/>
+                        <!-- Extra Bottom Clearance -->
+                        <Border Height="24"/>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
@@ -2037,7 +2036,7 @@
                 </Transitions>
             </Grid.Transitions>
 
-            <Grid RowDefinitions="Auto,*">
+            <Grid x:Name="AboutRootGrid" RowDefinitions="Auto,*">
                 <Border x:Name="AboutHeaderBar" Grid.Row="0"
                         Background="{DynamicResource AppSolidHeaderBrush}"
                         BorderThickness="0" Padding="16,12">
@@ -2055,8 +2054,8 @@
                     </Grid>
                 </Border>
 
-                <ScrollViewer x:Name="AboutScrollViewer" Grid.Row="1" HorizontalScrollBarVisibility="Disabled" Padding="20">
-                    <StackPanel Spacing="16" MaxWidth="440" HorizontalAlignment="Center">
+                <ScrollViewer x:Name="AboutScrollViewer" Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel x:Name="AboutContentStack" Spacing="16" MaxWidth="440" HorizontalAlignment="Center" Margin="20,20,20,24">
                         <Border Width="64" Height="64" CornerRadius="16" Background="#10C9FFDF" BorderBrush="#24B4FFDC" BorderThickness="1"
                                 HorizontalAlignment="Center">
                             <TextBlock Text="⋈" FontSize="36" Foreground="#C6F1DB" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -2066,7 +2065,7 @@
                         <TextBlock Text="Film Simulation Engine" FontSize="12" Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center"/>
                         <TextBlock Text="Developed by Isidore Paulin (ipweb.dev). Licensed under GPL v3."
                                    FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center" TextAlignment="Center"/>
-                        <Border Height="90"/>
+                        <Border Height="24"/>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
