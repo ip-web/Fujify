@@ -964,12 +964,13 @@
         <!-- 3. FULL-SCREEN SLIDING PANEL: PREFERENCES / SETTINGS -->
         <Grid x:Name="PreferencesSlidePanel" ZIndex="10000"
               Background="{DynamicResource AppSolidBackgroundBrush}"
-              RenderTransform="translateX(800)"
               Opacity="0"
               IsHitTestVisible="False">
+            <Grid.RenderTransform>
+                <TranslateTransform X="800" Y="0"/>
+            </Grid.RenderTransform>
             <Grid.Transitions>
                 <Transitions>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.28" Easing="CubicEaseOut"/>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut"/>
                 </Transitions>
             </Grid.Transitions>
@@ -1032,12 +1033,13 @@
         <!-- 4. FULL-SCREEN SLIDING PANEL: ABOUT -->
         <Grid x:Name="AboutSlidePanel" ZIndex="10000"
               Background="{DynamicResource AppSolidBackgroundBrush}"
-              RenderTransform="translateX(800)"
               Opacity="0"
               IsHitTestVisible="False">
+            <Grid.RenderTransform>
+                <TranslateTransform X="800" Y="0"/>
+            </Grid.RenderTransform>
             <Grid.Transitions>
                 <Transitions>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.28" Easing="CubicEaseOut"/>
                     <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut"/>
                 </Transitions>
             </Grid.Transitions>
