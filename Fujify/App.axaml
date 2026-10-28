@@ -234,6 +234,27 @@
             <Setter Property="Stroke" Value="#6ECCB6FF"/>
         </Style>
 
+        <!-- Grid View Card Selection and Hover Styles -->
+        <Style Selector="Border.grid-card">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15" Easing="CubicEaseOut"/>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.15" Easing="CubicEaseOut"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.grid-card:pointerover">
+            <Setter Property="BorderBrush" Value="#44FFFFFF"/>
+        </Style>
+        <Style Selector="Border.grid-card.selected">
+            <Setter Property="Background" Value="#1ECCB6FF"/>
+            <Setter Property="BorderBrush" Value="#4ECCB6FF"/>
+        </Style>
+        <Style Selector="Border.grid-card.selected:pointerover">
+            <Setter Property="Background" Value="#2ECCB6FF"/>
+            <Setter Property="BorderBrush" Value="#6ECCB6FF"/>
+        </Style>
+
         <!-- Global Interactive Controls Pointer & Content Alignment -->
         <Style Selector="Button">
             <Setter Property="Cursor" Value="Hand"/>

@@ -101,5 +101,71 @@ namespace Fujify.Tests
             var ex2 = Record.Exception(() => CrossPlatformLauncher.OpenWith(""));
             Assert.Null(ex2);
         }
+
+        private class MockSettingsService : ISettingsService
+        {
+            public AppSettings Settings { get; } = new();
+            public void Save() { }
+            public void Load() { }
+        }
+
+        [Fact]
+        public void FileItem_IsSelected_ShouldRaisePropertyChanged()
+        {
+            var item = new Models.FileItem { FilePath = "C:\\test\\photo.arw" };
+            bool raised = false;
+            item.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(Models.FileItem.IsSelected))
+                {
+                    raised = true;
+                }
+            };
+
+            item.IsSelected = true;
+            Assert.True(raised);
+            Assert.True(item.IsSelected);
+        }
+
+        [Fact]
+        public void MainViewModel_SelectedFile_ShouldSynchronizeIsSelected()
+        {
+            var settings = new MockSettingsService();
+            var vm = new ViewModels.MainViewModel(settingsService: settings);
+            var file1 = new Models.FileItem { FilePath = "C:\\test\\photo1.arw" };
+            var file2 = new Models.FileItem { FilePath = "C:\\test\\photo2.arw" };
+
+            vm.Files.Add(file1);
+            vm.Files.Add(file2);
+
+            vm.SelectedFile = file1;
+            Assert.True(file1.IsSelected);
+            Assert.False(file2.IsSelected);
+
+            vm.SelectedFile = file2;
+            Assert.False(file1.IsSelected);
+            Assert.True(file2.IsSelected);
+        }
+
+        [Fact]
+        public void MainViewModel_ContextMenuActions_WithSingleFileItem_ShouldExecuteCorrectly()
+        {
+            var settings = new MockSettingsService();
+            var vm = new ViewModels.MainViewModel(settingsService: settings);
+            var file1 = new Models.FileItem { FilePath = "C:\\test\\photo1.arw", Status = "Done" };
+            var file2 = new Models.FileItem { FilePath = "C:\\test\\photo2.arw", Status = "Error" };
+
+            vm.Files.Add(file1);
+            vm.Files.Add(file2);
+
+            // Reset to pending via single item command parameter (as in Grid View context menu)
+            vm.ResetStatusCommand.Execute(file1);
+            Assert.Equal("Pending", file1.Status);
+
+            // Remove single item via command parameter (as in Grid View context menu)
+            vm.RemoveFileCommand.Execute(file2);
+            Assert.Single(vm.Files);
+            Assert.Equal(file1, vm.Files[0]);
+        }
     }
 }

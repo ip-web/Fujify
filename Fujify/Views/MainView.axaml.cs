@@ -23,6 +23,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Transformation;
 using Avalonia.VisualTree;
+using Fujify.Models;
 using Fujify.ViewModels;
 
 namespace Fujify.Views
@@ -254,11 +255,34 @@ namespace Fujify.Views
             }
         }
 
+        private void GridItem_PointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (sender is Control control && control.DataContext is FileItem item && DataContext is MainViewModel vm)
+            {
+                vm.SelectedFile = item;
+
+                if (e.GetCurrentPoint(control).Properties.IsRightButtonPressed)
+                {
+                    var targetBorder = control as Border ?? control.FindAncestorOfType<Border>();
+                    if (targetBorder?.ContextMenu != null)
+                    {
+                        targetBorder.ContextMenu.Open(targetBorder);
+                        e.Handled = true;
+                    }
+                }
+            }
+        }
+
         private void GridItem_DoubleTapped(object? sender, TappedEventArgs e)
         {
-            if (DataContext is MainViewModel vm && vm.SelectedFile != null)
+            if (sender is Control control && control.DataContext is FileItem item && DataContext is MainViewModel vm)
             {
-                vm.OpenFileCommand.Execute(vm.SelectedFile);
+                vm.SelectedFile = item;
+                vm.OpenFileCommand.Execute(item);
+            }
+            else if (DataContext is MainViewModel vm2 && vm2.SelectedFile != null)
+            {
+                vm2.OpenFileCommand.Execute(vm2.SelectedFile);
             }
         }
 
