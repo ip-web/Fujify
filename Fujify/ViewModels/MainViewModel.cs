@@ -26,6 +26,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.Controls;
+using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using Fujify.Common;
@@ -212,6 +213,7 @@ namespace Fujify.ViewModels
         public bool HasRecentlyConvertedFiles => _recentlyConvertedDngFiles.Count > 0;
         public bool IsOpenInLightroomSupported => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
         public bool CanOpenInLightroom => IsOpenInLightroomSupported && HasRecentlyConvertedFiles && ModalTitle == "Processing completed";
+        public bool CanOpenOutputFolder => !OperatingSystem.IsIOS() && !OperatingSystem.IsAndroid() && HasRecentlyConvertedFiles && ModalTitle == "Processing completed";
 
         #region Properties
 
@@ -727,14 +729,58 @@ namespace Fujify.ViewModels
             set => SetProperty(ref _preferences, value);
         }
 
-        public void ShowMessageModal(string title, string message)
+        private string _modalIcon = "✔";
+        public string ModalIcon
+        {
+            get => _modalIcon;
+            set => SetProperty(ref _modalIcon, value);
+        }
+
+        private IBrush _modalIconColor = new SolidColorBrush(Color.Parse("#00C781"));
+        public IBrush ModalIconColor
+        {
+            get => _modalIconColor;
+            set => SetProperty(ref _modalIconColor, value);
+        }
+
+        private IBrush _modalBadgeBackground = new SolidColorBrush(Color.FromArgb(40, 0, 199, 129));
+        public IBrush ModalBadgeBackground
+        {
+            get => _modalBadgeBackground;
+            set => SetProperty(ref _modalBadgeBackground, value);
+        }
+
+        public void ShowMessageModal(string title, string message, bool isSuccess = true)
         {
             Dispatcher.UIThread.Post(() =>
             {
                 ModalTitle = title;
                 ModalMessage = message;
                 ModalType = "Message";
+
+                if (title.Contains("Free Tier", StringComparison.OrdinalIgnoreCase) ||
+                    title.Contains("Cooldown", StringComparison.OrdinalIgnoreCase))
+                {
+                    ModalIcon = "⏳";
+                    ModalIconColor = new SolidColorBrush(Color.Parse("#3498DB"));
+                    ModalBadgeBackground = new SolidColorBrush(Color.FromArgb(40, 52, 152, 219));
+                }
+                else if (!isSuccess || title.Contains("Fail", StringComparison.OrdinalIgnoreCase) ||
+                         title.Contains("Error", StringComparison.OrdinalIgnoreCase))
+                {
+                    ModalIcon = "✕";
+                    ModalIconColor = new SolidColorBrush(Color.Parse("#E74C3C"));
+                    ModalBadgeBackground = new SolidColorBrush(Color.FromArgb(40, 231, 76, 60));
+                }
+                else
+                {
+                    ModalIcon = "✔";
+                    ModalIconColor = new SolidColorBrush(Color.Parse("#00C781"));
+                    ModalBadgeBackground = new SolidColorBrush(Color.FromArgb(40, 0, 199, 129));
+                }
+
                 OnPropertyChanged(nameof(CanOpenInLightroom));
+                OnPropertyChanged(nameof(CanOpenOutputFolder));
                 IsModalOpen = true;
             });
         }
@@ -806,6 +852,7 @@ namespace Fujify.ViewModels
             _conflictTcs?.TrySetResult(new FileConflictResolution(ConflictChoice.Skip, false));
             _conflictTcs = null;
             OnPropertyChanged(nameof(CanOpenInLightroom));
+            OnPropertyChanged(nameof(CanOpenOutputFolder));
         }
 
         public void ImportSharedFiles(IEnumerable<string> filePaths)
@@ -1135,6 +1182,7 @@ namespace Fujify.ViewModels
             }
             OnPropertyChanged(nameof(HasRecentlyConvertedFiles));
             OnPropertyChanged(nameof(CanOpenInLightroom));
+            OnPropertyChanged(nameof(CanOpenOutputFolder));
 
             bool createBackup = CreateBackup;
             string? currentOutputFolder = OutputFolderPath;
@@ -1730,12 +1778,12 @@ namespace Fujify.ViewModels
                 }
                 else
                 {
-                    ShowMessageModal("Update Check", result.ErrorMessage ?? "Could not check for updates. Please check your internet connection.");
+                    ShowMessageModal("Update Check", result.ErrorMessage ?? "Could not check for updates. Please check your internet connection.", isSuccess: false);
                 }
             }
             catch (Exception ex)
             {
-                ShowMessageModal("Update Check Error", $"An error occurred: {ex.Message}");
+                ShowMessageModal("Update Check Error", $"An error occurred: {ex.Message}", isSuccess: false);
             }
         }
 

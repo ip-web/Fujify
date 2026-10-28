@@ -1477,11 +1477,11 @@
 
                     <!-- B. Redesigned Conversion Completed / Message Modal (Compact & Centered) -->
                     <StackPanel IsVisible="{Binding IsMessageModal}" Spacing="14" HorizontalAlignment="Center" Margin="0,8,0,4">
-                        <!-- Success Checkmark Badge -->
+                        <!-- Dynamic Status Badge -->
                         <Border Width="52" Height="52" CornerRadius="26"
-                                Background="{DynamicResource AppGlassPillBrush}"
+                                Background="{Binding ModalBadgeBackground}"
                                 HorizontalAlignment="Center">
-                            <TextBlock Text="✔" FontSize="26" Foreground="{DynamicResource AppAccentBrush}"
+                            <TextBlock Text="{Binding ModalIcon}" FontSize="26" Foreground="{Binding ModalIconColor}"
                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
 
@@ -1505,6 +1505,7 @@
                                     FontWeight="SemiBold" BorderThickness="0"/>
                             
                             <Button Content="Open Folder" Command="{Binding OpenOutputFolderCommand}"
+                                    IsVisible="{Binding CanOpenOutputFolder}"
                                     Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                     Foreground="{DynamicResource AppTextPrimaryBrush}"
                                     CornerRadius="12" Height="40" Padding="16,0" Margin="4"

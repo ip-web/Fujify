@@ -166,7 +166,7 @@ namespace Fujify.Services
 
             if (IsMobileOrSingleView || (owner == null && (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow == null))
             {
-                MainViewModel.Instance?.ShowMessageModal(title, message);
+                MainViewModel.Instance?.ShowMessageModal(title, message, isSuccess);
                 return;
             }
 
