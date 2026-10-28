@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using AuthenticationServices;
 using Avalonia;
 using Avalonia.iOS;
 using Foundation;
@@ -14,10 +16,35 @@ using UIKit;
 
 namespace Fujify.iOS;
 
+public class WebAuthPresentationContextProvider : NSObject, IASWebAuthenticationPresentationContextProviding
+{
+    private readonly UIWindow? _window;
+
+    public WebAuthPresentationContextProvider(UIWindow? window)
+    {
+        _window = window;
+    }
+
+    [Export("presentationAnchorForWebAuthenticationSession:")]
+    public UIWindow GetPresentationAnchor(ASWebAuthenticationSession session)
+    {
+        if (_window != null) return _window;
+
+        var window = UIApplication.SharedApplication.ConnectedScenes
+            .OfType<UIWindowScene>()
+            .SelectMany(s => s.Windows)
+            .FirstOrDefault(w => w.IsKeyWindow);
+
+        return window ?? UIApplication.SharedApplication.Windows.FirstOrDefault() ?? new UIWindow();
+    }
+}
+
 [Register("AppDelegate")]
 public class AppDelegate : AvaloniaAppDelegate<App>
 {
     private static PhotoPickerDelegate? _activePickerDelegate;
+    private static ASWebAuthenticationSession? _activeAuthSession;
+    private static WebAuthPresentationContextProvider? _activePresentationProvider;
 
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
@@ -27,6 +54,9 @@ public class AppDelegate : AvaloniaAppDelegate<App>
             var ex = e.ExceptionObject as Exception;
             System.Diagnostics.Debug.WriteLine($"[Fujify iOS Crash]: {ex}");
         };
+
+        // Wire native in-app OAuth authentication session (ASWebAuthenticationSession)
+        LicenseService.PlatformOAuthLauncher = AuthenticateWithWebSessionAsync;
 
         // Configure persistent writable staging directory for iOS
         DialogService.PlatformStagingDirectoryResolver = () =>
@@ -107,10 +137,19 @@ public class AppDelegate : AvaloniaAppDelegate<App>
             {
                 Window.BackgroundColor = UIColor.FromRGB(24, 24, 27);
             }
+
+            if (launchOptions != null && launchOptions.ContainsKey(UIApplication.LaunchOptionsUrlKey))
+            {
+                var launchUrl = launchOptions[UIApplication.LaunchOptionsUrlKey] as NSUrl;
+                if (launchUrl != null)
+                {
+                    HandleIncomingUrl(launchUrl);
+                }
+            }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[Fujify iOS] Error setting Window background: {ex}");
+            System.Diagnostics.Debug.WriteLine($"[Fujify iOS] Error setting Window background or processing launch URL: {ex}");
         }
         return result;
     }
@@ -118,25 +157,180 @@ public class AppDelegate : AvaloniaAppDelegate<App>
     [Export("application:openURL:options:")]
     public new bool OpenUrl(UIApplication app, NSUrl url, NSDictionary options)
     {
-        HandleIncomingUrl(url);
-        return true;
+        return HandleIncomingUrl(url);
     }
 
     [Export("application:openURL:sourceApplication:annotation:")]
     public bool OpenUrl(UIApplication application, NSUrl url, string sourceApplication, NSObject annotation)
     {
-        HandleIncomingUrl(url);
-        return true;
+        return HandleIncomingUrl(url);
     }
 
-    private void HandleIncomingUrl(NSUrl? url)
+    private static Task<(string Code, string? State)?> AuthenticateWithWebSessionAsync(string authUrl, string callbackScheme, CancellationToken cancellationToken)
     {
-        if (url == null) return;
+        var tcs = new TaskCompletionSource<(string Code, string? State)?>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        UIApplication.SharedApplication.BeginInvokeOnMainThread(() =>
+        {
+            try
+            {
+                var nsUrl = new NSUrl(authUrl);
+
+                var window = UIApplication.SharedApplication.ConnectedScenes
+                    .OfType<UIWindowScene>()
+                    .SelectMany(s => s.Windows)
+                    .FirstOrDefault(w => w.IsKeyWindow);
+                _activePresentationProvider = new WebAuthPresentationContextProvider(window);
+                _activeAuthSession = new ASWebAuthenticationSession(nsUrl, callbackScheme, (callbackUrl, error) =>
+                {
+                    try
+                    {
+                        if (error != null)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[Fujify iOS] ASWebAuthenticationSession error: {error.LocalizedDescription} (code: {error.Code})");
+                            if (error.Code == (long)ASWebAuthenticationSessionErrorCode.CanceledLogin)
+                            {
+                                tcs.TrySetException(new OperationCanceledException("Google Sign-In was cancelled."));
+                            }
+                            else
+                            {
+                                tcs.TrySetResult(null);
+                            }
+                            return;
+                        }
+
+                        if (callbackUrl != null)
+                        {
+                            string? code = null;
+                            string? state = null;
+
+                            try
+                            {
+                                var components = new NSUrlComponents(callbackUrl, true);
+                                code = components.QueryItems?.FirstOrDefault(q => q.Name == "code")?.Value;
+                                state = components.QueryItems?.FirstOrDefault(q => q.Name == "state")?.Value;
+                            }
+                            catch { }
+
+                            if (string.IsNullOrEmpty(code) && !string.IsNullOrEmpty(callbackUrl.Query))
+                            {
+                                foreach (var part in callbackUrl.Query.TrimStart('?').Split('&'))
+                                {
+                                    var kv = part.Split('=', 2);
+                                    if (kv.Length == 2)
+                                    {
+                                        string k = Uri.UnescapeDataString(kv[0]);
+                                        string v = Uri.UnescapeDataString(kv[1]);
+                                        if (k == "code") code = v;
+                                        else if (k == "state") state = v;
+                                    }
+                                }
+                            }
+
+                            if (!string.IsNullOrEmpty(code))
+                            {
+                                tcs.TrySetResult((code, state));
+                                return;
+                            }
+                        }
+
+                        tcs.TrySetResult(null);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Fujify iOS] Error in ASWebAuthenticationSession completion: {ex}");
+                        tcs.TrySetResult(null);
+                    }
+                    finally
+                    {
+                        _activeAuthSession = null;
+                        _activePresentationProvider = null;
+                    }
+                });
+
+                if (UIDevice.CurrentDevice.CheckSystemVersion(13, 0))
+                {
+                    _activeAuthSession.PresentationContextProvider = _activePresentationProvider;
+                }
+
+                cancellationToken.Register(() =>
+                {
+                    try
+                    {
+                        _activeAuthSession?.Cancel();
+                    }
+                    catch { }
+                    _activeAuthSession = null;
+                    _activePresentationProvider = null;
+                    tcs.TrySetCanceled();
+                });
+
+                bool started = _activeAuthSession.Start();
+                if (!started)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Fujify iOS] ASWebAuthenticationSession Start returned false");
+                    _activeAuthSession = null;
+                    _activePresentationProvider = null;
+                    tcs.TrySetResult(null);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Fujify iOS] Error launching ASWebAuthenticationSession: {ex}");
+                _activeAuthSession = null;
+                _activePresentationProvider = null;
+                tcs.TrySetResult(null);
+            }
+        });
+
+        return tcs.Task;
+    }
+
+    private bool HandleIncomingUrl(NSUrl? url)
+    {
+        if (url == null) return false;
 
         try
         {
+            // 1. Handle custom URL scheme OAuth callback (e.g., fujifier://oauth-callback?code=...&state=...)
+            if (url.Scheme != null && string.Equals(url.Scheme, "fujifier", StringComparison.OrdinalIgnoreCase))
+            {
+                string? code = null;
+                string? state = null;
+
+                try
+                {
+                    var components = new NSUrlComponents(url, true);
+                    code = components.QueryItems?.FirstOrDefault(q => q.Name == "code")?.Value;
+                    state = components.QueryItems?.FirstOrDefault(q => q.Name == "state")?.Value;
+                }
+                catch { }
+
+                if (string.IsNullOrEmpty(code) && !string.IsNullOrEmpty(url.Query))
+                {
+                    foreach (var part in url.Query.TrimStart('?').Split('&'))
+                    {
+                        var kv = part.Split('=', 2);
+                        if (kv.Length == 2)
+                        {
+                            string k = Uri.UnescapeDataString(kv[0]);
+                            string v = Uri.UnescapeDataString(kv[1]);
+                            if (k == "code") code = v;
+                            else if (k == "state") state = v;
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(code))
+                {
+                    LicenseService.OnOAuthCallbackReceived?.Invoke(code, state);
+                }
+                return true;
+            }
+
+            // 2. Handle shared raw file / document import
             string? sourcePath = url.Path;
-            if (string.IsNullOrEmpty(sourcePath)) return;
+            if (string.IsNullOrEmpty(sourcePath)) return false;
 
             string stagingDir = DialogService.GetStagingDirectory();
             string fileName = Path.GetFileName(sourcePath);
@@ -175,10 +369,12 @@ public class AppDelegate : AvaloniaAppDelegate<App>
                     MainViewModel.PendingInitialFiles.Add(destPath);
                 }
             }
+            return true;
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"[Fujify iOS] Error handling incoming URL: {ex}");
+            return false;
         }
     }
 

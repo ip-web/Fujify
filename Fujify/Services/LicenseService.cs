@@ -69,6 +69,7 @@ namespace Fujify.Services
         public string SlotInfoText => $"{UsedActivations} of {MaxActivations} device slots active";
 
         public static Action<string, string?>? OnOAuthCallbackReceived { get; set; }
+        public static Func<string, string, CancellationToken, Task<(string Code, string? State)?>>? PlatformOAuthLauncher { get; set; }
 
         private string? _pendingCodeVerifier;
         private string? _pendingExpectedState;
@@ -328,7 +329,7 @@ namespace Fujify.Services
             string redirectUri;
             HttpListener? listener = null;
 
-            if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
+            if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS() || PlatformOAuthLauncher != null)
             {
                 redirectUri = "fujifier://oauth-callback";
             }
@@ -379,7 +380,37 @@ namespace Fujify.Services
 
             try
             {
-                string authUrl = $"{GetWebsiteBaseUrl()}/auth/app-handoff?redirect_uri={Uri.EscapeDataString(redirectUri)}&code_challenge={codeChallenge}&state={expectedState}";
+                string platform = OperatingSystem.IsIOS() ? "ios" : (OperatingSystem.IsAndroid() ? "android" : (OperatingSystem.IsMacOS() ? "macos" : "desktop"));
+                string authUrl = $"{GetWebsiteBaseUrl()}/auth/app-handoff?redirect_uri={Uri.EscapeDataString(redirectUri)}&code_challenge={codeChallenge}&state={expectedState}&platform={platform}";
+
+                if (PlatformOAuthLauncher != null)
+                {
+                    statusCallback?.Invoke("Opening sign-in window...");
+                    try
+                    {
+                        var platformAuth = await PlatformOAuthLauncher(authUrl, "fujifier", cancellationToken);
+                        if (platformAuth.HasValue && !string.IsNullOrWhiteSpace(platformAuth.Value.Code))
+                        {
+                            var (code, state) = platformAuth.Value;
+                            if (!string.IsNullOrWhiteSpace(state) && !string.Equals(state, expectedState, StringComparison.Ordinal))
+                            {
+                                return new LicenseActivationResult(false, "Security state mismatch. Authorization rejected.");
+                            }
+
+                            statusCallback?.Invoke("Exchanging authorization code...");
+                            return await CompleteOAuthCallbackAsync(code, codeVerifier, state);
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        return new LicenseActivationResult(false, "Google Sign-In was cancelled.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[LicenseService] Platform OAuth launcher error, falling back: {ex.Message}");
+                    }
+                }
+
                 statusCallback?.Invoke("Opening browser for authentication...");
                 CrossPlatformLauncher.OpenUrl(authUrl);
 
