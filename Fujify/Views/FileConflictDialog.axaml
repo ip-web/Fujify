@@ -4,56 +4,65 @@
         x:Class="Fujify.Views.FileConflictDialog"
         x:DataType="vm:FileConflictDialogViewModel"
         Title="File Conflict"
-        Width="490" Height="330"
+        Width="470" Height="290"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
-        TransparencyLevelHint="Mica, AcrylicBlur"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="0"
+        SystemDecorations="None"
+        TransparencyLevelHint="Transparent"
         Background="Transparent"
         Icon="/Assets/images/logo.ico">
 
-    <Grid Background="{DynamicResource AppBackgroundBrush}">
-        <Border Classes="panel" Margin="16" Padding="20" ClipToBounds="True">
-            <Grid RowDefinitions="Auto,*,Auto,Auto">
-                <!-- Title and Icon -->
-                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,14">
-                    <Border Width="36" Height="36" CornerRadius="18" Background="#2A2418" BorderBrush="#44F39C12" BorderThickness="1">
-                        <TextBlock Text="⚠" FontSize="16" Foreground="#F39C12" 
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <StackPanel VerticalAlignment="Center" Spacing="2">
-                        <TextBlock Text="Destination File Exists" FontWeight="SemiBold" FontSize="15"
-                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                        <TextBlock Text="A file with this name already exists in the destination folder." 
-                                   Foreground="{DynamicResource AppTextSecondaryBrush}" FontSize="11"/>
-                    </StackPanel>
-                </StackPanel>
-
-                <!-- File Details -->
-                <Border Grid.Row="1" Background="{DynamicResource AppSurfaceSecondaryBrush}" 
-                        BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
-                        CornerRadius="10" Padding="12" Margin="0,0,0,14">
-                    <StackPanel Spacing="3">
-                        <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" FontSize="13"
-                                   Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
-                        <TextBlock Text="{Binding DirectoryPath}" FontSize="10.5" 
-                                   Foreground="{DynamicResource AppTextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
-                    </StackPanel>
+    <!-- Standalone Dialog Card Block -->
+    <Border Background="{DynamicResource AppSurfaceBrush}"
+            BorderBrush="{DynamicResource AppEdgeBrush}"
+            BorderThickness="1"
+            CornerRadius="16"
+            Padding="22"
+            ClipToBounds="True"
+            PointerPressed="Window_PointerPressed">
+        <Grid RowDefinitions="Auto,*,Auto,Auto">
+            <!-- Title and Icon -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="12" Margin="0,0,0,14">
+                <Border Width="36" Height="36" CornerRadius="18" Background="#2A2418" BorderBrush="#44F39C12" BorderThickness="1">
+                    <TextBlock Text="⚠" FontSize="16" Foreground="#F39C12" 
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
-
-                <!-- Apply to All Checkbox -->
-                <CheckBox Grid.Row="2" Content="Apply for all the pictures in queue" 
-                          IsChecked="{Binding ApplyToAll}" Margin="0,0,0,14" FontSize="11.5"/>
-
-                <!-- Action Buttons -->
-                <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-                    <Button Content="Skip" Command="{Binding SkipCommand}" Classes="secondary" Height="36" Padding="16,0" CornerRadius="18"
-                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                    <Button Content="Use Unique Name" Command="{Binding UseUniqueNameCommand}" Classes="secondary" Height="36" Padding="16,0" CornerRadius="18"
-                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                    <Button Content="Overwrite" Command="{Binding OverwriteCommand}" Classes="primary" Height="36" Padding="18,0" CornerRadius="18"
-                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                <StackPanel VerticalAlignment="Center" Spacing="2">
+                    <TextBlock Text="Destination File Exists" FontWeight="SemiBold" FontSize="15"
+                               Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                    <TextBlock Text="A file with this name already exists in the destination folder." 
+                               Foreground="{DynamicResource AppTextSecondaryBrush}" FontSize="11"/>
                 </StackPanel>
-            </Grid>
-        </Border>
-    </Grid>
+            </StackPanel>
+
+            <!-- File Details -->
+            <Border Grid.Row="1" Background="{DynamicResource AppSurfaceSecondaryBrush}" 
+                    BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
+                    CornerRadius="10" Padding="12" Margin="0,0,0,14">
+                <StackPanel Spacing="3">
+                    <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" FontSize="13"
+                               Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Text="{Binding DirectoryPath}" FontSize="10.5" 
+                               Foreground="{DynamicResource AppTextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Apply to All Checkbox -->
+            <CheckBox Grid.Row="2" Content="Apply for all the pictures in queue" 
+                      IsChecked="{Binding ApplyToAll}" Margin="0,0,0,14" FontSize="11.5"/>
+
+            <!-- Action Buttons -->
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                <Button Content="Skip" Command="{Binding SkipCommand}" Classes="secondary" Height="36" Padding="16,0" CornerRadius="18"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                <Button Content="Use Unique Name" Command="{Binding UseUniqueNameCommand}" Classes="secondary" Height="36" Padding="16,0" CornerRadius="18"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                <Button Content="Overwrite" Command="{Binding OverwriteCommand}" Classes="primary" Height="36" Padding="18,0" CornerRadius="18"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+            </StackPanel>
+        </Grid>
+    </Border>
 </Window>

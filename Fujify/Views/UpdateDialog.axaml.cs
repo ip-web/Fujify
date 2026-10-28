@@ -25,6 +25,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Fujify.Common;
 using Fujify.Models;
 using Fujify.Services;
@@ -192,6 +193,19 @@ namespace Fujify.Views
             else
             {
                 dialog.Show();
+            }
+        }
+
+        private void Window_PointerPressed(object? sender, Avalonia.Input.PointerPressedEventArgs e)
+        {
+            if (e.Source is Button || (e.Source is Avalonia.Visual visual && visual.FindAncestorOfType<Button>() != null))
+            {
+                return;
+            }
+
+            if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            {
+                BeginMoveDrag(e);
             }
         }
     }

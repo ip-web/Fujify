@@ -2,90 +2,113 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Fujify.Views.UpdateDialog"
         Title="New Update Available - Fujifier"
-        Width="520" Height="510"
-        MinWidth="460" MinHeight="420"
+        Width="490" Height="470"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
-        TransparencyLevelHint="Mica, AcrylicBlur"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="0"
+        SystemDecorations="None"
+        TransparencyLevelHint="Transparent"
         Background="Transparent"
         Icon="/Assets/images/logo.ico">
 
-    <Grid Background="{DynamicResource AppBackgroundBrush}">
-        <Border Classes="panel" Margin="16" Padding="22" ClipToBounds="True">
-            <Grid RowDefinitions="Auto, *, Auto, Auto">
-                <!-- 1. Header: Icon & Version Badge -->
-                <Grid Grid.Row="0" ColumnDefinitions="Auto, *" Margin="0,0,0,16">
-                    <Border Grid.Column="0" Width="46" Height="46" CornerRadius="23" 
-                            Background="#1AB89BE4" 
-                            VerticalAlignment="Center" Margin="0,0,14,0">
-                        <TextBlock Text="🚀" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
-                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                            <TextBlock Text="New Version Available" FontWeight="SemiBold" FontSize="16" 
-                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                            <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="6" Padding="6,2" VerticalAlignment="Center">
-                                <TextBlock x:Name="VersionBadgeText" Text="v2.2.0" FontSize="10" FontWeight="Bold" Foreground="#252332"/>
-                            </Border>
-                        </StackPanel>
-                        <TextBlock x:Name="CurrentVsNewText" Text="Current: v2.1.0 • Latest release is ready" 
-                                   FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                    </StackPanel>
-                </Grid>
-
-                <!-- 2. Release Notes Card (Scrollable) -->
-                <Border Grid.Row="1" Classes="panel" ClipToBounds="True">
-                    <Grid RowDefinitions="Auto, *">
-                        <Border Grid.Row="0" Padding="16,10" Background="Transparent"
-                                BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
-                            <Grid ColumnDefinitions="*, Auto">
-                                <TextBlock x:Name="ReleaseTitleText" Text="Release Highlights" FontWeight="SemiBold" FontSize="12" 
-                                           Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
-                                <TextBlock x:Name="ReleaseDateText" Grid.Column="1" Text="Just now" FontSize="10.5" 
-                                           Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
-                            </Grid>
-                        </Border>
-
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="16">
-                            <TextBlock x:Name="ReleaseNotesText" FontSize="11.5" TextWrapping="Wrap" LineHeight="17"
-                                       Foreground="{DynamicResource AppTextSecondaryBrush}"
-                                       Text="Loading release notes..."/>
-                        </ScrollViewer>
-                    </Grid>
+    <!-- Standalone Dialog Card Block -->
+    <Border Background="{DynamicResource AppSurfaceBrush}"
+            BorderBrush="{DynamicResource AppEdgeBrush}"
+            BorderThickness="1"
+            CornerRadius="16"
+            Padding="22"
+            ClipToBounds="True"
+            PointerPressed="Window_PointerPressed">
+        <Grid RowDefinitions="Auto, *, Auto, Auto">
+            <!-- 1. Header: Icon & Version Badge & Close Button -->
+            <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" Margin="0,0,0,14">
+                <Border Grid.Column="0" Width="44" Height="44" CornerRadius="22" 
+                        Background="#1AB89BE4" 
+                        VerticalAlignment="Center" Margin="0,0,12,0">
+                    <TextBlock Text="🚀" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
-
-                <!-- 3. Download Progress & Status Area -->
-                <StackPanel Grid.Row="2" Spacing="6" Margin="0,12,0,12">
-                    <Grid ColumnDefinitions="*, Auto">
-                        <TextBlock x:Name="DownloadStatusText" Text="Ready to update" FontSize="11" 
-                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                        <TextBlock x:Name="DownloadPercentText" Grid.Column="1" Text="" FontSize="11" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource AppAccentLightBrush}"/>
-                    </Grid>
-
-                    <ProgressBar x:Name="DownloadProgressBar" Height="4" CornerRadius="2" 
-                                 Minimum="0" Maximum="100" Value="0" IsVisible="False"
-                                 Foreground="{DynamicResource AppAccentBrush}"/>
-
-                    <TextBlock x:Name="DownloadErrorText" FontSize="11" Foreground="#E74C3C" 
-                               IsVisible="False" TextWrapping="Wrap"/>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <TextBlock Text="New Version Available" FontWeight="SemiBold" FontSize="15" 
+                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                        <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="6" Padding="6,2" VerticalAlignment="Center">
+                            <TextBlock x:Name="VersionBadgeText" Text="v2.2.0" FontSize="10" FontWeight="Bold" Foreground="#252332"/>
+                        </Border>
+                    </StackPanel>
+                    <TextBlock x:Name="CurrentVsNewText" Text="Current: v2.1.0 • Latest release is ready" 
+                               FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                 </StackPanel>
-
-                <!-- 4. Actions Toolbar -->
-                <Grid Grid.Row="3" ColumnDefinitions="Auto, *, Auto, Auto">
-                    <Button Grid.Column="0" Content="Skip This Version" Click="SkipVersion_Click" 
-                            Background="Transparent" BorderThickness="0" Foreground="{DynamicResource AppTextSecondaryBrush}"
-                            FontSize="11" Padding="8,4" VerticalAlignment="Center"/>
-
-                    <Button Grid.Column="2" Content="Later" Click="Later_Click" Classes="secondary"
-                            Height="36" Padding="18,0" CornerRadius="18" Margin="0,0,8,0"
-                            VerticalContentAlignment="Center"/>
-
-                    <Button x:Name="InstallButton" Grid.Column="3" Content="Update Now" Click="Install_Click" 
-                            Classes="primary" Height="36" Padding="20,0" CornerRadius="18" FontWeight="SemiBold"
-                            VerticalContentAlignment="Center"/>
-                </Grid>
+                <Button Grid.Column="2" Click="Later_Click"
+                        Width="28" Height="28" CornerRadius="14" Padding="0"
+                        Background="Transparent" Foreground="{DynamicResource AppTextSecondaryBrush}"
+                        BorderThickness="0" Cursor="Hand" ToolTip.Tip="Close"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                    <Button.Styles>
+                        <Style Selector="Button:pointerover">
+                            <Setter Property="Background" Value="#22FFFFFF"/>
+                            <Setter Property="Foreground" Value="#FFFFFFFF"/>
+                        </Style>
+                    </Button.Styles>
+                    <TextBlock Text="✕" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Button>
             </Grid>
-        </Border>
-    </Grid>
+
+            <!-- 2. Release Notes Card (Scrollable) -->
+            <Border Grid.Row="1" Background="{DynamicResource AppSurfaceSecondaryBrush}" 
+                    BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
+                    CornerRadius="12" ClipToBounds="True">
+                <Grid RowDefinitions="Auto, *">
+                    <Border Grid.Row="0" Padding="14,9" Background="Transparent"
+                            BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
+                        <Grid ColumnDefinitions="*, Auto">
+                            <TextBlock x:Name="ReleaseTitleText" Text="Release Highlights" FontWeight="SemiBold" FontSize="12" 
+                                       Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="ReleaseDateText" Grid.Column="1" Text="Just now" FontSize="10.5" 
+                                       Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="14">
+                        <TextBlock x:Name="ReleaseNotesText" FontSize="11" TextWrapping="Wrap" LineHeight="16"
+                                   Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                   Text="Loading release notes..."/>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- 3. Download Progress & Status Area -->
+            <StackPanel Grid.Row="2" Spacing="6" Margin="0,10,0,10">
+                <Grid ColumnDefinitions="*, Auto">
+                    <TextBlock x:Name="DownloadStatusText" Text="Ready to update" FontSize="11" 
+                               Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                    <TextBlock x:Name="DownloadPercentText" Grid.Column="1" Text="" FontSize="11" FontWeight="SemiBold"
+                               Foreground="{DynamicResource AppAccentLightBrush}"/>
+                </Grid>
+
+                <ProgressBar x:Name="DownloadProgressBar" Height="4" CornerRadius="2" 
+                             Minimum="0" Maximum="100" Value="0" IsVisible="False"
+                             Foreground="{DynamicResource AppAccentBrush}"/>
+
+                <TextBlock x:Name="DownloadErrorText" FontSize="11" Foreground="#E74C3C" 
+                           IsVisible="False" TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <!-- 4. Actions Toolbar -->
+            <Grid Grid.Row="3" ColumnDefinitions="Auto, *, Auto, Auto">
+                <Button Grid.Column="0" Content="Skip This Version" Click="SkipVersion_Click" 
+                        Background="Transparent" BorderThickness="0" Foreground="{DynamicResource AppTextSecondaryBrush}"
+                        FontSize="11" Padding="8,4" VerticalAlignment="Center"/>
+
+                <Button Grid.Column="2" Content="Later" Click="Later_Click" Classes="secondary"
+                        Height="34" Padding="18,0" CornerRadius="17" Margin="0,0,8,0"
+                        VerticalContentAlignment="Center"/>
+
+                <Button x:Name="InstallButton" Grid.Column="3" Content="Update Now" Click="Install_Click" 
+                        Classes="primary" Height="34" Padding="20,0" CornerRadius="17" FontWeight="SemiBold"
+                        VerticalContentAlignment="Center"/>
+            </Grid>
+        </Grid>
+    </Border>
 </Window>

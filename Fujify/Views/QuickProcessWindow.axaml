@@ -4,38 +4,49 @@
         x:Class="Fujify.Views.QuickProcessWindow"
         x:DataType="vm:QuickProcessViewModel"
         Title="{Binding Title}"
-        Width="460" Height="260"
-        MinWidth="420" MinHeight="240"
+        Width="460" Height="250"
+        MinWidth="420" MinHeight="230"
         CanResize="False"
         WindowStartupLocation="CenterScreen"
-        TransparencyLevelHint="Mica, AcrylicBlur"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="0"
+        SystemDecorations="None"
+        TransparencyLevelHint="Transparent"
         Background="Transparent"
         Icon="/Assets/images/logo.ico">
 
-    <Grid Background="{DynamicResource AppBackgroundBrush}">
-        <Grid Margin="24" RowDefinitions="Auto, *, Auto">
+    <!-- Standalone Dialog Card Block -->
+    <Border Background="{DynamicResource AppSurfaceBrush}"
+            BorderBrush="{DynamicResource AppEdgeBrush}"
+            BorderThickness="1"
+            CornerRadius="16"
+            Padding="22"
+            ClipToBounds="True"
+            PointerPressed="Window_PointerPressed">
+        <Grid RowDefinitions="Auto, *, Auto">
             <!-- Header: Status Icon & Titles -->
-            <Grid Grid.Row="0" ColumnDefinitions="Auto, *" Margin="0,0,0,16">
+            <Grid Grid.Row="0" ColumnDefinitions="Auto, *" Margin="0,0,0,14">
                 <Border Grid.Column="0" Width="44" Height="44" CornerRadius="22" 
                         Background="{DynamicResource AppGlassPillBrush}" 
-                        VerticalAlignment="Center" Margin="0,0,14,0">
+                        VerticalAlignment="Center" Margin="0,0,12,0">
                     <TextBlock Text="{Binding StatusIcon}" FontSize="20" 
                                Foreground="{Binding StatusIconColor}" 
                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
-                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
-                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="16" 
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="15" 
                                Foreground="{DynamicResource AppTextPrimaryBrush}" 
                                TextTrimming="CharacterEllipsis"/>
-                    <TextBlock Text="{Binding Subtitle}" FontSize="12" 
+                    <TextBlock Text="{Binding Subtitle}" FontSize="11" 
                                Foreground="{DynamicResource AppTextSecondaryBrush}" 
                                TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
             </Grid>
 
             <!-- Progress Section -->
-            <StackPanel Grid.Row="1" VerticalAlignment="Center" Spacing="10" Margin="0,10,0,10">
-                <ProgressBar Height="8" CornerRadius="4" Minimum="0" Maximum="100"
+            <StackPanel Grid.Row="1" VerticalAlignment="Center" Spacing="8" Margin="0,8,0,8">
+                <ProgressBar Height="6" CornerRadius="3" Minimum="0" Maximum="100"
                              Value="{Binding ProgressValue}"
                              IsIndeterminate="{Binding IsProgressIndeterminate}"/>
                 <Grid ColumnDefinitions="*, Auto">
@@ -51,15 +62,15 @@
             <!-- Action Buttons Footer -->
             <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
                 <Button Content="Open Output Folder" Command="{Binding OpenFolderCommand}" 
-                        IsVisible="{Binding CanOpenFolder}" Height="36" Padding="14,0" CornerRadius="10"
+                        IsVisible="{Binding CanOpenFolder}" Classes="secondary" Height="34" Padding="14,0" CornerRadius="17"
                         VerticalContentAlignment="Center"/>
                 <Button Content="Cancel" Command="{Binding CancelCommand}" 
-                        IsVisible="{Binding IsProcessing}" Height="36" Width="90" CornerRadius="10"
+                        IsVisible="{Binding IsProcessing}" Classes="secondary" Height="34" Width="90" CornerRadius="17"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                 <Button Content="Done" Command="{Binding DoneCommand}" 
-                        IsVisible="{Binding IsCompleted}" Classes="accent" Height="36" Width="90" CornerRadius="10"
+                        IsVisible="{Binding IsCompleted}" Classes="primary" Height="34" Width="90" CornerRadius="17"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
             </StackPanel>
         </Grid>
-    </Grid>
+    </Border>
 </Window>

@@ -10,7 +10,7 @@
         WindowStartupLocation="CenterScreen"
         ExtendClientAreaToDecorationsHint="True"
         ExtendClientAreaChromeHints="NoChrome"
-        ExtendClientAreaTitleBarHeightHint="-1"
+        ExtendClientAreaTitleBarHeightHint="0"
         TransparencyLevelHint="Mica, AcrylicBlur"
         Background="Transparent"
         Icon="/Assets/images/logo.ico">
