@@ -1,0 +1,5 @@
+app id : ca-app-pub-7034111600506292~2070313807
+ad blocks:
+Main_Bottom_Banner : ca-app-pub-7034111600506292/6391160201
+Splash_AppOpen : ca-app-pub-7034111600506292/8496121355
+Splash_Interstitial_Video : ca-app-pub-7034111600506292/9017323545

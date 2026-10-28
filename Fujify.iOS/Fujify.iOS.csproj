@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <PackageReference Include="Avalonia.iOS" Version="11.2.8" />
+    <PackageReference Include="Cats.Google.iOS.AdMob" Version="12.14.0" />
   </ItemGroup>
 
   <ItemGroup>

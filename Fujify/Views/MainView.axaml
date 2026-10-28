@@ -198,96 +198,123 @@
                             BorderThickness="0"
                             Padding="16,8">
                         <StackPanel Spacing="8">
-                            <!-- Grouped Conversion Options Card -->
-                            <Border Background="{DynamicResource AppSurfaceBrush}" CornerRadius="16" Padding="12,10" BorderThickness="0">
-                                <StackPanel Spacing="8">
-                                    <!-- Backup Switch -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Grid.Column="0" Text="Backup Original DNG files" FontSize="13"
-                                                   Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"
-                                                   TextWrapping="Wrap" Margin="0,0,10,0"/>
-                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateBackup}" OnContent="" OffContent=""/>
-                                    </Grid>
-
-                                    <!-- Suffix Option Switch -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
-                                            <TextBlock Text="Add Suffix to File Name" FontSize="13"
-                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
-                                            <TextBlock Text="{Binding SuffixPreview}" FontSize="11"
-                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"
-                                                       IsVisible="{Binding AppendSuffix}" TextWrapping="Wrap"/>
-                                        </StackPanel>
-                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding AppendSuffix}" OnContent="" OffContent=""/>
-                                    </Grid>
-
-                                    <!-- Inline Suffix Input -->
-                                    <Grid ColumnDefinitions="Auto,*" Margin="0,-2,0,2" IsVisible="{Binding AppendSuffix}">
-                                        <TextBlock Grid.Column="0" Text="Suffix:" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"
-                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                                        <TextBox Grid.Column="1" Text="{Binding Suffix}"
-                                                 Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                 Foreground="{DynamicResource AppTextPrimaryBrush}"
-                                                 BorderThickness="0" Watermark="-fujified" FontSize="12" Height="32"
-                                                 CornerRadius="8" VerticalContentAlignment="Center"/>
-                                    </Grid>
-
-                                    <!-- Subfolder Switch -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
-                                            <TextBlock Text="Save in Subfolder" FontSize="13"
-                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
-                                            <TextBlock Text="{Binding SubfolderPreview}" FontSize="11"
-                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"
-                                                       IsVisible="{Binding CreateSubfolder}" TextWrapping="Wrap"/>
-                                        </StackPanel>
-                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateSubfolder}" OnContent="" OffContent=""/>
-                                    </Grid>
-
-                                    <!-- Inline Subfolder Settings -->
-                                    <StackPanel Spacing="6" Margin="0,-2,0,2" IsVisible="{Binding CreateSubfolder}">
+                            <!-- Grouped Conversion Options / Foldable Quick Settings Card -->
+                            <Border Background="{DynamicResource AppSurfaceBrush}" CornerRadius="16" BorderThickness="0" ClipToBounds="True">
+                                <StackPanel Spacing="0">
+                                    <!-- Foldable Header Bar Button -->
+                                    <Button Command="{Binding ToggleQuickSettingsCommand}"
+                                            Background="Transparent" BorderThickness="0" Padding="14,10"
+                                            HorizontalAlignment="Stretch" Cursor="Hand">
                                         <Grid ColumnDefinitions="*,Auto">
-                                            <TextBlock Grid.Column="0" Text="Keep original folder name" FontSize="12"
-                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
-                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding SubfolderUseOriginalName}" OnContent="" OffContent=""/>
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                <TextBlock Text="⚙" FontSize="12" Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
+                                                <TextBlock Text="Conversion Options" FontWeight="SemiBold" FontSize="13"
+                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                <Border Background="{DynamicResource AppGlassPillBrush}" CornerRadius="6" Padding="6,2" Margin="4,0,0,0"
+                                                        IsVisible="{Binding !IsQuickSettingsExpanded}">
+                                                    <TextBlock Text="{Binding QuickSettingsSummary}" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="▼" FontSize="10"
+                                                       Classes="fold-chevron" Classes.collapsed="{Binding !IsQuickSettingsExpanded}"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"
+                                                       RenderTransformOrigin="50%,50%"/>
                                         </Grid>
+                                    </Button>
 
-                                        <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding SubfolderUseOriginalName}">
-                                            <TextBlock Grid.Column="0" Text="Dir Suffix:" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"
-                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                                            <TextBox Grid.Column="1" Text="{Binding SubfolderSuffix}"
-                                                     Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                     Foreground="{DynamicResource AppTextPrimaryBrush}"
-                                                     BorderThickness="0" Watermark="-fujified" FontSize="12" Height="32"
-                                                     CornerRadius="8" VerticalContentAlignment="Center"/>
-                                        </Grid>
+                                    <!-- Foldable Body -->
+                                    <Border Classes="foldable-box" Classes.collapsed="{Binding !IsQuickSettingsExpanded}"
+                                            ClipToBounds="True">
+                                        <StackPanel Spacing="8" Margin="14,0,14,12">
+                                            <!-- Backup Switch -->
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0" Text="Backup Original DNG files" FontSize="13"
+                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"
+                                                           TextWrapping="Wrap" Margin="0,0,10,0"/>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateBackup}" OnContent="" OffContent=""/>
+                                            </Grid>
 
-                                        <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
-                                            <TextBlock Grid.Column="0" Text="Subfolder:" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"
-                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                                            <TextBox Grid.Column="1" Text="{Binding SubfolderCustomName}"
-                                                     Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                     Foreground="{DynamicResource AppTextPrimaryBrush}"
-                                                     BorderThickness="0" Watermark="Fujified" FontSize="12" Height="32"
-                                                     CornerRadius="8" VerticalContentAlignment="Center"/>
-                                        </Grid>
-                                    </StackPanel>
+                                            <!-- Suffix Option Switch -->
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
+                                                    <TextBlock Text="Add Suffix to File Name" FontSize="13"
+                                                               Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
+                                                    <TextBlock Text="{Binding SuffixPreview}" FontSize="11"
+                                                               Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                                               IsVisible="{Binding AppendSuffix}" TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding AppendSuffix}" OnContent="" OffContent=""/>
+                                            </Grid>
 
-                                    <!-- Auto-Open Destination Folder Switch -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Grid.Column="0" Text="Open folder when done" FontSize="13"
-                                                   Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"
-                                                   TextWrapping="Wrap" Margin="0,0,10,0"/>
-                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenOutputFolder}" OnContent="" OffContent=""/>
-                                    </Grid>
+                                            <!-- Inline Suffix Input -->
+                                            <Grid ColumnDefinitions="Auto,*" Margin="0,-2,0,2" IsVisible="{Binding AppendSuffix}">
+                                                <TextBlock Grid.Column="0" Text="Suffix:" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"
+                                                           Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Suffix}"
+                                                         Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                         Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                         BorderThickness="0" Watermark="-fujified" FontSize="12" Height="32"
+                                                         CornerRadius="8" VerticalContentAlignment="Center"/>
+                                            </Grid>
 
-                                    <!-- Open in Lightroom Switch -->
-                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsOpenInLightroomSupported}">
-                                        <TextBlock Grid.Column="0" Text="Open in Lightroom after convert" FontSize="13"
-                                                   Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"
-                                                   TextWrapping="Wrap" Margin="0,0,10,0"/>
-                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenInLightroom}" OnContent="" OffContent=""/>
-                                    </Grid>
+                                            <!-- Subfolder Switch -->
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,10,0">
+                                                    <TextBlock Text="Save in Subfolder" FontSize="13"
+                                                               Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
+                                                    <TextBlock Text="{Binding SubfolderPreview}" FontSize="11"
+                                                               Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                                               IsVisible="{Binding CreateSubfolder}" TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateSubfolder}" OnContent="" OffContent=""/>
+                                            </Grid>
+
+                                            <!-- Inline Subfolder Settings -->
+                                            <StackPanel Spacing="6" Margin="0,-2,0,2" IsVisible="{Binding CreateSubfolder}">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0" Text="Keep original folder name" FontSize="12"
+                                                               Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
+                                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding SubfolderUseOriginalName}" OnContent="" OffContent=""/>
+                                                </Grid>
+
+                                                <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding SubfolderUseOriginalName}">
+                                                    <TextBlock Grid.Column="0" Text="Dir Suffix:" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"
+                                                               Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                                    <TextBox Grid.Column="1" Text="{Binding SubfolderSuffix}"
+                                                             Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                             Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                             BorderThickness="0" Watermark="-fujified" FontSize="12" Height="32"
+                                                             CornerRadius="8" VerticalContentAlignment="Center"/>
+                                                </Grid>
+
+                                                <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
+                                                    <TextBlock Grid.Column="0" Text="Subfolder:" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"
+                                                               Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                                    <TextBox Grid.Column="1" Text="{Binding SubfolderCustomName}"
+                                                             Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                             Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                             BorderThickness="0" Watermark="Fujified" FontSize="12" Height="32"
+                                                             CornerRadius="8" VerticalContentAlignment="Center"/>
+                                                </Grid>
+                                            </StackPanel>
+
+                                            <!-- Auto-Open Destination Folder Switch -->
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0" Text="Open folder when done" FontSize="13"
+                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"
+                                                           TextWrapping="Wrap" Margin="0,0,10,0"/>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenOutputFolder}" OnContent="" OffContent=""/>
+                                            </Grid>
+
+                                            <!-- Open in Lightroom Switch -->
+                                            <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsOpenInLightroomSupported}">
+                                                <TextBlock Grid.Column="0" Text="Open in Lightroom after convert" FontSize="13"
+                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"
+                                                           TextWrapping="Wrap" Margin="0,0,10,0"/>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenInLightroom}" OnContent="" OffContent=""/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
                                 </StackPanel>
                             </Border>
 
@@ -373,13 +400,33 @@
                                                 ToolTip.Tip="Remove all photos from the queue"/>
                                     </StackPanel>
 
-                                    <!-- Section: Quick Settings Card -->
+                                    <!-- Section: Foldable Quick Settings Card -->
                                     <StackPanel Spacing="8">
-                                        <TextBlock Text="QUICK SETTINGS" FontWeight="Bold" FontSize="11"
-                                                   Foreground="{DynamicResource AppTextSecondaryBrush}" LetterSpacing="1"/>
+                                        <!-- Foldable Header Bar Button -->
+                                        <Button Command="{Binding ToggleQuickSettingsCommand}"
+                                                Background="Transparent" BorderThickness="0" Padding="0"
+                                                HorizontalAlignment="Stretch" Cursor="Hand">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                    <TextBlock Text="⚙" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="QUICK SETTINGS" FontWeight="Bold" FontSize="11"
+                                                               Foreground="{DynamicResource AppTextSecondaryBrush}" LetterSpacing="1" VerticalAlignment="Center"/>
+                                                    <Border Background="{DynamicResource AppGlassPillBrush}" CornerRadius="6" Padding="6,2" Margin="4,0,0,0"
+                                                            IsVisible="{Binding !IsQuickSettingsExpanded}">
+                                                        <TextBlock Text="{Binding QuickSettingsSummary}" FontSize="9" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Text="▼" FontSize="9"
+                                                           Classes="fold-chevron" Classes.collapsed="{Binding !IsQuickSettingsExpanded}"
+                                                           Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"
+                                                           RenderTransformOrigin="50%,50%"/>
+                                            </Grid>
+                                        </Button>
 
-                                        <Border Background="{DynamicResource AppSurfaceSecondaryBrush}" CornerRadius="14" Padding="12" BorderThickness="0">
-                                            <StackPanel Spacing="10">
+                                        <!-- Foldable Body -->
+                                        <Border Classes="foldable-box" Classes.collapsed="{Binding !IsQuickSettingsExpanded}"
+                                                ClipToBounds="True" Background="{DynamicResource AppSurfaceSecondaryBrush}" CornerRadius="14" BorderThickness="0">
+                                            <StackPanel Spacing="10" Margin="12">
                                                 <!-- Backup Switch -->
                                                 <Grid ColumnDefinitions="*,Auto">
                                                     <TextBlock Grid.Column="0" Text="Backup Original DNG" FontSize="12"

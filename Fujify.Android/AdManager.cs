@@ -88,6 +88,7 @@ public class AdManager
     public void ShowSplashAppOpenAd()
     {
         if (!_isInitialized || _activity == null || _activity.IsFinishing || _activity.IsDestroyed) return;
+        if (AdService.Instance?.ShouldShowAds == false) return;
 
         try
         {
@@ -142,6 +143,7 @@ public class AdManager
     public void PreloadInterstitial()
     {
         if (!_isInitialized || _activity == null || _activity.IsFinishing || _interstitialAd != null) return;
+        if (AdService.Instance?.ShouldShowAds == false) return;
 
         try
         {
@@ -189,6 +191,7 @@ public class AdManager
     public void ShowInterstitialAd()
     {
         if (_activity == null || _activity.IsFinishing || _activity.IsDestroyed) return;
+        if (AdService.Instance?.ShouldShowAds == false) return;
 
         if (_interstitialAd != null && !_isShowingAd)
         {
@@ -210,6 +213,7 @@ public class AdManager
     public void SetupBannerAd()
     {
         if (!_isInitialized || _activity == null || _bannerContainer != null) return;
+        if (AdService.Instance?.ShouldShowAds == false) return;
 
         try
         {

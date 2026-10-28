@@ -34,15 +34,18 @@ namespace Fujify.Services
     {
         private readonly ILicenseService _licenseService;
 
+        public static AdService? Instance { get; private set; }
         public static Action? PlatformShowSplashCallback { get; set; }
         public static Action? PlatformShowInterstitialCallback { get; set; }
         public static Action<bool>? PlatformSetBannerVisibleCallback { get; set; }
+        public static event Action<bool>? BannerVisibilityChanged;
 
         public bool ShouldShowAds => !_licenseService.IsPro;
         public bool IsAdSupportedOnCurrentPlatform => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
 
         public AdService(ILicenseService? licenseService = null)
         {
+            Instance = this;
             _licenseService = licenseService ?? new LicenseService();
             _licenseService.LicenseChanged += (s, status) =>
             {
@@ -70,7 +73,9 @@ namespace Fujify.Services
         {
             if (IsAdSupportedOnCurrentPlatform)
             {
-                PlatformSetBannerVisibleCallback?.Invoke(visible && ShouldShowAds);
+                bool show = visible && ShouldShowAds;
+                PlatformSetBannerVisibleCallback?.Invoke(show);
+                BannerVisibilityChanged?.Invoke(show);
             }
         }
     }
