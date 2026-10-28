@@ -3,25 +3,30 @@
              x:Class="Fujify.App"
              xmlns:local="using:Fujify"
              RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
 
     <Application.DataTemplates>
         <local:ViewLocator />
     </Application.DataTemplates>
 
     <Application.Resources>
-        <!-- Semantic App Theme Brushes (Dark by default, AMOLED pitch black or Light dynamically) -->
-        <SolidColorBrush x:Key="AppBackgroundBrush" Color="#FF202227"/>
-        <SolidColorBrush x:Key="AppSolidBackgroundBrush" Color="#FF202227"/>
-        <SolidColorBrush x:Key="AppSurfaceBrush" Color="#FF2B2D35"/>
-        <SolidColorBrush x:Key="AppSurfaceSecondaryBrush" Color="#FF363842"/>
-        <SolidColorBrush x:Key="AppHeaderBrush" Color="#FF202227"/>
-        <SolidColorBrush x:Key="AppSolidHeaderBrush" Color="#FF202227"/>
-        <SolidColorBrush x:Key="AppFooterBrush" Color="#FF202227"/>
-        <SolidColorBrush x:Key="AppTextPrimaryBrush" Color="#FFFFFF"/>
-        <SolidColorBrush x:Key="AppTextSecondaryBrush" Color="#A0A0AC"/>
+        <!-- Semantic App Theme Brushes: Studio Purple & Reduced Glass Design System -->
+        <SolidColorBrush x:Key="AppBackgroundBrush" Color="#FF0E1016"/>
+        <SolidColorBrush x:Key="AppSolidBackgroundBrush" Color="#FF0E1016"/>
+        <SolidColorBrush x:Key="AppSurfaceBrush" Color="#FF20212B"/>
+        <SolidColorBrush x:Key="AppSurfaceSecondaryBrush" Color="#FF2A2933"/>
+        <SolidColorBrush x:Key="AppHeaderBrush" Color="#FF0E1016"/>
+        <SolidColorBrush x:Key="AppSolidHeaderBrush" Color="#FF0E1016"/>
+        <SolidColorBrush x:Key="AppFooterBrush" Color="#FF14151E"/>
+        <SolidColorBrush x:Key="AppTextPrimaryBrush" Color="#FFF2F2F8"/>
+        <SolidColorBrush x:Key="AppTextSecondaryBrush" Color="#FFA6A7B8"/>
         <SolidColorBrush x:Key="AppGlassPillBrush" Color="#1AFFFFFF"/>
-        <SolidColorBrush x:Key="AppAccentBrush" Color="#01D701"/>
+        <SolidColorBrush x:Key="AppAccentBrush" Color="#FFC2ACEB"/>
+        <SolidColorBrush x:Key="AppAccentLightBrush" Color="#FFE3D6FF"/>
+        <SolidColorBrush x:Key="AppEdgeBrush" Color="#26FFFFFF"/>
+        <SolidColorBrush x:Key="AppPrimaryBtnBgBrush" Color="#FFFAF9FC"/>
+        <SolidColorBrush x:Key="AppPrimaryBtnFgBrush" Color="#FF252332"/>
+        <SolidColorBrush x:Key="AppSelectedRowBrush" Color="#1ECCB6FF"/>
+        <SolidColorBrush x:Key="AppSelectedBorderBrush" Color="#4DCCB6FF"/>
         <x:Double x:Key="DataGridSortIconMinWidth">0</x:Double>
     </Application.Resources>
 
@@ -34,7 +39,7 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="GridLinesVisibility" Value="Horizontal"/>
-            <Setter Property="HorizontalGridLinesBrush" Value="{DynamicResource AppSurfaceSecondaryBrush}"/>
+            <Setter Property="HorizontalGridLinesBrush" Value="#14FFFFFF"/>
         </Style>
         <Style Selector="DataGrid /template/ Rectangle#PART_ColumnHeadersAndRowsSeparator">
             <Setter Property="IsVisible" Value="False"/>
@@ -46,8 +51,8 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource AppTextSecondaryBrush}"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="Padding" Value="4,6"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="Padding" Value="8,6"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="AreSeparatorsVisible" Value="False"/>
             <Setter Property="SeparatorBrush" Value="Transparent"/>
@@ -76,32 +81,35 @@
         </Style>
 
         <Style Selector="DataGridCell">
-            <Setter Property="Padding" Value="4,2"/>
+            <Setter Property="Padding" Value="6,4"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
         <Style Selector="DataGridRow">
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Margin" Value="0,2"/>
         </Style>
         <Style Selector="DataGridRow:pointerover">
-            <Setter Property="Background" Value="{DynamicResource AppGlassPillBrush}"/>
+            <Setter Property="Background" Value="#0DFFFFFF"/>
         </Style>
         <Style Selector="DataGridRow:selected">
-            <Setter Property="Background" Value="{DynamicResource AppSurfaceSecondaryBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource AppSelectedRowBrush}"/>
         </Style>
 
-        <!-- View Mode Toggle Buttons (List vs Grid) -->
+        <!-- View Mode Segmented Toggle Buttons (List vs Grid) -->
         <Style Selector="Button.view-toggle">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource AppTextSecondaryBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Padding" Value="10,6"/>
             <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontSize" Value="11"/>
         </Style>
         <Style Selector="Button.view-toggle.active">
-            <Setter Property="Background" Value="{DynamicResource AppGlassPillBrush}"/>
-            <Setter Property="Foreground" Value="{DynamicResource AppTextPrimaryBrush}"/>
+            <Setter Property="Background" Value="#34343F"/>
+            <Setter Property="Foreground" Value="#EEEAF8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
 
         <!-- Micro-interactions & Smooth Transitions -->
@@ -114,47 +122,108 @@
             </Setter>
         </Style>
         <Style Selector="Button:pointerover">
-            <Setter Property="Opacity" Value="0.88"/>
+            <Setter Property="Opacity" Value="0.90"/>
         </Style>
         <Style Selector="Button:pressed">
             <Setter Property="RenderTransform" Value="scale(0.97)"/>
             <Setter Property="Opacity" Value="0.75"/>
         </Style>
 
-        <!-- Modern Borderless Accent Button -->
-        <Style Selector="Button.accent">
-            <Setter Property="Background" Value="{DynamicResource AppAccentBrush}"/>
-            <Setter Property="Foreground" Value="White"/>
+        <!-- Studio Primary Action Button (White/Cream Pill with Dark Text) -->
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="{DynamicResource AppPrimaryBtnBgBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppPrimaryBtnFgBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="22"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="16,10"/>
+        </Style>
+        <Style Selector="Button.primary:pointerover">
+            <Setter Property="Background" Value="#FFFFFFFF"/>
         </Style>
 
-        <!-- Modern Borderless Card Style -->
+        <!-- Studio Secondary Action Button (Translucent Pill) -->
+        <Style Selector="Button.secondary">
+            <Setter Property="Background" Value="#12FFFFFF"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppEdgeBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextPrimaryBrush}"/>
+            <Setter Property="CornerRadius" Value="22"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="16,10"/>
+        </Style>
+        <Style Selector="Button.secondary:pointerover">
+            <Setter Property="Background" Value="#1AFFFFFF"/>
+        </Style>
+
+        <!-- Accent Button -->
+        <Style Selector="Button.accent">
+            <Setter Property="Background" Value="{DynamicResource AppAccentBrush}"/>
+            <Setter Property="Foreground" Value="#252332"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="22"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+
+        <!-- Navigation Rail Buttons -->
+        <Style Selector="Button.nav">
+            <Setter Property="Width" Value="66"/>
+            <Setter Property="Padding" Value="8,10"/>
+            <Setter Property="CornerRadius" Value="14"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppTextSecondaryBrush}"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.nav:pointerover">
+            <Setter Property="Background" Value="#0DFFFFFF"/>
+        </Style>
+        <Style Selector="Button.nav.active">
+            <Setter Property="Background" Value="#16CCB6FF"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppEdgeBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppAccentLightBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <!-- Studio Reduced Glass Panel (23px Rounded Bordered Card) -->
+        <Style Selector="Border.panel">
+            <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppEdgeBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="23"/>
+            <Setter Property="BoxShadow" Value="0 8px 24px #00000028"/>
+        </Style>
+
         <Style Selector="Border.card">
             <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}"/>
             <Setter Property="CornerRadius" Value="14"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Padding" Value="14"/>
-            <Setter Property="Transitions">
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut"/>
-                </Transitions>
-            </Setter>
         </Style>
 
+        <!-- Simulation Chips -->
         <Style Selector="Border.chip">
-            <Setter Property="Background" Value="{DynamicResource AppSurfaceSecondaryBrush}"/>
-            <Setter Property="CornerRadius" Value="10"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="Background" Value="#292834"/>
+            <Setter Property="BorderBrush" Value="#14FFFFFF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="8,5"/>
+        </Style>
+        <Style Selector="Border.chip.chosen">
+            <Setter Property="Background" Value="#393044"/>
+            <Setter Property="BorderBrush" Value="#42C4A8FF"/>
+            <Setter Property="BorderThickness" Value="1"/>
         </Style>
 
-        <!-- Dynamic Accent Theme Integration -->
+        <!-- Dynamic Accent Integration -->
         <Style Selector="ProgressBar">
             <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}"/>
         </Style>
 
         <Style Selector="ToggleSwitch:checked /template/ Border#SwitchKnobBounds">
-            <Setter Property="Background" Value="{DynamicResource AppAccentBrush}"/>
+            <Setter Property="Background" Value="#8474AC"/>
         </Style>
 
         <Style Selector="CheckBox:checked /template/ Border#NormalRectangle">
@@ -165,6 +234,7 @@
         <Style Selector="RadioButton:checked /template/ Ellipse#CheckGlyph">
             <Setter Property="Fill" Value="{DynamicResource AppAccentBrush}"/>
         </Style>
+
         <!-- Foldable Quick Settings Box Styles & Animations -->
         <Style Selector="Border.foldable-box">
             <Setter Property="MaxHeight" Value="600"/>

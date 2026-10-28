@@ -115,6 +115,10 @@ namespace Fujify.ViewModels
                 OnPropertyChanged(nameof(CanProcessOrStop));
                 OnPropertyChanged(nameof(OverallStatusText));
                 OnPropertyChanged(nameof(ProgressSummaryText));
+                OnPropertyChanged(nameof(ActiveStep));
+                OnPropertyChanged(nameof(IsStep1Current));
+                OnPropertyChanged(nameof(IsStep2Current));
+                OnPropertyChanged(nameof(IsStep3Current));
                 (ClearCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
                 (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
             };
@@ -129,6 +133,16 @@ namespace Fujify.ViewModels
             OpenWebsiteCommand = new RelayCommand(ExecuteOpenWebsite);
             ToggleQuickSettingsCommand = new RelayCommand(() => IsQuickSettingsExpanded = !IsQuickSettingsExpanded);
             _isQuickSettingsExpanded = _settingsService.Settings.IsQuickSettingsExpanded;
+
+            SelectInspectorSettingsTabCommand = new RelayCommand(() => InspectorTabIndex = 0);
+            SelectInspectorInfoTabCommand = new RelayCommand(() => InspectorTabIndex = 1);
+            NavPhotosCommand = new RelayCommand(() => ActiveNavTab = "photos");
+            NavHomeCommand = new RelayCommand(() => ActiveNavTab = "home");
+            NavPresetsCommand = new RelayCommand(() =>
+            {
+                ActiveNavTab = "presets";
+                InspectorTabIndex = 0;
+            });
 
             RemoveFileCommand = new RelayCommand<object>(param =>
             {
@@ -234,6 +248,78 @@ namespace Fujify.ViewModels
         public ICommand OpenWithCommand { get; }
         public ICommand ResetStatusCommand { get; }
         public ICommand ToggleQuickSettingsCommand { get; }
+        public ICommand SelectInspectorSettingsTabCommand { get; }
+        public ICommand SelectInspectorInfoTabCommand { get; }
+        public ICommand NavPhotosCommand { get; }
+        public ICommand NavHomeCommand { get; }
+        public ICommand NavPresetsCommand { get; }
+
+        private int _inspectorTabIndex = 0; // 0 = Settings, 1 = Photo info
+        public int InspectorTabIndex
+        {
+            get => _inspectorTabIndex;
+            set
+            {
+                if (SetProperty(ref _inspectorTabIndex, value))
+                {
+                    OnPropertyChanged(nameof(IsInspectorSettingsTab));
+                    OnPropertyChanged(nameof(IsInspectorInfoTab));
+                }
+            }
+        }
+        public bool IsInspectorSettingsTab => InspectorTabIndex == 0;
+        public bool IsInspectorInfoTab => InspectorTabIndex == 1;
+
+        private string _activeNavTab = "photos";
+        public string ActiveNavTab
+        {
+            get => _activeNavTab;
+            set => SetProperty(ref _activeNavTab, value);
+        }
+
+        public string AvatarInitials
+        {
+            get
+            {
+                if (_licenseService?.CurrentStatus?.IsPro == true) return "PRO";
+                string? email = _licenseService?.CurrentStatus?.AccountEmail;
+                if (!string.IsNullOrWhiteSpace(email) && email.Length >= 2)
+                {
+                    return email.Substring(0, 2).ToUpperInvariant();
+                }
+                return "FU";
+            }
+        }
+
+        public string OutputDestinationSummary
+        {
+            get
+            {
+                if (CreateSubfolder)
+                {
+                    string folderName = SubfolderUseOriginalName ? $"(original){SubfolderSuffix}" : SubfolderCustomName;
+                    return $"Subfolder: {folderName}";
+                }
+                if (!string.IsNullOrEmpty(_outputFolderPath))
+                {
+                    return _outputFolderPath;
+                }
+                return "Same folder as originals";
+            }
+        }
+
+        public string ActiveStep
+        {
+            get
+            {
+                if (Files.Count == 0) return "1";
+                if (IsProcessing) return "3";
+                return "2";
+            }
+        }
+        public bool IsStep1Current => ActiveStep == "1";
+        public bool IsStep2Current => ActiveStep == "2";
+        public bool IsStep3Current => ActiveStep == "3";
 
         private bool _isDragOver;
         public bool IsDragOver
@@ -423,6 +509,7 @@ namespace Fujify.ViewModels
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(SubfolderPreview));
                     OnPropertyChanged(nameof(QuickSettingsSummary));
+                    OnPropertyChanged(nameof(OutputDestinationSummary));
                     if (_preferences != null)
                     {
                         _preferences.CreateSubfolder = value;
@@ -443,6 +530,7 @@ namespace Fujify.ViewModels
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(SubfolderPreview));
                     OnPropertyChanged(nameof(QuickSettingsSummary));
+                    OnPropertyChanged(nameof(OutputDestinationSummary));
                     if (_preferences != null)
                     {
                         _preferences.SubfolderUseOriginalName = value;
@@ -463,6 +551,7 @@ namespace Fujify.ViewModels
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(SubfolderPreview));
                     OnPropertyChanged(nameof(QuickSettingsSummary));
+                    OnPropertyChanged(nameof(OutputDestinationSummary));
                     if (_preferences != null)
                     {
                         _preferences.SubfolderSuffix = value;
@@ -483,6 +572,7 @@ namespace Fujify.ViewModels
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(SubfolderPreview));
                     OnPropertyChanged(nameof(QuickSettingsSummary));
+                    OnPropertyChanged(nameof(OutputDestinationSummary));
                     if (_preferences != null)
                     {
                         _preferences.SubfolderCustomName = value;
@@ -921,6 +1011,7 @@ namespace Fujify.ViewModels
                 {
                     OnPropertyChanged(nameof(FormattedOutputFolderPath));
                     OnPropertyChanged(nameof(HasCustomOutputFolder));
+                    OnPropertyChanged(nameof(OutputDestinationSummary));
                 }
             }
         }
@@ -956,6 +1047,10 @@ namespace Fujify.ViewModels
                     OnPropertyChanged(nameof(CanProcessOrStop));
                     OnPropertyChanged(nameof(OverallStatusText));
                     OnPropertyChanged(nameof(ProgressSummaryText));
+                    OnPropertyChanged(nameof(ActiveStep));
+                    OnPropertyChanged(nameof(IsStep1Current));
+                    OnPropertyChanged(nameof(IsStep2Current));
+                    OnPropertyChanged(nameof(IsStep3Current));
                     (ClearCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
                     (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
                 }
