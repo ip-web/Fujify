@@ -1592,13 +1592,13 @@
                 </Transitions>
             </Grid.Transitions>
 
-            <Grid RowDefinitions="Auto,*">
+            <Grid RowDefinitions="Auto,*" DataContext="{Binding Preferences}">
                 <!-- Navigation Top Bar -->
                 <Border x:Name="PreferencesHeaderBar" Grid.Row="0"
                         Background="{DynamicResource AppSolidHeaderBrush}"
                         BorderThickness="0" Padding="16,12">
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <Button Grid.Column="0" Command="{Binding Preferences.CancelCommand}"
+                        <Button Grid.Column="0" Command="{Binding CancelCommand}"
                                 Background="Transparent" BorderThickness="0" Padding="6,8">
                             <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                 <TextBlock Text="‹" FontSize="24" FontWeight="Bold" Margin="0,-4,0,0" Foreground="{DynamicResource AppAccentBrush}"/>
@@ -1610,47 +1610,412 @@
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Foreground="{DynamicResource AppTextPrimaryBrush}"/>
 
-                        <Button Grid.Column="2" Content="Save" Command="{Binding Preferences.SaveCommand}"
+                        <Button Grid.Column="2" Content="Save" Command="{Binding SaveCommand}"
                                 Classes="primary" Height="36" Padding="16,0" CornerRadius="18"
                                 FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center"/>
                     </Grid>
                 </Border>
 
                 <!-- Scrollable Settings Body -->
-                <ScrollViewer Grid.Row="1" Padding="16,12">
-                    <StackPanel Spacing="20" MaxWidth="540" HorizontalAlignment="Stretch">
-                        <TextBlock Text="Settings" FontWeight="Bold" FontSize="20" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                <ScrollViewer x:Name="PreferencesScrollViewer" Grid.Row="1"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Padding="16,12">
+                    <StackPanel Spacing="16" MaxWidth="600" HorizontalAlignment="Stretch">
 
-                        <!-- Theme Selection -->
+                        <!-- 1. THEME -->
                         <Border Classes="panel" ClipToBounds="True">
                             <Grid RowDefinitions="Auto,*">
+                                <!-- Inner Group Header -->
                                 <Border Grid.Row="0" Padding="18,12" Background="Transparent"
                                         BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Appearance" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                    <TextBlock Text="Theme" FontWeight="SemiBold" FontSize="13"
+                                               Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                 </Border>
+
+                                <!-- Group Content -->
+                                <StackPanel Grid.Row="1" Margin="18,14" Spacing="10">
+                                    <TextBlock Text="Appearance Mode" FontWeight="SemiBold" FontSize="12"
+                                               Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" Margin="0,4,0,4">
+                                        <RadioButton Grid.Row="0" Grid.Column="0" Content="Automatic"
+                                                     IsChecked="{Binding IsAutoThemeSelected, Mode=TwoWay}"
+                                                     GroupName="MobileTheme" Margin="0,0,6,8"/>
+                                        <RadioButton Grid.Row="0" Grid.Column="1" Content="Dark"
+                                                     IsChecked="{Binding IsDarkThemeSelected, Mode=TwoWay}"
+                                                     GroupName="MobileTheme" Margin="6,0,0,8"/>
+                                        <RadioButton Grid.Row="1" Grid.Column="0" Content="AMOLED"
+                                                     IsChecked="{Binding IsAmoledThemeSelected, Mode=TwoWay}"
+                                                     GroupName="MobileTheme" Margin="0,0,6,0"/>
+                                        <RadioButton Grid.Row="1" Grid.Column="1" Content="Light"
+                                                     IsChecked="{Binding IsLightThemeSelected, Mode=TwoWay}"
+                                                     GroupName="MobileTheme" Margin="6,0,0,0"/>
+                                    </Grid>
+                                    <TextBlock Text="Automatic adapts to system mode. Dark features refined slate tones. AMOLED provides true pitch-black contrast."
+                                               FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- 2. PERFORMANCE -->
+                        <Border Classes="panel" ClipToBounds="True">
+                            <Grid RowDefinitions="Auto,*">
+                                <!-- Inner Group Header -->
+                                <Border Grid.Row="0" Padding="18,12" Background="Transparent"
+                                        BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
+                                    <TextBlock Text="Performance" FontWeight="SemiBold" FontSize="13"
+                                               Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                </Border>
+
+                                <!-- Group Content -->
                                 <StackPanel Grid.Row="1" Margin="18,14" Spacing="12">
+                                    <!-- Concurrency Slider -->
+                                    <StackPanel Spacing="8">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                <TextBlock Text="Concurrent Conversions" FontWeight="SemiBold" FontSize="12"
+                                                           Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                                <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="4" Padding="5,1" IsVisible="{Binding !IsPro}" VerticalAlignment="Center">
+                                                    <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="#252332"/>
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding MaxConcurrentConversions}" FontWeight="Bold" FontSize="13"
+                                                       Foreground="{DynamicResource AppAccentLightBrush}"/>
+                                        </Grid>
+                                        <Slider Minimum="1" Maximum="{Binding TotalThreads}" Value="{Binding MaxConcurrentConversions}"
+                                                IsEnabled="{Binding IsPro}"
+                                                IsSnapToTickEnabled="True" TickFrequency="1"/>
+                                        <TextBlock Text="{Binding ConcurrencyHint}" FontSize="11"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+
+                                    <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
+
+                                    <!-- Skip Thumbnails Toggle -->
                                     <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Grid.Column="0" Text="Theme Mode" VerticalAlignment="Center" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                        <ComboBox Grid.Column="1" SelectedItem="{Binding Preferences.ThemeMode, Mode=TwoWay}"
-                                                  ItemsSource="{Binding Preferences.AvailableThemes}" Width="140"/>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                            <TextBlock Text="Skip Thumbnail Generation" FontWeight="SemiBold" FontSize="12"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <TextBlock Text="Speeds up batch photo queue loading significantly" FontSize="11"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding SkipThumbnailGeneration}" OnContent="" OffContent=""/>
                                     </Grid>
                                 </StackPanel>
                             </Grid>
                         </Border>
 
-                        <!-- Account & Plan Info -->
+                        <!-- 3. FILE HANDLING -->
                         <Border Classes="panel" ClipToBounds="True">
                             <Grid RowDefinitions="Auto,*">
+                                <!-- Inner Group Header -->
                                 <Border Grid.Row="0" Padding="18,12" Background="Transparent"
                                         BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Account &amp; License" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                    <TextBlock Text="File Handling" FontWeight="SemiBold" FontSize="13"
+                                               Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                 </Border>
-                                <StackPanel Grid.Row="1" Margin="18,14" Spacing="8">
-                                    <TextBlock Text="{Binding Preferences.LicenseStatusText}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                    <TextBlock Text="{Binding Preferences.LicenseDescriptionText}" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+
+                                <!-- Group Content -->
+                                <StackPanel Grid.Row="1" Margin="18,14" Spacing="12">
+                                    <!-- Custom File Suffix -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                            <TextBlock Text="Add Suffix to Converted File Name" FontWeight="SemiBold" FontSize="12"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <TextBlock Text="Appends custom text identifier before .dng extension" FontSize="11"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding AppendSuffix}" OnContent="" OffContent=""/>
+                                    </Grid>
+
+                                    <Grid ColumnDefinitions="Auto,*" Margin="0,2,0,0" IsVisible="{Binding AppendSuffix}">
+                                        <TextBlock Grid.Column="0" Text="Suffix:" VerticalAlignment="Center" FontSize="11" Margin="0,0,10,0"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                        <TextBox Grid.Column="1" Text="{Binding Suffix}"
+                                                 Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                 Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                 BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
+                                                 Watermark="-fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                    </Grid>
+                                    <TextBlock Text="Example: DSC0001.ARW → DSC0001-fujified.dng" FontSize="11"
+                                               Foreground="{DynamicResource AppAccentLightBrush}"
+                                               IsVisible="{Binding AppendSuffix}" Margin="0,-4,0,2" TextWrapping="Wrap"/>
+
+                                    <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
+
+                                    <!-- Subfolder Option -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                            <TextBlock Text="Save Converted Photos in Subfolder" FontWeight="SemiBold" FontSize="12"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <TextBlock Text="Creates a subfolder for converted DNGs instead of saving directly in source folder" FontSize="11"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateSubfolder}" OnContent="" OffContent=""/>
+                                    </Grid>
+
+                                    <StackPanel Spacing="8" Margin="0,4,0,2" IsVisible="{Binding CreateSubfolder}">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                                <TextBlock Text="Keep Original Directory Name" FontSize="11" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                                <TextBlock Text="Uses the source directory name as base for the subfolder" FontSize="10.5"
+                                                           Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding SubfolderUseOriginalName}" OnContent="" OffContent=""/>
+                                        </Grid>
+
+                                        <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding SubfolderUseOriginalName}">
+                                            <TextBlock Grid.Column="0" Text="Directory Suffix:" VerticalAlignment="Center" FontSize="11" Margin="0,0,10,0"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                            <TextBox Grid.Column="1" Text="{Binding SubfolderSuffix}"
+                                                     Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                     Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                     BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
+                                                     Watermark="-fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                        </Grid>
+
+                                        <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
+                                            <TextBlock Grid.Column="0" Text="Subfolder Name:" VerticalAlignment="Center" FontSize="11" Margin="0,0,10,0"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                            <TextBox Grid.Column="1" Text="{Binding SubfolderCustomName}"
+                                                     Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                     Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                     BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
+                                                     Watermark="Fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                        </Grid>
+
+                                        <TextBlock Text="{Binding SubfolderPreview, StringFormat='Example: {0}'}" FontSize="11"
+                                                   Foreground="{DynamicResource AppAccentLightBrush}" Margin="0,0,0,2" TextWrapping="Wrap"/>
+                                    </StackPanel>
+
+                                    <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
+
+                                    <!-- Auto-Open Destination Folder -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                            <TextBlock Text="Open Destination Folder After Conversion" FontWeight="SemiBold" FontSize="12"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <TextBlock Text="Automatically opens the destination folder in file manager when processing finishes" FontSize="11"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenOutputFolder}" OnContent="" OffContent=""/>
+                                    </Grid>
+
+                                    <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
+
+                                    <!-- Lossless Compression -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                <TextBlock Text="Lossless DNG Compression" FontWeight="SemiBold" FontSize="12"
+                                                           Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                                <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="4" Padding="5,1" IsVisible="{Binding !IsPro}" VerticalAlignment="Center">
+                                                    <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="#252332"/>
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="Reduces DNG file size with zero image quality loss (Pro only)" FontSize="11"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding LosslessCompression}" IsEnabled="{Binding IsPro}" OnContent="" OffContent=""/>
+                                    </Grid>
+
+                                    <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
+
+                                    <!-- Embed RAW -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                            <TextBlock Text="Embed Original RAW inside DNG" FontWeight="SemiBold" FontSize="12"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <TextBlock Text="Preserves original unmodified camera sensor file inside DNG" FontSize="11"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding EmbedOriginalRaw}" OnContent="" OffContent=""/>
+                                    </Grid>
+
+                                    <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" IsVisible="{Binding IsOpenInLightroomSupported}"/>
+
+                                    <!-- Auto-open in Lightroom -->
+                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsOpenInLightroomSupported}">
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                            <TextBlock Text="Auto-Open Converted Photos in Lightroom" FontWeight="SemiBold" FontSize="12"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <TextBlock Text="Automatically launches Lightroom with processed DNGs" FontSize="11"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenInLightroom}" OnContent="" OffContent=""/>
+                                    </Grid>
+
+                                    <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" IsVisible="{Binding IsWindows}"/>
+
+                                    <!-- Windows Explorer Context Menu -->
+                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsWindows}">
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="Windows Context Menu (Fujifier)" FontWeight="SemiBold" FontSize="12"
+                                                           Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                                <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="4" Padding="5,1"
+                                                        IsVisible="{Binding !IsPro}" VerticalAlignment="Center">
+                                                    <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="#252332"/>
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="Adds 'Fujifier' cascading options to right-click menu on RAW files" FontSize="11"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsWindowsContextMenuEnabled}" OnContent="" OffContent=""/>
+                                    </Grid>
                                 </StackPanel>
                             </Grid>
                         </Border>
+
+                        <!-- 4. LICENSE & PLAN -->
+                        <Border Classes="panel" ClipToBounds="True">
+                            <Grid RowDefinitions="Auto,*">
+                                <!-- Inner Group Header -->
+                                <Border Grid.Row="0" Padding="18,12" Background="Transparent"
+                                        BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
+                                    <TextBlock Text="License &amp; Plan" FontWeight="SemiBold" FontSize="13"
+                                               Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                </Border>
+
+                                <!-- Group Content -->
+                                <StackPanel Grid.Row="1" Margin="18,14" Spacing="12">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" Spacing="3" Margin="0,0,8,0">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <TextBlock Text="{Binding LicenseStatusText}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                                <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="4" Padding="6,1" IsVisible="{Binding IsPro}" VerticalAlignment="Center">
+                                                    <TextBlock Text="PRO ACTIVE" FontSize="9" FontWeight="Bold" Foreground="#252332"/>
+                                                </Border>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding LicenseDescriptionText}" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="⭐ Get Pro" Command="{Binding UpgradeToProCommand}" Classes="primary" IsVisible="{Binding !IsPro}" Height="34" Padding="14,0" CornerRadius="17" VerticalContentAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="Deactivate" Command="{Binding DeactivateLicenseCommand}" Classes="secondary" IsVisible="{Binding IsPro}" Height="34" Padding="14,0" CornerRadius="17" VerticalContentAlignment="Center"/>
+                                    </Grid>
+
+                                    <!-- Connected Account Section (Visible when user is signed in) -->
+                                    <Border Background="{DynamicResource AppSurfaceSecondaryBrush}" BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,2,0,0" IsVisible="{Binding IsAccountLoggedIn}">
+                                        <Grid ColumnDefinitions="*,Auto,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                <TextBlock Text="Fujifier Account" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource AppAccentLightBrush}"/>
+                                                <TextBlock Text="{Binding AccountDisplayText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Content="🔄 Retrieve" Command="{Binding RetrieveLicenseCommand}" IsEnabled="{Binding !IsRetrievingLicense}" Classes="secondary" Height="30" Padding="10,0" CornerRadius="15" VerticalContentAlignment="Center" Margin="0,0,6,0" FontSize="11"/>
+                                            <Button Grid.Column="2" Content="Sign Out" Command="{Binding LogoutAccountCommand}" Classes="secondary" Height="30" Padding="10,0" CornerRadius="15" VerticalContentAlignment="Center" FontSize="11"/>
+                                        </Grid>
+                                    </Border>
+
+                                    <!-- Activation Options when in Free Tier and not signed in -->
+                                    <StackPanel Spacing="10" IsVisible="{Binding !IsAccountLoggedIn}">
+                                        <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
+
+                                        <!-- Tabs for Activation Mode: Account/Google vs Key -->
+                                        <StackPanel Orientation="Horizontal" Spacing="12">
+                                            <RadioButton Content="Sign In (Google / Account)" IsChecked="{Binding IsAccountTabActive, Mode=OneWay}" Command="{Binding SetAccountTabCommand}" GroupName="MobileActivationMode" FontSize="11.5"/>
+                                            <RadioButton Content="Enter Key" IsChecked="{Binding IsKeyTabActive, Mode=OneWay}" Command="{Binding SetKeyTabCommand}" GroupName="MobileActivationMode" FontSize="11.5"/>
+                                        </StackPanel>
+
+                                        <!-- Option A: Google OAuth & Account Sign In -->
+                                        <StackPanel Spacing="10" IsVisible="{Binding IsAccountTabActive}">
+                                            <!-- Google Sign-In Button -->
+                                            <Button Command="{Binding LoginWithGoogleCommand}" IsEnabled="{Binding !IsGoogleLoggingIn}"
+                                                    Classes="secondary" Height="36" CornerRadius="18" Padding="14,0" HorizontalAlignment="Stretch"
+                                                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                                                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                                    <Viewbox Width="15" Height="15" VerticalAlignment="Center">
+                                                        <Canvas Width="24" Height="24">
+                                                            <Path Fill="#4285F4" Data="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.04h3.87c2.26-2.09 3.67-5.17 3.67-9.14z"/>
+                                                            <Path Fill="#34A853" Data="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.87-3.04c-1.08.72-2.45 1.16-4.06 1.16-3.13 0-5.78-2.11-6.73-4.96H1.25v3.13C3.25 21.31 7.35 24 12 24z"/>
+                                                            <Path Fill="#FBBC05" Data="M5.27 14.25c-.25-.72-.38-1.49-.38-2.25s.13-1.53.38-2.25V6.62H1.25C.45 8.24 0 10.06 0 12s.45 3.76 1.25 5.38l4.02-3.13z"/>
+                                                            <Path Fill="#EA4335" Data="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.25 2.69 1.25 6.62l4.02 3.13c.95-2.85 3.6-4.96 6.73-4.96z"/>
+                                                        </Canvas>
+                                                    </Viewbox>
+                                                    <TextBlock Text="Continue with Google" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+
+                                            <!-- Divider -->
+                                            <Grid ColumnDefinitions="*,Auto,*" Margin="0,2">
+                                                <Separator Grid.Column="0" Height="1" Background="{DynamicResource AppEdgeBrush}" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="1" Text="or account login" FontSize="10.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="8,0" VerticalAlignment="Center"/>
+                                                <Separator Grid.Column="2" Height="1" Background="{DynamicResource AppEdgeBrush}" VerticalAlignment="Center"/>
+                                            </Grid>
+
+                                            <!-- Email and Password -->
+                                            <TextBox Text="{Binding AccountEmailInput, Mode=TwoWay}" Watermark="Account Email" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center"/>
+                                            <TextBox Text="{Binding AccountPasswordInput, Mode=TwoWay}" PasswordChar="●" Watermark="Account Password" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center"/>
+                                            <Button Content="Sign In &amp; Sync License" Command="{Binding AccountLoginCommand}" Classes="primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Height="34" CornerRadius="17" VerticalContentAlignment="Center"/>
+                                        </StackPanel>
+
+                                        <!-- Option B: Direct License Key Input -->
+                                        <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsKeyTabActive}">
+                                            <TextBox Grid.Column="0" Text="{Binding LicenseKeyInput, Mode=TwoWay}" Watermark="Enter license key" Height="34" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                                            <Button Grid.Column="1" Content="Activate" Command="{Binding ActivateLicenseCommand}" Classes="primary" Height="34" Padding="16,0" CornerRadius="17" VerticalContentAlignment="Center"/>
+                                        </Grid>
+                                    </StackPanel>
+
+                                    <!-- Live Status Feedback Message -->
+                                    <TextBlock Text="{Binding LicenseMessageText}" FontSize="11" Foreground="{Binding LicenseMessageColor}" IsVisible="{Binding HasLicenseMessage}" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- 5. UPDATES -->
+                        <Border Classes="panel" ClipToBounds="True">
+                            <Grid RowDefinitions="Auto,*">
+                                <!-- Inner Group Header -->
+                                <Border Grid.Row="0" Padding="18,12" Background="Transparent"
+                                        BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
+                                    <TextBlock Text="Updates" FontWeight="SemiBold" FontSize="13"
+                                               Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                </Border>
+
+                                <!-- Group Content -->
+                                <StackPanel Grid.Row="1" Margin="18,14" Spacing="12">
+                                    <!-- Check on startup toggle -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                            <TextBlock Text="Check for Updates on Startup" FontWeight="SemiBold" FontSize="12"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <TextBlock Text="Automatically check GitHub releases when Fujifier opens" FontSize="11"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding CheckForUpdatesOnStartup}" OnContent="" OffContent=""/>
+                                    </Grid>
+
+                                    <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
+
+                                    <!-- Manual Check Button -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                            <TextBlock Text="{Binding CurrentAppVersionText}" FontWeight="SemiBold" FontSize="12"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <TextBlock Text="{Binding UpdateStatusMessage}" FontSize="11"
+                                                       Foreground="{Binding UpdateStatusColor}"
+                                                       IsVisible="{Binding HasUpdateStatusMessage}" TextWrapping="Wrap"/>
+                                            <TextBlock Text="Check GitHub releases for updates" FontSize="11"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                                       IsVisible="{Binding !HasUpdateStatusMessage}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Content="Check Now" Command="{Binding CheckForUpdatesCommand}"
+                                                IsEnabled="{Binding !IsCheckingForUpdate}"
+                                                Classes="secondary" Height="34" Padding="16,0" CornerRadius="17"
+                                                VerticalContentAlignment="Center"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Bottom Action Buttons -->
+                        <Grid ColumnDefinitions="*,*" Margin="0,8,0,16">
+                            <Button Grid.Column="0" Content="Cancel" Command="{Binding CancelCommand}" Classes="secondary"
+                                    Height="40" CornerRadius="20" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                            <Button Grid.Column="1" Content="Save Settings" Command="{Binding SaveCommand}" Classes="primary"
+                                    Height="40" CornerRadius="20" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="8,0,0,0"/>
+                        </Grid>
+
+                        <!-- Extra Bottom Inset Clearance for Mobile Gesture Navigation Bar -->
+                        <Border Height="140"/>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>
@@ -1690,7 +2055,7 @@
                     </Grid>
                 </Border>
 
-                <ScrollViewer Grid.Row="1" Padding="20">
+                <ScrollViewer x:Name="AboutScrollViewer" Grid.Row="1" HorizontalScrollBarVisibility="Disabled" Padding="20">
                     <StackPanel Spacing="16" MaxWidth="440" HorizontalAlignment="Center">
                         <Border Width="64" Height="64" CornerRadius="16" Background="#10C9FFDF" BorderBrush="#24B4FFDC" BorderThickness="1"
                                 HorizontalAlignment="Center">
@@ -1701,6 +2066,7 @@
                         <TextBlock Text="Film Simulation Engine" FontSize="12" Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center"/>
                         <TextBlock Text="Developed by Isidore Paulin (ipweb.dev). Licensed under GPL v3."
                                    FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center" TextAlignment="Center"/>
+                        <Border Height="90"/>
                     </StackPanel>
                 </ScrollViewer>
             </Grid>

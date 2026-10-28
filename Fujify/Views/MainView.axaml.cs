@@ -131,10 +131,22 @@ namespace Fujify.Views
                 prefHeader.Padding = new Avalonia.Thickness(16 + leftInset, 4 + topInset, 16 + rightInset, 6);
             }
 
+            var prefScroll = this.FindControl<ScrollViewer>("PreferencesScrollViewer");
+            if (prefScroll != null)
+            {
+                prefScroll.Padding = new Avalonia.Thickness(16 + leftInset, 12, 16 + rightInset, 24 + bottomInset);
+            }
+
             var aboutHeader = this.FindControl<Border>("AboutHeaderBar");
             if (aboutHeader != null)
             {
                 aboutHeader.Padding = new Avalonia.Thickness(16 + leftInset, 4 + topInset, 16 + rightInset, 6);
+            }
+
+            var aboutScroll = this.FindControl<ScrollViewer>("AboutScrollViewer");
+            if (aboutScroll != null)
+            {
+                aboutScroll.Padding = new Avalonia.Thickness(20 + leftInset, 20, 20 + rightInset, 24 + bottomInset);
             }
 
             var modal = this.FindControl<Border>("ModalDialogContainer");
