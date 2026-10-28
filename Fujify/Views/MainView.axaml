@@ -9,24 +9,21 @@
 
     <UserControl.KeyBindings>
         <KeyBinding Gesture="Delete" Command="{Binding RemoveFileCommand}" CommandParameter="{Binding SelectedFile}"/>
-        <KeyBinding Gesture="Back" Command="{Binding RemoveFileCommand}" CommandParameter="{Binding SelectedFile}"/>
     </UserControl.KeyBindings>
 
     <Grid Background="{DynamicResource AppBackgroundBrush}" ClipToBounds="True">
         <!-- AMBIENT PURPLE & TEAL GLOW ACCENTS (Smooth & Large without Banding) -->
         <Canvas IsHitTestVisible="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
             <!-- Top-Right Smooth Ambient Glow (Large, Non-banding) -->
-            <Ellipse Width="1400" Height="950" Canvas.Right="-250" Canvas.Top="-300">
+            <Ellipse Width="1800" Height="1200" Canvas.Right="-200" Canvas.Top="-200">
                 <Ellipse.Fill>
-                    <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" RadiusX="50%" RadiusY="50%">
-                        <GradientStop Color="#406B49A8" Offset="0.0"/>
-                        <GradientStop Color="#365F4095" Offset="0.12"/>
-                        <GradientStop Color="#2C523682" Offset="0.25"/>
-                        <GradientStop Color="#22442C6E" Offset="0.38"/>
-                        <GradientStop Color="#1937235A" Offset="0.52"/>
-                        <GradientStop Color="#102A1A47" Offset="0.67"/>
-                        <GradientStop Color="#091E1333" Offset="0.80"/>
-                        <GradientStop Color="#04140D22" Offset="0.91"/>
+                    <RadialGradientBrush Center="70%,20%" GradientOrigin="70%,20%" RadiusX="60%" RadiusY="60%">
+                        <GradientStop Color="#4A286E" Offset="0.0"/>
+                        <GradientStop Color="#3D215E" Offset="0.15"/>
+                        <GradientStop Color="#301A4F" Offset="0.30"/>
+                        <GradientStop Color="#24133F" Offset="0.45"/>
+                        <GradientStop Color="#1A0D30" Offset="0.60"/>
+                        <GradientStop Color="#120922" Offset="0.75"/>
                         <GradientStop Color="#000E1016" Offset="1.0"/>
                     </RadialGradientBrush>
                 </Ellipse.Fill>
@@ -51,11 +48,11 @@
             <Border x:Name="HeaderBar" Grid.Row="0"
                     Background="Transparent"
                     BorderThickness="0"
-                    Height="35"
-                    Padding="21,0"
+                    Height="34"
+                    Padding="16,0,0,0"
                     PointerPressed="TitleBar_PointerPressed"
                     DoubleTapped="TitleBar_DoubleTapped">
-                <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Stretch">
                     <!-- Left: Studio Logo & Title -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" IsHitTestVisible="False">
                         <Image Source="/Assets/images/logoXL.png" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
@@ -65,19 +62,19 @@
                     <!-- Center: Draggable Spacer -->
                     <Panel Grid.Column="1" Background="Transparent" IsHitTestVisible="False"/>
 
-                    <!-- Right: Custom Functional Minimize, Maximize, Close Buttons matching mockup dots -->
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <!-- Right: Custom Functional Minimize, Maximize, Close Buttons matching standard Windows controls -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="0" VerticalAlignment="Stretch" HorizontalAlignment="Right">
                         <!-- Minimize Button -->
-                        <Button Classes="titlebar-dot" Click="TitleBar_Minimize_Click" ToolTip.Tip="Minimize">
-                            <TextBlock Text="—" FontSize="7" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <Button Classes="win-caption" Click="TitleBar_Minimize_Click" ToolTip.Tip="Minimize">
+                            <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
                         <!-- Maximize / Restore Button -->
-                        <Button Classes="titlebar-dot" Click="TitleBar_Maximize_Click" ToolTip.Tip="Maximize">
-                            <TextBlock Text="▢" FontSize="7" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <Button Classes="win-caption" Click="TitleBar_Maximize_Click" ToolTip.Tip="Maximize">
+                            <TextBlock Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
                         <!-- Close Button -->
-                        <Button Classes="titlebar-dot close" Click="TitleBar_Close_Click" ToolTip.Tip="Close">
-                            <TextBlock Text="✕" FontSize="7" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <Button Classes="win-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="Close">
+                            <TextBlock Text="&#x2715;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                         </Button>
                     </StackPanel>
                 </Grid>
@@ -207,7 +204,7 @@
 
                         <!-- 1. LEFT NAVIGATION RAIL -->
                         <Border Grid.Column="0" Background="Transparent"
-                                BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,1,0"
+                                BorderThickness="0"
                                 Padding="11,16">
                             <Grid RowDefinitions="Auto,*,Auto,Auto">
                                 <!-- Rail Logo (Fujifier Emblem) -->
@@ -260,7 +257,7 @@
                                                    Foreground="#9D96B6" LetterSpacing="1.8"/>
                                         <TextBlock Text="Fujifier" FontSize="26" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource AppTextPrimaryBrush}" LetterSpacing="-0.8"/>
-                                        <TextBlock Text="Import your RAW photos. Choose your film simulations. Process your batch." FontSize="11"
+                                        <TextBlock Text="Import your RAW photos. All Fujifilm film simulations unlocked. Process your batch." FontSize="11"
                                                    Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                     </StackPanel>
 
@@ -292,6 +289,15 @@
                                             </Border>
                                             <TextBlock Text="Process" FontSize="10" VerticalAlignment="Center"/>
                                         </StackPanel>
+
+                                        <!-- Step 4: Done -->
+                                        <StackPanel Classes="step-item" Classes.current="{Binding IsStep4Current}"
+                                                    Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <Border Classes="step-badge" Width="19" Height="19" CornerRadius="10">
+                                                <TextBlock Text="4" FontSize="9" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                            <TextBlock Text="Done" FontSize="10" VerticalAlignment="Center"/>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Grid>
                             </Border>
@@ -310,7 +316,7 @@
                                         <Button Classes="primary" Command="{Binding AddFilesCommand}"
                                                 ToolTip.Tip="Import RAW photos from computer">
                                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                <PathIcon Data="M 12 5 v 14 M 5 12 h 14" Width="12" Height="12" Foreground="{DynamicResource AppPrimaryBtnFgBrush}"/>
+                                                <PathIcon Data="M 11 4 A 1 1 0 0 1 13 4 V 11 H 20 A 1 1 0 0 1 20 13 H 13 V 20 A 1 1 0 0 1 11 20 V 13 H 4 A 1 1 0 0 1 4 11 H 11 Z" Width="12" Height="12" Foreground="{DynamicResource AppPrimaryBtnFgBrush}"/>
                                                 <TextBlock Text="Add files" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource AppPrimaryBtnFgBrush}" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
@@ -429,7 +435,6 @@
                                                       DoubleTapped="DataGrid_DoubleTapped">
                                                 <DataGrid.KeyBindings>
                                                     <KeyBinding Gesture="Delete" Command="{Binding RemoveFileCommand}" CommandParameter="{Binding #QueueDataGrid.SelectedItems}"/>
-                                                    <KeyBinding Gesture="Back" Command="{Binding RemoveFileCommand}" CommandParameter="{Binding #QueueDataGrid.SelectedItems}"/>
                                                 </DataGrid.KeyBindings>
                                                 <DataGrid.Styles>
                                                     <Style Selector="DataGridRow" x:DataType="models:FileItem">
@@ -652,7 +657,7 @@
 
 
                             <!-- RIGHT: Inspector Panel (Settings | Photo info Tabs) -->
-                            <Border Grid.Column="1" Classes="inspector" Width="295" ClipToBounds="True" Background="Transparent" BorderThickness="0">
+                            <Border Grid.Column="1" Classes="panel" Width="295" ClipToBounds="True">
                                 <Grid RowDefinitions="Auto,*">
 
                                     <!-- Inspector Top Tabs -->
@@ -695,28 +700,34 @@
                                                     <TextBlock Text="Output destination" FontSize="10" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource AppTextSecondaryBrush}"/>
 
-                                                    <!-- Browse Output Folder Button -->
-                                                    <Grid ColumnDefinitions="*,Auto">
-                                                        <Button Grid.Column="0" Command="{Binding BrowseFolderCommand}"
-                                                                Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                                BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
-                                                                Height="36" CornerRadius="10" Padding="10,0"
-                                                                HorizontalAlignment="Stretch" VerticalContentAlignment="Center"
-                                                                ToolTip.Tip="Select custom output folder (Default: same as originals)">
-                                                            <Grid ColumnDefinitions="Auto,*">
-                                                                <TextBlock Grid.Column="0" Text="📁 " FontSize="11" VerticalAlignment="Center"/>
-                                                                <TextBlock Grid.Column="1" Text="{Binding FormattedOutputFolderPath}" FontSize="10"
+                                                    <!-- Browse Output Folder with Nested Reset Cross -->
+                                                    <Border Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                            BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
+                                                            Height="36" CornerRadius="10" Padding="10,0,6,0">
+                                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                                            <TextBlock Grid.Column="0" Text="📁 " FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                                                            <Button Grid.Column="1" Command="{Binding BrowseFolderCommand}"
+                                                                    Background="Transparent" BorderThickness="0" Padding="0"
+                                                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
+                                                                    ToolTip.Tip="Select custom output folder (Default: same as originals)">
+                                                                <TextBlock Text="{Binding FormattedOutputFolderPath}" FontSize="10"
                                                                            TextTrimming="CharacterEllipsis" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
-                                                            </Grid>
-                                                        </Button>
-
-                                                        <Button Grid.Column="1" Content="✕" Command="{Binding ClearOutputFolderCommand}"
-                                                                IsVisible="{Binding HasCustomOutputFolder}"
-                                                                Width="24" Height="24" CornerRadius="12" Margin="6,0,0,0" Padding="0"
-                                                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                                                Background="{DynamicResource AppGlassPillBrush}" Foreground="{DynamicResource AppTextSecondaryBrush}"
-                                                                BorderThickness="0" ToolTip.Tip="Reset to source folder"/>
-                                                    </Grid>
+                                                            </Button>
+                                                            <Button Grid.Column="2" Content="✕" Command="{Binding ClearOutputFolderCommand}"
+                                                                    IsVisible="{Binding HasCustomOutputFolder}"
+                                                                    Width="20" Height="20" Padding="0"
+                                                                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                                    Background="Transparent" Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                                                    BorderThickness="0" Cursor="Hand" ToolTip.Tip="Reset to source folder">
+                                                                <Button.Styles>
+                                                                    <Style Selector="Button:pointerover">
+                                                                        <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}"/>
+                                                                        <Setter Property="Background" Value="Transparent"/>
+                                                                    </Style>
+                                                                </Button.Styles>
+                                                            </Button>
+                                                        </Grid>
+                                                    </Border>
                                                 </StackPanel>
 
                                                 <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" Margin="0,4"/>
@@ -794,7 +805,7 @@
 
                                                         <!-- Subfolder Preview -->
                                                         <TextBlock Text="{Binding SubfolderPreview, StringFormat='Preview: {0}'}"
-                                                                   FontSize="9" Foreground="{DynamicResource AppAccentBrush}"
+                                                                   FontSize="9" Foreground="{DynamicResource AppAccentLightBrush}"
                                                                    TextTrimming="CharacterEllipsis"/>
                                                     </StackPanel>
 
@@ -1038,24 +1049,34 @@
                         <TextBlock Text="Preferences" FontWeight="Bold" FontSize="20" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
 
                         <!-- Theme Selection -->
-                        <Border Classes="panel" Padding="16">
-                            <StackPanel Spacing="12">
-                                <TextBlock Text="Appearance" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Grid.Column="0" Text="Theme Mode" VerticalAlignment="Center" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                    <ComboBox Grid.Column="1" SelectedItem="{Binding Preferences.ThemeMode, Mode=TwoWay}"
-                                              ItemsSource="{Binding Preferences.AvailableThemes}" Width="140"/>
-                                </Grid>
-                            </StackPanel>
+                        <Border Classes="panel" ClipToBounds="True">
+                            <Grid RowDefinitions="Auto,*">
+                                <Border Grid.Row="0" Padding="18,12" Background="Transparent"
+                                        BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
+                                    <TextBlock Text="Appearance" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                </Border>
+                                <StackPanel Grid.Row="1" Margin="18,14" Spacing="12">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Grid.Column="0" Text="Theme Mode" VerticalAlignment="Center" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        <ComboBox Grid.Column="1" SelectedItem="{Binding Preferences.ThemeMode, Mode=TwoWay}"
+                                                  ItemsSource="{Binding Preferences.AvailableThemes}" Width="140"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
                         </Border>
 
                         <!-- Account & Plan Info -->
-                        <Border Classes="panel" Padding="16">
-                            <StackPanel Spacing="12">
-                                <TextBlock Text="Account &amp; License" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                <TextBlock Text="{Binding Preferences.LicenseStatusText}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                <TextBlock Text="{Binding Preferences.LicenseDescriptionText}" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
-                            </StackPanel>
+                        <Border Classes="panel" ClipToBounds="True">
+                            <Grid RowDefinitions="Auto,*">
+                                <Border Grid.Row="0" Padding="18,12" Background="Transparent"
+                                        BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
+                                    <TextBlock Text="Account &amp; License" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                </Border>
+                                <StackPanel Grid.Row="1" Margin="18,14" Spacing="8">
+                                    <TextBlock Text="{Binding Preferences.LicenseStatusText}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                    <TextBlock Text="{Binding Preferences.LicenseDescriptionText}" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Grid>
                         </Border>
                     </StackPanel>
                 </ScrollViewer>

@@ -2,7 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Fujify.Views.AboutWindow"
         Title="About Fujifier"
-        Width="440" Height="470"
+        Width="460" Height="500"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
         TransparencyLevelHint="Mica, AcrylicBlur"
@@ -10,50 +10,50 @@
         Icon="/Assets/images/logo.ico">
 
     <Grid Background="{DynamicResource AppBackgroundBrush}">
-        <Grid Margin="24" RowDefinitions="Auto,*,Auto">
-            <!-- Header with Logo -->
-            <StackPanel Grid.Row="0" HorizontalAlignment="Center" Spacing="8" Margin="0,0,0,14">
-                <Image Source="/Assets/images/logoXL.png" Width="64" Height="64"/>
-                <TextBlock Text="Fujifier" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
-                <TextBlock Text="Version 2.1.0 (Cross-Platform)" FontSize="12" 
-                           Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center"/>
-            </StackPanel>
-
-            <!-- Information Content -->
-            <Border Grid.Row="1" Background="{DynamicResource AppSurfaceBrush}" 
-                    CornerRadius="14" Padding="16" BorderThickness="0">
-                <StackPanel Spacing="10">
-                    <TextBlock Text="Fujifilm Film Simulation Profiles for All Cameras" FontWeight="SemiBold" FontSize="13"
-                               Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
-                    <TextBlock Text="Converts camera RAW images to DNG while embedding Fujifilm camera profiles and metadata so Adobe Lightroom and Camera Raw (ACR) can apply authentic Fujifilm film simulations."
-                               FontSize="12" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
-                    
-                    <Separator Margin="0,4" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
-
-                    <!-- Functional Link Buttons -->
-                    <Grid ColumnDefinitions="*,*,*">
-                        <Button Grid.Column="0" Content="Website" Click="Website_Click"
-                                Background="Transparent" Foreground="{DynamicResource AppAccentBrush}"
-                                HorizontalAlignment="Center" FontSize="11" Padding="4"/>
-                        <Button Grid.Column="1" Content="GitHub" Click="GitHub_Click"
-                                Background="Transparent" Foreground="{DynamicResource AppAccentBrush}"
-                                HorizontalAlignment="Center" FontSize="11" Padding="4"/>
-                        <Button Grid.Column="2" Content="Updates" Click="Releases_Click"
-                                Background="Transparent" Foreground="{DynamicResource AppAccentBrush}"
-                                HorizontalAlignment="Center" FontSize="11" Padding="4"/>
-                    </Grid>
-
-                    <Separator Margin="0,4" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
-
-                    <TextBlock Text="Developed by Isidore Paulin (ipweb.dev)" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                    <TextBlock Text="Powered by: DNGLab, ExifTool, Avalonia UI" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                    <TextBlock Text="Licensed under GNU General Public License v3" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+        <Border Classes="panel" Margin="16" Padding="22" ClipToBounds="True">
+            <Grid RowDefinitions="Auto,*,Auto">
+                <!-- Header with Logo -->
+                <StackPanel Grid.Row="0" HorizontalAlignment="Center" Spacing="8" Margin="0,0,0,14">
+                    <Image Source="/Assets/images/logoXL.png" Width="56" Height="56"/>
+                    <TextBlock Text="Fujifier" FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Version 2.1.0 (Cross-Platform)" FontSize="11" 
+                               Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center"/>
                 </StackPanel>
-            </Border>
 
-            <!-- Footer -->
-            <Button Grid.Row="2" Content="Close" Click="Close_Click" Classes="accent" Width="95" Height="36" CornerRadius="10"
-                    HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="0,14,0,0"/>
-        </Grid>
+                <!-- Information Content -->
+                <Border Grid.Row="1" Background="{DynamicResource AppSurfaceSecondaryBrush}" 
+                        BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
+                        CornerRadius="14" Padding="16">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="Fujifilm Film Simulation Profiles for All Cameras" FontWeight="SemiBold" FontSize="12.5"
+                                   Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
+                        <TextBlock Text="Converts camera RAW images to DNG while embedding Fujifilm camera profiles and metadata so Adobe Lightroom and Camera Raw (ACR) can apply authentic Fujifilm film simulations."
+                                   FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap" LineHeight="16"/>
+                        
+                        <Separator Margin="0,4" Background="{DynamicResource AppEdgeBrush}"/>
+
+                        <!-- Functional Link Buttons -->
+                        <Grid ColumnDefinitions="*,*,*">
+                            <Button Grid.Column="0" Content="Website" Click="Website_Click" Classes="secondary"
+                                    HorizontalAlignment="Center" FontSize="10.5" Height="28" Padding="10,0" CornerRadius="14"/>
+                            <Button Grid.Column="1" Content="GitHub" Click="GitHub_Click" Classes="secondary"
+                                    HorizontalAlignment="Center" FontSize="10.5" Height="28" Padding="10,0" CornerRadius="14"/>
+                            <Button Grid.Column="2" Content="Updates" Click="Releases_Click" Classes="secondary"
+                                    HorizontalAlignment="Center" FontSize="10.5" Height="28" Padding="10,0" CornerRadius="14"/>
+                        </Grid>
+
+                        <Separator Margin="0,4" Background="{DynamicResource AppEdgeBrush}"/>
+
+                        <TextBlock Text="Developed by Isidore Paulin (ipweb.dev)" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                        <TextBlock Text="Powered by: DNGLab, ExifTool, Avalonia UI" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                        <TextBlock Text="Licensed under GNU General Public License v3" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Footer -->
+                <Button Grid.Row="2" Content="Close" Click="Close_Click" Classes="primary" Height="36" Padding="24,0" CornerRadius="18"
+                        HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="0,14,0,0"/>
+            </Grid>
+        </Border>
     </Grid>
 </Window>
