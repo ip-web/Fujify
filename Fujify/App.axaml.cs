@@ -18,7 +18,7 @@ public partial class App : Application
         AvaloniaXamlLoader.Load(this);
     }
 
-    public static readonly Avalonia.Media.Color FallbackAccentGreen = Avalonia.Media.Color.Parse("#01D701");
+    public static readonly Avalonia.Media.Color FallbackAccentPurple = Avalonia.Media.Color.Parse("#C2ACEB");
 
     public static Avalonia.Media.Color GetEffectiveAccentColor()
     {
@@ -35,7 +35,7 @@ public partial class App : Application
         }
         catch { }
 
-        return FallbackAccentGreen;
+        return FallbackAccentPurple;
     }
 
     public static void UpdateAccentBrush()
@@ -85,51 +85,51 @@ public partial class App : Application
         var bgColor = useMica
             ? (isLight
                 ? Avalonia.Media.Color.Parse("#B8F2F2F7")
-                : (isAmoled ? Avalonia.Media.Color.Parse("#000000") : Avalonia.Media.Color.Parse("#B8202227")))
+                : (isAmoled ? Avalonia.Media.Color.Parse("#000000") : Avalonia.Media.Color.Parse("#B80E1016")))
             : (isLight
                 ? Avalonia.Media.Color.Parse("#FFF2F2F7")
-                : (isAmoled ? Avalonia.Media.Color.Parse("#FF000000") : Avalonia.Media.Color.Parse("#FF202227")));
+                : (isAmoled ? Avalonia.Media.Color.Parse("#FF000000") : Avalonia.Media.Color.Parse("#FF0E1016")));
 
         var surfColor = useMica
             ? (isLight
                 ? Avalonia.Media.Color.Parse("#FFFFFF")
-                : (isAmoled ? Avalonia.Media.Color.Parse("#101014") : Avalonia.Media.Color.Parse("#D92B2D35")))
+                : (isAmoled ? Avalonia.Media.Color.Parse("#101014") : Avalonia.Media.Color.Parse("#E620212B")))
             : (isLight
                 ? Avalonia.Media.Color.Parse("#FFFFFFFF")
-                : (isAmoled ? Avalonia.Media.Color.Parse("#FF101014") : Avalonia.Media.Color.Parse("#FF2B2D35")));
+                : (isAmoled ? Avalonia.Media.Color.Parse("#FF101014") : Avalonia.Media.Color.Parse("#FF20212B")));
 
         var surf2Color = isLight
             ? Avalonia.Media.Color.Parse("#E5E5EA")
-            : (isAmoled ? Avalonia.Media.Color.Parse("#1A1A20") : Avalonia.Media.Color.Parse("#363842"));
+            : (isAmoled ? Avalonia.Media.Color.Parse("#1A1A20") : Avalonia.Media.Color.Parse("#2A2933"));
 
         var headerColor = useMica
             ? (isLight
                 ? Avalonia.Media.Color.Parse("#A0F2F2F7")
-                : (isAmoled ? Avalonia.Media.Color.Parse("#EE000000") : Avalonia.Media.Color.Parse("#90202227")))
+                : (isAmoled ? Avalonia.Media.Color.Parse("#EE000000") : Avalonia.Media.Color.Parse("#900E1016")))
             : (isLight
                 ? Avalonia.Media.Color.Parse("#FFF2F2F7")
-                : (isAmoled ? Avalonia.Media.Color.Parse("#FF000000") : Avalonia.Media.Color.Parse("#FF202227")));
+                : (isAmoled ? Avalonia.Media.Color.Parse("#FF000000") : Avalonia.Media.Color.Parse("#FF0E1016")));
 
         var footerColor = useMica
             ? (isLight
                 ? Avalonia.Media.Color.Parse("#A0F2F2F7")
-                : (isAmoled ? Avalonia.Media.Color.Parse("#EE000000") : Avalonia.Media.Color.Parse("#90202227")))
+                : (isAmoled ? Avalonia.Media.Color.Parse("#EE000000") : Avalonia.Media.Color.Parse("#9014151E")))
             : (isLight
                 ? Avalonia.Media.Color.Parse("#FFF2F2F7")
-                : (isAmoled ? Avalonia.Media.Color.Parse("#FF000000") : Avalonia.Media.Color.Parse("#FF202227")));
+                : (isAmoled ? Avalonia.Media.Color.Parse("#FF000000") : Avalonia.Media.Color.Parse("#FF14151E")));
 
-        var text1Color = isLight ? Avalonia.Media.Color.Parse("#000000") : Avalonia.Media.Color.Parse("#FFFFFF");
-        var text2Color = isLight ? Avalonia.Media.Color.Parse("#6E6E78") : Avalonia.Media.Color.Parse("#A0A0AC");
+        var text1Color = isLight ? Avalonia.Media.Color.Parse("#000000") : Avalonia.Media.Color.Parse("#F2F2F8");
+        var text2Color = isLight ? Avalonia.Media.Color.Parse("#6E6E78") : Avalonia.Media.Color.Parse("#A6A7B8");
         var glassPill = isLight ? Avalonia.Media.Color.Parse("#12000000") : Avalonia.Media.Color.Parse("#1AFFFFFF");
 
         // Solid fully-opaque backgrounds for panels and modals
         var solidBgColor = isLight
             ? Avalonia.Media.Color.Parse("#FFF2F2F7")
-            : (isAmoled ? Avalonia.Media.Color.Parse("#FF000000") : Avalonia.Media.Color.Parse("#FF202227"));
+            : (isAmoled ? Avalonia.Media.Color.Parse("#FF000000") : Avalonia.Media.Color.Parse("#FF0E1016"));
 
         var solidHeaderColor = isLight
             ? Avalonia.Media.Color.Parse("#FFF2F2F7")
-            : (isAmoled ? Avalonia.Media.Color.Parse("#FF000000") : Avalonia.Media.Color.Parse("#FF202227"));
+            : (isAmoled ? Avalonia.Media.Color.Parse("#FF000000") : Avalonia.Media.Color.Parse("#FF0E1016"));
 
         SetOrUpdateBrush("AppBackgroundBrush", bgColor);
         SetOrUpdateBrush("AppSolidBackgroundBrush", solidBgColor);
@@ -141,6 +141,8 @@ public partial class App : Application
         SetOrUpdateBrush("AppTextPrimaryBrush", text1Color);
         SetOrUpdateBrush("AppTextSecondaryBrush", text2Color);
         SetOrUpdateBrush("AppGlassPillBrush", glassPill);
+        SetOrUpdateBrush("AppEdgeBrush", Avalonia.Media.Color.Parse("#26FFFFFF"));
+        SetOrUpdateBrush("AppAccentLightBrush", Avalonia.Media.Color.Parse("#E3D6FF"));
         UpdateAccentBrush();
     }
 

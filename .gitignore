@@ -10,6 +10,7 @@
 *.userosscache
 *.sln.docstates
 client_secret*.json
+Fujifier-*.html
 *.json.secret
 
 # User-specific files (MonoDevelop/Xamarin Studio)
