@@ -169,7 +169,8 @@
                                                         <Border HorizontalAlignment="Left" CornerRadius="6" Padding="8,3"
                                                                 Background="{DynamicResource AppSurfaceSecondaryBrush}">
                                                             <TextBlock Text="{Binding Status}" FontSize="10" FontWeight="SemiBold"
-                                                                       Foreground="{Binding StatusColor}"/>
+                                                                       Foreground="{Binding StatusColor}"
+                                                                       HorizontalAlignment="Center" TextAlignment="Center"/>
                                                         </Border>
                                                     </StackPanel>
 
@@ -687,13 +688,31 @@
                                             <DataGridTextColumn Header="File Name" Binding="{Binding FileName}" Width="*" MinWidth="160" />
                                             <DataGridTextColumn Header="Detected Camera" Binding="{Binding CameraMakeAndModel}" Width="160" MinWidth="80" />
 
-                                            <DataGridTemplateColumn Header="Status" Width="100" MinWidth="60" SortMemberPath="Status">
+                                            <DataGridTemplateColumn Width="100" MinWidth="60" SortMemberPath="Status">
+                                                <DataGridTemplateColumn.Header>
+                                                    <TextBlock Text="Status" HorizontalAlignment="Center" TextAlignment="Center"/>
+                                                </DataGridTemplateColumn.Header>
                                                 <DataGridTemplateColumn.CellTemplate>
                                                     <DataTemplate x:DataType="models:FileItem">
-                                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="4">
-                                                            <TextBlock Text="{Binding StatusIcon}" VerticalAlignment="Center" FontSize="12" Foreground="{Binding StatusColor}"/>
-                                                            <TextBlock Text="{Binding Status}" VerticalAlignment="Center" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{Binding StatusColor}"/>
-                                                        </StackPanel>
+                                                        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                                                            <!-- Completed: Show only the purple arrow, horizontally center aligned -->
+                                                            <TextBlock IsVisible="{Binding IsCompleted}"
+                                                                       Text="{Binding Status}"
+                                                                       FontSize="13"
+                                                                       HorizontalAlignment="Center"
+                                                                       TextAlignment="Center"
+                                                                       VerticalAlignment="Center"
+                                                                       Foreground="{Binding StatusColor}"/>
+                                                            <!-- Pending/In Progress/Error: Show StatusIcon + Status text, horizontally centered -->
+                                                            <StackPanel IsVisible="{Binding !IsCompleted}"
+                                                                        Orientation="Horizontal"
+                                                                        HorizontalAlignment="Center"
+                                                                        VerticalAlignment="Center"
+                                                                        Spacing="4">
+                                                                <TextBlock Text="{Binding StatusIcon}" VerticalAlignment="Center" FontSize="12" Foreground="{Binding StatusColor}"/>
+                                                                <TextBlock Text="{Binding Status}" VerticalAlignment="Center" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{Binding StatusColor}"/>
+                                                            </StackPanel>
+                                                        </Grid>
                                                     </DataTemplate>
                                                 </DataGridTemplateColumn.CellTemplate>
                                             </DataGridTemplateColumn>
@@ -789,11 +808,15 @@
                                                                            TextTrimming="CharacterEllipsis"/>
 
                                                                 <!-- Status & Remove Button -->
-                                                                <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
-                                                                    <TextBlock Grid.Column="0" Text="{Binding Status}" FontSize="10"
+                                                                <Grid Grid.Row="2">
+                                                                    <!-- Centered Status (purple arrow when completed, centered text otherwise) -->
+                                                                    <TextBlock Text="{Binding Status}" FontSize="11"
                                                                                Foreground="{Binding StatusColor}" TextTrimming="CharacterEllipsis"
-                                                                               VerticalAlignment="Center"/>
-                                                                    <Button Grid.Column="1" Content="✕" Command="{Binding RemoveCommand}" CommandParameter="{Binding}"
+                                                                               HorizontalAlignment="Center" TextAlignment="Center"
+                                                                               VerticalAlignment="Center"
+                                                                               Margin="24,0,24,0"/>
+                                                                    <!-- Remove Button docked on right -->
+                                                                    <Button HorizontalAlignment="Right" Content="✕" Command="{Binding RemoveCommand}" CommandParameter="{Binding}"
                                                                             Width="22" Height="22" CornerRadius="11" Padding="0"
                                                                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                                                             Background="{DynamicResource AppGlassPillBrush}" Foreground="{DynamicResource AppTextSecondaryBrush}"
@@ -910,11 +933,20 @@
                                             <!-- Status -->
                                             <Grid ColumnDefinitions="90,*" Margin="0,1">
                                                 <TextBlock Grid.Column="0" Text="Status" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
-                                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding SelectedFile.StatusIcon}" FontSize="11" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="{Binding SelectedFile.Status}" FontSize="11" FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
-                                                </StackPanel>
+                                                <Panel Grid.Column="1" VerticalAlignment="Center">
+                                                    <!-- When completed: show only the purple arrow without duplicate icon -->
+                                                    <TextBlock IsVisible="{Binding SelectedFile.IsCompleted}"
+                                                               Text="{Binding SelectedFile.Status}"
+                                                               FontSize="12"
+                                                               VerticalAlignment="Center"/>
+                                                    <!-- When not completed: show icon + status text -->
+                                                    <StackPanel IsVisible="{Binding !SelectedFile.IsCompleted}"
+                                                                Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                                        <TextBlock Text="{Binding SelectedFile.StatusIcon}" FontSize="11" VerticalAlignment="Center"/>
+                                                        <TextBlock Text="{Binding SelectedFile.Status}" FontSize="11" FontWeight="SemiBold"
+                                                                   Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Panel>
                                             </Grid>
                                         </StackPanel>
                                     </Border>
