@@ -22,6 +22,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Transformation;
+using Avalonia.VisualTree;
 using Fujify.ViewModels;
 
 namespace Fujify.Views
@@ -263,6 +264,11 @@ namespace Fujify.Views
 
         private void TitleBar_PointerPressed(object? sender, PointerPressedEventArgs e)
         {
+            if (e.Source is Button || (e.Source is Avalonia.Visual visual && visual.FindAncestorOfType<Button>() != null))
+            {
+                return;
+            }
+
             if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             {
                 (VisualRoot as Window)?.BeginMoveDrag(e);
@@ -271,6 +277,11 @@ namespace Fujify.Views
 
         private void TitleBar_DoubleTapped(object? sender, TappedEventArgs e)
         {
+            if (e.Source is Button || (e.Source is Avalonia.Visual visual && visual.FindAncestorOfType<Button>() != null))
+            {
+                return;
+            }
+
             if (VisualRoot is Window window)
             {
                 window.WindowState = window.WindowState == WindowState.Maximized

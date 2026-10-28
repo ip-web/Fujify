@@ -14,16 +14,13 @@
     <Grid Background="{DynamicResource AppBackgroundBrush}" ClipToBounds="True">
         <!-- AMBIENT PURPLE & TEAL GLOW ACCENTS (Smooth & Large without Banding) -->
         <Canvas IsHitTestVisible="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <!-- Top-Right Smooth Ambient Glow (Large, Non-banding) -->
-            <Ellipse Width="1800" Height="1200" Canvas.Right="-200" Canvas.Top="-200">
+            <!-- Top-Right Smooth Ambient Glow (~80% width, soft dark purple tint matching Settings window) -->
+            <Ellipse Width="950" Height="650" Canvas.Right="-100" Canvas.Top="-100" Opacity="0.22">
                 <Ellipse.Fill>
-                    <RadialGradientBrush Center="70%,20%" GradientOrigin="70%,20%" RadiusX="60%" RadiusY="60%">
-                        <GradientStop Color="#4A286E" Offset="0.0"/>
-                        <GradientStop Color="#3D215E" Offset="0.15"/>
-                        <GradientStop Color="#301A4F" Offset="0.30"/>
-                        <GradientStop Color="#24133F" Offset="0.45"/>
-                        <GradientStop Color="#1A0D30" Offset="0.60"/>
-                        <GradientStop Color="#120922" Offset="0.75"/>
+                    <RadialGradientBrush Center="60%,35%" GradientOrigin="60%,35%" RadiusX="55%" RadiusY="55%">
+                        <GradientStop Color="#3E1D60" Offset="0.0"/>
+                        <GradientStop Color="#2C1445" Offset="0.30"/>
+                        <GradientStop Color="#1D0E30" Offset="0.60"/>
                         <GradientStop Color="#000E1016" Offset="1.0"/>
                     </RadialGradientBrush>
                 </Ellipse.Fill>
@@ -200,12 +197,12 @@
                 <Grid IsVisible="{Binding !IsPhoneLayout}" RowDefinitions="*,Auto">
 
                     <!-- TOP SHELL: Left Rail + Main Workspace -->
-                    <Grid Grid.Row="0" ColumnDefinitions="88,*">
+                    <Grid Grid.Row="0" ColumnDefinitions="60,*">
 
                         <!-- 1. LEFT NAVIGATION RAIL -->
                         <Border Grid.Column="0" Background="Transparent"
                                 BorderThickness="0"
-                                Padding="11,16">
+                                Padding="6,16">
                             <Grid RowDefinitions="Auto,*,Auto,Auto">
                                 <!-- Rail Logo (Fujifier Emblem) -->
                                 <Border Grid.Row="0" Width="41" Height="41" CornerRadius="14"
@@ -249,7 +246,7 @@
                         <Grid Grid.Column="1" RowDefinitions="Auto,*">
 
                             <!-- Top Heading & Step Workflow Indicators -->
-                            <Border Grid.Row="0" Padding="25,20,25,12" Background="Transparent">
+                            <Border Grid.Row="0" Padding="8,18,24,10" Background="Transparent">
                                 <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
                                     <!-- Studio Heading -->
                                     <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
@@ -304,7 +301,7 @@
 
 
                         <!-- Central Workspace (Queue + Inspector) -->
-                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="25,4,25,18">
+                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="8,4,24,18">
 
                             <!-- CENTER: Photo Queue Panel -->
                             <Grid Grid.Column="0" RowDefinitions="Auto,*" Margin="0,0,16,0">
@@ -704,16 +701,27 @@
                                                     <Border Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                             BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
                                                             Height="36" CornerRadius="10" Padding="10,0,6,0">
-                                                        <Grid ColumnDefinitions="Auto,*,Auto">
-                                                            <TextBlock Grid.Column="0" Text="📁 " FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                                            <Button Grid.Column="1" Command="{Binding BrowseFolderCommand}"
+                                                        <Grid ColumnDefinitions="*,Auto">
+                                                            <Button Grid.Column="0" Command="{Binding BrowseFolderCommand}"
                                                                     Background="Transparent" BorderThickness="0" Padding="0"
                                                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
                                                                     ToolTip.Tip="Select custom output folder (Default: same as originals)">
-                                                                <TextBlock Text="{Binding FormattedOutputFolderPath}" FontSize="10"
-                                                                           TextTrimming="CharacterEllipsis" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                                <Button.Styles>
+                                                                    <Style Selector="Button:pointerover /template/ ContentPresenter">
+                                                                        <Setter Property="Background" Value="Transparent"/>
+                                                                    </Style>
+                                                                    <Style Selector="Button:pointerover PathIcon">
+                                                                        <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}"/>
+                                                                    </Style>
+                                                                </Button.Styles>
+                                                                <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                                    <PathIcon Data="M 3 7 V 5 h 7 l 2 3 h 9 v 12 H 3 Z" Width="13" Height="13"
+                                                                              Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
+                                                                    <TextBlock Text="{Binding FormattedOutputFolderPath}" FontSize="10.5"
+                                                                               TextTrimming="CharacterEllipsis" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                                </StackPanel>
                                                             </Button>
-                                                            <Button Grid.Column="2" Content="✕" Command="{Binding ClearOutputFolderCommand}"
+                                                            <Button Grid.Column="1" Content="✕" Command="{Binding ClearOutputFolderCommand}"
                                                                     IsVisible="{Binding HasCustomOutputFolder}"
                                                                     Width="20" Height="20" Padding="0"
                                                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
