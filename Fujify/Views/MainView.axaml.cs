@@ -131,10 +131,22 @@ namespace Fujify.Views
                 prefHeader.Padding = new Avalonia.Thickness(16 + leftInset, 4 + topInset, 16 + rightInset, 6);
             }
 
+            var prefRoot = this.FindControl<Grid>("PreferencesRootGrid");
+            if (prefRoot != null)
+            {
+                prefRoot.Margin = new Avalonia.Thickness(0, 0, 0, bottomInset);
+            }
+
+            var prefStack = this.FindControl<StackPanel>("PreferencesContentStack");
+            if (prefStack != null)
+            {
+                prefStack.Margin = new Avalonia.Thickness(16 + leftInset, 12, 16 + rightInset, 24);
+            }
+
             var prefScroll = this.FindControl<ScrollViewer>("PreferencesScrollViewer");
             if (prefScroll != null)
             {
-                prefScroll.Padding = new Avalonia.Thickness(16 + leftInset, 12, 16 + rightInset, 24 + bottomInset);
+                prefScroll.Padding = new Avalonia.Thickness(0);
             }
 
             var aboutHeader = this.FindControl<Border>("AboutHeaderBar");
@@ -143,10 +155,22 @@ namespace Fujify.Views
                 aboutHeader.Padding = new Avalonia.Thickness(16 + leftInset, 4 + topInset, 16 + rightInset, 6);
             }
 
+            var aboutRoot = this.FindControl<Grid>("AboutRootGrid");
+            if (aboutRoot != null)
+            {
+                aboutRoot.Margin = new Avalonia.Thickness(0, 0, 0, bottomInset);
+            }
+
+            var aboutStack = this.FindControl<StackPanel>("AboutContentStack");
+            if (aboutStack != null)
+            {
+                aboutStack.Margin = new Avalonia.Thickness(20 + leftInset, 20, 20 + rightInset, 24);
+            }
+
             var aboutScroll = this.FindControl<ScrollViewer>("AboutScrollViewer");
             if (aboutScroll != null)
             {
-                aboutScroll.Padding = new Avalonia.Thickness(20 + leftInset, 20, 20 + rightInset, 24 + bottomInset);
+                aboutScroll.Padding = new Avalonia.Thickness(0);
             }
 
             var modal = this.FindControl<Border>("ModalDialogContainer");
