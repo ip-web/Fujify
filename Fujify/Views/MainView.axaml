@@ -89,7 +89,7 @@
                 <!-- A. PHONE LAYOUT (Touch-First Cards, Single Column with Foldable Bottom Menu) -->
                 <Grid IsVisible="{Binding IsPhoneLayout}">
                     <!-- Base Phone Screen -->
-                    <Grid RowDefinitions="Auto,Auto,*,Auto">
+                    <Grid RowDefinitions="Auto,*,Auto">
                         <!-- Row 0: Mobile App Bar (Native mobile header with logo, title, and settings) -->
                         <Border x:Name="PhoneTopBar" Grid.Row="0" Background="Transparent" BorderThickness="0" Padding="16,8,16,4">
                             <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
@@ -115,8 +115,15 @@
                                        PointerPressed="TitleBar_PointerPressed"
                                        DoubleTapped="TitleBar_DoubleTapped"/>
 
-                                <!-- Right: Settings Shortcut + Desktop Caption Controls (if narrow desktop) -->
+                                <!-- Right: Queue Clear + Settings Shortcut + Desktop Caption Controls (if narrow desktop) -->
                                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                    <Button Command="{Binding ClearCommand}"
+                                            IsVisible="{Binding HasFiles}"
+                                            Classes="secondary" Height="36" Padding="14,0" CornerRadius="18"
+                                            Content="Clear" FontSize="11" FontWeight="SemiBold"
+                                            VerticalContentAlignment="Center"
+                                            ToolTip.Tip="Remove all photos from queue"/>
+
                                     <Button Command="{Binding OpenPreferencesCommand}"
                                             Classes="secondary" Width="36" Height="36" Padding="0" CornerRadius="18"
                                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
@@ -141,27 +148,8 @@
                             </Grid>
                         </Border>
 
-                        <!-- Row 1: Quick Toolbar (+ Add Files, + Add Folder, Clear) -->
-                        <Border Grid.Row="1" Background="Transparent" BorderThickness="0" Padding="16,4,16,8">
-                            <Grid ColumnDefinitions="*,*,Auto">
-                                <Button Grid.Column="0" Content="+ Add Files" Command="{Binding AddFilesCommand}"
-                                        Classes="primary" Margin="0,0,4,0" Height="40" Padding="0"
-                                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                        FontSize="12" FontWeight="SemiBold" CornerRadius="20"/>
-                                <Button Grid.Column="1" Content="+ Add Folder" Command="{Binding AddFolderCommand}"
-                                        Classes="secondary" Margin="2,0,2,0" Height="40" Padding="0"
-                                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                        FontSize="12" FontWeight="SemiBold" CornerRadius="20"/>
-                                <Button Grid.Column="2" Content="Clear" Command="{Binding ClearCommand}"
-                                        IsEnabled="{Binding CanClear}"
-                                        Classes="secondary" Margin="2,0,0,0" Height="40" Padding="14,0"
-                                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                        FontSize="12" FontWeight="SemiBold" CornerRadius="20"/>
-                            </Grid>
-                        </Border>
-
-                        <!-- Row 2: Phone File List / Empty State -->
-                        <Grid Grid.Row="2">
+                        <!-- Row 1: Phone File List / Empty State -->
+                        <Grid Grid.Row="1">
                             <!-- Empty State -->
                             <ScrollViewer IsVisible="{Binding !HasFiles}" HorizontalScrollBarVisibility="Disabled">
                                 <Border Padding="16,8" VerticalAlignment="Center" HorizontalAlignment="Stretch">
@@ -173,7 +161,7 @@
                                         </Border>
                                         <TextBlock Text="Add RAW Photos to Begin" FontWeight="Bold" FontSize="17"
                                                    Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="Tap '+ Add Files' above to import RAW files from your camera, SD card, or photo library."
+                                        <TextBlock Text="Tap the '+' button below to import RAW files from your camera, SD card, or photo library."
                                                    FontSize="12" Foreground="{DynamicResource AppTextSecondaryBrush}"
                                                    TextAlignment="Center" TextWrapping="Wrap"/>
                                     </StackPanel>
@@ -182,7 +170,7 @@
 
                             <!-- Mobile Card List -->
                             <ScrollViewer IsVisible="{Binding HasFiles}" HorizontalScrollBarVisibility="Disabled">
-                                <ItemsControl ItemsSource="{Binding Files}" Margin="16,6">
+                                <ItemsControl ItemsSource="{Binding Files}" Margin="16,6,16,80">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="models:FileItem">
                                             <Border Classes="mobile-card" Classes.selected="{Binding IsSelected}"
@@ -281,10 +269,88 @@
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </ScrollViewer>
+
+                            <!-- Mobile Add Menu Backdrop (Dismisses floating menu when tapped) -->
+                            <Border IsVisible="{Binding IsMobileAddMenuOpen}"
+                                    Background="#66070A12"
+                                    ZIndex="150"
+                                    PointerPressed="OnMobileAddBackdropPointerPressed"/>
+
+                            <!-- Mobile Floating Add Button & Speed Dial Menu (Bottom Left) -->
+                            <Grid ZIndex="160"
+                                  HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                  Margin="20,0,0,20">
+                                <!-- Speed Dial Options (Expand Upwards) -->
+                                <StackPanel IsVisible="{Binding IsMobileAddMenuOpen}"
+                                            Orientation="Vertical" Spacing="10"
+                                            HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                            Margin="0,0,0,68">
+                                    <!-- Option: Add Folder -->
+                                    <Border CornerRadius="21" BoxShadow="0 6 18 0 #50000000">
+                                        <Button Command="{Binding MobileAddFolderCommand}"
+                                                Classes="secondary" Height="42" CornerRadius="21"
+                                                Padding="14,0,18,0">
+                                            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                                <Border Width="28" Height="28" CornerRadius="14"
+                                                        Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                        VerticalAlignment="Center">
+                                                    <PathIcon Data="M 3 7 V 5 h 7 l 2 3 h 9 v 12 H 3 Z"
+                                                              Width="13" Height="13"
+                                                              Foreground="{DynamicResource AppAccentBrush}"
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <TextBlock Text="Add Folder" FontSize="12" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </Border>
+
+                                    <!-- Option: Add Files -->
+                                    <Border CornerRadius="21" BoxShadow="0 6 18 0 #50000000">
+                                        <Button Command="{Binding MobileAddFilesCommand}"
+                                                Classes="secondary" Height="42" CornerRadius="21"
+                                                Padding="14,0,18,0">
+                                            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                                <Border Width="28" Height="28" CornerRadius="14"
+                                                        Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                        VerticalAlignment="Center">
+                                                    <PathIcon Data="M 3 3 h 18 v 18 H 3 Z M 8 8 A 1.5 1.5 0 1 0 8 11 A 1.5 1.5 0 1 0 8 8 M 3 17 l 6 -6 l 4 4 l 3 -3 l 5 5"
+                                                              Width="13" Height="13"
+                                                              Foreground="{DynamicResource AppAccentBrush}"
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <TextBlock Text="Add Files" FontSize="12" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </Border>
+                                </StackPanel>
+
+                                <!-- Floating + Action Button -->
+                                <Border Width="56" Height="56" CornerRadius="28"
+                                        BoxShadow="0 8 24 0 #60000000"
+                                        HorizontalAlignment="Left" VerticalAlignment="Bottom">
+                                    <Button Command="{Binding ToggleMobileAddMenuCommand}"
+                                            Classes="primary"
+                                            Width="56" Height="56" CornerRadius="28"
+                                            Padding="0"
+                                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                            ToolTip.Tip="Add photos or folder">
+                                        <PathIcon Data="M 11 4 A 1 1 0 0 1 13 4 V 11 H 20 A 1 1 0 0 1 20 13 H 13 V 20 A 1 1 0 0 1 11 20 V 13 H 4 A 1 1 0 0 1 4 11 H 11 Z"
+                                                  Width="20" Height="20"
+                                                  Foreground="{DynamicResource AppPrimaryBtnFgBrush}"
+                                                  RenderTransformOrigin="50%,50%">
+                                            <PathIcon.RenderTransform>
+                                                <RotateTransform Angle="{Binding MobileAddMenuAngle}"/>
+                                            </PathIcon.RenderTransform>
+                                        </PathIcon>
+                                    </Button>
+                                </Border>
+                            </Grid>
                         </Grid>
 
                         <!-- Phone Bottom Action Bar with Options Fold Toggle -->
-                        <Border x:Name="PhoneBottomBar" Grid.Row="3" Background="{DynamicResource AppFooterBrush}"
+                        <Border x:Name="PhoneBottomBar" Grid.Row="2" Background="{DynamicResource AppFooterBrush}"
                                 BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,1,0,0" Padding="16,8">
                             <Grid ColumnDefinitions="*,Auto,Auto" VerticalAlignment="Center">
                                 <!-- Status & Output Destination Summary (Clickable to fold/unfold sidebar) -->
