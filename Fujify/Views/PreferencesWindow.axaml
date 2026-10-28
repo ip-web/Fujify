@@ -7,28 +7,53 @@
         Width="520" Height="680"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
-        TransparencyLevelHint="Mica, AcrylicBlur"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="0"
+        SystemDecorations="None"
+        TransparencyLevelHint="Transparent"
         Background="Transparent"
         Icon="/Assets/images/logo.ico">
 
-    <Grid Background="{DynamicResource AppBackgroundBrush}">
-        <!-- Subtle Purple Ambient Glow in top right -->
-        <Canvas IsHitTestVisible="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-            <Ellipse Width="600" Height="400" Canvas.Right="-150" Canvas.Top="-150" Opacity="0.18">
-                <Ellipse.Fill>
-                    <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" RadiusX="50%" RadiusY="50%">
-                        <GradientStop Color="#4A286E" Offset="0.0"/>
-                        <GradientStop Color="#24133F" Offset="0.5"/>
-                        <GradientStop Color="#000E1016" Offset="1.0"/>
-                    </RadialGradientBrush>
-                </Ellipse.Fill>
-            </Ellipse>
-        </Canvas>
+    <Border Background="{DynamicResource AppSurfaceBrush}"
+            BorderBrush="{DynamicResource AppEdgeBrush}"
+            BorderThickness="1"
+            CornerRadius="16"
+            ClipToBounds="True"
+            PointerPressed="Window_PointerPressed">
+        <Panel>
+            <!-- Subtle Purple Ambient Glow in top right -->
+            <Canvas IsHitTestVisible="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Ellipse Width="600" Height="400" Canvas.Right="-150" Canvas.Top="-150" Opacity="0.18">
+                    <Ellipse.Fill>
+                        <RadialGradientBrush Center="50%,50%" GradientOrigin="50%,50%" RadiusX="50%" RadiusY="50%">
+                            <GradientStop Color="#4A286E" Offset="0.0"/>
+                            <GradientStop Color="#24133F" Offset="0.5"/>
+                            <GradientStop Color="#000E1016" Offset="1.0"/>
+                        </RadialGradientBrush>
+                    </Ellipse.Fill>
+                </Ellipse>
+            </Canvas>
 
-        <Grid Margin="24" RowDefinitions="Auto,*,Auto">
-            <!-- Header -->
-            <TextBlock Grid.Row="0" Text="Settings" FontWeight="SemiBold" FontSize="20"
-                       Foreground="{DynamicResource AppTextPrimaryBrush}" Margin="4,0,0,16"/>
+            <Grid Margin="24" RowDefinitions="Auto,*,Auto">
+                <!-- Header with Title and Close X -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="4,0,0,16">
+                    <TextBlock Grid.Column="0" Text="Settings" FontWeight="SemiBold" FontSize="20"
+                               Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" Command="{Binding CancelCommand}"
+                            Width="30" Height="30" CornerRadius="15" Padding="0"
+                            Background="Transparent" Foreground="{DynamicResource AppTextSecondaryBrush}"
+                            BorderThickness="0" Cursor="Hand" ToolTip.Tip="Close"
+                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                        <Button.Styles>
+                            <Style Selector="Button:pointerover">
+                                <Setter Property="Background" Value="#22FFFFFF"/>
+                                <Setter Property="Foreground" Value="#FFFFFFFF"/>
+                            </Style>
+                        </Button.Styles>
+                        <TextBlock Text="✕" FontSize="11" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Button>
+                </Grid>
 
             <!-- Settings Options Grouped by Category -->
             <ScrollViewer Grid.Row="1" Padding="0,0,6,0">
@@ -423,5 +448,6 @@
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
             </StackPanel>
         </Grid>
-    </Grid>
+        </Panel>
+    </Border>
 </Window>

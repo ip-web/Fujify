@@ -18,6 +18,8 @@
  */
 
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.VisualTree;
 using Fujify.ViewModels;
 
 namespace Fujify.Views
@@ -35,6 +37,19 @@ namespace Fujify.Views
                     await vm.StartAsync();
                 }
             };
+        }
+
+        private void Window_PointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (e.Source is Button || (e.Source is Avalonia.Visual visual && visual.FindAncestorOfType<Button>() != null))
+            {
+                return;
+            }
+
+            if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            {
+                BeginMoveDrag(e);
+            }
         }
     }
 }

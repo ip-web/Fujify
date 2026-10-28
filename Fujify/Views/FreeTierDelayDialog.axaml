@@ -2,100 +2,108 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Fujify.Views.FreeTierDelayDialog"
         Title="Fujifier Free Tier"
-        Width="500" Height="420"
-        MinWidth="440" MinHeight="380"
+        Width="480" Height="380"
         CanResize="False"
         WindowStartupLocation="CenterScreen"
-        TransparencyLevelHint="Mica, AcrylicBlur"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="0"
+        SystemDecorations="None"
+        TransparencyLevelHint="Transparent"
         Background="Transparent"
         Icon="/Assets/images/logo.ico">
 
-    <Grid Background="{DynamicResource AppBackgroundBrush}">
-        <Border Classes="panel" Margin="16" Padding="22" ClipToBounds="True">
-            <Grid RowDefinitions="Auto, *, Auto, Auto">
-                <!-- Header: Icon & Tier Badge -->
-                <StackPanel Grid.Row="0" Spacing="8" HorizontalAlignment="Center" Margin="0,0,0,12">
-                    <Border Width="48" Height="48" CornerRadius="24" 
-                            Background="#1AB89BE4" 
-                            HorizontalAlignment="Center">
-                        <TextBlock x:Name="IconText" Text="⏳" FontSize="22" 
-                                   Foreground="{DynamicResource AppAccentLightBrush}" 
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <TextBlock x:Name="TitleText" Text="Fujifier Free Tier" FontWeight="SemiBold" FontSize="17" 
-                               Foreground="{DynamicResource AppTextPrimaryBrush}" 
-                               HorizontalAlignment="Center" TextAlignment="Center"/>
+    <!-- Standalone Dialog Card Block -->
+    <Border Background="{DynamicResource AppSurfaceBrush}"
+            BorderBrush="{DynamicResource AppEdgeBrush}"
+            BorderThickness="1"
+            CornerRadius="16"
+            Padding="22"
+            ClipToBounds="True"
+            PointerPressed="Window_PointerPressed">
+        <Grid RowDefinitions="Auto, *, Auto, Auto">
+            <!-- Header: Icon & Tier Badge -->
+            <StackPanel Grid.Row="0" Spacing="6" HorizontalAlignment="Center" Margin="0,0,0,10">
+                <Border Width="44" Height="44" CornerRadius="22" 
+                        Background="#1AB89BE4" 
+                        HorizontalAlignment="Center">
+                    <TextBlock x:Name="IconText" Text="⏳" FontSize="20" 
+                               Foreground="{DynamicResource AppAccentLightBrush}" 
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <TextBlock x:Name="TitleText" Text="Fujifier Free Tier" FontWeight="SemiBold" FontSize="16" 
+                           Foreground="{DynamicResource AppTextPrimaryBrush}" 
+                           HorizontalAlignment="Center" TextAlignment="Center"/>
+            </StackPanel>
+
+            <!-- Explanation & Details -->
+            <StackPanel Grid.Row="1" Spacing="10" VerticalAlignment="Center">
+                <TextBlock x:Name="MessageText" FontSize="11" TextWrapping="Wrap" 
+                           Foreground="{DynamicResource AppTextSecondaryBrush}" 
+                           HorizontalAlignment="Center" TextAlignment="Center" LineHeight="16"
+                           Text="You are currently using the Free tier of Fujifier. Free version is limited to 10 photos per queue with a 15-second cooldown timer. Upgrade to Fujifier Pro to enjoy unlimited batch processing, instant execution, and Windows Explorer context menu integration!"/>
+
+                <!-- Cooldown Progress -->
+                <StackPanel Spacing="5" Margin="0,6,0,0">
+                    <ProgressBar x:Name="CountdownProgressBar" Height="4" CornerRadius="2" 
+                                 Minimum="0" Maximum="15" Value="0" 
+                                 Foreground="{DynamicResource AppAccentBrush}"/>
+                    <TextBlock x:Name="CountdownStatusText" Text="Cooldown active: 15s remaining..." 
+                               FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" 
+                               HorizontalAlignment="Center"/>
                 </StackPanel>
 
-                <!-- Explanation & Details -->
-                <StackPanel Grid.Row="1" Spacing="10" VerticalAlignment="Center">
-                    <TextBlock x:Name="MessageText" FontSize="11.5" TextWrapping="Wrap" 
-                               Foreground="{DynamicResource AppTextSecondaryBrush}" 
-                               HorizontalAlignment="Center" TextAlignment="Center" LineHeight="17"
-                               Text="You are currently using the Free tier of Fujifier. Free version is limited to 10 photos per queue with a 15-second cooldown timer. Upgrade to Fujifier Pro to enjoy unlimited batch processing, instant execution, and Windows Explorer context menu integration!"/>
+                <!-- License Key Entry Section (Expandable) -->
+                <StackPanel x:Name="LicenseKeySection" IsVisible="False" Spacing="6" Margin="0,6,0,0">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <TextBox x:Name="LicenseKeyInput" Grid.Column="0" 
+                                 Watermark="Paste FUJIFIER-PRO license key here..." 
+                                 Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                 Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                 BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
+                                 FontSize="11" Height="34" CornerRadius="8" 
+                                 VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                        <Button Grid.Column="1" Content="Activate" Click="ActivateKey_Click" 
+                                Classes="primary" Height="34" Padding="16,0" CornerRadius="17"
+                                VerticalContentAlignment="Center"/>
+                    </Grid>
+                    <TextBlock x:Name="LicenseActivationError" FontSize="11" 
+                               Foreground="#E74C3C" IsVisible="False" 
+                               TextAlignment="Center"/>
+                </StackPanel>
+            </StackPanel>
 
-                    <!-- Cooldown Progress -->
-                    <StackPanel Spacing="6" Margin="0,8,0,0">
-                        <ProgressBar x:Name="CountdownProgressBar" Height="4" CornerRadius="2" 
-                                     Minimum="0" Maximum="15" Value="0" 
-                                     Foreground="{DynamicResource AppAccentBrush}"/>
-                        <TextBlock x:Name="CountdownStatusText" Text="Cooldown active: 15s remaining..." 
-                                   FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" 
-                                   HorizontalAlignment="Center"/>
+            <!-- Middle Links (Upgrade, Google Sign In & License Key) -->
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="0,12,0,12">
+                <Button Content="⭐ Upgrade to Pro" Click="Upgrade_Click" Classes="primary" 
+                        Height="34" Padding="14,0" CornerRadius="17"
+                        VerticalContentAlignment="Center" FontWeight="SemiBold" FontSize="11.5"/>
+                <Button x:Name="GoogleSignInButton" Click="GoogleSignIn_Click" Classes="secondary"
+                        Height="34" Padding="12,0" CornerRadius="17"
+                        VerticalContentAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Viewbox Width="14" Height="14" VerticalAlignment="Center">
+                            <Canvas Width="24" Height="24">
+                                <Path Fill="#4285F4" Data="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.04h3.87c2.26-2.09 3.67-5.17 3.67-9.14z"/>
+                                <Path Fill="#34A853" Data="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.87-3.04c-1.08.72-2.45 1.16-4.06 1.16-3.13 0-5.78-2.11-6.73-4.96H1.25v3.13C3.25 21.31 7.35 24 12 24z"/>
+                                <Path Fill="#FBBC05" Data="M5.27 14.25c-.25-.72-.38-1.49-.38-2.25s.13-1.53.38-2.25V6.62H1.25C.45 8.24 0 10.06 0 12s.45 3.76 1.25 5.38l4.02-3.13z"/>
+                                <Path Fill="#EA4335" Data="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.25 2.69 1.25 6.62l4.02 3.13c.95-2.85 3.6-4.96 6.73-4.96z"/>
+                            </Canvas>
+                        </Viewbox>
+                        <TextBlock Text="Google Sign-In" FontSize="11.5" VerticalAlignment="Center"/>
                     </StackPanel>
+                </Button>
+                <Button x:Name="ToggleKeyButton" Content="License Key" Click="ToggleLicenseKey_Click" Classes="secondary"
+                        Height="34" Padding="12,0" CornerRadius="17"
+                        VerticalContentAlignment="Center" FontSize="11.5"/>
+            </StackPanel>
 
-                    <!-- License Key Entry Section (Expandable) -->
-                    <StackPanel x:Name="LicenseKeySection" IsVisible="False" Spacing="6" Margin="0,6,0,0">
-                        <Grid ColumnDefinitions="*, Auto">
-                            <TextBox x:Name="LicenseKeyInput" Grid.Column="0" 
-                                     Watermark="Paste FUJIFIER-PRO license key here..." 
-                                     Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                     Foreground="{DynamicResource AppTextPrimaryBrush}"
-                                     BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                     FontSize="11" Height="34" CornerRadius="8" 
-                                     VerticalContentAlignment="Center" Margin="0,0,8,0"/>
-                            <Button Grid.Column="1" Content="Activate" Click="ActivateKey_Click" 
-                                    Classes="primary" Height="34" Padding="16,0" CornerRadius="17"
-                                    VerticalContentAlignment="Center"/>
-                        </Grid>
-                        <TextBlock x:Name="LicenseActivationError" FontSize="11" 
-                                   Foreground="#E74C3C" IsVisible="False" 
-                                   TextAlignment="Center"/>
-                    </StackPanel>
-                </StackPanel>
-
-                <!-- Middle Links (Upgrade, Google Sign In & License Key) -->
-                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="0,14,0,14">
-                    <Button Content="⭐ Upgrade to Pro" Click="Upgrade_Click" Classes="primary" 
-                            Height="36" Padding="14,0" CornerRadius="18"
-                            VerticalContentAlignment="Center" FontWeight="SemiBold" FontSize="11.5"/>
-                    <Button x:Name="GoogleSignInButton" Click="GoogleSignIn_Click" Classes="secondary"
-                            Height="36" Padding="12,0" CornerRadius="18"
-                            VerticalContentAlignment="Center">
-                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                            <Viewbox Width="14" Height="14" VerticalAlignment="Center">
-                                <Canvas Width="24" Height="24">
-                                    <Path Fill="#4285F4" Data="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.04h3.87c2.26-2.09 3.67-5.17 3.67-9.14z"/>
-                                    <Path Fill="#34A853" Data="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.87-3.04c-1.08.72-2.45 1.16-4.06 1.16-3.13 0-5.78-2.11-6.73-4.96H1.25v3.13C3.25 21.31 7.35 24 12 24z"/>
-                                    <Path Fill="#FBBC05" Data="M5.27 14.25c-.25-.72-.38-1.49-.38-2.25s.13-1.53.38-2.25V6.62H1.25C.45 8.24 0 10.06 0 12s.45 3.76 1.25 5.38l4.02-3.13z"/>
-                                    <Path Fill="#EA4335" Data="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.25 2.69 1.25 6.62l4.02 3.13c.95-2.85 3.6-4.96 6.73-4.96z"/>
-                                </Canvas>
-                            </Viewbox>
-                            <TextBlock Text="Google Sign-In" FontSize="11.5" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Button>
-                    <Button x:Name="ToggleKeyButton" Content="License Key" Click="ToggleLicenseKey_Click" Classes="secondary"
-                            Height="36" Padding="12,0" CornerRadius="18"
-                            VerticalContentAlignment="Center" FontSize="11.5"/>
-                </StackPanel>
-
-                <!-- Bottom Action: Continue with Free Version (Disabled until timer finishes) -->
-                <Button Grid.Row="3" x:Name="ContinueButton" 
-                        Content="Continue with Free Version (15s)" 
-                        Click="Continue_Click" IsEnabled="False" Classes="secondary"
-                        Height="38" CornerRadius="19" HorizontalAlignment="Stretch" 
-                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-            </Grid>
-        </Border>
-    </Grid>
+            <!-- Bottom Action: Continue with Free Version (Disabled until timer finishes) -->
+            <Button Grid.Row="3" x:Name="ContinueButton" 
+                    Content="Continue with Free Version (15s)" 
+                    Click="Continue_Click" IsEnabled="False" Classes="secondary"
+                    Height="36" CornerRadius="18" HorizontalAlignment="Stretch" 
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+        </Grid>
+    </Border>
 </Window>

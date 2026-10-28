@@ -47,6 +47,7 @@
                     BorderThickness="0"
                     Height="34"
                     Padding="16,0,0,0"
+                    ZIndex="100"
                     PointerPressed="TitleBar_PointerPressed"
                     DoubleTapped="TitleBar_DoubleTapped">
                 <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Stretch">
@@ -203,7 +204,7 @@
                         <Border Grid.Column="0" Background="Transparent"
                                 BorderThickness="0"
                                 Padding="6,16">
-                            <Grid RowDefinitions="Auto,*,Auto,Auto">
+                            <Grid RowDefinitions="Auto,*,Auto,Auto,Auto">
                                 <!-- Rail Logo (Fujifier Emblem) -->
                                 <Border Grid.Row="0" Width="41" Height="41" CornerRadius="14"
                                         Background="#10C9FFDF" BorderBrush="#24B4FFDC" BorderThickness="1"
@@ -217,15 +218,24 @@
 
                                 <!-- Settings Button -->
                                 <Button Grid.Row="2" Classes="nav" Command="{Binding OpenPreferencesCommand}"
-                                        HorizontalAlignment="Center" Margin="0,0,0,10" ToolTip.Tip="Settings &amp; License">
+                                        HorizontalAlignment="Center" Margin="0,0,0,10" ToolTip.Tip="Settings">
                                     <StackPanel Spacing="5" HorizontalAlignment="Center">
-                                        <PathIcon Data="M 4 7 h 16 M 4 17 h 16 M 7 7 A 2 2 0 1 0 11 7 A 2 2 0 1 0 7 7 M 13 17 A 2 2 0 1 0 17 17 A 2 2 0 1 0 13 17" Width="18" Height="18" HorizontalAlignment="Center"/>
+                                        <PathIcon Data="M 12 15 A 3 3 0 1 0 12 9 A 3 3 0 1 0 12 15 M 19.4 15 a 1.65 1.65 0 0 0 .33 1.82 l .06 .06 a 2 2 0 1 1 -2.83 2.83 l -.06 -.06 a 1.65 1.65 0 0 0 -1.82 -.33 1.65 1.65 0 0 0 -1 1.51 V 21 a 2 2 0 1 1 -4 0 v -.09 A 1.65 1.65 0 0 0 9 19.4 a 1.65 1.65 0 0 0 -1.82 .33 l -.06 .06 a 2 2 0 1 1 -2.83 -2.83 l .06 -.06 a 1.65 1.65 0 0 0 .33 -1.82 1.65 1.65 0 0 0 -1.51 -1 H 3 a 2 2 0 1 1 0 -4 h .09 A 1.65 1.65 0 0 0 4.6 9 a 1.65 1.65 0 0 0 -.33 -1.82 l -.06 -.06 a 2 2 0 1 1 2.83 -2.83 l .06 .06 a 1.65 1.65 0 0 0 1.82 .33 H 9 a 1.65 1.65 0 0 0 1 -1.51 V 3 a 2 2 0 1 1 4 0 v .09 a 1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82 -.33 l .06 -.06 a 2 2 0 1 1 2.83 2.83 l -.06 .06 a 1.65 1.65 0 0 0 -.33 1.82 V 9 a 1.65 1.65 0 0 0 1.51 1 H 21 a 2 2 0 1 1 0 4 h -.09 a 1.65 1.65 0 0 0 -1.51 1 Z" Width="18" Height="18" HorizontalAlignment="Center"/>
                                         <TextBlock Text="Settings" FontSize="9" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
 
+                                <!-- Info / About Button -->
+                                <Button Grid.Row="3" Classes="nav" Command="{Binding OpenAboutCommand}"
+                                        HorizontalAlignment="Center" Margin="0,0,0,14" ToolTip.Tip="About &amp; Info">
+                                    <StackPanel Spacing="5" HorizontalAlignment="Center">
+                                        <PathIcon Data="M 12 2 A 10 10 0 1 0 12 22 A 10 10 0 1 0 12 2 M 12 16 v -4 M 12 8 h 0.01" Width="18" Height="18" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="About" FontSize="9" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
                                 <!-- Avatar Circle (Account / Pro Status) -->
-                                <Button Grid.Row="3" Command="{Binding OpenPreferencesCommand}"
+                                <Button Grid.Row="4" Command="{Binding OpenPreferencesCommand}"
                                         Width="30" Height="30" CornerRadius="15" Padding="0"
                                         BorderBrush="#33FFFFFF" BorderThickness="1" HorizontalAlignment="Center"
                                         ToolTip.Tip="Account / Plan Status">
@@ -687,7 +697,7 @@
 
 
                                     <!-- Inspector Body Content -->
-                                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="18">
+                                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="18">
                                         <Panel>
 
                                             <!-- TAB 1: SETTINGS VIEW -->
@@ -700,11 +710,12 @@
                                                     <!-- Browse Output Folder with Nested Reset Cross -->
                                                     <Border Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                             BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
-                                                            Height="36" CornerRadius="10" Padding="10,0,6,0" ClipToBounds="True">
+                                                            Height="36" CornerRadius="10" Padding="10,0,6,0" ClipToBounds="True"
+                                                            HorizontalAlignment="Stretch" MaxWidth="259">
                                                         <Grid ColumnDefinitions="*,Auto" ClipToBounds="True">
                                                             <Button Grid.Column="0" Command="{Binding BrowseFolderCommand}"
                                                                     Background="Transparent" BorderThickness="0" Padding="0"
-                                                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
+                                                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center"
                                                                     ClipToBounds="True"
                                                                     ToolTip.Tip="Select custom output folder (Default: same as originals)">
                                                                 <Button.Styles>
@@ -994,7 +1005,7 @@
                                 <TextBlock Text="Original files stay protected" FontSize="10"
                                            Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
 
-                                <!-- Studio Process Batch Action Button with centered text and ↗ icon -->
+                                <!-- Studio Process Batch Action Button with centered text and sparkle icon -->
                                 <Button Command="{Binding ProcessCommand}"
                                         IsEnabled="{Binding CanProcessOrStop}" Classes="primary"
                                         Height="42" Padding="20,0" CornerRadius="21"
@@ -1002,8 +1013,9 @@
                                     <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" HorizontalAlignment="Center">
                                         <TextBlock Text="{Binding ProcessButtonContent}" FontSize="12" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource AppPrimaryBtnFgBrush}" VerticalAlignment="Center"/>
-                                        <TextBlock Text="↗" FontSize="14" FontWeight="Bold"
-                                                   Foreground="{DynamicResource AppPrimaryBtnFgBrush}" VerticalAlignment="Center" Margin="0,-2,0,0"/>
+                                        <PathIcon Data="M 10 1 L 12.5 7.5 L 19 10 L 12.5 12.5 L 10 19 L 7.5 12.5 L 1 10 L 7.5 7.5 Z M 17 13 L 18.2 16.2 L 21.5 17.5 L 18.2 18.8 L 17 22 L 15.8 18.8 L 12.5 17.5 L 15.8 16.2 Z"
+                                                  Width="13" Height="13"
+                                                  Foreground="{DynamicResource AppPrimaryBtnFgBrush}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -1018,6 +1030,7 @@
         <Grid x:Name="PreferencesSlidePanel" ZIndex="10000"
               Background="{DynamicResource AppSolidBackgroundBrush}"
               Opacity="0"
+              IsVisible="{Binding IsPreferencesModal}"
               IsHitTestVisible="False">
             <Grid.RenderTransform>
                 <TranslateTransform X="800" Y="0"/>
@@ -1097,6 +1110,7 @@
         <Grid x:Name="AboutSlidePanel" ZIndex="10000"
               Background="{DynamicResource AppSolidBackgroundBrush}"
               Opacity="0"
+              IsVisible="{Binding IsAboutModal}"
               IsHitTestVisible="False">
             <Grid.RenderTransform>
                 <TranslateTransform X="800" Y="0"/>

@@ -1,5 +1,7 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 
 namespace Fujify.Views
 {
@@ -8,11 +10,6 @@ namespace Fujify.Views
         public AboutWindow()
         {
             InitializeComponent();
-            if (!App.SupportsMica)
-            {
-                TransparencyLevelHint = new[] { WindowTransparencyLevel.None };
-                Background = null;
-            }
         }
 
         private void Close_Click(object? sender, RoutedEventArgs e)
@@ -48,6 +45,19 @@ namespace Fujify.Views
             catch
             {
                 Common.CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujifier/releases");
+            }
+        }
+
+        private void Window_PointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (e.Source is Button || (e.Source is Avalonia.Visual visual && visual.FindAncestorOfType<Button>() != null))
+            {
+                return;
+            }
+
+            if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            {
+                BeginMoveDrag(e);
             }
         }
     }

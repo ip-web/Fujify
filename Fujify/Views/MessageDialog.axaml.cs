@@ -1,6 +1,8 @@
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 
 namespace Fujify.Views
 {
@@ -9,11 +11,6 @@ namespace Fujify.Views
         public MessageDialog()
         {
             InitializeComponent();
-            if (!App.SupportsMica)
-            {
-                TransparencyLevelHint = new[] { WindowTransparencyLevel.None };
-                Background = null;
-            }
         }
 
         public MessageDialog(string title, string message, bool isSuccess = true) : this()
@@ -39,6 +36,19 @@ namespace Fujify.Views
         private void Ok_Click(object? sender, RoutedEventArgs e)
         {
             Close();
+        }
+
+        private void Window_PointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (e.Source is Button || (e.Source is Avalonia.Visual visual && visual.FindAncestorOfType<Button>() != null))
+            {
+                return;
+            }
+
+            if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            {
+                BeginMoveDrag(e);
+            }
         }
     }
 }

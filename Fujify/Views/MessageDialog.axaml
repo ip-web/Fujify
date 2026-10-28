@@ -2,41 +2,49 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Fujify.Views.MessageDialog"
         Title="Notification"
-        Width="380" Height="250"
+        Width="360" Height="220"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
-        TransparencyLevelHint="Mica, AcrylicBlur"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="0"
+        SystemDecorations="None"
+        TransparencyLevelHint="Transparent"
         Background="Transparent"
         Icon="/Assets/images/logo.ico">
 
-    <Grid Background="{DynamicResource AppBackgroundBrush}">
-        <!-- Card Container -->
-        <Border Classes="panel" Margin="16" Padding="24" ClipToBounds="True">
-            <Grid RowDefinitions="Auto,*,Auto" VerticalAlignment="Center">
-                <!-- Icon -->
-                <Border x:Name="IconBorder" Grid.Row="0" Width="48" Height="48" CornerRadius="24"
-                        Background="#1AB89BE4"
-                        HorizontalAlignment="Center" Margin="0,0,0,12">
-                    <TextBlock x:Name="IconText" Text="✔" FontSize="22" Foreground="{DynamicResource AppAccentLightBrush}"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
+    <!-- Standalone Dialog Card Block -->
+    <Border Background="{DynamicResource AppSurfaceBrush}"
+            BorderBrush="{DynamicResource AppEdgeBrush}"
+            BorderThickness="1"
+            CornerRadius="16"
+            Padding="24"
+            ClipToBounds="True"
+            PointerPressed="Window_PointerPressed">
+        <Grid RowDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+            <!-- Icon -->
+            <Border x:Name="IconBorder" Grid.Row="0" Width="44" Height="44" CornerRadius="22"
+                    Background="#1AB89BE4"
+                    HorizontalAlignment="Center" Margin="0,0,0,10">
+                <TextBlock x:Name="IconText" Text="✔" FontSize="20" Foreground="{DynamicResource AppAccentLightBrush}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
 
-                <!-- Text Content -->
-                <StackPanel Grid.Row="1" Spacing="6" HorizontalAlignment="Center">
-                    <TextBlock x:Name="TitleText" FontWeight="SemiBold" FontSize="16"
-                               Foreground="{DynamicResource AppTextPrimaryBrush}"
-                               HorizontalAlignment="Center" TextAlignment="Center"/>
-                    <TextBlock x:Name="MessageContent" FontSize="12" TextWrapping="Wrap" 
-                               Foreground="{DynamicResource AppTextSecondaryBrush}"
-                               HorizontalAlignment="Center" TextAlignment="Center" MaxWidth="300"/>
-                </StackPanel>
+            <!-- Text Content -->
+            <StackPanel Grid.Row="1" Spacing="4" HorizontalAlignment="Center">
+                <TextBlock x:Name="TitleText" FontWeight="SemiBold" FontSize="15"
+                           Foreground="{DynamicResource AppTextPrimaryBrush}"
+                           HorizontalAlignment="Center" TextAlignment="Center"/>
+                <TextBlock x:Name="MessageContent" FontSize="11.5" TextWrapping="Wrap" 
+                           Foreground="{DynamicResource AppTextSecondaryBrush}"
+                           HorizontalAlignment="Center" TextAlignment="Center" MaxWidth="290"/>
+            </StackPanel>
 
-                <!-- Centered Action -->
-                <Button Grid.Row="2" Content="Done" Click="Ok_Click" Classes="primary"
-                        Height="36" Padding="28,0" CornerRadius="18"
-                        HorizontalAlignment="Center" HorizontalContentAlignment="Center"
-                        VerticalContentAlignment="Center" Margin="0,16,0,0"/>
-            </Grid>
-        </Border>
-    </Grid>
+            <!-- Centered Action -->
+            <Button Grid.Row="2" Content="Done" Click="Ok_Click" Classes="primary"
+                    Height="34" Padding="28,0" CornerRadius="17"
+                    HorizontalAlignment="Center" HorizontalContentAlignment="Center"
+                    VerticalContentAlignment="Center" Margin="0,14,0,0"/>
+        </Grid>
+    </Border>
 </Window>

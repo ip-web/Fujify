@@ -1,4 +1,6 @@
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.VisualTree;
 using Fujify.Models;
 using Fujify.ViewModels;
 
@@ -11,11 +13,6 @@ namespace Fujify.Views
         public FileConflictDialog()
         {
             InitializeComponent();
-            if (!App.SupportsMica)
-            {
-                TransparencyLevelHint = new[] { WindowTransparencyLevel.None };
-                Background = null;
-            }
         }
 
         public FileConflictDialog(FileConflictDialogViewModel viewModel) : this()
@@ -26,6 +23,22 @@ namespace Fujify.Views
                 Result = res;
                 Close(res);
             };
+        }
+
+        private void Window_PointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (e.Source is Button ||
+                (e.Source is Avalonia.Visual visual && visual.FindAncestorOfType<Button>() != null) ||
+                (e.Source is CheckBox) ||
+                (e.Source is Avalonia.Visual v2 && v2.FindAncestorOfType<CheckBox>() != null))
+            {
+                return;
+            }
+
+            if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            {
+                BeginMoveDrag(e);
+            }
         }
     }
 }
