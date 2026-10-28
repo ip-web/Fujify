@@ -423,6 +423,88 @@ public partial class App : Application
                     aboutWin.Show(mainWindow);
                 };
             }
+            else if (System.Environment.GetEnvironmentVariable("FUJIFIER_SCREENSHOT_MOBILE") is { Length: > 0 } mobPath)
+            {
+                mainWindow.Loaded += async (s, e) =>
+                {
+                    mainWindow.Width = 480;
+                    mainWindow.Height = 720;
+                    await System.Threading.Tasks.Task.Delay(1000);
+                    int mw = (int)mainWindow.Bounds.Width;
+                    int mh = (int)mainWindow.Bounds.Height;
+                    if (mw <= 0) mw = 480;
+                    if (mh <= 0) mh = 720;
+                    var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(mw, mh), new Avalonia.Vector(96, 96));
+                    rtb.Render(mainWindow);
+                    rtb.Save(mobPath);
+                    System.Environment.Exit(0);
+                };
+            }
+            else if (System.Environment.GetEnvironmentVariable("FUJIFIER_SCREENSHOT_MOBILE_OPEN") is { Length: > 0 } mobOpenPath)
+            {
+                mainWindow.Loaded += async (s, e) =>
+                {
+                    mainWindow.Width = 480;
+                    mainWindow.Height = 720;
+                    await System.Threading.Tasks.Task.Delay(1000);
+                    vm.OpenMobileSidebarCommand.Execute(null);
+                    await System.Threading.Tasks.Task.Delay(600);
+                    int mw = (int)mainWindow.Bounds.Width;
+                    int mh = (int)mainWindow.Bounds.Height;
+                    if (mw <= 0) mw = 480;
+                    if (mh <= 0) mh = 720;
+                    var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(mw, mh), new Avalonia.Vector(96, 96));
+                    rtb.Render(mainWindow);
+                    rtb.Save(mobOpenPath);
+                    System.Environment.Exit(0);
+                };
+            }
+            else if (System.Environment.GetEnvironmentVariable("FUJIFIER_SCREENSHOT_MOBILE_INFO") is { Length: > 0 } mobInfoPath)
+            {
+                mainWindow.Loaded += async (s, e) =>
+                {
+                    mainWindow.Width = 480;
+                    mainWindow.Height = 720;
+                    await System.Threading.Tasks.Task.Delay(1000);
+                    vm.OpenMobileSidebarCommand.Execute(null);
+                    vm.SelectInspectorInfoTabCommand.Execute(null);
+                    await System.Threading.Tasks.Task.Delay(600);
+                    int mw = (int)mainWindow.Bounds.Width;
+                    int mh = (int)mainWindow.Bounds.Height;
+                    if (mw <= 0) mw = 480;
+                    if (mh <= 0) mh = 720;
+                    var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(mw, mh), new Avalonia.Vector(96, 96));
+                    rtb.Render(mainWindow);
+                    rtb.Save(mobInfoPath);
+                    System.Environment.Exit(0);
+                };
+            }
+            else if (System.Environment.GetEnvironmentVariable("FUJIFIER_SCREENSHOT_MOBILE_SETTINGS") is { Length: > 0 } mobSettingsPath)
+            {
+                mainWindow.Loaded += async (s, e) =>
+                {
+                    mainWindow.Width = 480;
+                    mainWindow.Height = 720;
+                    await System.Threading.Tasks.Task.Delay(1000);
+                    if (vm.OpenPreferencesCommand is CommunityToolkit.Mvvm.Input.IAsyncRelayCommand asyncCmd)
+                    {
+                        await asyncCmd.ExecuteAsync(null);
+                    }
+                    else
+                    {
+                        vm.OpenPreferencesCommand.Execute(null);
+                    }
+                    await System.Threading.Tasks.Task.Delay(600);
+                    int mw = (int)mainWindow.Bounds.Width;
+                    int mh = (int)mainWindow.Bounds.Height;
+                    if (mw <= 0) mw = 480;
+                    if (mh <= 0) mh = 720;
+                    var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(mw, mh), new Avalonia.Vector(96, 96));
+                    rtb.Render(mainWindow);
+                    rtb.Save(mobSettingsPath);
+                    System.Environment.Exit(0);
+                };
+            }
             else if (!licenseService.IsPro)
             {
                 Avalonia.Threading.Dispatcher.UIThread.Post(async () =>

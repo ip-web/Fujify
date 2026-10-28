@@ -136,7 +136,17 @@ namespace Fujify.ViewModels
             _isQuickSettingsExpanded = _settingsService.Settings.IsQuickSettingsExpanded;
 
             SelectInspectorSettingsTabCommand = new RelayCommand(() => InspectorTabIndex = 0);
-            SelectInspectorInfoTabCommand = new RelayCommand(() => InspectorTabIndex = 1);
+            SelectInspectorInfoTabCommand = new RelayCommand(() =>
+            {
+                InspectorTabIndex = 1;
+                if (SelectedFile == null && Files.Count > 0)
+                {
+                    SelectedFile = Files[0];
+                }
+            });
+            ToggleMobileSidebarCommand = new RelayCommand(() => IsMobileSidebarOpen = !IsMobileSidebarOpen);
+            CloseMobileSidebarCommand = new RelayCommand(() => IsMobileSidebarOpen = false);
+            OpenMobileSidebarCommand = new RelayCommand(() => IsMobileSidebarOpen = true);
             NavPhotosCommand = new RelayCommand(() => ActiveNavTab = "photos");
             NavHomeCommand = new RelayCommand(() => ActiveNavTab = "home");
             NavPresetsCommand = new RelayCommand(() =>
@@ -251,9 +261,27 @@ namespace Fujify.ViewModels
         public ICommand ToggleQuickSettingsCommand { get; }
         public ICommand SelectInspectorSettingsTabCommand { get; }
         public ICommand SelectInspectorInfoTabCommand { get; }
+        public ICommand ToggleMobileSidebarCommand { get; }
+        public ICommand CloseMobileSidebarCommand { get; }
+        public ICommand OpenMobileSidebarCommand { get; }
         public ICommand NavPhotosCommand { get; }
         public ICommand NavHomeCommand { get; }
         public ICommand NavPresetsCommand { get; }
+
+        private bool _isMobileSidebarOpen;
+        public bool IsMobileSidebarOpen
+        {
+            get => _isMobileSidebarOpen;
+            set
+            {
+                if (SetProperty(ref _isMobileSidebarOpen, value))
+                {
+                    OnPropertyChanged(nameof(MobileSidebarChevron));
+                }
+            }
+        }
+
+        public string MobileSidebarChevron => _isMobileSidebarOpen ? "▼" : "▲";
 
         private int _inspectorTabIndex = 0; // 0 = Settings, 1 = Photo info
         public int InspectorTabIndex
@@ -778,6 +806,10 @@ namespace Fujify.ViewModels
 
             IsPhoneLayout = width < 650;
             IsTabletLayout = width >= 650 && width < 900;
+            if (!IsPhoneLayout)
+            {
+                IsMobileSidebarOpen = false;
+            }
             if (_selectedFile == null && Files.Count > 0)
             {
                 SelectedFile = Files[0];
@@ -896,7 +928,7 @@ namespace Fujify.ViewModels
 
         public void ShowMessageModal(string title, string message, bool isSuccess = true)
         {
-            Dispatcher.UIThread.Post(() =>
+            void Action()
             {
                 ModalTitle = title;
                 ModalMessage = message;
@@ -926,12 +958,21 @@ namespace Fujify.ViewModels
                 OnPropertyChanged(nameof(CanOpenInLightroom));
                 OnPropertyChanged(nameof(CanOpenOutputFolder));
                 IsModalOpen = true;
-            });
+            }
+
+            if (Dispatcher.UIThread.CheckAccess())
+            {
+                Action();
+            }
+            else
+            {
+                Dispatcher.UIThread.Post(Action);
+            }
         }
 
         public void ShowPreferencesModal()
         {
-            Dispatcher.UIThread.Post(() =>
+            void Action()
             {
                 Preferences = new PreferencesViewModel(_settingsService, _licenseService)
                 {
@@ -947,17 +988,35 @@ namespace Fujify.ViewModels
                 ModalTitle = "Settings";
                 ModalType = "Preferences";
                 IsModalOpen = true;
-            });
+            }
+
+            if (Dispatcher.UIThread.CheckAccess())
+            {
+                Action();
+            }
+            else
+            {
+                Dispatcher.UIThread.Post(Action);
+            }
         }
 
         public void ShowAboutModal()
         {
-            Dispatcher.UIThread.Post(() =>
+            void Action()
             {
                 ModalTitle = "About Fujifier";
                 ModalType = "About";
                 IsModalOpen = true;
-            });
+            }
+
+            if (Dispatcher.UIThread.CheckAccess())
+            {
+                Action();
+            }
+            else
+            {
+                Dispatcher.UIThread.Post(Action);
+            }
         }
 
         public Task<FileConflictResolution> ShowConflictModalAsync(string filePath)
