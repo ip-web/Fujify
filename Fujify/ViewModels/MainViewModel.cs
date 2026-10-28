@@ -353,6 +353,7 @@ namespace Fujify.ViewModels
                 if (_selectedFile == null && Files.Count > 0)
                 {
                     _selectedFile = Files[0];
+                    _selectedFile.IsSelected = true;
                     if (!_selectedFile.HasExifLoaded)
                     {
                         LoadExifForFile(_selectedFile);
@@ -362,8 +363,17 @@ namespace Fujify.ViewModels
             }
             set
             {
+                var previous = _selectedFile;
                 if (SetProperty(ref _selectedFile, value))
                 {
+                    if (previous != null)
+                    {
+                        previous.IsSelected = false;
+                    }
+                    if (value != null)
+                    {
+                        value.IsSelected = true;
+                    }
                     OnPropertyChanged(nameof(HasSelectedFile));
                     if (value != null && !value.HasExifLoaded)
                     {

@@ -323,6 +323,46 @@ public partial class App : Application
                     System.Environment.Exit(0);
                 };
             }
+            else if (System.Environment.GetEnvironmentVariable("FUJIFIER_SCREENSHOT_GRID") is { Length: > 0 } gridPath)
+            {
+                mainWindow.Loaded += async (s, e) =>
+                {
+                    await System.Threading.Tasks.Task.Delay(1000);
+                    vm.SetGridViewCommand.Execute(null);
+                    await System.Threading.Tasks.Task.Delay(500);
+                    int mw = System.Math.Max(1180, (int)mainWindow.Bounds.Width);
+                    int mh = System.Math.Max(800, (int)mainWindow.Bounds.Height);
+                    var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(mw, mh), new Avalonia.Vector(96, 96));
+                    rtb.Render(mainWindow);
+                    rtb.Save(gridPath);
+                    System.Environment.Exit(0);
+                };
+            }
+            else if (System.Environment.GetEnvironmentVariable("FUJIFIER_SCREENSHOT_GRID_CONTEXT") is { Length: > 0 } gridCtxPath)
+            {
+                mainWindow.Loaded += async (s, e) =>
+                {
+                    await System.Threading.Tasks.Task.Delay(1000);
+                    vm.SetGridViewCommand.Execute(null);
+                    await System.Threading.Tasks.Task.Delay(500);
+                    if (mainWindow.Content is Views.MainView mainView)
+                    {
+                        var borders = Avalonia.VisualTree.VisualExtensions.GetVisualDescendants(mainView).OfType<Avalonia.Controls.Border>();
+                        var border = borders.FirstOrDefault(b => b.Classes.Contains("grid-card"));
+                        if (border?.ContextMenu != null)
+                        {
+                            border.ContextMenu.Open(border);
+                        }
+                    }
+                    await System.Threading.Tasks.Task.Delay(600);
+                    int mw = System.Math.Max(1180, (int)mainWindow.Bounds.Width);
+                    int mh = System.Math.Max(800, (int)mainWindow.Bounds.Height);
+                    var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(mw, mh), new Avalonia.Vector(96, 96));
+                    rtb.Render(mainWindow);
+                    rtb.Save(gridCtxPath);
+                    System.Environment.Exit(0);
+                };
+            }
             else if (System.Environment.GetEnvironmentVariable("FUJIFIER_SCREENSHOT_PHOTOINFO") is { Length: > 0 } piPath)
             {
                 mainWindow.Loaded += async (s, e) =>
