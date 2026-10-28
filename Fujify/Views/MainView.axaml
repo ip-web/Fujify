@@ -64,17 +64,17 @@
                            DoubleTapped="TitleBar_DoubleTapped"/>
 
                     <!-- Right: Custom Functional Minimize, Maximize, Close Buttons matching standard Windows controls -->
-                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="0" VerticalAlignment="Stretch" HorizontalAlignment="Right">
+                    <StackPanel x:Name="CaptionButtonsPanel" Grid.Column="2" Orientation="Horizontal" Spacing="0" VerticalAlignment="Stretch" HorizontalAlignment="Right">
                         <!-- Minimize Button -->
-                        <Button Classes="win-caption" Click="TitleBar_Minimize_Click" ToolTip.Tip="Minimize">
+                        <Button x:Name="TitleBarMinimizeButton" Classes="win-caption" Click="TitleBar_Minimize_Click" ToolTip.Tip="Minimize">
                             <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                         <!-- Maximize / Restore Button -->
-                        <Button Classes="win-caption" Click="TitleBar_Maximize_Click" ToolTip.Tip="Maximize">
+                        <Button x:Name="TitleBarMaximizeButton" Classes="win-caption" Click="TitleBar_Maximize_Click" ToolTip.Tip="Maximize">
                             <TextBlock Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                         <!-- Close Button -->
-                        <Button Classes="win-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="Close">
+                        <Button x:Name="TitleBarCloseButton" Classes="win-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="Close">
                             <TextBlock Text="&#x2715;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                     </StackPanel>

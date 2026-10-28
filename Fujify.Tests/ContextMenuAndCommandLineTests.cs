@@ -167,5 +167,25 @@ namespace Fujify.Tests
             Assert.Single(vm.Files);
             Assert.Equal(file1, vm.Files[0]);
         }
+
+        [Theory]
+        // 100% DPI: width=1180, buttons width=138 (starts at 1042), height=34
+        [InlineData(1100, 5, 1180, 1.0, true)]    // Top part of buttons (previously blocked by DWM)
+        [InlineData(1179, 1, 1180, 1.0, true)]    // Top edge of close button
+        [InlineData(1179, 30, 1180, 1.0, true)]   // Bottom part of close button
+        [InlineData(1043, 10, 1180, 1.0, true)]   // Minimize button
+        [InlineData(500, 10, 1180, 1.0, false)]   // Titlebar spacer (should remain native HTCAPTION)
+        [InlineData(50, 10, 1180, 1.0, false)]    // Studio logo area
+        [InlineData(1100, 50, 1180, 1.0, false)]  // Below titlebar
+        // 150% High DPI: width=1770, buttons width=207 (starts at 1563), height=51
+        [InlineData(1600, 8, 1770, 1.5, true)]    // Top part of buttons under high-DPI scaling
+        [InlineData(1769, 45, 1770, 1.5, true)]   // Bottom part under high-DPI scaling
+        [InlineData(800, 15, 1770, 1.5, false)]   // Titlebar spacer under high-DPI scaling
+        public void CaptionButtons_HitTest_ShouldRoutePointerToClient(
+            int clientX, int clientY, int clientWidth, double scaling, bool expectedIsOverButtons)
+        {
+            bool isOver = Views.MainWindow.IsPointerOverCaptionButtons(clientX, clientY, clientWidth, scaling);
+            Assert.Equal(expectedIsOverButtons, isOver);
+        }
     }
 }
