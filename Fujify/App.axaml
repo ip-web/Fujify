@@ -74,6 +74,11 @@
 
         <Thickness x:Key="ToggleSwitchOuterBorderStrokeThickness">1</Thickness>
         <Thickness x:Key="ToggleSwitchOnStrokeThickness">1</Thickness>
+
+        <!-- DataGrid Currency & Focus Visual Brushes (Eliminate white cell selection border) -->
+        <SolidColorBrush x:Key="DataGridCurrencyVisualPrimaryBrush" Color="Transparent"/>
+        <SolidColorBrush x:Key="DataGridCellFocusVisualPrimaryBrush" Color="Transparent"/>
+        <SolidColorBrush x:Key="DataGridCellFocusVisualSecondaryBrush" Color="Transparent"/>
     </Application.Resources>
 
     <Application.Styles>
@@ -151,6 +156,25 @@
             <Setter Property="IsVisible" Value="False"/>
         </Style>
         <Style Selector="DataGridCell:focus /template/ Border#FocusBounds">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <Style Selector="DataGridCell /template/ Rectangle#CurrencyVisual">
+            <Setter Property="IsVisible" Value="False"/>
+            <Setter Property="Stroke" Value="Transparent"/>
+            <Setter Property="StrokeThickness" Value="0"/>
+        </Style>
+        <Style Selector="DataGridCell:current /template/ Rectangle#CurrencyVisual">
+            <Setter Property="IsVisible" Value="False"/>
+            <Setter Property="Stroke" Value="Transparent"/>
+            <Setter Property="StrokeThickness" Value="0"/>
+        </Style>
+        <Style Selector="DataGridCell /template/ Grid#FocusVisual">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <Style Selector="DataGridCell:focus /template/ Grid#FocusVisual">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <Style Selector="DataGridCell /template/ Rectangle#PART_RightGridLine">
             <Setter Property="IsVisible" Value="False"/>
         </Style>
         <Style Selector="DataGridCell:focus">

@@ -49,7 +49,7 @@ namespace Fujify.Services
                     originalDirName = "Photos";
                 }
 
-                string suffix = subfolderSuffix?.Trim() ?? string.Empty;
+                string suffix = subfolderSuffix ?? string.Empty;
                 subfolderName = originalDirName + suffix;
             }
             else

@@ -236,8 +236,8 @@ namespace Fujify.ViewModels
 
         public string SubfolderPreview => CreateSubfolder
             ? (SubfolderUseOriginalName
-                ? $"Photos → Photos/{(!string.IsNullOrWhiteSpace(_subfolderSuffix) ? "Photos" + _subfolderSuffix.Trim() : "Photos")}/"
-                : $"Photos → Photos/{(!string.IsNullOrWhiteSpace(_subfolderCustomName) ? _subfolderCustomName.Trim() : "Fujified")}/")
+                ? $"Photos → Photos/{(!string.IsNullOrEmpty(_subfolderSuffix) ? "Photos" + _subfolderSuffix : "Photos")}/"
+                : $"Photos → Photos/{(!string.IsNullOrWhiteSpace(_subfolderCustomName) ? _subfolderCustomName : "Fujified")}/")
             : string.Empty;
 
         public bool AutoOpenOutputFolder
@@ -511,7 +511,7 @@ namespace Fujify.ViewModels
             _suffix = string.IsNullOrWhiteSpace(settings.Suffix) ? "-fujified" : settings.Suffix;
             _createSubfolder = settings.CreateSubfolder;
             _subfolderUseOriginalName = settings.SubfolderUseOriginalName;
-            _subfolderSuffix = string.IsNullOrWhiteSpace(settings.SubfolderSuffix) ? "-fujified" : settings.SubfolderSuffix;
+            _subfolderSuffix = settings.SubfolderSuffix ?? "-fujified";
             _subfolderCustomName = string.IsNullOrWhiteSpace(settings.SubfolderCustomName) ? "Fujified" : settings.SubfolderCustomName;
             _autoOpenOutputFolder = settings.AutoOpenOutputFolder;
             _isWindowsContextMenuEnabled = OperatingSystem.IsWindows() && _licenseService.IsPro &&
