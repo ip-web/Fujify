@@ -82,6 +82,7 @@ namespace Fujify.Common
 
         public static void OpenWith(string filePath)
         {
+            if (string.IsNullOrWhiteSpace(filePath)) return;
             try
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -95,7 +96,16 @@ namespace Fujify.Common
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
-                    Process.Start("open", $"-a \"{filePath}\"");
+                    if (!File.Exists(filePath)) return;
+                    string escapedPath = filePath.Replace("\\", "\\\\").Replace("\"", "\\\"");
+                    RunOsaScript(
+                        "tell application \"System Events\" to activate",
+                        "try",
+                        $"set targetFile to (POSIX file \"{escapedPath}\") as alias",
+                        "set chosenApp to choose application with prompt \"Choose an application to open this file with:\"",
+                        "tell application \"Finder\" to open targetFile using chosenApp",
+                        "end try"
+                    );
                 }
                 else
                 {
@@ -110,6 +120,7 @@ namespace Fujify.Common
 
         public static void ShowFileProperties(string filePath)
         {
+            if (string.IsNullOrWhiteSpace(filePath)) return;
             try
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -124,8 +135,18 @@ namespace Fujify.Common
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
-                    string script = $"tell application \"Finder\" to open information window of (POSIX file \"{filePath}\" as alias)";
-                    Process.Start("osascript", $"-e '{script}'");
+                    if (!File.Exists(filePath) && !Directory.Exists(filePath)) return;
+                    string escapedPath = filePath.Replace("\\", "\\\\").Replace("\"", "\\\"");
+                    RunOsaScript(
+                        "tell application \"Finder\"",
+                        "activate",
+                        "try",
+                        $"open information window of (POSIX file \"{escapedPath}\" as alias)",
+                        "on error",
+                        $"reveal (POSIX file \"{escapedPath}\" as alias)",
+                        "end try",
+                        "end tell"
+                    );
                 }
                 else
                 {
@@ -136,6 +157,21 @@ namespace Fujify.Common
             {
                 Debug.WriteLine($"Error displaying properties for {filePath}: {ex.Message}");
             }
+        }
+
+        private static void RunOsaScript(params string[] scriptLines)
+        {
+            var psi = new ProcessStartInfo("osascript")
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            foreach (var line in scriptLines)
+            {
+                psi.ArgumentList.Add("-e");
+                psi.ArgumentList.Add(line);
+            }
+            Process.Start(psi);
         }
 
         public static void OpenFolder(string folderPath)

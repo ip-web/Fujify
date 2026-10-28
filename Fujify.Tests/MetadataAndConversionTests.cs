@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using Fujify.Models;
 using Fujify.Services;
@@ -476,6 +477,120 @@ namespace Fujify.Tests
                 Assert.NotNull(exif);
                 Assert.NotNull(exif.DateTimeOriginal);
             }
+        }
+
+        [Fact]
+        public void ReadCameraMakeAndModel_CanonCr3_ShouldExtractCanonEOSR()
+        {
+            string cr3Path = @"D:\Users\isisk\Documents\test sony\test files\Canon-EOS-R.CR3";
+            if (File.Exists(cr3Path))
+            {
+                string? dngEditorResult = DngMetadataEditor.ReadCameraMakeAndModel(cr3Path);
+                Assert.Equal("Canon EOS R", dngEditorResult);
+
+                string? rawReaderResult = RawMetadataReader.TryGetCameraMakeAndModel(cr3Path);
+                Assert.Equal("Canon EOS R", rawReaderResult);
+
+                var metadataService = new MetadataService();
+                string svcResult = metadataService.GetCameraMakeAndModel(cr3Path);
+                Assert.Equal("Canon EOS R", svcResult);
+                Assert.NotEqual("CCDT", svcResult);
+
+                var exif = RawMetadataReader.TryGetExifData(cr3Path);
+                Assert.NotNull(exif);
+            }
+        }
+
+        [Fact]
+        public void ReadCanonCr3CameraInfo_SyntheticCr3WithCcdtBox_ShouldReturnCanonEOSRNotCCDT()
+        {
+            using var ms = new MemoryStream();
+            // 1. ftyp box (24 bytes)
+            ms.Write(new byte[] { 0, 0, 0, 24 });
+            ms.Write(Encoding.ASCII.GetBytes("ftypcrx "));
+            ms.Write(new byte[] { 0, 0, 0, 1 });
+            ms.Write(Encoding.ASCII.GetBytes("crx isom"));
+
+            // moov box containing uuid box containing CCDT and CMT1
+            long moovPos = ms.Position;
+            ms.Write(new byte[] { 0, 0, 0, 0 }); // moov size placeholder
+            ms.Write(Encoding.ASCII.GetBytes("moov"));
+
+            long uuidPos = ms.Position;
+            ms.Write(new byte[] { 0, 0, 0, 0 }); // uuid size placeholder
+            ms.Write(Encoding.ASCII.GetBytes("uuid"));
+            ms.Write(new byte[] { 0x85, 0xC0, 0xB6, 0x87, 0x82, 0x0F, 0x11, 0xE0, 0x81, 0x11, 0xF4, 0xCE, 0x46, 0x2B, 0x02, 0x4C }); // Canon UUID
+
+            // Sub-box 1: CCDT box (simulating the box that caused the false reading)
+            long ccdtPos = ms.Position;
+            ms.Write(new byte[] { 0, 0, 0, 32 }); // 32 bytes
+            ms.Write(Encoding.ASCII.GetBytes("CCDT"));
+            ms.Write(new byte[24]); // dummy payload
+
+            // Sub-box 2: CMT1 box
+            long cmt1Pos = ms.Position;
+            ms.Write(new byte[] { 0, 0, 0, 0 }); // cmt1 size placeholder
+            ms.Write(Encoding.ASCII.GetBytes("CMT1"));
+
+            long tiffStart = ms.Position;
+            // TIFF header: II (little-endian), magic 42, IFD0 offset 8
+            ms.Write(new byte[] { 0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00 });
+
+            // IFD0: 2 entries (Make = 0x010F, Model = 0x0110)
+            ms.Write(BitConverter.GetBytes((ushort)2));
+
+            // Offsets relative to tiffStart:
+            // Header is 8 bytes.
+            // IFD0 count: 2 bytes.
+            // 2 entries * 12 bytes = 24 bytes.
+            // Next IFD offset: 4 bytes.
+            // Total IFD size = 2 + 24 + 4 = 30 bytes.
+            // String data starts at offset 8 + 30 = 38 (relative to tiffStart).
+            uint makeOffset = 38;
+            byte[] makeBytes = Encoding.ASCII.GetBytes("Canon\0"); // 6 bytes
+            uint modelOffset = (uint)(makeOffset + makeBytes.Length); // 44
+            byte[] modelBytes = Encoding.ASCII.GetBytes("Canon EOS R\0"); // 12 bytes
+
+            // Entry 1: Make (0x010F, ASCII=2, count=6, offset=makeOffset)
+            ms.Write(BitConverter.GetBytes((ushort)0x010F));
+            ms.Write(BitConverter.GetBytes((ushort)2));
+            ms.Write(BitConverter.GetBytes((uint)makeBytes.Length));
+            ms.Write(BitConverter.GetBytes(makeOffset));
+
+            // Entry 2: Model (0x0110, ASCII=2, count=12, offset=modelOffset)
+            ms.Write(BitConverter.GetBytes((ushort)0x0110));
+            ms.Write(BitConverter.GetBytes((ushort)2));
+            ms.Write(BitConverter.GetBytes((uint)modelBytes.Length));
+            ms.Write(BitConverter.GetBytes(modelOffset));
+
+            // Next IFD = 0
+            ms.Write(new byte[] { 0, 0, 0, 0 });
+
+            // String payloads
+            ms.Write(makeBytes);
+            ms.Write(modelBytes);
+
+            long cmt1End = ms.Position;
+            long cmt1Size = cmt1End - cmt1Pos;
+            long uuidEnd = ms.Position;
+            long uuidSize = uuidEnd - uuidPos;
+            long moovEnd = ms.Position;
+            long moovSize = moovEnd - moovPos;
+
+            // Fill placeholders (big-endian)
+            ms.Seek(cmt1Pos, SeekOrigin.Begin);
+            ms.Write(new byte[] { (byte)(cmt1Size >> 24), (byte)(cmt1Size >> 16), (byte)(cmt1Size >> 8), (byte)cmt1Size });
+
+            ms.Seek(uuidPos, SeekOrigin.Begin);
+            ms.Write(new byte[] { (byte)(uuidSize >> 24), (byte)(uuidSize >> 16), (byte)(uuidSize >> 8), (byte)uuidSize });
+
+            ms.Seek(moovPos, SeekOrigin.Begin);
+            ms.Write(new byte[] { (byte)(moovSize >> 24), (byte)(moovSize >> 16), (byte)(moovSize >> 8), (byte)moovSize });
+
+            ms.Seek(0, SeekOrigin.Begin);
+
+            string? model = DngMetadataEditor.ReadCanonCr3CameraInfo(ms);
+            Assert.Equal("Canon EOS R", model);
         }
 
         [Fact]
