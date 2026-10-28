@@ -51,6 +51,19 @@
         <string>lightroom</string>
         <string>adobe-lightroom</string>
     </array>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.ipweb.fujifier</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>fujifier</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+        </dict>
+    </array>
     <key>CFBundleDocumentTypes</key>
     <array>
         <dict>

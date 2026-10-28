@@ -635,6 +635,102 @@ namespace Fujify.Tests
         }
 
         [Fact]
+        public async Task LoginWithGoogleOAuthAsync_WhenPlatformOAuthLauncherConfigured_UsesLauncherAndActivatesPro()
+        {
+            var settings = new MockSettingsService();
+
+            var handler = new MockHttpMessageHandler((req) =>
+            {
+                if (req.RequestUri!.AbsolutePath.EndsWith("/auth/exchange-token"))
+                {
+                    var exchangeResponse = new AuthLoginResponse
+                    {
+                        Success = true,
+                        AccessToken = "ios_platform_access_token",
+                        RefreshToken = "ios_platform_refresh_token",
+                        User = new AuthUserDto
+                        {
+                            Id = 101,
+                            Email = "ios-user@fujifier.cc",
+                            DisplayName = "iOS User"
+                        },
+                        Licenses = new List<UserLicenseDto>
+                        {
+                            new()
+                            {
+                                Id = 404,
+                                LicenseKey = "FUJI-IOS-KEY-7777",
+                                Status = "active"
+                            }
+                        }
+                    };
+
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(exchangeResponse))
+                    };
+                }
+
+                if (req.RequestUri!.AbsolutePath.EndsWith("/license/activate"))
+                {
+                    var actResponse = new LicenseActivationResponse
+                    {
+                        Success = true,
+                        LicenseKey = "FUJI-IOS-KEY-7777",
+                        Status = "active",
+                        UsedActivations = 1,
+                        MaxActivations = 3
+                    };
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(actResponse))
+                    };
+                }
+
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            });
+
+            var httpClient = new HttpClient(handler);
+            var service = new LicenseService(settings, httpClient);
+
+            string? capturedAuthUrl = null;
+            string? capturedScheme = null;
+
+            LicenseService.PlatformOAuthLauncher = (authUrl, scheme, ct) =>
+            {
+                capturedAuthUrl = authUrl;
+                capturedScheme = scheme;
+
+                // Extract state from the authUrl so the mock returns matching state
+                var uri = new Uri(authUrl);
+                var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
+                string? state = queryParams["state"];
+
+                return Task.FromResult<(string Code, string? State)?>((Code: "ios_test_code_888", State: state));
+            };
+
+            try
+            {
+                var result = await service.LoginWithGoogleOAuthAsync();
+
+                Assert.True(result.Success, result.ErrorMessage);
+                Assert.True(service.IsPro);
+                Assert.True(service.IsAccountLoggedIn);
+                Assert.Equal("ios-user@fujifier.cc", service.AccountEmail);
+                Assert.Equal("FUJI-IOS-KEY-7777", service.CurrentStatus.LicenseKey);
+
+                Assert.NotNull(capturedAuthUrl);
+                Assert.Equal("fujifier", capturedScheme);
+                Assert.Contains("redirect_uri=fujifier", capturedAuthUrl);
+                Assert.Contains("platform=", capturedAuthUrl);
+            }
+            finally
+            {
+                LicenseService.PlatformOAuthLauncher = null;
+            }
+        }
+
+        [Fact]
         public void LicenseService_DefaultsToFujifierCc_AndMigratesOldDomain()
         {
             var settings = new MockSettingsService();
