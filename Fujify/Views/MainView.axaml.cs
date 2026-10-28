@@ -373,6 +373,14 @@ namespace Fujify.Views
             }
         }
 
+        private void OnMobileAddBackdropPointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                vm.IsMobileAddMenuOpen = false;
+            }
+        }
+
         private void TitleBar_PointerPressed(object? sender, PointerPressedEventArgs e)
         {
             if (e.Source is Button || (e.Source is Avalonia.Visual visual && visual.FindAncestorOfType<Button>() != null))

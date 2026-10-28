@@ -144,9 +144,29 @@ namespace Fujify.ViewModels
                     SelectedFile = Files[0];
                 }
             });
-            ToggleMobileSidebarCommand = new RelayCommand(() => IsMobileSidebarOpen = !IsMobileSidebarOpen);
+            ToggleMobileSidebarCommand = new RelayCommand(() =>
+            {
+                IsMobileAddMenuOpen = false;
+                IsMobileSidebarOpen = !IsMobileSidebarOpen;
+            });
             CloseMobileSidebarCommand = new RelayCommand(() => IsMobileSidebarOpen = false);
-            OpenMobileSidebarCommand = new RelayCommand(() => IsMobileSidebarOpen = true);
+            OpenMobileSidebarCommand = new RelayCommand(() =>
+            {
+                IsMobileAddMenuOpen = false;
+                IsMobileSidebarOpen = true;
+            });
+            ToggleMobileAddMenuCommand = new RelayCommand(() => IsMobileAddMenuOpen = !IsMobileAddMenuOpen);
+            CloseMobileAddMenuCommand = new RelayCommand(() => IsMobileAddMenuOpen = false);
+            MobileAddFilesCommand = new AsyncRelayCommand(async () =>
+            {
+                IsMobileAddMenuOpen = false;
+                await ExecuteAddFilesAsync();
+            });
+            MobileAddFolderCommand = new AsyncRelayCommand(async () =>
+            {
+                IsMobileAddMenuOpen = false;
+                await ExecuteAddFolderAsync();
+            });
             NavPhotosCommand = new RelayCommand(() => ActiveNavTab = "photos");
             NavHomeCommand = new RelayCommand(() => ActiveNavTab = "home");
             NavPresetsCommand = new RelayCommand(() =>
@@ -264,9 +284,28 @@ namespace Fujify.ViewModels
         public ICommand ToggleMobileSidebarCommand { get; }
         public ICommand CloseMobileSidebarCommand { get; }
         public ICommand OpenMobileSidebarCommand { get; }
+        public ICommand ToggleMobileAddMenuCommand { get; }
+        public ICommand CloseMobileAddMenuCommand { get; }
+        public ICommand MobileAddFilesCommand { get; }
+        public ICommand MobileAddFolderCommand { get; }
         public ICommand NavPhotosCommand { get; }
         public ICommand NavHomeCommand { get; }
         public ICommand NavPresetsCommand { get; }
+
+        private bool _isMobileAddMenuOpen;
+        public bool IsMobileAddMenuOpen
+        {
+            get => _isMobileAddMenuOpen;
+            set
+            {
+                if (SetProperty(ref _isMobileAddMenuOpen, value))
+                {
+                    OnPropertyChanged(nameof(MobileAddMenuAngle));
+                }
+            }
+        }
+
+        public double MobileAddMenuAngle => _isMobileAddMenuOpen ? 45.0 : 0.0;
 
         private bool _isMobileSidebarOpen;
         public bool IsMobileSidebarOpen
@@ -992,6 +1031,7 @@ namespace Fujify.ViewModels
                 };
                 ModalTitle = "Settings";
                 ModalType = "Preferences";
+                IsMobileAddMenuOpen = false;
                 IsModalOpen = true;
             }
 
@@ -1011,6 +1051,7 @@ namespace Fujify.ViewModels
             {
                 ModalTitle = "About Fujifier";
                 ModalType = "About";
+                IsMobileAddMenuOpen = false;
                 IsModalOpen = true;
             }
 
@@ -1056,6 +1097,7 @@ namespace Fujify.ViewModels
                 App.ApplyTheme(_settingsService.Settings.ThemeMode);
             }
             IsModalOpen = false;
+            IsMobileAddMenuOpen = false;
             ModalType = "None";
             _conflictTcs?.TrySetResult(new FileConflictResolution(ConflictChoice.Skip, false));
             _conflictTcs = null;
