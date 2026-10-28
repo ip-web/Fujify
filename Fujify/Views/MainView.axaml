@@ -964,7 +964,7 @@
         <!-- 3. FULL-SCREEN SLIDING PANEL: PREFERENCES / SETTINGS -->
         <Grid x:Name="PreferencesSlidePanel" ZIndex="10000"
               Background="{DynamicResource AppSolidBackgroundBrush}"
-              RenderTransform="translateX(800px)"
+              RenderTransform="translateX(800)"
               Opacity="0"
               IsHitTestVisible="False">
             <Grid.Transitions>
@@ -1032,7 +1032,7 @@
         <!-- 4. FULL-SCREEN SLIDING PANEL: ABOUT -->
         <Grid x:Name="AboutSlidePanel" ZIndex="10000"
               Background="{DynamicResource AppSolidBackgroundBrush}"
-              RenderTransform="translateX(800px)"
+              RenderTransform="translateX(800)"
               Opacity="0"
               IsHitTestVisible="False">
             <Grid.Transitions>
