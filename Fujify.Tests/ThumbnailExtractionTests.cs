@@ -221,5 +221,72 @@ namespace Fujify.Tests
             Assert.Equal(120, bmp.Width);
             Assert.Equal(80, bmp.Height);
         }
+
+        [Fact]
+        public void CanonCiff_ShouldExtractPreviewFromMockCrw()
+        {
+            byte[] jpeg = CreateValidJpegBytes(120, 80);
+            string ciffPath = Path.Combine(_testDir, "test_canon.crw");
+
+            using (var fs = new FileStream(ciffPath, FileMode.Create, FileAccess.Write))
+            using (var bw = new BinaryWriter(fs))
+            {
+                // 1. CIFF Header (26 bytes)
+                bw.Write(new byte[] { 0x49, 0x49 }); // "II" (little-endian)
+                bw.Write((uint)26); // header length = 26
+                bw.Write(Encoding.ASCII.GetBytes("HEAPCCDR")); // CIFF raw heap signature
+                bw.Write(new byte[12]); // padding up to 26 bytes
+
+                // 2. JPEG payload (at offset 0 relative to blockBase = 26)
+                bw.Write(jpeg);
+
+                // 3. Root directory (starts at offset = jpeg.Length relative to blockBase = 26)
+                uint dirOffset = (uint)jpeg.Length;
+                bw.Write((ushort)1); // 1 record
+                // Record 0: tag 0x2007 (JPEG Image), length, offset
+                bw.Write((ushort)0x2007);
+                bw.Write((uint)jpeg.Length);
+                bw.Write((uint)0); // offset = 0 relative to blockBase = 26
+
+                // 4. Last 4 bytes of file: directory offset relative to blockBase = 26
+                bw.Write(dirOffset);
+            }
+
+            var jpegBytes = ThumbnailService.TryExtractEmbeddedJpeg(ciffPath);
+            Assert.NotNull(jpegBytes);
+            Assert.Equal(jpeg.Length, jpegBytes.Length);
+
+            using var bmp = SKBitmap.Decode(jpegBytes);
+            Assert.NotNull(bmp);
+            Assert.Equal(120, bmp.Width);
+            Assert.Equal(80, bmp.Height);
+        }
+
+        [Fact]
+        public void RealCanonD60_ShouldExtractEmbeddedJpegPreview()
+        {
+            string d60Path = @"D:\Users\isisk\Documents\test sony\test files\Canon-EOS-D60.CRW";
+            if (!File.Exists(d60Path))
+            {
+                string altPath = @"D:\Users\isisk\Documents\test sony\test files\raws\canon\d60\RAW_CANON_D60_ARGB.CRW";
+                if (File.Exists(altPath))
+                {
+                    d60Path = altPath;
+                }
+                else
+                {
+                    return; // Skip if file not found in test environment
+                }
+            }
+
+            var jpegBytes = ThumbnailService.TryExtractEmbeddedJpeg(d60Path);
+            Assert.NotNull(jpegBytes);
+            Assert.True(jpegBytes.Length > 100_000, $"Expected large embedded JPEG preview, got {jpegBytes.Length} bytes");
+
+            using var bmp = SKBitmap.Decode(jpegBytes);
+            Assert.NotNull(bmp);
+            Assert.True(bmp.Width > 500, $"Expected preview width > 500, got {bmp.Width}");
+            Assert.True(bmp.Height > 500, $"Expected preview height > 500, got {bmp.Height}");
+        }
     }
 }

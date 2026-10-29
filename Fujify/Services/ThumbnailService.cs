@@ -228,6 +228,18 @@ namespace Fujify.Services
                     if (cr3Bytes != null) return cr3Bytes;
                 }
 
+                // 2.5 Canon CIFF (.CRW): Camera Image File Format used by early Canon DSLRs and PowerShots (D30, D60, 10D, 300D, G1-G6, etc.)
+                bool isLittleEndian = header[0] == 0x49 && header[1] == 0x49;
+                bool isBigEndian = header[0] == 0x4D && header[1] == 0x4D;
+                if ((isLittleEndian || isBigEndian) && read >= 14 &&
+                    header[6] == 0x48 && header[7] == 0x45 && header[8] == 0x41 && header[9] == 0x50 &&
+                    header[10] == 0x43 && header[11] == 0x43 && header[12] == 0x44 &&
+                    (header[13] == 0x52 || header[13] == 0x42))
+                {
+                    var ciffBytes = TryExtractCiffJpeg(fs, header, isLittleEndian);
+                    if (ciffBytes != null) return ciffBytes;
+                }
+
                 // 3. TIFF-based RAW (DNG, Sony ARW, Canon CR2, Nikon NEF, Olympus/OM System ORF, Pentax PEF, Panasonic RW2)
                 var tiffBytes = TryExtractTiffJpeg(fs, header);
                 if (tiffBytes != null) return tiffBytes;
@@ -431,6 +443,118 @@ namespace Fujify.Services
                 }
             }
             catch { }
+            return null;
+        }
+
+        private static byte[]? TryExtractCiffJpeg(FileStream fs, byte[] header, bool isLittleEndian)
+        {
+            try
+            {
+                uint headerLength = ReadUInt32(header, 2, isLittleEndian);
+                if (headerLength < 26 || headerLength > fs.Length - 4)
+                {
+                    headerLength = 26;
+                }
+
+                var queue = new Queue<(long Base, long Length, int Depth)>();
+                queue.Enqueue((headerLength, fs.Length - headerLength, 0));
+
+                long bestOffset = -1;
+                long bestLength = 0;
+
+                byte[] buf4 = new byte[4];
+                byte[] buf2 = new byte[2];
+
+                while (queue.Count > 0)
+                {
+                    var (baseOff, blockLen, depth) = queue.Dequeue();
+                    if (depth > 8 || blockLen < 8) continue;
+
+                    long dirOffsetPtr = baseOff + blockLen - 4;
+                    if (dirOffsetPtr + 4 > fs.Length || dirOffsetPtr < baseOff) continue;
+
+                    fs.Seek(dirOffsetPtr, SeekOrigin.Begin);
+                    if (fs.Read(buf4, 0, 4) != 4) continue;
+                    uint dirOffset = ReadUInt32(buf4, 0, isLittleEndian);
+
+                    long dirPos = baseOff + dirOffset;
+                    if (dirPos < baseOff || dirPos + 2 > baseOff + blockLen || dirPos + 2 > fs.Length) continue;
+
+                    fs.Seek(dirPos, SeekOrigin.Begin);
+                    if (fs.Read(buf2, 0, 2) != 2) continue;
+                    ushort numRecords = ReadUInt16(buf2, 0, isLittleEndian);
+                    if (numRecords == 0 || numRecords > 512) continue;
+
+                    int recBytesToRead = numRecords * 10;
+                    if (dirPos + 2 + recBytesToRead > fs.Length) continue;
+
+                    byte[] recBuf = new byte[recBytesToRead];
+                    if (fs.Read(recBuf, 0, recBytesToRead) != recBytesToRead) continue;
+
+                    for (int i = 0; i < numRecords; i++)
+                    {
+                        int idx = i * 10;
+                        ushort tag = ReadUInt16(recBuf, idx, isLittleEndian);
+                        uint len = ReadUInt32(recBuf, idx + 2, isLittleEndian);
+                        uint off = ReadUInt32(recBuf, idx + 6, isLittleEndian);
+
+                        // Bit 14 indicates in-record immediate data (not a heap offset)
+                        if ((tag & 0x4000) != 0) continue;
+
+                        ushort tagType = (ushort)(tag & 0x3800);
+                        if (tagType == 0x2800 || tagType == 0x3000)
+                        {
+                            // Subdirectory
+                            long subBase = baseOff + off;
+                            long subLen = len;
+                            if (subBase + subLen <= fs.Length && subLen >= 8 && depth < 8)
+                            {
+                                queue.Enqueue((subBase, subLen, depth + 1));
+                            }
+                        }
+                        else
+                        {
+                            // Data record
+                            long dataOff = baseOff + off;
+                            if (dataOff >= 0 && dataOff + len <= fs.Length && len >= 256)
+                            {
+                                fs.Seek(dataOff, SeekOrigin.Begin);
+                                if (fs.Read(buf4, 0, 4) == 4 && buf4[0] == 0xFF && buf4[1] == 0xD8)
+                                {
+                                    if (len > bestLength)
+                                    {
+                                        bestLength = len;
+                                        bestOffset = dataOff;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (bestOffset >= 0 && bestLength >= 256 && bestOffset + bestLength <= fs.Length)
+                {
+                    byte[] jpegBytes = new byte[bestLength];
+                    fs.Seek(bestOffset, SeekOrigin.Begin);
+                    int totalRead = 0;
+                    while (totalRead < bestLength)
+                    {
+                        int r = fs.Read(jpegBytes, totalRead, (int)bestLength - totalRead);
+                        if (r <= 0) break;
+                        totalRead += r;
+                    }
+
+                    if (totalRead == bestLength && IsValidJpegHeader(jpegBytes))
+                    {
+                        return jpegBytes;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[Fujifier] CIFF JPEG extraction failed: {ex.Message}");
+            }
+
             return null;
         }
 
