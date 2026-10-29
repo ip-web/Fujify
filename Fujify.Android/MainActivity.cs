@@ -145,7 +145,14 @@ public class MainActivity : AvaloniaMainActivity<App>
     protected override void OnResume()
     {
         base.OnResume();
+        EnableHighRefreshRate();
         AdManager.Instance.Resume();
+    }
+
+    public override void OnConfigurationChanged(global::Android.Content.Res.Configuration newConfig)
+    {
+        base.OnConfigurationChanged(newConfig);
+        EnableHighRefreshRate();
     }
 
     protected override void OnPause()
@@ -501,6 +508,8 @@ public class MainActivity : AvaloniaMainActivity<App>
         {
             if (Window == null) return;
             var layoutParams = Window.Attributes;
+            if (layoutParams == null) return;
+
             Display? display = null;
             if (Build.VERSION.SdkInt >= BuildVersionCodes.R)
             {
@@ -515,25 +524,57 @@ public class MainActivity : AvaloniaMainActivity<App>
 
             if (display != null)
             {
+                var currentMode = display.GetMode();
+                int currentWidth = currentMode?.PhysicalWidth ?? 0;
+                int currentHeight = currentMode?.PhysicalHeight ?? 0;
+
                 var supportedModes = display.GetSupportedModes();
+                int matchingTargetModeId = 0;
+                float maxRefreshRate = 0f;
+
                 if (supportedModes != null && supportedModes.Length > 0)
                 {
-                    int targetModeId = 0;
-                    float maxRefreshRate = 0f;
                     foreach (var mode in supportedModes)
                     {
                         if (mode.RefreshRate > maxRefreshRate)
                         {
                             maxRefreshRate = mode.RefreshRate;
-                            targetModeId = mode.ModeId;
+                        }
+
+                        // On foldable dual-screen devices (e.g. Galaxy Z Fold), ONLY match modes
+                        // with the physical resolution of the currently active display (folded vs unfolded)
+                        // to avoid SurfaceFlinger mode rejection falling back to 30Hz!
+                        if (currentWidth > 0 && currentHeight > 0 &&
+                            mode.PhysicalWidth == currentWidth && mode.PhysicalHeight == currentHeight)
+                        {
+                            if (mode.RefreshRate >= maxRefreshRate)
+                            {
+                                matchingTargetModeId = mode.ModeId;
+                            }
                         }
                     }
-                    if (targetModeId != 0 && layoutParams != null)
-                    {
-                        layoutParams.PreferredDisplayModeId = targetModeId;
-                        Window.Attributes = layoutParams;
-                    }
                 }
+
+                if (maxRefreshRate < 60f)
+                {
+                    maxRefreshRate = 120f;
+                }
+
+                // PreferredRefreshRate directly requests 120Hz from the display hardware on the current resolution
+                layoutParams.PreferredRefreshRate = maxRefreshRate;
+
+                // PreferredDisplayModeId only if resolution strictly matches current screen
+                if (matchingTargetModeId != 0)
+                {
+                    layoutParams.PreferredDisplayModeId = matchingTargetModeId;
+                }
+                else
+                {
+                    layoutParams.PreferredDisplayModeId = 0;
+                }
+
+                Window.Attributes = layoutParams;
+                global::Android.Util.Log.Info("Fujifier", $"EnableHighRefreshRate: PreferredRefreshRate={maxRefreshRate}Hz, ModeId={matchingTargetModeId}");
             }
         }
         catch (Exception ex)
@@ -548,7 +589,7 @@ public class MainActivity : AvaloniaMainActivity<App>
             .WithInterFont()
             .With(new SkiaOptions
             {
-                MaxGpuResourceSizeBytes = 128 * 1024 * 1024
+                MaxGpuResourceSizeBytes = 256 * 1024 * 1024
             });
     }
 }
