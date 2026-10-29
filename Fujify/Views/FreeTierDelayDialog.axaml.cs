@@ -228,20 +228,7 @@ namespace Fujify.Views
 
         private static async Task<bool> ShowMobileDelayAsync(MainViewModel vm, ILicenseService licenseService, bool isPostConversion)
         {
-            string title = isPostConversion ? "Conversion Finished (Free Tier)" : "Welcome to Fujifier (Free Tier)";
-            for (int sec = 15; sec > 0; sec--)
-            {
-                if (licenseService.IsPro) break;
-                vm.ShowMessageModal(title, $"Free tier active (Queue limited to 10 files).\n\nCooldown timer: {sec}s remaining before you can continue...\n\nUpgrade to Fujifier Pro to remove all limits!");
-                await Task.Delay(1000);
-            }
-
-            if (!licenseService.IsPro)
-            {
-                vm.ShowMessageModal(title, "Cooldown finished. You can now use Fujifier Free.\n\nTip: Upgrade to Fujifier Pro in Preferences to unlock unlimited queues and instant processing!");
-            }
-
-            return licenseService.IsPro;
+            return await vm.ShowFreeTierDelayModalAsync(licenseService, isPostConversion);
         }
 
         private void Window_PointerPressed(object? sender, Avalonia.Input.PointerPressedEventArgs e)

@@ -17,9 +17,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+using System;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Transformation;
 using Avalonia.VisualTree;
@@ -40,6 +42,11 @@ namespace Fujify.Views
             AddHandler(DragDrop.DragLeaveEvent, View_DragLeave);
             AddHandler(DragDrop.DragOverEvent, View_DragOver);
             AddHandler(DragDrop.DropEvent, View_Drop);
+
+            if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
+            {
+                AddHandler(Control.ContextRequestedEvent, (s, e) => e.Handled = true, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+            }
         }
 
         protected override void OnAttachedToVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
@@ -289,7 +296,7 @@ namespace Fujify.Views
 
         private void OnBackdropPointerPressed(object? sender, PointerPressedEventArgs e)
         {
-            if (DataContext is MainViewModel vm)
+            if (DataContext is MainViewModel vm && vm.CanDismissModal)
             {
                 vm.CloseModal();
             }
@@ -308,6 +315,11 @@ namespace Fujify.Views
             if (sender is Control control && control.DataContext is FileItem item && DataContext is MainViewModel vm)
             {
                 vm.SelectedFile = item;
+
+                if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
+                {
+                    return;
+                }
 
                 if (e.GetCurrentPoint(control).Properties.IsRightButtonPressed)
                 {
@@ -339,16 +351,6 @@ namespace Fujify.Views
             if (sender is Control control && control.DataContext is FileItem item && DataContext is MainViewModel vm)
             {
                 vm.SelectedFile = item;
-
-                if (e.GetCurrentPoint(control).Properties.IsRightButtonPressed)
-                {
-                    var targetBorder = control as Border ?? control.FindAncestorOfType<Border>();
-                    if (targetBorder?.ContextMenu != null)
-                    {
-                        targetBorder.ContextMenu.Open(targetBorder);
-                        e.Handled = true;
-                    }
-                }
             }
         }
 

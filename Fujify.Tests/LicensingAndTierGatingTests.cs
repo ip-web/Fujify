@@ -851,5 +851,69 @@ namespace Fujify.Tests
             Assert.False(adService.ShouldShowAds);
             Assert.True(settings.Settings.LosslessCompression);
         }
+
+        [Fact]
+        public void FreeTierDelayModal_OnFreeTier_CannotDismissUntilUnlockedOrTimerFinishes()
+        {
+            var settings = new MockSettingsService();
+            var service = new LicenseService(settings);
+            var dialogService = new DialogService(settings, service);
+            var mainVm = new MainViewModel(dialogService: dialogService, settingsService: settings, licenseService: service);
+
+            Assert.False(service.IsPro);
+
+            // Trigger free tier delay modal
+            _ = mainVm.ShowFreeTierDelayModalAsync(service, isPostConversion: false);
+
+            Assert.True(mainVm.IsModalOpen);
+            Assert.True(mainVm.IsFreeTierDelayModal);
+            Assert.True(mainVm.IsBottomSheetOpen);
+            Assert.False(mainVm.CanDismissModal);
+            Assert.Contains("15s", mainVm.DelayDismissButtonText);
+
+            // Attempting to close modal while timer is running MUST be rejected
+            mainVm.CloseModal();
+            Assert.True(mainVm.IsModalOpen);
+            Assert.True(mainVm.IsFreeTierDelayModal);
+
+            // Once timer completes or unlocked, modal can be dismissed
+            mainVm.CanDismissModal = true;
+            mainVm.CloseModal();
+            Assert.False(mainVm.IsModalOpen);
+        }
+
+        [Fact]
+        public void FreeTierDelayModal_HasBuyProAndLoginCommands()
+        {
+            var settings = new MockSettingsService();
+            var service = new LicenseService(settings);
+            var dialogService = new DialogService(settings, service);
+            var mainVm = new MainViewModel(dialogService: dialogService, settingsService: settings, licenseService: service);
+
+            Assert.NotNull(mainVm.BuyProCommand);
+            Assert.NotNull(mainVm.DelayGoogleSignInCommand);
+            Assert.NotNull(mainVm.DelayToggleKeyCommand);
+            Assert.NotNull(mainVm.DelayActivateKeyCommand);
+
+            // Toggle license key input
+            Assert.False(mainVm.IsDelayKeyInputVisible);
+            mainVm.DelayToggleKeyCommand.Execute(null);
+            Assert.True(mainVm.IsDelayKeyInputVisible);
+            mainVm.DelayToggleKeyCommand.Execute(null);
+            Assert.False(mainVm.IsDelayKeyInputVisible);
+        }
+
+        [Fact]
+        public void AboutAndInfoCommands_CanExecuteWithoutError()
+        {
+            var settings = new MockSettingsService();
+            var service = new LicenseService(settings);
+            var dialogService = new DialogService(settings, service);
+            var mainVm = new MainViewModel(dialogService: dialogService, settingsService: settings, licenseService: service);
+
+            Assert.NotNull(mainVm.OpenWebsiteCommand);
+            Assert.NotNull(mainVm.OpenGitHubCommand);
+            Assert.NotNull(mainVm.OpenReleasesCommand);
+        }
     }
 }

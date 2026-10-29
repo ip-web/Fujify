@@ -302,7 +302,7 @@ namespace Fujify.Services
 
                 if (isOriginallyDng && createBackup)
                 {
-                    string backupPath = Path.ChangeExtension(dngFilePath, ".dng_original");
+                    string backupPath = Path.Combine(Path.GetDirectoryName(dngFilePath) ?? string.Empty, $"{Path.GetFileNameWithoutExtension(dngFilePath)}ORIG.DNG");
                     if (!File.Exists(backupPath))
                     {
                         try

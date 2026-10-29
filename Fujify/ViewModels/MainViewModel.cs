@@ -89,6 +89,7 @@ namespace Fujify.ViewModels
             _dialogService = dialogService ?? new DialogService(_settingsService, _licenseService);
             _updateService = updateService ?? new UpdateService(_settingsService);
             _adService = adService ?? new AdService(_licenseService);
+            _createBackup = _settingsService.Settings.BackupOriginalFile;
             Instance = this;
 
             void OnLicenseUpdated(LicenseStatus status)
@@ -254,6 +255,14 @@ namespace Fujify.ViewModels
 
             CloseModalCommand = new RelayCommand(CloseModal);
 
+            OpenWebsiteCommand = new RelayCommand(() => CrossPlatformLauncher.OpenUrl("https://fujifier.cc"));
+            OpenGitHubCommand = new RelayCommand(() => CrossPlatformLauncher.OpenUrl("https://github.com/isidore-paulin/FujifyNET"));
+            OpenReleasesCommand = new RelayCommand(() => CrossPlatformLauncher.OpenUrl("https://github.com/isidore-paulin/FujifyNET/releases"));
+            BuyProCommand = new RelayCommand(() => CrossPlatformLauncher.OpenUrl("https://fujifier.cc/pro"));
+            DelayGoogleSignInCommand = new AsyncRelayCommand(ExecuteDelayGoogleSignInAsync);
+            DelayToggleKeyCommand = new RelayCommand(() => IsDelayKeyInputVisible = !IsDelayKeyInputVisible);
+            DelayActivateKeyCommand = new AsyncRelayCommand(ExecuteDelayActivateKeyAsync);
+
             OpenInLightroomCommand = new RelayCommand(() =>
             {
                 CloseModal();
@@ -296,6 +305,12 @@ namespace Fujify.ViewModels
         public ICommand OpenCameraPickerCommand { get; }
         public ICommand SelectCameraModelCommand { get; }
         public ICommand CloseModalCommand { get; }
+        public ICommand OpenGitHubCommand { get; }
+        public ICommand OpenReleasesCommand { get; }
+        public ICommand BuyProCommand { get; }
+        public ICommand DelayGoogleSignInCommand { get; }
+        public ICommand DelayToggleKeyCommand { get; }
+        public ICommand DelayActivateKeyCommand { get; }
         public ICommand OpenInLightroomCommand { get; }
         public ICommand ResolveConflictCommand { get; }
         public ICommand SetListViewCommand { get; }
@@ -855,6 +870,8 @@ namespace Fujify.ViewModels
         public void RefreshSettings()
         {
             _licenseService.SyncFromSettings();
+            _createBackup = _settingsService.Settings.BackupOriginalFile;
+            OnPropertyChanged(nameof(CreateBackup));
             OnPropertyChanged(nameof(IsPro));
             OnPropertyChanged(nameof(LosslessCompression));
             OnPropertyChanged(nameof(AvatarInitials));
@@ -910,6 +927,7 @@ namespace Fujify.ViewModels
                     OnPropertyChanged(nameof(IsCameraPickerModal));
                     OnPropertyChanged(nameof(IsConflictModal));
                     OnPropertyChanged(nameof(IsMessageModal));
+                    OnPropertyChanged(nameof(IsFreeTierDelayModal));
                 }
             }
         }
@@ -927,6 +945,7 @@ namespace Fujify.ViewModels
                     OnPropertyChanged(nameof(IsPreferencesModal));
                     OnPropertyChanged(nameof(IsAboutModal));
                     OnPropertyChanged(nameof(IsMessageModal));
+                    OnPropertyChanged(nameof(IsFreeTierDelayModal));
                     OnPropertyChanged(nameof(IsBottomSheetOpen));
                 }
             }
@@ -937,7 +956,8 @@ namespace Fujify.ViewModels
         public bool IsPreferencesModal => _modalType == "Preferences" && _isModalOpen;
         public bool IsAboutModal => _modalType == "About" && _isModalOpen;
         public bool IsMessageModal => _modalType == "Message";
-        public bool IsBottomSheetOpen => _isModalOpen && (IsCameraPickerModal || IsConflictModal || IsMessageModal);
+        public bool IsFreeTierDelayModal => _modalType == "FreeTierDelay";
+        public bool IsBottomSheetOpen => _isModalOpen && (IsCameraPickerModal || IsConflictModal || IsMessageModal || IsFreeTierDelayModal);
 
         private string _modalTitle = string.Empty;
         public string ModalTitle
@@ -1122,8 +1142,235 @@ namespace Fujify.ViewModels
             _conflictTcs = null;
         }
 
+        private TaskCompletionSource<bool>? _freeTierDelayTcs;
+        private DispatcherTimer? _delayTimer;
+        private int _delayRemainingSeconds = 15;
+        private bool _canDismissModal = true;
+        private bool _isDelayUnlocked = false;
+        private string _delayStatusText = "Cooldown active: 15s remaining...";
+        private string _delayDismissButtonText = "Continue with Free Version (15s)";
+        private double _delayProgressBarValue = 0;
+        private bool _isDelayKeyInputVisible = false;
+        private string _delayLicenseKey = string.Empty;
+        private string _delayLicenseError = string.Empty;
+
+        public bool CanDismissModal
+        {
+            get => _canDismissModal;
+            set => SetProperty(ref _canDismissModal, value);
+        }
+
+        public bool IsDelayUnlocked
+        {
+            get => _isDelayUnlocked;
+            set => SetProperty(ref _isDelayUnlocked, value);
+        }
+
+        public int DelayRemainingSeconds
+        {
+            get => _delayRemainingSeconds;
+            set => SetProperty(ref _delayRemainingSeconds, value);
+        }
+
+        public double DelayProgressBarValue
+        {
+            get => _delayProgressBarValue;
+            set => SetProperty(ref _delayProgressBarValue, value);
+        }
+
+        public string DelayStatusText
+        {
+            get => _delayStatusText;
+            set => SetProperty(ref _delayStatusText, value);
+        }
+
+        public string DelayDismissButtonText
+        {
+            get => _delayDismissButtonText;
+            set => SetProperty(ref _delayDismissButtonText, value);
+        }
+
+        public bool IsDelayKeyInputVisible
+        {
+            get => _isDelayKeyInputVisible;
+            set => SetProperty(ref _isDelayKeyInputVisible, value);
+        }
+
+        public string DelayLicenseKey
+        {
+            get => _delayLicenseKey;
+            set => SetProperty(ref _delayLicenseKey, value);
+        }
+
+        public string DelayLicenseError
+        {
+            get => _delayLicenseError;
+            set
+            {
+                if (SetProperty(ref _delayLicenseError, value))
+                {
+                    OnPropertyChanged(nameof(HasDelayLicenseError));
+                }
+            }
+        }
+
+        public bool HasDelayLicenseError => !string.IsNullOrWhiteSpace(_delayLicenseError);
+
+        public Task<bool> ShowFreeTierDelayModalAsync(ILicenseService licenseService, bool isPostConversion = false)
+        {
+            if (licenseService.IsPro)
+            {
+                return Task.FromResult(true);
+            }
+
+            var tcs = new TaskCompletionSource<bool>();
+            _freeTierDelayTcs = tcs;
+
+            void Action()
+            {
+                ModalTitle = isPostConversion ? "Conversion Finished (Free Tier)" : "Fujifier Free Tier";
+                ModalMessage = isPostConversion
+                    ? "Your photos have been processed! Under the Free tier, a 15-second cooldown is required after conversions. Upgrade to Fujifier Pro to enjoy instant batch processing, unlimited queues, and all pro features."
+                    : "You are currently using the Free tier of Fujifier. Free version is limited to 10 photos per queue with a 15-second cooldown timer. Upgrade to Fujifier Pro to enjoy unlimited batch processing, instant execution, and all pro features!";
+                ModalIcon = "⏳";
+                ModalType = "FreeTierDelay";
+                CanDismissModal = false;
+                IsDelayUnlocked = false;
+                IsDelayKeyInputVisible = false;
+                DelayLicenseKey = string.Empty;
+                DelayLicenseError = string.Empty;
+                DelayRemainingSeconds = 15;
+                DelayProgressBarValue = 0;
+                DelayStatusText = "Cooldown active: 15s remaining...";
+                DelayDismissButtonText = "Continue with Free Version (15s)";
+
+                _delayTimer?.Stop();
+                _delayTimer = new DispatcherTimer
+                {
+                    Interval = TimeSpan.FromSeconds(1)
+                };
+                _delayTimer.Tick += (s, e) =>
+                {
+                    if (licenseService.IsPro)
+                    {
+                        _delayTimer?.Stop();
+                        IsDelayUnlocked = true;
+                        CanDismissModal = true;
+                        DelayStatusText = "Pro license active.";
+                        DelayDismissButtonText = "Start Using Fujifier Pro";
+                        DelayProgressBarValue = 15;
+                        return;
+                    }
+
+                    DelayRemainingSeconds--;
+                    if (DelayRemainingSeconds > 0)
+                    {
+                        DelayProgressBarValue = 15 - DelayRemainingSeconds;
+                        DelayStatusText = $"Cooldown active: {DelayRemainingSeconds}s remaining...";
+                        DelayDismissButtonText = $"Continue with Free Version ({DelayRemainingSeconds}s)";
+                    }
+                    else
+                    {
+                        _delayTimer?.Stop();
+                        CanDismissModal = true;
+                        DelayProgressBarValue = 15;
+                        DelayStatusText = "Cooldown finished. You may now continue.";
+                        DelayDismissButtonText = "Continue with Free Version";
+                    }
+                };
+
+                _delayTimer.Start();
+                IsModalOpen = true;
+            }
+
+            if (Dispatcher.UIThread.CheckAccess())
+            {
+                Action();
+            }
+            else
+            {
+                Dispatcher.UIThread.Post(Action);
+            }
+
+            return tcs.Task;
+        }
+
+        private async Task ExecuteDelayGoogleSignInAsync()
+        {
+            DelayStatusText = "Signing in with Google...";
+            var result = await _licenseService.LoginWithGoogleOAuthAsync(msg =>
+            {
+                DelayStatusText = msg;
+            });
+
+            if (result.Success && _licenseService.IsPro)
+            {
+                _delayTimer?.Stop();
+                IsDelayUnlocked = true;
+                CanDismissModal = true;
+                ModalTitle = "✔ Pro Unlocked!";
+                ModalMessage = "Welcome to Fujifier Pro! All tier limits, countdown delays, and advertisements have been removed permanently.";
+                DelayStatusText = "Pro license active.";
+                DelayDismissButtonText = "Start Using Fujifier Pro";
+                DelayProgressBarValue = 15;
+                IsDelayKeyInputVisible = false;
+                RefreshSettings();
+            }
+            else if (result.Success)
+            {
+                DelayStatusText = result.ErrorMessage ?? "Signed in. No active Pro license found on fujifier.cc.";
+            }
+            else
+            {
+                DelayStatusText = result.ErrorMessage ?? "Google Sign-In failed.";
+            }
+        }
+
+        private async Task ExecuteDelayActivateKeyAsync()
+        {
+            string key = DelayLicenseKey?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                DelayLicenseError = "Please enter a valid license key.";
+                return;
+            }
+
+            var result = await _licenseService.ActivateLicenseKeyAsync(key);
+            if (result.Success)
+            {
+                _delayTimer?.Stop();
+                IsDelayUnlocked = true;
+                CanDismissModal = true;
+                DelayLicenseError = string.Empty;
+                ModalTitle = "✔ Pro Unlocked!";
+                ModalMessage = "Thank you for upgrading to Fujifier Pro! All tier limits, countdown delays, and advertisements have been removed permanently.";
+                DelayStatusText = "License active.";
+                DelayDismissButtonText = "Start Using Fujifier Pro";
+                DelayProgressBarValue = 15;
+                IsDelayKeyInputVisible = false;
+                RefreshSettings();
+            }
+            else
+            {
+                DelayLicenseError = result.ErrorMessage ?? "Invalid license key.";
+            }
+        }
+
         public void CloseModal()
         {
+            if (ModalType == "FreeTierDelay" && !CanDismissModal)
+            {
+                return;
+            }
+
+            if (ModalType == "FreeTierDelay")
+            {
+                _delayTimer?.Stop();
+                _delayTimer = null;
+                _freeTierDelayTcs?.TrySetResult(_licenseService.IsPro);
+                _freeTierDelayTcs = null;
+            }
+
             if (ModalType == "Preferences")
             {
                 App.ApplyTheme(_settingsService.Settings.ThemeMode);
@@ -1181,6 +1428,8 @@ namespace Fujify.ViewModels
             {
                 if (SetProperty(ref _createBackup, value))
                 {
+                    _settingsService.Settings.BackupOriginalFile = value;
+                    _settingsService.Save();
                     OnPropertyChanged(nameof(QuickSettingsSummary));
                 }
             }
@@ -1736,14 +1985,18 @@ namespace Fujify.ViewModels
                 outputFolder,
                 _settingsService.Settings);
 
-            bool isSameFileInPlace = isOriginallyDng && string.IsNullOrEmpty(outputFolder) && !appendSuffix && !_settingsService.Settings.CreateSubfolder;
+            string inputDir = Path.GetDirectoryName(filePath) ?? string.Empty;
+            string outputDir = Path.GetDirectoryName(initialDestFilePath) ?? string.Empty;
+            bool isSameFolder = string.Equals(Path.GetFullPath(inputDir), Path.GetFullPath(outputDir), StringComparison.OrdinalIgnoreCase);
+            bool isExactSameFilePath = isOriginallyDng && string.Equals(Path.GetFullPath(filePath), Path.GetFullPath(initialDestFilePath), StringComparison.OrdinalIgnoreCase);
+
             bool fileAlreadyExists;
             lock (reservedOutputPaths)
             {
                 fileAlreadyExists = File.Exists(initialDestFilePath) || reservedOutputPaths.Contains(initialDestFilePath);
             }
 
-            bool destinationConflict = !isSameFileInPlace && fileAlreadyExists;
+            bool destinationConflict = !isExactSameFilePath && !(isOriginallyDng && isSameFolder && createBackup) && fileAlreadyExists;
             string finalDestFilePath = initialDestFilePath;
 
             // Check for file conflict in the destination prior to conversion
@@ -1811,75 +2064,135 @@ namespace Fujify.ViewModels
             }
 
             string? dngFilePath = filePath;
+            string? tempInPlaceOutputFile = null;
+            string? origBackupPath = null;
 
-            if (!isOriginallyDng)
+            if (isOriginallyDng)
             {
-                UpdateFileStatus(filePath, "Converting to DNG");
-                bool embedOriginalRaw = _settingsService.Settings.EmbedOriginalRaw;
-
-                string targetDngForConversion;
-                if (string.IsNullOrEmpty(outputFolder) && !_settingsService.Settings.CreateSubfolder)
+                if (createBackup && isSameFolder)
                 {
-                    targetDngForConversion = finalDestFilePath;
+                    // If the file is already a DNG and the output folder is the same as the input,
+                    // change the name of the original file to filenameORIG.DNG
+                    string origBaseName = Path.GetFileNameWithoutExtension(filePath);
+                    origBackupPath = Path.Combine(inputDir, $"{origBaseName}ORIG.DNG");
+                    if (File.Exists(origBackupPath))
+                    {
+                        File.Delete(origBackupPath);
+                    }
+                    File.Move(filePath, origBackupPath);
+                    dngFilePath = origBackupPath;
+                }
+                else if (!createBackup && isExactSameFilePath)
+                {
+                    // Write to a temporary file first so the original can be safely sent to trash upon success
+                    string origBaseName = Path.GetFileNameWithoutExtension(filePath);
+                    tempInPlaceOutputFile = Path.Combine(outputDir, $"{origBaseName}_tmp_{Guid.NewGuid():N}.dng");
+                }
+            }
+
+            try
+            {
+                if (!isOriginallyDng)
+                {
+                    UpdateFileStatus(filePath, "Converting to DNG");
+                    bool embedOriginalRaw = _settingsService.Settings.EmbedOriginalRaw;
+
+                    string targetDngForConversion;
+                    if (string.IsNullOrEmpty(outputFolder) && !_settingsService.Settings.CreateSubfolder)
+                    {
+                        targetDngForConversion = finalDestFilePath;
+                    }
+                    else
+                    {
+                        string sourceDir = Path.GetDirectoryName(filePath) ?? string.Empty;
+                        targetDngForConversion = Path.Combine(sourceDir, $"{Path.GetFileNameWithoutExtension(filePath)}_tmp_{Guid.NewGuid():N}.dng");
+                    }
+
+                    bool useLossless = _licenseService.IsPro && _settingsService.Settings.LosslessCompression;
+                    var convResult = await Task.Run(() => _rawConverterService.ConvertToDng(
+                        filePath,
+                        embedOriginalRaw,
+                        targetDngForConversion,
+                        useLossless), ct);
+                    if (!convResult.Success || string.IsNullOrEmpty(convResult.OutputDngPath))
+                    {
+                        string err = convResult.ErrorMessage ?? "Conversion failed";
+                        UpdateFileStatus(filePath, err);
+                        throw new InvalidOperationException(err);
+                    }
+
+                    dngFilePath = convResult.OutputDngPath;
+                    UpdateFileStatus(filePath, "Conversion successful");
+                }
+
+                string? customOutputPath = tempInPlaceOutputFile ?? ((!string.IsNullOrEmpty(outputFolder) || finalDestFilePath != dngFilePath)
+                    ? finalDestFilePath
+                    : null);
+
+                if (!string.IsNullOrEmpty(customOutputPath))
+                {
+                    string? destDir = Path.GetDirectoryName(customOutputPath);
+                    if (!string.IsNullOrEmpty(destDir) && !Directory.Exists(destDir))
+                    {
+                        Directory.CreateDirectory(destDir);
+                    }
+                }
+
+                var metaResult = await Task.Run(() => _metadataService.InjectFujifilmMetadata(
+                    dngFilePath,
+                    outputFolder,
+                    createBackup: false,
+                    isOriginallyDng: isOriginallyDng,
+                    customOutputFilePath: customOutputPath,
+                    targetUniqueCameraModel: TargetCameraModel), ct);
+
+                if (metaResult.Success)
+                {
+                    if (!string.IsNullOrEmpty(tempInPlaceOutputFile))
+                    {
+                        // Original in-place DNG: send original to trash, then move temporary file to final path
+                        FileTrashHelper.SendToTrash(filePath);
+                        File.Move(tempInPlaceOutputFile, finalDestFilePath, overwrite: true);
+                    }
+                    else if (!createBackup)
+                    {
+                        // If backup is deactivated, send original file to trash for all files that succeeded
+                        FileTrashHelper.SendToTrash(filePath);
+                    }
+
+                    UpdateFileStatus(filePath, "✔");
+                    lock (_recentlyConvertedDngFiles)
+                    {
+                        _recentlyConvertedDngFiles.Add(finalDestFilePath);
+                    }
+                    PlatformFileCreatedCallback?.Invoke(finalDestFilePath);
                 }
                 else
                 {
-                    string sourceDir = Path.GetDirectoryName(filePath) ?? string.Empty;
-                    targetDngForConversion = Path.Combine(sourceDir, $"{Path.GetFileNameWithoutExtension(filePath)}_tmp_{Guid.NewGuid():N}.dng");
-                }
-
-                bool useLossless = _licenseService.IsPro && _settingsService.Settings.LosslessCompression;
-                var convResult = await Task.Run(() => _rawConverterService.ConvertToDng(
-                    filePath,
-                    embedOriginalRaw,
-                    targetDngForConversion,
-                    useLossless), ct);
-                if (!convResult.Success || string.IsNullOrEmpty(convResult.OutputDngPath))
-                {
-                    string err = convResult.ErrorMessage ?? "Conversion failed";
+                    if (!string.IsNullOrEmpty(tempInPlaceOutputFile) && File.Exists(tempInPlaceOutputFile))
+                    {
+                        try { File.Delete(tempInPlaceOutputFile); } catch { }
+                    }
+                    if (isOriginallyDng && createBackup && isSameFolder && !string.IsNullOrEmpty(origBackupPath) && File.Exists(origBackupPath) && !File.Exists(filePath))
+                    {
+                        try { File.Move(origBackupPath, filePath); } catch { }
+                    }
+                    string err = metaResult.ErrorMessage ?? "Error writing metadata";
                     UpdateFileStatus(filePath, err);
                     throw new InvalidOperationException(err);
                 }
-
-                dngFilePath = convResult.OutputDngPath;
-                UpdateFileStatus(filePath, "Conversion successful");
             }
-
-            string? customOutputPath = (!string.IsNullOrEmpty(outputFolder) || finalDestFilePath != dngFilePath)
-                ? finalDestFilePath
-                : null;
-
-            if (!string.IsNullOrEmpty(customOutputPath))
+            catch
             {
-                string? destDir = Path.GetDirectoryName(customOutputPath);
-                if (!string.IsNullOrEmpty(destDir) && !Directory.Exists(destDir))
+                if (!string.IsNullOrEmpty(tempInPlaceOutputFile) && File.Exists(tempInPlaceOutputFile))
                 {
-                    Directory.CreateDirectory(destDir);
+                    try { File.Delete(tempInPlaceOutputFile); } catch { }
                 }
-            }
-
-            var metaResult = await Task.Run(() => _metadataService.InjectFujifilmMetadata(
-                dngFilePath,
-                outputFolder,
-                createBackup,
-                isOriginallyDng,
-                customOutputPath,
-                targetUniqueCameraModel: TargetCameraModel), ct);
-
-            if (metaResult.Success)
-            {
-                UpdateFileStatus(filePath, "✔");
-                lock (_recentlyConvertedDngFiles)
+                if (isOriginallyDng && createBackup && isSameFolder && !string.IsNullOrEmpty(origBackupPath) && File.Exists(origBackupPath) && !File.Exists(filePath))
                 {
-                    _recentlyConvertedDngFiles.Add(finalDestFilePath);
+                    try { File.Move(origBackupPath, filePath); } catch { }
                 }
-                PlatformFileCreatedCallback?.Invoke(finalDestFilePath);
-            }
-            else
-            {
-                string err = metaResult.ErrorMessage ?? "Error writing metadata";
-                UpdateFileStatus(filePath, err);
-                throw new InvalidOperationException(err);
+                throw;
             }
         }
 

@@ -120,12 +120,12 @@
 
                                 <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
 
-                                <!-- Skip Thumbnails Toggle -->
+                                <!-- Import Pictures Instantly Toggle -->
                                 <Grid ColumnDefinitions="*,Auto">
                                     <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
-                                        <TextBlock Text="Skip Thumbnail Generation" FontWeight="SemiBold" FontSize="12"
+                                        <TextBlock Text="Import Pictures Instantly" FontWeight="SemiBold" FontSize="12"
                                                    Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                        <TextBlock Text="Speeds up batch photo queue loading significantly" FontSize="11"
+                                        <TextBlock Text="Skips thumbnail generation for performance, importing photos into the queue instantly" FontSize="11"
                                                    Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                     </StackPanel>
                                     <ToggleSwitch Grid.Column="1" IsChecked="{Binding SkipThumbnailGeneration}" OnContent="" OffContent=""/>
@@ -247,6 +247,19 @@
                                                    Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                     </StackPanel>
                                     <ToggleSwitch Grid.Column="1" IsChecked="{Binding LosslessCompression}" IsEnabled="{Binding IsPro}" OnContent="" OffContent=""/>
+                                </Grid>
+
+                                <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
+
+                                <!-- Backup Original File -->
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                        <TextBlock Text="Backup Original File" FontWeight="SemiBold" FontSize="12"
+                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        <TextBlock Text="Preserves original file (renames in-place DNGs to filenameORIG.DNG). When disabled, files that succeed are sent to Trash." FontSize="11"
+                                                   Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding BackupOriginalFile}" OnContent="" OffContent=""/>
                                 </Grid>
 
                                 <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
