@@ -708,27 +708,23 @@
                 <Grid IsVisible="{Binding !IsPhoneLayout}" RowDefinitions="*,Auto">
 
                     <!-- TOP SHELL: Left Rail + Main Workspace -->
-                    <Grid Grid.Row="0" ColumnDefinitions="60,*">
+                    <Grid Grid.Row="0" ColumnDefinitions="60,*" ClipToBounds="True">
 
                         <!-- 1. LEFT NAVIGATION RAIL -->
-                        <ScrollViewer x:Name="NavRailScrollViewer"
-                                      Grid.Column="0"
-                                      VerticalScrollBarVisibility="Auto"
-                                      HorizontalScrollBarVisibility="Disabled"
-                                      IsScrollInertiaEnabled="True">
-                            <Grid MinHeight="{Binding #NavRailScrollViewer.Bounds.Height}"
-                                  RowDefinitions="Auto,*,Auto,Auto"
-                                  Margin="6,16">
+                        <Border Grid.Column="0" Background="Transparent"
+                                BorderThickness="0"
+                                Padding="6,16">
+                            <Grid RowDefinitions="Auto,*,Auto,Auto">
                                 <!-- Rail Logo (Fujifier Emblem) -->
                                 <Border Grid.Row="0" Width="41" Height="41" CornerRadius="14"
                                         Background="#10C9FFDF" BorderBrush="#24B4FFDC" BorderThickness="1"
-                                        HorizontalAlignment="Center" Margin="0,0,0,16" ToolTip.Tip="Fujifier">
+                                        HorizontalAlignment="Center" Margin="0,0,0,22" ToolTip.Tip="Fujifier">
                                     <Image Source="/Assets/images/logoXL.png" Width="26" Height="26" Stretch="Uniform"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
 
                                 <!-- Spacer -->
-                                <Panel Grid.Row="1" MinHeight="10"/>
+                                <Panel Grid.Row="1"/>
 
                                 <!-- Settings Button -->
                                 <Button Grid.Row="2" Classes="nav" Command="{Binding OpenPreferencesCommand}"
@@ -748,7 +744,7 @@
                                     </StackPanel>
                                 </Button>
                             </Grid>
-                        </ScrollViewer>
+                        </Border>
 
 
                         <!-- 2. MAIN WORKSPACE AREA -->
@@ -810,7 +806,7 @@
 
 
                         <!-- Central Workspace (Queue + Inspector) -->
-                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="8,4,24,18">
+                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="8,4,24,18" ClipToBounds="True">
 
                             <!-- CENTER: Photo Queue Panel -->
                             <Grid Grid.Column="0" RowDefinitions="Auto,*" Margin="0,0,16,0">
@@ -913,21 +909,25 @@
                                             </Border>
 
                                             <!-- Empty State Dropzone -->
-                                            <Border IsVisible="{Binding !HasFiles}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="30">
-                                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
-                                                    <Border Width="68" Height="68" CornerRadius="34"
-                                                            Background="{DynamicResource AppSurfaceSecondaryBrush}" HorizontalAlignment="Center">
-                                                        <TextBlock Text="📸" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <TextBlock Text="Drag &amp; Drop RAW Photos Here"
-                                                               FontWeight="SemiBold" FontSize="15"
-                                                               Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Add more RAW files to include them in this batch."
-                                                               FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Supported: RAF, ARW, CR2, CR3, NEF, DNG, RW2, ORF, PEF"
-                                                               FontSize="10" Foreground="#747080" HorizontalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Border>
+                                            <ScrollViewer IsVisible="{Binding !HasFiles}"
+                                                          HorizontalScrollBarVisibility="Disabled"
+                                                          VerticalScrollBarVisibility="Auto">
+                                                <Border HorizontalAlignment="Stretch" VerticalAlignment="Center" Padding="20">
+                                                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                                                        <Border Width="68" Height="68" CornerRadius="34"
+                                                                Background="{DynamicResource AppSurfaceSecondaryBrush}" HorizontalAlignment="Center">
+                                                            <TextBlock Text="📸" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                        <TextBlock Text="Drag &amp; Drop RAW Photos Here"
+                                                                   FontWeight="SemiBold" FontSize="15"
+                                                                   Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
+                                                        <TextBlock Text="Add more RAW files to include them in this batch."
+                                                                   FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center"/>
+                                                        <TextBlock Text="Supported: RAF, ARW, CR2, CR3, NEF, DNG, RW2, ORF, PEF"
+                                                                   FontSize="10" Foreground="#747080" HorizontalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </ScrollViewer>
 
                                             <!-- 1. List View (DataGrid with Reduced-Glass Rows & Pills) -->
                                             <DataGrid x:Name="QueueDataGrid"
@@ -1257,8 +1257,13 @@
 
 
                                     <!-- Inspector Body Content -->
-                                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="18">
-                                        <Panel>
+                                    <ScrollViewer Grid.Row="1"
+                                                  VerticalScrollBarVisibility="Auto"
+                                                  HorizontalScrollBarVisibility="Disabled"
+                                                  IsScrollInertiaEnabled="True"
+                                                  Background="Transparent"
+                                                  Padding="18,14,14,14">
+                                        <Panel Margin="0,0,0,24">
 
                                             <!-- TAB 1: SETTINGS VIEW -->
                                             <StackPanel IsVisible="{Binding IsInspectorSettingsTab}" Spacing="14">
