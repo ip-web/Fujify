@@ -751,7 +751,7 @@
                         <Grid Grid.Column="1" RowDefinitions="Auto,*">
 
                             <!-- Top Heading & Step Workflow Indicators -->
-                            <Border Grid.Row="0" Padding="8,18,24,10" Background="Transparent">
+                            <Border Grid.Row="0" Padding="8,12,24,8" Background="Transparent">
                                 <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
                                     <!-- Studio Heading -->
                                     <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
@@ -806,10 +806,10 @@
 
 
                         <!-- Central Workspace (Queue + Inspector) -->
-                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" Margin="8,4,24,18" ClipToBounds="True">
+                        <Grid Grid.Row="1" RowDefinitions="*" ColumnDefinitions="*,295" Margin="8,4,24,14">
 
                             <!-- CENTER: Photo Queue Panel -->
-                            <Grid Grid.Column="0" RowDefinitions="Auto,*" Margin="0,0,16,0">
+                            <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="Auto,*" Margin="0,0,16,0" VerticalAlignment="Stretch">
 
                                 <!-- Queue Top Section Header (Action buttons without "X photos in queue" sentence) -->
                                 <Grid Grid.Row="0" Margin="0,0,0,14" VerticalAlignment="Center">
@@ -1224,7 +1224,7 @@
 
 
                             <!-- RIGHT: Inspector Panel (Settings | Photo info Tabs) -->
-                            <Border Grid.Column="1" Classes="panel" Width="295" ClipToBounds="True">
+                            <Border Grid.Row="0" Grid.Column="1" Classes="panel" Width="295" VerticalAlignment="Stretch" ClipToBounds="True">
                                 <Grid RowDefinitions="Auto,*">
 
                                     <!-- Inspector Top Tabs -->
