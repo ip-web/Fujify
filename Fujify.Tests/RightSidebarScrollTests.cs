@@ -11,6 +11,7 @@ using Xunit;
 
 namespace Fujify.Tests
 {
+    [Collection("UI")]
     public class RightSidebarScrollTests
     {
         [Fact]

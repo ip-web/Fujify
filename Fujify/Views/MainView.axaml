@@ -1263,7 +1263,6 @@
                                                   Grid.Row="1"
                                                   VerticalScrollBarVisibility="Auto"
                                                   HorizontalScrollBarVisibility="Disabled"
-                                                  AllowAutoHide="False"
                                                   IsScrollInertiaEnabled="True"
                                                   Background="Transparent"
                                                   Padding="16,8,12,8">
@@ -1411,6 +1410,9 @@
                                                                    Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenInLightroom}" OnContent="" OffContent=""/>
                                                     </Grid>
+
+                                                    <!-- Generous bottom padding spacer so content never clips when scrolled to the end -->
+                                                    <Border Height="48" Background="Transparent" IsHitTestVisible="False"/>
                                                 </StackPanel>
                                             </StackPanel>
 
@@ -1496,6 +1498,9 @@
                                                                        Foreground="{DynamicResource AppAccentLightBrush}"/>
                                                         </StackPanel>
                                                     </Grid>
+
+                                                    <!-- Generous bottom padding spacer so content never clips when scrolled to the end -->
+                                                    <Border Height="48" Background="Transparent" IsHitTestVisible="False"/>
                                                 </StackPanel>
                                             </StackPanel>
                                         </Panel>
@@ -1559,6 +1564,7 @@
 
         <!-- 3. FULL-SCREEN SLIDING PANEL: PREFERENCES / SETTINGS -->
         <Grid x:Name="PreferencesSlidePanel" ZIndex="10000"
+              IsVisible="{Binding IsPreferencesModal}"
               Background="{DynamicResource AppSolidBackgroundBrush}"
               RenderTransform="translateX(800px)"
               IsHitTestVisible="False">
@@ -2067,6 +2073,7 @@
 
         <!-- 4. FULL-SCREEN SLIDING PANEL: ABOUT -->
         <Grid x:Name="AboutSlidePanel" ZIndex="10000"
+              IsVisible="{Binding IsAboutModal}"
               Background="{DynamicResource AppSolidBackgroundBrush}"
               RenderTransform="translateX(800px)"
               IsHitTestVisible="False">

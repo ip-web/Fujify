@@ -191,11 +191,12 @@ namespace Fujify.Views
         {
             if (DataContext is not MainViewModel vm) return;
 
-            double width = Bounds.Width > 0 ? Bounds.Width : 600;
+            double width = Bounds.Width > 0 ? Bounds.Width : 2000;
 
             if (_prefPanel != null)
             {
                 bool isOpen = vm.IsPreferencesModal;
+                _prefPanel.IsVisible = isOpen;
                 _prefPanel.IsHitTestVisible = isOpen;
                 _prefPanel.RenderTransform = TransformOperations.Parse($"translateX({(isOpen ? 0 : width)}px)");
             }
@@ -203,6 +204,7 @@ namespace Fujify.Views
             if (_aboutPanel != null)
             {
                 bool isOpen = vm.IsAboutModal;
+                _aboutPanel.IsVisible = isOpen;
                 _aboutPanel.IsHitTestVisible = isOpen;
                 _aboutPanel.RenderTransform = TransformOperations.Parse($"translateX({(isOpen ? 0 : width)}px)");
             }
