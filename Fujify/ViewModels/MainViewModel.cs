@@ -85,17 +85,44 @@ namespace Fujify.ViewModels
             _metadataService = metadataService ?? new MetadataService();
             _thumbnailService = thumbnailService ?? new ThumbnailService();
             _settingsService = settingsService ?? new SettingsService();
-            _licenseService = licenseService ?? new LicenseService(_settingsService);
+            _licenseService = licenseService ?? Services.LicenseService.Instance ?? new Services.LicenseService(_settingsService);
             _dialogService = dialogService ?? new DialogService(_settingsService, _licenseService);
             _updateService = updateService ?? new UpdateService(_settingsService);
             _adService = adService ?? new AdService(_licenseService);
             Instance = this;
 
-            _licenseService.LicenseChanged += (s, status) =>
+            void OnLicenseUpdated(LicenseStatus status)
             {
-                OnPropertyChanged(nameof(IsPro));
-                OnPropertyChanged(nameof(LosslessCompression));
-            };
+                Dispatcher.UIThread.Post(() =>
+                {
+                    OnPropertyChanged(nameof(IsPro));
+                    OnPropertyChanged(nameof(LosslessCompression));
+                    OnPropertyChanged(nameof(CanProcess));
+                    OnPropertyChanged(nameof(CanClear));
+                    OnPropertyChanged(nameof(CanProcessOrStop));
+                    OnPropertyChanged(nameof(OverallStatusText));
+                    OnPropertyChanged(nameof(ProgressSummaryText));
+                    OnPropertyChanged(nameof(AvatarInitials));
+                    OnPropertyChanged(nameof(LicenseService));
+                    (ClearCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+                    (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+
+                    if (OperatingSystem.IsWindows())
+                    {
+                        if (_settingsService.Settings.EnableWindowsContextMenu && status.IsPro)
+                        {
+                            WindowsContextMenuService.RegisterContextMenu();
+                        }
+                        else if (!status.IsPro && WindowsContextMenuService.IsContextMenuRegistered())
+                        {
+                            WindowsContextMenuService.UnregisterContextMenu();
+                        }
+                    }
+                });
+            }
+
+            _licenseService.LicenseChanged += (s, status) => OnLicenseUpdated(status);
+            Services.LicenseService.AnyLicenseChanged += (s, status) => OnLicenseUpdated(status);
 
             ProcessCommand = new AsyncRelayCommand(ExecuteProcessOrStopAsync);
             ClearCommand = new AsyncRelayCommand(ExecuteClearAsync, () => CanClear);
@@ -827,6 +854,13 @@ namespace Fujify.ViewModels
 
         public void RefreshSettings()
         {
+            _licenseService.SyncFromSettings();
+            OnPropertyChanged(nameof(IsPro));
+            OnPropertyChanged(nameof(LosslessCompression));
+            OnPropertyChanged(nameof(AvatarInitials));
+            OnPropertyChanged(nameof(CanProcess));
+            OnPropertyChanged(nameof(CanClear));
+            OnPropertyChanged(nameof(CanProcessOrStop));
             OnPropertyChanged(nameof(AppendSuffix));
             OnPropertyChanged(nameof(Suffix));
             OnPropertyChanged(nameof(SuffixPreview));
@@ -839,9 +873,10 @@ namespace Fujify.ViewModels
             OnPropertyChanged(nameof(AutoOpenInLightroom));
             OnPropertyChanged(nameof(IsOpenInLightroomSupported));
             OnPropertyChanged(nameof(AutoOpenOutputFolder));
-            OnPropertyChanged(nameof(LosslessCompression));
             OnPropertyChanged(nameof(OverallStatusText));
             OnPropertyChanged(nameof(ProgressSummaryText));
+            (ClearCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+            (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
         }
 
         public void UpdateLayoutMode(double width, double height)
@@ -1022,10 +1057,7 @@ namespace Fujify.ViewModels
                 {
                     CloseAction = ok =>
                     {
-                        if (ok)
-                        {
-                            RefreshSettings();
-                        }
+                        RefreshSettings();
                         CloseModal();
                     }
                 };

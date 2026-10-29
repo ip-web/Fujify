@@ -472,7 +472,7 @@ namespace Fujify.ViewModels
             IDialogService? dialogService = null)
         {
             _settingsService = settingsService;
-            _licenseService = licenseService ?? new LicenseService(_settingsService);
+            _licenseService = licenseService ?? LicenseService.Instance ?? new LicenseService(_settingsService);
             _updateService = updateService ?? new UpdateService(_settingsService);
             _dialogService = dialogService;
             var settings = _settingsService.Settings;
@@ -555,6 +555,14 @@ namespace Fujify.ViewModels
 
                     if (res.Success)
                     {
+                        if (_licenseService.IsPro)
+                        {
+                            _losslessCompression = true;
+                            _maxConcurrentConversions = DefaultConcurrency;
+                            _settingsService.Settings.LosslessCompression = true;
+                            _settingsService.Settings.MaxConcurrentConversions = DefaultConcurrency;
+                            _settingsService.Save();
+                        }
                         string msg = res.ErrorMessage ?? "Signed in with Google and license synced!";
                         LicenseMessageText = $"✔ {msg}";
                         LicenseMessageColor = "#01D701";
@@ -593,6 +601,11 @@ namespace Fujify.ViewModels
                         LicenseMessageText = $"✔ {msg}";
                         LicenseMessageColor = "#01D701";
                         HasLicenseMessage = true;
+                        _losslessCompression = true;
+                        _maxConcurrentConversions = DefaultConcurrency;
+                        _settingsService.Settings.LosslessCompression = true;
+                        _settingsService.Settings.MaxConcurrentConversions = DefaultConcurrency;
+                        _settingsService.Save();
                         await ShowResultDialogAsync("License Retrieved", msg, isSuccess: true);
                     }
                     else if (res.Success)
@@ -636,6 +649,14 @@ namespace Fujify.ViewModels
                 var res = await _licenseService.LoginWithAccountAsync(AccountEmailInput, AccountPasswordInput);
                 if (res.Success)
                 {
+                    if (_licenseService.IsPro)
+                    {
+                        _losslessCompression = true;
+                        _maxConcurrentConversions = DefaultConcurrency;
+                        _settingsService.Settings.LosslessCompression = true;
+                        _settingsService.Settings.MaxConcurrentConversions = DefaultConcurrency;
+                        _settingsService.Save();
+                    }
                     string msg = res.ErrorMessage ?? "Signed in successfully and license synced!";
                     LicenseMessageText = $"✔ {msg}";
                     LicenseMessageColor = "#01D701";
@@ -679,6 +700,11 @@ namespace Fujify.ViewModels
                 var res = await _licenseService.ActivateLicenseKeyAsync(LicenseKeyInput);
                 if (res.Success)
                 {
+                    _losslessCompression = true;
+                    _maxConcurrentConversions = DefaultConcurrency;
+                    _settingsService.Settings.LosslessCompression = true;
+                    _settingsService.Settings.MaxConcurrentConversions = DefaultConcurrency;
+                    _settingsService.Save();
                     LicenseMessageText = "✔ Pro license activated on this device!";
                     LicenseMessageColor = "#01D701";
                     HasLicenseMessage = true;
@@ -702,6 +728,11 @@ namespace Fujify.ViewModels
                 HasLicenseMessage = true;
 
                 await _licenseService.DeactivateLicenseAsync();
+                _losslessCompression = false;
+                _maxConcurrentConversions = 1;
+                _settingsService.Settings.LosslessCompression = false;
+                _settingsService.Settings.MaxConcurrentConversions = 1;
+                _settingsService.Save();
                 LicenseMessageText = "License deactivated. Device slot freed on fujifier.cc.";
                 LicenseMessageColor = "#A0A0AC";
                 HasLicenseMessage = true;

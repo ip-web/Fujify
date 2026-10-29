@@ -46,8 +46,12 @@ namespace Fujify.Services
         public AdService(ILicenseService? licenseService = null)
         {
             Instance = this;
-            _licenseService = licenseService ?? new LicenseService();
+            _licenseService = licenseService ?? LicenseService.Instance ?? new LicenseService();
             _licenseService.LicenseChanged += (s, status) =>
+            {
+                SetBannerVisible(ShouldShowAds);
+            };
+            LicenseService.AnyLicenseChanged += (s, status) =>
             {
                 SetBannerVisible(ShouldShowAds);
             };

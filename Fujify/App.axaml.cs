@@ -228,6 +228,7 @@ public partial class App : Application
         UpdateAccentBrush();
 
         var licenseService = new Services.LicenseService(settingsService);
+        Services.LicenseService.Instance = licenseService;
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
@@ -266,7 +267,7 @@ public partial class App : Application
                 return;
             }
 
-            var dialogService = new Services.DialogService(settingsService);
+            var dialogService = new Services.DialogService(settingsService, licenseService);
             var vm = new MainViewModel(dialogService: dialogService, settingsService: settingsService, licenseService: licenseService);
 
             var mainWindow = new MainWindow
@@ -545,7 +546,7 @@ public partial class App : Application
         }
         else if (ApplicationLifetime is ISingleViewApplicationLifetime singleView)
         {
-            var dialogService = new Services.DialogService(settingsService);
+            var dialogService = new Services.DialogService(settingsService, licenseService);
             var vm = new MainViewModel(dialogService: dialogService, settingsService: settingsService, licenseService: licenseService);
             var mainView = new MainView
             {

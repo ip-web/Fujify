@@ -811,5 +811,45 @@ namespace Fujify.Tests
             Assert.Equal("Studio Pro", settings.Settings.AccountDisplayName);
             Assert.Equal("FUJI-STR-ID-TEST-0001", service.CurrentStatus.LicenseKey);
         }
+
+        [Fact]
+        public async Task DeactivatedAccount_WhenLicenseActivated_MainAppInstantlyBecomesProWithoutRestart()
+        {
+            var settings = new MockSettingsService();
+            // Account is connected, but device is deactivated (free tier)
+            settings.Settings.AccessToken = "test-token";
+            settings.Settings.AccountEmail = "photographer@fujifier.cc";
+            settings.Settings.AccountDisplayName = "Pro User";
+            settings.Settings.LicenseKey = null;
+
+            var service = new LicenseService(settings);
+            LicenseService.Instance = service;
+
+            var dialogService = new DialogService(settings, service);
+            var adService = new AdService(service);
+            var mainVm = new MainViewModel(dialogService: dialogService, settingsService: settings, licenseService: service, adService: adService);
+
+            Assert.False(service.IsPro);
+            Assert.False(mainVm.IsPro);
+            Assert.True(adService.ShouldShowAds);
+
+            // User opens Preferences dialog (which should share or synchronize the license service)
+            var prefsVm = new PreferencesViewModel(settings, dialogService: dialogService);
+            Assert.True(prefsVm.IsAccountLoggedIn);
+            Assert.False(prefsVm.IsPro);
+
+            // Activate license via Preferences
+            prefsVm.LicenseKeyInput = "FUJIFIER-DEV-PRO-OVERRIDE";
+            await (prefsVm.ActivateLicenseCommand as CommunityToolkit.Mvvm.Input.IAsyncRelayCommand)!.ExecuteAsync(null);
+
+            // Preferences UI unlocks Pro
+            Assert.True(prefsVm.IsPro);
+
+            // Main app MUST immediately reflect Pro without requiring an app restart!
+            Assert.True(service.IsPro);
+            Assert.True(mainVm.IsPro);
+            Assert.False(adService.ShouldShowAds);
+            Assert.True(settings.Settings.LosslessCompression);
+        }
     }
 }
