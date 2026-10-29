@@ -56,6 +56,7 @@ public class MainActivity : AvaloniaMainActivity<App>
 {
     protected override void OnCreate(Bundle? savedInstanceState)
     {
+        AdManager.Instance.PreInitialize(this);
         base.OnCreate(savedInstanceState);
         EnableHighRefreshRate();
 

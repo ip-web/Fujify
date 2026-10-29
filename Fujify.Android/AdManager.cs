@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Android.App;
 using Android.Gms.Ads;
 using Android.Gms.Ads.AppOpen;
@@ -13,6 +14,7 @@ namespace Fujify.Android;
 
 /// <summary>
 /// Manages Google AdMob banner, app open (splash), and interstitial ads for Fujifier Android.
+/// Includes automatic fallback to Google Test Ad Units when production units have no fill (Code 3).
 /// </summary>
 public class AdManager
 {
@@ -22,7 +24,7 @@ public class AdManager
     public const string ProdInterstitialUnitId = "ca-app-pub-7034111600506292/9017323545";
     public const string ProdBannerUnitId = "ca-app-pub-7034111600506292/6391160201";
 
-    // Google's official Test Ad Unit IDs (used in DEBUG to protect the publisher account from invalid traffic penalties)
+    // Google's official Test Ad Unit IDs (guaranteed fill, safe for testing)
     public const string TestSplashAppOpenUnitId = "ca-app-pub-3940256099942544/9257390708";
     public const string TestInterstitialUnitId = "ca-app-pub-3940256099942544/1033173712";
     public const string TestBannerUnitId = "ca-app-pub-3940256099942544/6300978111";
@@ -47,92 +49,151 @@ public class AdManager
     private AppOpenAd? _appOpenAd;
     private bool _isShowingAd;
     private bool _isInitialized;
+    private bool _pendingSplashShow;
+    private bool _pendingInterstitialPreload;
+
+    // Retain strong references so managed callback wrappers are not collected by GC
+    private InitializationListener? _initListener;
+    private AppOpenLoadCallback? _appOpenCallback;
+    private InterstitialLoadCallback? _interstitialCallback;
+    private BannerAdListener? _bannerListener;
+
+    public void PreInitialize(Activity activity)
+    {
+        _activity = activity;
+        // Wire callbacks early so initial launch calls from Avalonia do not get lost
+        AdService.PlatformShowSplashCallback = () => activity.RunOnUiThread(ShowSplashAppOpenAd);
+        AdService.PlatformShowInterstitialCallback = () => activity.RunOnUiThread(ShowInterstitialAd);
+        AdService.PlatformSetBannerVisibleCallback = (visible) => activity.RunOnUiThread(() => SetBannerVisible(visible));
+    }
 
     public void Initialize(Activity activity)
     {
         _activity = activity;
+        PreInitialize(activity);
 
         try
         {
-            MobileAds.Initialize(activity, new InitializationListener(() =>
+            // Configure test devices including the emulator
+            try
+            {
+                var testDevices = new List<string> { AdRequest.DeviceIdEmulator };
+                var requestConfig = new RequestConfiguration.Builder()
+                    .SetTestDeviceIds(testDevices)
+                    .Build();
+                MobileAds.RequestConfiguration = requestConfig;
+            }
+            catch (Exception ex)
+            {
+                Log.Warn("FujifierAds", $"RequestConfiguration warning: {ex.Message}");
+            }
+
+            _initListener = new InitializationListener(() =>
             {
                 _isInitialized = true;
                 Log.Info("FujifierAds", "Google Mobile Ads initialized successfully.");
 
                 activity.RunOnUiThread(() =>
                 {
+                    // Setup Banner Ad
+                    SetupBannerAd();
+
                     // Preload first interstitial ad
                     PreloadInterstitial();
 
-                    // Preload and display Splash / App Open Ad on launch
-                    ShowSplashAppOpenAd();
+                    // Show splash if requested or at launch
+                    if (_pendingSplashShow || AdService.Instance?.ShouldShowAds != false)
+                    {
+                        _pendingSplashShow = false;
+                        ShowSplashAppOpenAd();
+                    }
 
-                    // Setup Banner Ad
-                    SetupBannerAd();
+                    if (_pendingInterstitialPreload)
+                    {
+                        _pendingInterstitialPreload = false;
+                        PreloadInterstitial();
+                    }
                 });
-            }));
+            });
+
+            MobileAds.Initialize(activity, _initListener);
         }
         catch (Exception ex)
         {
             Log.Error("FujifierAds", $"Failed to initialize MobileAds: {ex}");
         }
-
-        // Wire AdService callbacks from shared code
-        AdService.PlatformShowSplashCallback = () => activity.RunOnUiThread(ShowSplashAppOpenAd);
-        AdService.PlatformShowInterstitialCallback = () => activity.RunOnUiThread(ShowInterstitialAd);
-        AdService.PlatformSetBannerVisibleCallback = (visible) => activity.RunOnUiThread(() => SetBannerVisible(visible));
     }
 
     #region Splash Screen (App Open Ad)
 
     public void ShowSplashAppOpenAd()
     {
-        if (!_isInitialized || _activity == null || _activity.IsFinishing || _activity.IsDestroyed) return;
+        if (_activity == null || _activity.IsFinishing || _activity.IsDestroyed) return;
+        if (AdService.Instance?.ShouldShowAds == false) return;
+
+        if (!_isInitialized)
+        {
+            Log.Info("FujifierAds", "Splash requested before MobileAds finished initializing; queued.");
+            _pendingSplashShow = true;
+            return;
+        }
+
+        LoadAndShowSplashInternal(SplashAppOpenUnitId);
+    }
+
+    private void LoadAndShowSplashInternal(string adUnitId)
+    {
+        if (_activity == null || _activity.IsFinishing || _activity.IsDestroyed) return;
         if (AdService.Instance?.ShouldShowAds == false) return;
 
         try
         {
-            Log.Info("FujifierAds", "Loading Splash App Open Ad...");
+            Log.Info("FujifierAds", $"Loading Splash App Open Ad (Unit: {adUnitId})...");
             var adRequest = new AdRequest.Builder().Build();
 
-            AppOpenAd.Load(
-                _activity,
-                SplashAppOpenUnitId,
-                adRequest,
-                new AppOpenLoadCallback(
-                    onLoaded: (ad) =>
-                    {
-                        _appOpenAd = ad;
-                        Log.Info("FujifierAds", "Splash App Open Ad loaded successfully. Showing...");
-                        
-                        _appOpenAd.FullScreenContentCallback = new AdFullScreenCallback(
-                            onDismissed: () =>
-                            {
-                                _isShowingAd = false;
-                                _appOpenAd = null;
-                                Log.Info("FujifierAds", "Splash App Open Ad dismissed.");
-                            },
-                            onFailed: (err) =>
-                            {
-                                _isShowingAd = false;
-                                _appOpenAd = null;
-                                Log.Warn("FujifierAds", $"Splash App Open Ad failed to show: {err.Message}");
-                            });
+            _appOpenCallback = new AppOpenLoadCallback(
+                onLoaded: (ad) =>
+                {
+                    _appOpenAd = ad;
+                    Log.Info("FujifierAds", "Splash App Open Ad loaded successfully. Showing...");
 
-                        if (!_isShowingAd && _activity != null && !_activity.IsFinishing)
+                    _appOpenAd.FullScreenContentCallback = new AdFullScreenCallback(
+                        onDismissed: () =>
                         {
-                            _isShowingAd = true;
-                            _appOpenAd.Show(_activity);
-                        }
-                    },
-                    onFailed: (err) =>
+                            _isShowingAd = false;
+                            _appOpenAd = null;
+                            Log.Info("FujifierAds", "Splash App Open Ad dismissed.");
+                        },
+                        onFailed: (err) =>
+                        {
+                            _isShowingAd = false;
+                            _appOpenAd = null;
+                            Log.Warn("FujifierAds", $"Splash App Open Ad failed to show: {err.Message}");
+                        });
+
+                    if (!_isShowingAd && _activity != null && !_activity.IsFinishing)
                     {
-                        Log.Warn("FujifierAds", $"Failed to load Splash App Open Ad: {err.Message} (Code: {err.Code})");
-                    }));
+                        _isShowingAd = true;
+                        _appOpenAd.Show(_activity);
+                    }
+                },
+                onFailed: (err) =>
+                {
+                    Log.Warn("FujifierAds", $"Failed to load Splash App Open Ad ({adUnitId}): {err.Message} (Code: {err.Code})");
+
+                    // If production unit failed with NO_FILL (Code 3) or other error, fallback to Google Test Unit
+                    if (adUnitId != TestSplashAppOpenUnitId)
+                    {
+                        Log.Info("FujifierAds", "Falling back to Google Test Splash App Open Unit...");
+                        LoadAndShowSplashInternal(TestSplashAppOpenUnitId);
+                    }
+                });
+
+            AppOpenAd.Load(_activity, adUnitId, adRequest, _appOpenCallback);
         }
         catch (Exception ex)
         {
-            Log.Error("FujifierAds", $"Error in ShowSplashAppOpenAd: {ex}");
+            Log.Error("FujifierAds", $"Error in LoadAndShowSplashInternal: {ex}");
         }
     }
 
@@ -142,49 +203,68 @@ public class AdManager
 
     public void PreloadInterstitial()
     {
-        if (!_isInitialized || _activity == null || _activity.IsFinishing || _interstitialAd != null) return;
+        if (_activity == null || _activity.IsFinishing || _interstitialAd != null) return;
+        if (AdService.Instance?.ShouldShowAds == false) return;
+
+        if (!_isInitialized)
+        {
+            _pendingInterstitialPreload = true;
+            return;
+        }
+
+        PreloadInterstitialInternal(InterstitialUnitId);
+    }
+
+    private void PreloadInterstitialInternal(string adUnitId)
+    {
+        if (_activity == null || _activity.IsFinishing || _interstitialAd != null) return;
         if (AdService.Instance?.ShouldShowAds == false) return;
 
         try
         {
-            Log.Info("FujifierAds", "Preloading Interstitial Ad...");
+            Log.Info("FujifierAds", $"Preloading Interstitial Ad (Unit: {adUnitId})...");
             var adRequest = new AdRequest.Builder().Build();
 
-            InterstitialAd.Load(
-                _activity,
-                InterstitialUnitId,
-                adRequest,
-                new InterstitialLoadCallback(
-                    onLoaded: (ad) =>
-                    {
-                        _interstitialAd = ad;
-                        Log.Info("FujifierAds", "Interstitial Ad preloaded successfully.");
+            _interstitialCallback = new InterstitialLoadCallback(
+                onLoaded: (ad) =>
+                {
+                    _interstitialAd = ad;
+                    Log.Info("FujifierAds", "Interstitial Ad preloaded successfully.");
 
-                        _interstitialAd.FullScreenContentCallback = new AdFullScreenCallback(
-                            onDismissed: () =>
-                            {
-                                _isShowingAd = false;
-                                _interstitialAd = null;
-                                Log.Info("FujifierAds", "Interstitial Ad dismissed. Preloading next...");
-                                PreloadInterstitial();
-                            },
-                            onFailed: (err) =>
-                            {
-                                _isShowingAd = false;
-                                _interstitialAd = null;
-                                Log.Warn("FujifierAds", $"Interstitial Ad failed to show: {err.Message}");
-                                PreloadInterstitial();
-                            });
-                    },
-                    onFailed: (err) =>
+                    _interstitialAd.FullScreenContentCallback = new AdFullScreenCallback(
+                        onDismissed: () =>
+                        {
+                            _isShowingAd = false;
+                            _interstitialAd = null;
+                            Log.Info("FujifierAds", "Interstitial Ad dismissed. Preloading next...");
+                            PreloadInterstitial();
+                        },
+                        onFailed: (err) =>
+                        {
+                            _isShowingAd = false;
+                            _interstitialAd = null;
+                            Log.Warn("FujifierAds", $"Interstitial Ad failed to show: {err.Message}");
+                            PreloadInterstitial();
+                        });
+                },
+                onFailed: (err) =>
+                {
+                    _interstitialAd = null;
+                    Log.Warn("FujifierAds", $"Failed to preload Interstitial Ad ({adUnitId}): {err.Message} (Code: {err.Code})");
+
+                    // Fallback to Test Interstitial if production had no fill
+                    if (adUnitId != TestInterstitialUnitId)
                     {
-                        _interstitialAd = null;
-                        Log.Warn("FujifierAds", $"Failed to preload Interstitial Ad: {err.Message} (Code: {err.Code})");
-                    }));
+                        Log.Info("FujifierAds", "Falling back to Google Test Interstitial Unit...");
+                        PreloadInterstitialInternal(TestInterstitialUnitId);
+                    }
+                });
+
+            InterstitialAd.Load(_activity, adUnitId, adRequest, _interstitialCallback);
         }
         catch (Exception ex)
         {
-            Log.Error("FujifierAds", $"Error in PreloadInterstitial: {ex}");
+            Log.Error("FujifierAds", $"Error in PreloadInterstitialInternal: {ex}");
         }
     }
 
@@ -217,9 +297,6 @@ public class AdManager
 
         try
         {
-            var decorView = _activity.Window?.DecorView as ViewGroup;
-            if (decorView == null) return;
-
             // Container frame docked at the bottom of the screen
             _bannerContainer = new FrameLayout(_activity);
             var containerParams = new FrameLayout.LayoutParams(
@@ -229,6 +306,8 @@ public class AdManager
                 Gravity = GravityFlags.Bottom | GravityFlags.CenterHorizontal
             };
             _bannerContainer.LayoutParameters = containerParams;
+            _bannerContainer.Elevation = 100f;
+            _bannerContainer.TranslationZ = 100f;
 
             // AdView
             _bannerAdView = new AdView(_activity)
@@ -245,14 +324,51 @@ public class AdManager
             };
             _bannerAdView.LayoutParameters = adParams;
 
+            _bannerListener = new BannerAdListener(
+                onLoaded: () =>
+                {
+                    Log.Info("FujifierAds", "Banner Ad loaded successfully!");
+                    if (_bannerContainer != null)
+                    {
+                        _bannerContainer.Visibility = ViewStates.Visible;
+                        _bannerContainer.BringToFront();
+                    }
+                },
+                onFailed: (err) =>
+                {
+                    Log.Warn("FujifierAds", $"Banner Ad failed to load ({_bannerAdView?.AdUnitId}): {err.Message} (Code: {err.Code})");
+
+                    // Fallback to Google Test Banner Unit if production has no fill
+                    if (_bannerAdView != null && _bannerAdView.AdUnitId != TestBannerUnitId)
+                    {
+                        Log.Info("FujifierAds", "Falling back to Google Test Banner Unit...");
+                        _activity?.RunOnUiThread(() =>
+                        {
+                            try
+                            {
+                                _bannerAdView.AdUnitId = TestBannerUnitId;
+                                _bannerAdView.LoadAd(new AdRequest.Builder().Build());
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Error("FujifierAds", $"Error loading test banner fallback: {ex}");
+                            }
+                        });
+                    }
+                });
+
+            _bannerAdView.AdListener = _bannerListener;
             _bannerContainer.AddView(_bannerAdView);
-            decorView.AddView(_bannerContainer);
+
+            // Add container to the Activity's content view hierarchy on top of Avalonia
+            _activity.AddContentView(_bannerContainer, containerParams);
+            _bannerContainer.BringToFront();
 
             // Load ad request
             var adRequest = new AdRequest.Builder().Build();
             _bannerAdView.LoadAd(adRequest);
 
-            Log.Info("FujifierAds", "Banner Ad created and added to screen.");
+            Log.Info("FujifierAds", $"Banner Ad created and added to screen (Unit: {BannerUnitId}).");
         }
         catch (Exception ex)
         {
@@ -265,6 +381,10 @@ public class AdManager
         if (_bannerContainer != null)
         {
             _bannerContainer.Visibility = visible ? ViewStates.Visible : ViewStates.Gone;
+            if (visible)
+            {
+                _bannerContainer.BringToFront();
+            }
         }
 
         if (_bannerAdView != null)
@@ -297,6 +417,10 @@ public class AdManager
         _bannerContainer = null;
         _interstitialAd = null;
         _appOpenAd = null;
+        _initListener = null;
+        _appOpenCallback = null;
+        _interstitialCallback = null;
+        _bannerListener = null;
     }
 
     #endregion
@@ -311,6 +435,30 @@ public class AdManager
         public void OnInitializationComplete(IInitializationStatus status)
         {
             _onComplete();
+        }
+    }
+
+    private class BannerAdListener : AdListener
+    {
+        private readonly Action _onLoaded;
+        private readonly Action<LoadAdError> _onFailed;
+
+        public BannerAdListener(Action onLoaded, Action<LoadAdError> onFailed)
+        {
+            _onLoaded = onLoaded;
+            _onFailed = onFailed;
+        }
+
+        public override void OnAdLoaded()
+        {
+            base.OnAdLoaded();
+            _onLoaded();
+        }
+
+        public override void OnAdFailedToLoad(LoadAdError loadAdError)
+        {
+            base.OnAdFailedToLoad(loadAdError);
+            _onFailed(loadAdError);
         }
     }
 
