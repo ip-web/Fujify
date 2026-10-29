@@ -341,12 +341,24 @@
                                         </Border>
 
                                         <!-- Action Buttons -->
-                                        <WrapPanel Orientation="Horizontal">
+                                        <WrapPanel Orientation="Horizontal" IsEnabled="{Binding !IsInstallingPresets}">
                                             <Button Content="Install to Lightroom" Command="{Binding InstallLightroomPresetsCommand}" Classes="secondary"
                                                     Padding="12,6" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
                                             <Button Content="Export Presets (.zip)" Command="{Binding ExportLightroomPresetsCommand}" Classes="secondary"
                                                     Padding="12,6" FontSize="11" FontWeight="Normal"/>
                                         </WrapPanel>
+
+                                        <!-- Preset Import Progress Bar -->
+                                        <StackPanel IsVisible="{Binding IsInstallingPresets}" Spacing="6" Margin="0,4,0,0">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <TextBlock Grid.Column="0" Text="{Binding PresetInstallStatusText}" FontSize="11"
+                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding PresetInstallPercentText}" FontSize="11" FontWeight="Bold"
+                                                           Foreground="{DynamicResource AppAccentBrush}" Margin="8,0,0,0"/>
+                                            </Grid>
+                                            <ProgressBar Minimum="0" Maximum="100" Value="{Binding PresetInstallProgress}" Height="4" CornerRadius="2"
+                                                         Foreground="{DynamicResource AppAccentBrush}" Background="{DynamicResource AppSurfaceBrush}"/>
+                                        </StackPanel>
                                     </StackPanel>
                                 </Border>
                             </StackPanel>
