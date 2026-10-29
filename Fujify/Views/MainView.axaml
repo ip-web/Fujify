@@ -765,7 +765,7 @@
                         <Border Grid.Column="0" Background="Transparent"
                                 BorderThickness="0"
                                 Padding="6,16">
-                            <Grid RowDefinitions="Auto,*,Auto,Auto,Auto">
+                            <Grid RowDefinitions="Auto,*,Auto,Auto">
                                 <!-- Rail Logo (Fujifier Emblem) -->
                                 <Border Grid.Row="0" Width="41" Height="41" CornerRadius="14"
                                         Background="#10C9FFDF" BorderBrush="#24B4FFDC" BorderThickness="1"
@@ -788,26 +788,11 @@
 
                                 <!-- Info / About Button -->
                                 <Button Grid.Row="3" Classes="nav" Command="{Binding OpenAboutCommand}"
-                                        HorizontalAlignment="Center" Margin="0,0,0,14" ToolTip.Tip="About &amp; Info">
+                                        HorizontalAlignment="Center" Margin="0,0,0,6" ToolTip.Tip="About &amp; Info">
                                     <StackPanel Spacing="5" HorizontalAlignment="Center">
                                         <PathIcon Data="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" Width="18" Height="18" HorizontalAlignment="Center"/>
                                         <TextBlock Text="About" FontSize="9" HorizontalAlignment="Center"/>
                                     </StackPanel>
-                                </Button>
-
-                                <!-- Avatar Circle (Account / Pro Status) -->
-                                <Button Grid.Row="4" Command="{Binding OpenPreferencesCommand}"
-                                        Width="30" Height="30" CornerRadius="15" Padding="0"
-                                        BorderBrush="#33FFFFFF" BorderThickness="1" HorizontalAlignment="Center"
-                                        ToolTip.Tip="Account / Plan Status">
-                                    <Button.Background>
-                                        <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                            <GradientStop Color="#BDD4BC" Offset="0"/>
-                                            <GradientStop Color="#9B8DD0" Offset="1"/>
-                                        </LinearGradientBrush>
-                                    </Button.Background>
-                                    <TextBlock Text="{Binding AvatarInitials}" FontSize="9" FontWeight="Bold"
-                                               Foreground="#253B36" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Button>
                             </Grid>
                         </Border>
