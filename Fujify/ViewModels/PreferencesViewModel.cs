@@ -40,6 +40,7 @@ namespace Fujify.ViewModels
         public Avalonia.Controls.Window? OwnerWindow { get; set; }
 
         private bool _isDarkTheme;
+        private bool _backupOriginalFile = true;
         private bool _embedOriginalRaw;
         private bool _skipThumbnailGeneration;
         private bool _losslessCompression = true;
@@ -358,6 +359,12 @@ namespace Fujify.ViewModels
             }
         }
 
+        public bool BackupOriginalFile
+        {
+            get => _backupOriginalFile;
+            set => SetProperty(ref _backupOriginalFile, value);
+        }
+
         public bool EmbedOriginalRaw
         {
             get => _embedOriginalRaw;
@@ -373,7 +380,19 @@ namespace Fujify.ViewModels
         public bool SkipThumbnailGeneration
         {
             get => _skipThumbnailGeneration;
-            set => SetProperty(ref _skipThumbnailGeneration, value);
+            set
+            {
+                if (SetProperty(ref _skipThumbnailGeneration, value))
+                {
+                    OnPropertyChanged(nameof(ImportPicturesInstantly));
+                }
+            }
+        }
+
+        public bool ImportPicturesInstantly
+        {
+            get => SkipThumbnailGeneration;
+            set => SkipThumbnailGeneration = value;
         }
 
         public int MaxConcurrentConversions
@@ -503,6 +522,7 @@ namespace Fujify.ViewModels
                 ? (settings.IsDarkTheme ? "Dark" : "Light")
                 : settings.ThemeMode;
             _isDarkTheme = _themeMode != "Light";
+            _backupOriginalFile = settings.BackupOriginalFile;
             _embedOriginalRaw = settings.EmbedOriginalRaw;
             _skipThumbnailGeneration = settings.SkipThumbnailGeneration;
             _autoOpenInLightroom = settings.AutoOpenInLightroom;
@@ -789,6 +809,7 @@ namespace Fujify.ViewModels
         {
             var s = _settingsService.Settings;
             s.ThemeMode = _themeMode;
+            s.BackupOriginalFile = _backupOriginalFile;
             s.EmbedOriginalRaw = _embedOriginalRaw;
             s.SkipThumbnailGeneration = _skipThumbnailGeneration;
             s.LosslessCompression = _licenseService.IsPro && _losslessCompression;

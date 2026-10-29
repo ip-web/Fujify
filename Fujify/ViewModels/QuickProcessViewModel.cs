@@ -383,12 +383,17 @@ namespace Fujify.ViewModels
                 outputFolder,
                 _settingsService.Settings);
 
-            bool isSameFileInPlace = isOriginallyDng && string.IsNullOrEmpty(outputFolder) && !appendSuffix && !_settingsService.Settings.CreateSubfolder;
+            string inputDir = Path.GetDirectoryName(filePath) ?? string.Empty;
+            string outputDir = Path.GetDirectoryName(initialDestFilePath) ?? string.Empty;
+            bool isSameFolder = string.Equals(Path.GetFullPath(inputDir), Path.GetFullPath(outputDir), StringComparison.OrdinalIgnoreCase);
+            bool isExactSameFilePath = isOriginallyDng && string.Equals(Path.GetFullPath(filePath), Path.GetFullPath(initialDestFilePath), StringComparison.OrdinalIgnoreCase);
+            bool createBackup = _settingsService.Settings.BackupOriginalFile;
+
             string finalDestFilePath = initialDestFilePath;
 
             lock (_reservedOutputPaths)
             {
-                if (!isSameFileInPlace && (File.Exists(initialDestFilePath) || _reservedOutputPaths.Contains(initialDestFilePath)))
+                if (!isExactSameFilePath && !(isOriginallyDng && isSameFolder && createBackup) && (File.Exists(initialDestFilePath) || _reservedOutputPaths.Contains(initialDestFilePath)))
                 {
                     finalDestFilePath = GetUniqueFilePath(initialDestFilePath, _reservedOutputPaths);
                 }
@@ -399,9 +404,34 @@ namespace Fujify.ViewModels
             }
 
             string? dngFilePath = filePath;
-            if (!isOriginallyDng)
+            string? tempInPlaceOutputFile = null;
+            string? origBackupPath = null;
+
+            if (isOriginallyDng)
             {
-                bool embedOriginalRaw = _settingsService.Settings.EmbedOriginalRaw;
+                if (createBackup && isSameFolder)
+                {
+                    string origBaseName = Path.GetFileNameWithoutExtension(filePath);
+                    origBackupPath = Path.Combine(inputDir, $"{origBaseName}ORIG.DNG");
+                    if (File.Exists(origBackupPath))
+                    {
+                        File.Delete(origBackupPath);
+                    }
+                    File.Move(filePath, origBackupPath);
+                    dngFilePath = origBackupPath;
+                }
+                else if (!createBackup && isExactSameFilePath)
+                {
+                    string origBaseName = Path.GetFileNameWithoutExtension(filePath);
+                    tempInPlaceOutputFile = Path.Combine(outputDir, $"{origBaseName}_tmp_{Guid.NewGuid():N}.dng");
+                }
+            }
+
+            try
+            {
+                if (!isOriginallyDng)
+                {
+                    bool embedOriginalRaw = _settingsService.Settings.EmbedOriginalRaw;
 
                 string targetDngForConversion;
                 if (string.IsNullOrEmpty(outputFolder) && !_settingsService.Settings.CreateSubfolder)
@@ -429,9 +459,9 @@ namespace Fujify.ViewModels
                 dngFilePath = convResult.OutputDngPath;
             }
 
-            string? customOutputPath = (!string.IsNullOrEmpty(outputFolder) || finalDestFilePath != dngFilePath)
+            string? customOutputPath = tempInPlaceOutputFile ?? ((!string.IsNullOrEmpty(outputFolder) || finalDestFilePath != dngFilePath)
                 ? finalDestFilePath
-                : null;
+                : null);
 
             if (!string.IsNullOrEmpty(customOutputPath))
             {
@@ -452,10 +482,41 @@ namespace Fujify.ViewModels
 
             if (!metaResult.Success)
             {
+                if (!string.IsNullOrEmpty(tempInPlaceOutputFile) && File.Exists(tempInPlaceOutputFile))
+                {
+                    try { File.Delete(tempInPlaceOutputFile); } catch { }
+                }
+                if (isOriginallyDng && createBackup && isSameFolder && !string.IsNullOrEmpty(origBackupPath) && File.Exists(origBackupPath) && !File.Exists(filePath))
+                {
+                    try { File.Move(origBackupPath, filePath); } catch { }
+                }
                 throw new InvalidOperationException(metaResult.ErrorMessage ?? "Error injecting Fujifilm metadata");
             }
 
+            if (!string.IsNullOrEmpty(tempInPlaceOutputFile))
+            {
+                FileTrashHelper.SendToTrash(filePath);
+                File.Move(tempInPlaceOutputFile, finalDestFilePath, overwrite: true);
+            }
+            else if (!createBackup)
+            {
+                FileTrashHelper.SendToTrash(filePath);
+            }
+
             return finalDestFilePath;
+            }
+            catch
+            {
+                if (!string.IsNullOrEmpty(tempInPlaceOutputFile) && File.Exists(tempInPlaceOutputFile))
+                {
+                    try { File.Delete(tempInPlaceOutputFile); } catch { }
+                }
+                if (isOriginallyDng && createBackup && isSameFolder && !string.IsNullOrEmpty(origBackupPath) && File.Exists(origBackupPath) && !File.Exists(filePath))
+                {
+                    try { File.Move(origBackupPath, filePath); } catch { }
+                }
+                throw;
+            }
         }
 
         private static string GetUniqueFilePath(string filePath, HashSet<string>? reservedPaths = null)

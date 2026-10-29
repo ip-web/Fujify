@@ -181,55 +181,6 @@
                                                     PointerPressed="MobileCard_PointerPressed"
                                                     DoubleTapped="MobileCard_DoubleTapped"
                                                     Cursor="Hand">
-                                                <Border.ContextMenu>
-                                                    <ContextMenu>
-                                                        <MenuItem Header="Open Image"
-                                                                  Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).OpenFileCommand}"
-                                                                  CommandParameter="{Binding}">
-                                                            <MenuItem.Icon>
-                                                                <PathIcon Data="M 3 3 h 18 v 18 H 3 Z M 8 8 A 1.5 1.5 0 1 0 8 11 A 1.5 1.5 0 1 0 8 8 M 3 17 l 6 -6 l 4 4 l 3 -3 l 5 5" Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}"/>
-                                                            </MenuItem.Icon>
-                                                        </MenuItem>
-                                                        <MenuItem Header="Open With..."
-                                                                  Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).OpenWithCommand}"
-                                                                  CommandParameter="{Binding}">
-                                                            <MenuItem.Icon>
-                                                                <PathIcon Data="M 18 13 v 6 a 2 2 0 0 1 -2 2 H 5 a 2 2 0 0 1 -2 -2 V 8 a 2 2 0 0 1 2 -2 h 6 M 15 3 h 6 v 6 M 10 14 L 21 3" Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}"/>
-                                                            </MenuItem.Icon>
-                                                        </MenuItem>
-                                                        <MenuItem Header="Open Containing Folder"
-                                                                  Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).OpenFolderCommand}"
-                                                                  CommandParameter="{Binding}">
-                                                            <MenuItem.Icon>
-                                                                <PathIcon Data="M 3 7 V 5 h 7 l 2 3 h 9 v 12 H 3 Z" Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}"/>
-                                                            </MenuItem.Icon>
-                                                        </MenuItem>
-                                                        <Separator/>
-                                                        <MenuItem Header="Reset to Pending"
-                                                                  Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).ResetStatusCommand}"
-                                                                  CommandParameter="{Binding}">
-                                                            <MenuItem.Icon>
-                                                                <PathIcon Data="M 1 4 v 6 h 6 M 23 20 v -6 h -6 M 20.49 9 A 9 9 0 0 0 5.64 5.64 L 1 10 M 23 14 l -4.64 4.36 A 9 9 0 0 1 3.51 15" Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}"/>
-                                                            </MenuItem.Icon>
-                                                        </MenuItem>
-                                                        <Separator/>
-                                                        <MenuItem Header="Properties"
-                                                                  Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).ShowPropertiesCommand}"
-                                                                  CommandParameter="{Binding}">
-                                                            <MenuItem.Icon>
-                                                                <PathIcon Data="M 12 2 A 10 10 0 1 0 12 22 A 10 10 0 1 0 12 2 M 12 16 v -4 M 12 8 h 0.01" Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}"/>
-                                                            </MenuItem.Icon>
-                                                        </MenuItem>
-                                                        <Separator/>
-                                                        <MenuItem Header="Remove from Selection"
-                                                                  Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).RemoveFileCommand}"
-                                                                  CommandParameter="{Binding}">
-                                                            <MenuItem.Icon>
-                                                                <PathIcon Data="M 18 6 L 6 18 M 6 6 l 12 12" Width="12" Height="12" Foreground="#FF8F8A"/>
-                                                            </MenuItem.Icon>
-                                                        </MenuItem>
-                                                    </ContextMenu>
-                                                </Border.ContextMenu>
                                                 <Grid ColumnDefinitions="Auto,*,Auto">
                                                     <!-- Thumbnail -->
                                                     <Border Grid.Column="0" Width="64" Height="64" CornerRadius="10"
@@ -544,7 +495,7 @@
 
                                             <!-- Backup Switch -->
                                             <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0" Text="Back up original DNG" FontSize="11"
+                                                <TextBlock Grid.Column="0" Text="Backup original file" FontSize="11"
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                 <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateBackup}" OnContent="" OffContent=""/>
                                             </Grid>
@@ -723,7 +674,7 @@
                                                 <!-- File Size -->
                                                 <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,12">
                                                     <TextBlock Text="File size" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
-                                                    <TextBlock Text="{Binding SelectedFile.FileSizeFormatted, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
+                                                    <TextBlock Text="{Binding SelectedFile.FormattedFileSize, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                 </StackPanel>
 
@@ -734,25 +685,18 @@
                                                                Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                 </StackPanel>
 
-                                                <!-- Lens Model -->
+                                                <!-- Date Taken (EXIF) -->
                                                 <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,12">
-                                                    <TextBlock Text="Lens" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
-                                                    <TextBlock Text="{Binding SelectedFile.LensModel, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
+                                                    <TextBlock Text="Date taken" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                    <TextBlock Text="{Binding SelectedFile.DateTimeOriginal, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
                                                 </StackPanel>
 
-                                                <!-- Date Taken -->
-                                                <StackPanel Grid.Row="3" Grid.Column="0">
-                                                    <TextBlock Text="Date taken" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
-                                                    <TextBlock Text="{Binding SelectedFile.DateTakenFormatted, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                                </StackPanel>
-
-                                                <!-- Exposure Comp. -->
-                                                <StackPanel Grid.Row="3" Grid.Column="1">
-                                                    <TextBlock Text="Exposure comp." FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
-                                                    <TextBlock Text="{Binding SelectedFile.ExposureCompensation, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                                <!-- Status -->
+                                                <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
+                                                    <TextBlock Text="Status" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                    <TextBlock Text="{Binding SelectedFile.Status, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource AppAccentLightBrush}"/>
                                                 </StackPanel>
                                             </Grid>
                                         </StackPanel>
@@ -1375,7 +1319,7 @@
 
                                                     <!-- Backup Switch -->
                                                     <Grid ColumnDefinitions="*,Auto">
-                                                        <TextBlock Grid.Column="0" Text="Back up original DNG" FontSize="11"
+                                                        <TextBlock Grid.Column="0" Text="Backup original file" FontSize="11"
                                                                    Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateBackup}" OnContent="" OffContent=""/>
                                                     </Grid>
@@ -1753,12 +1697,12 @@
 
                                     <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
 
-                                    <!-- Skip Thumbnails Toggle -->
+                                    <!-- Import Pictures Instantly Toggle -->
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
-                                            <TextBlock Text="Skip Thumbnail Generation" FontWeight="SemiBold" FontSize="12"
+                                            <TextBlock Text="Import Pictures Instantly" FontWeight="SemiBold" FontSize="12"
                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                            <TextBlock Text="Speeds up batch photo queue loading significantly" FontSize="11"
+                                            <TextBlock Text="Skips thumbnail generation for performance, importing photos into the queue instantly" FontSize="11"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding SkipThumbnailGeneration}" OnContent="" OffContent=""/>
@@ -1880,6 +1824,19 @@
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding LosslessCompression}" IsEnabled="{Binding IsPro}" OnContent="" OffContent=""/>
+                                    </Grid>
+
+                                    <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
+
+                                    <!-- Backup Original File -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                            <TextBlock Text="Backup Original File" FontWeight="SemiBold" FontSize="12"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <TextBlock Text="Preserves original file (renames in-place DNGs to filenameORIG.DNG). When disabled, files that succeed are sent to Trash." FontSize="11"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding BackupOriginalFile}" OnContent="" OffContent=""/>
                                     </Grid>
 
                                     <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
@@ -2118,15 +2075,50 @@
 
                 <ScrollViewer x:Name="AboutScrollViewer" Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel x:Name="AboutContentStack" Spacing="16" MaxWidth="440" HorizontalAlignment="Center" Margin="20,20,20,24">
-                        <Border Width="64" Height="64" CornerRadius="16" Background="#10C9FFDF" BorderBrush="#24B4FFDC" BorderThickness="1"
-                                HorizontalAlignment="Center">
-                            <TextBlock Text="⋈" FontSize="36" Foreground="#C6F1DB" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <!-- Header with Logo & Version -->
+                        <StackPanel HorizontalAlignment="Center" Spacing="6">
+                            <Image Source="/Assets/images/logoXL.png" Width="52" Height="52" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Fujifier" FontSize="19" FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Version 2.1.0 (Cross-Platform)" FontSize="11" 
+                                       Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- Information Content Card -->
+                        <Border Background="{DynamicResource AppSurfaceSecondaryBrush}" 
+                                BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
+                                CornerRadius="12" Padding="14">
+                            <StackPanel Spacing="9">
+                                <TextBlock Text="Fujifilm Film Simulation Profiles for All Cameras" FontWeight="SemiBold" FontSize="12"
+                                           Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
+                                <TextBlock Text="Converts camera RAW images to DNG while embedding Fujifilm camera profiles and metadata so Adobe Lightroom and Camera Raw (ACR) can apply authentic Fujifilm film simulations."
+                                           FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap" LineHeight="16"/>
+                                
+                                <Separator Margin="0,2" Background="{DynamicResource AppEdgeBrush}"/>
+
+                                <!-- Functional Link Buttons -->
+                                <Grid ColumnDefinitions="*,*,*">
+                                    <Button Grid.Column="0" Content="Website" Command="{Binding OpenWebsiteCommand}" Classes="secondary"
+                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                            FontSize="11" Height="30" Padding="0" CornerRadius="15" Margin="0,0,4,0"/>
+                                    <Button Grid.Column="1" Content="GitHub" Command="{Binding OpenGitHubCommand}" Classes="secondary"
+                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                            FontSize="11" Height="30" Padding="0" CornerRadius="15" Margin="2,0,2,0"/>
+                                    <Button Grid.Column="2" Content="Updates" Command="{Binding OpenReleasesCommand}" Classes="secondary"
+                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                            FontSize="11" Height="30" Padding="0" CornerRadius="15" Margin="4,0,0,0"/>
+                                </Grid>
+
+                                <Separator Margin="0,2" Background="{DynamicResource AppEdgeBrush}"/>
+
+                                <TextBlock Text="Developed by Isidore Paulin (ipweb.dev)" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                <TextBlock Text="Powered by: DNGLab, ExifTool, Avalonia UI" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                <TextBlock Text="Licensed under GNU General Public License v3" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                            </StackPanel>
                         </Border>
-                        <TextBlock Text="Fujifier Batch Studio" FontWeight="Bold" FontSize="18"
-                                   Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Film Simulation Engine" FontSize="12" Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Developed by Isidore Paulin (ipweb.dev). Licensed under GPL v3."
-                                   FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center" TextAlignment="Center"/>
+
+                        <!-- Close Button -->
+                        <Button Content="Close" Command="{Binding CloseModalCommand}" Classes="primary" Height="34" Width="90" Padding="0" CornerRadius="17"
+                                HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="0,6,0,0"/>
                         <Border Height="24"/>
                     </StackPanel>
                 </ScrollViewer>
@@ -2134,7 +2126,7 @@
         </Grid>
 
 
-        <!-- 5. IN-APP MODAL OVERLAY (Message / Conflict / Notification) -->
+        <!-- 5. IN-APP MODAL OVERLAY (Message / Conflict / Notification / FreeTierDelay) -->
         <Border ZIndex="9999"
                 Background="#99070A12"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
@@ -2142,23 +2134,110 @@
                 Classes="modal-backdrop" Classes.open="{Binding IsBottomSheetOpen}"
                 PointerPressed="OnBackdropPointerPressed">
             <Border x:Name="ModalDialogContainer" Classes="panel modal-card" Classes.open="{Binding IsBottomSheetOpen}"
-                    Width="400" MaxWidth="500" Padding="24"
+                    Width="400" MaxWidth="500" Padding="22"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
-                <StackPanel Spacing="14">
-                    <!-- Status Icon -->
-                    <Border Width="48" Height="48" CornerRadius="24" Background="#1AB89BE4" HorizontalAlignment="Center">
-                        <TextBlock Text="{Binding ModalIcon}" FontSize="24" Foreground="{DynamicResource AppAccentLightBrush}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-                    <!-- Title & Message -->
-                    <TextBlock Text="{Binding ModalTitle}" FontSize="17" FontWeight="Bold"
-                               Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center" TextAlignment="Center"/>
-                    <TextBlock Text="{Binding ModalMessage}" FontSize="12" Foreground="{DynamicResource AppTextSecondaryBrush}"
-                               TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"/>
-                    <!-- Centered Dismiss Button -->
-                    <Button Content="Got it" Command="{Binding CloseModalCommand}" Classes="primary"
-                            Height="38" CornerRadius="19" Padding="24,0" HorizontalAlignment="Center"/>
-                </StackPanel>
+                <Panel>
+                    <!-- Free Tier Delay Modal -->
+                    <StackPanel Spacing="12" IsVisible="{Binding IsFreeTierDelayModal}">
+                        <!-- Header: Icon & Tier Badge -->
+                        <StackPanel Spacing="6" HorizontalAlignment="Center">
+                            <Border Width="44" Height="44" CornerRadius="22" 
+                                    Background="#1AB89BE4" 
+                                    HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding ModalIcon}" FontSize="20" 
+                                           Foreground="{DynamicResource AppAccentLightBrush}" 
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="{Binding ModalTitle}" FontWeight="SemiBold" FontSize="16" 
+                                       Foreground="{DynamicResource AppTextPrimaryBrush}" 
+                                       HorizontalAlignment="Center" TextAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- Explanation & Details -->
+                        <TextBlock Text="{Binding ModalMessage}" FontSize="11" TextWrapping="Wrap" 
+                                   Foreground="{DynamicResource AppTextSecondaryBrush}" 
+                                   HorizontalAlignment="Center" TextAlignment="Center" LineHeight="16"/>
+
+                        <!-- Cooldown Progress -->
+                        <StackPanel Spacing="5" Margin="0,4,0,0">
+                            <ProgressBar Height="4" CornerRadius="2" 
+                                         Minimum="0" Maximum="15" Value="{Binding DelayProgressBarValue}" 
+                                         Foreground="{DynamicResource AppAccentBrush}"/>
+                            <TextBlock Text="{Binding DelayStatusText}" 
+                                       FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" 
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- License Key Entry Section (Expandable) -->
+                        <StackPanel IsVisible="{Binding IsDelayKeyInputVisible}" Spacing="6" Margin="0,4,0,0">
+                            <Grid ColumnDefinitions="*, Auto">
+                                <TextBox Text="{Binding DelayLicenseKey, Mode=TwoWay}" Grid.Column="0" 
+                                         Watermark="Paste FUJIFIER-PRO license key here..." 
+                                         Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                         Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                         BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
+                                         FontSize="11" Height="34" CornerRadius="8" 
+                                         VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                                <Button Grid.Column="1" Content="Activate" Command="{Binding DelayActivateKeyCommand}" 
+                                        Classes="primary" Height="34" Padding="16,0" CornerRadius="17"
+                                        VerticalContentAlignment="Center"/>
+                            </Grid>
+                            <TextBlock Text="{Binding DelayLicenseError}" FontSize="11" 
+                                       Foreground="#E74C3C" IsVisible="{Binding HasDelayLicenseError}" 
+                                       TextAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- Middle Links (Buy Pro, Google Sign In & License Key) -->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="0,8,0,8">
+                            <Button Content="⭐ Buy Pro" Command="{Binding BuyProCommand}" Classes="primary" 
+                                    Height="34" Padding="14,0" CornerRadius="17"
+                                    VerticalContentAlignment="Center" FontWeight="SemiBold" FontSize="11.5"/>
+                            <Button Command="{Binding DelayGoogleSignInCommand}" Classes="secondary"
+                                    Height="34" Padding="12,0" CornerRadius="17"
+                                    VerticalContentAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                    <Viewbox Width="14" Height="14" VerticalAlignment="Center">
+                                        <Canvas Width="24" Height="24">
+                                            <Path Fill="#4285F4" Data="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.04h3.87c2.26-2.09 3.67-5.17 3.67-9.14z"/>
+                                            <Path Fill="#34A853" Data="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.87-3.04c-1.08.72-2.45 1.16-4.06 1.16-3.13 0-5.78-2.11-6.73-4.96H1.25v3.13C3.25 21.31 7.35 24 12 24z"/>
+                                            <Path Fill="#FBBC05" Data="M5.27 14.25c-.25-.72-.38-1.49-.38-2.25s.13-1.53.38-2.25V6.62H1.25C.45 8.24 0 10.06 0 12s.45 3.76 1.25 5.38l4.02-3.13z"/>
+                                            <Path Fill="#EA4335" Data="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.25 2.69 1.25 6.62l4.02 3.13c.95-2.85 3.6-4.96 6.73-4.96z"/>
+                                        </Canvas>
+                                    </Viewbox>
+                                    <TextBlock Text="Login" FontSize="11.5" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Content="License Key" Command="{Binding DelayToggleKeyCommand}" Classes="secondary"
+                                    Height="34" Padding="12,0" CornerRadius="17"
+                                    VerticalContentAlignment="Center" FontSize="11.5"/>
+                        </StackPanel>
+
+                        <!-- Bottom Action: Continue with Free Version (Disabled until timer finishes) -->
+                        <Button Content="{Binding DelayDismissButtonText}" 
+                                Command="{Binding CloseModalCommand}"
+                                IsEnabled="{Binding CanDismissModal}" 
+                                Classes="secondary"
+                                Height="36" CornerRadius="18" HorizontalAlignment="Stretch" 
+                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Standard Message Modal -->
+                    <StackPanel Spacing="14" IsVisible="{Binding IsMessageModal}">
+                        <!-- Status Icon -->
+                        <Border Width="48" Height="48" CornerRadius="24" Background="{Binding ModalBadgeBackground}" HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding ModalIcon}" FontSize="24" Foreground="{Binding ModalIconColor}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <!-- Title & Message -->
+                        <TextBlock Text="{Binding ModalTitle}" FontSize="17" FontWeight="Bold"
+                                   Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center" TextAlignment="Center"/>
+                        <TextBlock Text="{Binding ModalMessage}" FontSize="12" Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                   TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"/>
+                        <!-- Centered Dismiss Button -->
+                        <Button Content="Got it" Command="{Binding CloseModalCommand}" Classes="primary"
+                                Height="38" CornerRadius="19" Padding="24,0" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </Panel>
             </Border>
         </Border>
     </Grid>

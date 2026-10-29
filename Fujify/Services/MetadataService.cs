@@ -456,7 +456,11 @@ namespace Fujify.Services
                 }
                 else
                 {
-                    string temporaryFilePath = Path.ChangeExtension(dngFilePath, ".dng_original");
+                    string temporaryFilePath = Path.Combine(Path.GetDirectoryName(dngFilePath) ?? string.Empty, $"{Path.GetFileNameWithoutExtension(dngFilePath)}ORIG.DNG");
+                    if (!File.Exists(temporaryFilePath))
+                    {
+                        temporaryFilePath = Path.ChangeExtension(dngFilePath, ".dng_original");
+                    }
 
                     if (isOriginallyDng && createBackup)
                     {
