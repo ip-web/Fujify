@@ -306,6 +306,49 @@
                                     </StackPanel>
                                     <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsWindowsContextMenuEnabled}" OnContent="" OffContent=""/>
                                 </Grid>
+
+                                <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
+
+                                <!-- Lightroom Film Simulation Presets -->
+                                <Border Background="{DynamicResource AppSurfaceSecondaryBrush}" CornerRadius="10" Padding="12,10" 
+                                        BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1">
+                                    <StackPanel Spacing="8">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Text="Lightroom Film Simulation Presets" FontWeight="SemiBold" FontSize="12"
+                                                               Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                                    <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="4" Padding="5,1" 
+                                                            IsVisible="{Binding !IsPro}" VerticalAlignment="Center">
+                                                        <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="#252332"/>
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock Text="Installs 20 develop presets into Adobe Lightroom &amp; Camera Raw to switch between Fujifilm film simulations with 1 click." 
+                                                           FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Important Note: converted photo requirement -->
+                                        <Border Background="#1A7C5CFC" BorderBrush="#337C5CFC" BorderThickness="1" CornerRadius="6" Padding="10,8">
+                                            <Grid ColumnDefinitions="Auto,*">
+                                                <PathIcon Grid.Column="0" Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" 
+                                                          Width="14" Height="14" Foreground="{DynamicResource AppAccentBrush}" VerticalAlignment="Top" Margin="0,1,8,0"/>
+                                                <TextBlock Grid.Column="1" FontSize="10.5" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap" LineHeight="15">
+                                                    <Run FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}">Notice:</Run>
+                                                    <Run Text=" Photos must be converted with Fujifier beforehand. Fujifilm film simulation profiles only apply to Fujified DNGs or genuine Fujifilm cameras."/>
+                                                </TextBlock>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- Action Buttons -->
+                                        <WrapPanel Orientation="Horizontal">
+                                            <Button Content="Install to Lightroom" Command="{Binding InstallLightroomPresetsCommand}" Classes="secondary"
+                                                    Padding="12,6" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
+                                            <Button Content="Export Presets (.zip)" Command="{Binding ExportLightroomPresetsCommand}" Classes="secondary"
+                                                    Padding="12,6" FontSize="11" FontWeight="Normal"/>
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </Border>
                             </StackPanel>
                         </Grid>
                     </Border>

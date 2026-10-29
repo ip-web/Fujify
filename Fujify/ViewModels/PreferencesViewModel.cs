@@ -18,6 +18,7 @@
  */
 
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.Threading;
@@ -36,6 +37,7 @@ namespace Fujify.ViewModels
         private readonly ILicenseService _licenseService;
         private readonly IUpdateService _updateService;
         private readonly IDialogService? _dialogService;
+        private readonly ILightroomPresetService _lightroomPresetService;
 
         public Avalonia.Controls.Window? OwnerWindow { get; set; }
 
@@ -484,16 +486,23 @@ namespace Fujify.ViewModels
 
         public Action<bool>? CloseAction { get; set; }
 
+        public ICommand InstallLightroomPresetsCommand { get; }
+        public ICommand ExportLightroomPresetsCommand { get; }
+        public bool IsLightroomDirectoryDetected => _lightroomPresetService.IsLightroomDirectoryDetected;
+        public string LightroomDetectedPath => _lightroomPresetService.DetectLightroomSettingsDirectory() ?? "Not detected";
+
         public PreferencesViewModel(
             ISettingsService settingsService,
             ILicenseService? licenseService = null,
             IUpdateService? updateService = null,
-            IDialogService? dialogService = null)
+            IDialogService? dialogService = null,
+            ILightroomPresetService? lightroomPresetService = null)
         {
             _settingsService = settingsService;
             _licenseService = licenseService ?? LicenseService.Instance ?? new LicenseService(_settingsService);
             _updateService = updateService ?? new UpdateService(_settingsService);
             _dialogService = dialogService;
+            _lightroomPresetService = lightroomPresetService ?? LightroomPresetService.Instance ?? new LightroomPresetService(_licenseService);
             var settings = _settingsService.Settings;
 
             _checkForUpdatesOnStartup = settings.CheckForUpdatesOnStartup;
@@ -552,6 +561,9 @@ namespace Fujify.ViewModels
             {
                 CrossPlatformLauncher.OpenUrl("https://fujifier.cc/pro");
             });
+
+            InstallLightroomPresetsCommand = new AsyncRelayCommand(InstallLightroomPresetsAsync);
+            ExportLightroomPresetsCommand = new AsyncRelayCommand(ExportLightroomPresetsAsync);
 
             SetKeyTabCommand = new RelayCommand(() => IsAccountTabActive = false);
             SetAccountTabCommand = new RelayCommand(() => IsAccountTabActive = true);
@@ -842,6 +854,71 @@ namespace Fujify.ViewModels
             App.ApplyTheme(_themeMode);
 
             CloseAction?.Invoke(true);
+        }
+
+        private async Task InstallLightroomPresetsAsync()
+        {
+            if (!_licenseService.IsPro)
+            {
+                await ShowResultDialogAsync(
+                    "Fujifier Pro Feature",
+                    "Automatic 1-click Lightroom preset installation is exclusive to Fujifier Pro.\n\nUpgrade to Pro to unlock instant preset installation directly into Adobe Lightroom & Camera Raw.",
+                    isSuccess: false);
+                return;
+            }
+
+            var result = _lightroomPresetService.InstallPresetsToLightroom();
+            if (result.Success)
+            {
+                string msg = $"Successfully installed {result.Count} Fujifilm film simulation presets into Adobe Lightroom & Camera Raw!\n\n" +
+                             $"Installed folder:\n{result.TargetPath}\n\n" +
+                             $"Restart or open Lightroom/Camera Raw to see them in your Develop Presets panel under 'Fujifilm Film Simulations (Fujifier)'.\n\n" +
+                             $"⚠️ Important Notice: Photos must be converted to DNG with Fujifier beforehand for Lightroom to recognize the Fujifilm camera profiles.";
+                await ShowResultDialogAsync("Lightroom Presets Installed", msg, isSuccess: true);
+            }
+            else
+            {
+                await ShowResultDialogAsync("Installation Failed", result.ErrorMessage ?? "Could not install presets to Lightroom.", isSuccess: false);
+            }
+        }
+
+        private async Task ExportLightroomPresetsAsync()
+        {
+            if (!_licenseService.IsPro)
+            {
+                await ShowResultDialogAsync(
+                    "Fujifier Pro Feature",
+                    "Exporting Lightroom preset packs is exclusive to Fujifier Pro.\n\nUpgrade to Pro to unlock preset exports for Lightroom Mobile, iPad, and desktop.",
+                    isSuccess: false);
+                return;
+            }
+
+            try
+            {
+                string targetDir = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+                if (string.IsNullOrEmpty(targetDir) || !Directory.Exists(targetDir))
+                {
+                    targetDir = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                }
+                if (string.IsNullOrEmpty(targetDir) || !Directory.Exists(targetDir))
+                {
+                    targetDir = Path.GetTempPath();
+                }
+
+                string zipPath = Path.Combine(targetDir, "Fujifier-Lightroom-Presets.zip");
+                byte[] zipBytes = _lightroomPresetService.GeneratePresetsZip();
+                File.WriteAllBytes(zipPath, zipBytes);
+
+                string msg = $"Lightroom Presets exported successfully!\n\n" +
+                             $"Saved file:\n{zipPath}\n\n" +
+                             $"You can import this .zip file directly into Lightroom Classic, Lightroom CC, or Lightroom Mobile on iOS/Android.\n\n" +
+                             $"⚠️ Important Notice: Photos must be converted to DNG using Fujifier beforehand for Fujifilm simulation profiles to take effect.";
+                await ShowResultDialogAsync("Presets Exported", msg, isSuccess: true);
+            }
+            catch (Exception ex)
+            {
+                await ShowResultDialogAsync("Export Failed", $"Failed to export presets: {ex.Message}", isSuccess: false);
+            }
         }
 
         private async Task ShowResultDialogAsync(string title, string message, bool isSuccess)
