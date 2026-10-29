@@ -83,6 +83,7 @@ namespace Fujify.Services
         event EventHandler<LicenseStatus>? LicenseChanged;
 
         void Initialize();
+        void SyncFromSettings();
         Task<LicenseActivationResult> ActivateLicenseKeyAsync(string licenseKey);
         Task<LicenseActivationResult> LoginWithAccountAsync(string email, string password);
         Task<LicenseActivationResult> LoginWithGoogleOAuthAsync(Action<string>? statusCallback = null, CancellationToken cancellationToken = default);

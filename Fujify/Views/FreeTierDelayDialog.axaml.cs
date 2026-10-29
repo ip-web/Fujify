@@ -36,7 +36,7 @@ namespace Fujify.Views
         private int _remainingSeconds = 15;
         private bool _isUnlocked = false;
 
-        public FreeTierDelayDialog() : this(new LicenseService(), false)
+        public FreeTierDelayDialog() : this(LicenseService.Instance ?? new LicenseService(), false)
         {
         }
 

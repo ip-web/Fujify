@@ -128,7 +128,7 @@ namespace Fujify.Services
         public DialogService(ISettingsService? settingsService = null, ILicenseService? licenseService = null)
         {
             _settingsService = settingsService ?? new SettingsService();
-            _licenseService = licenseService;
+            _licenseService = licenseService ?? LicenseService.Instance;
         }
 
         private static bool IsMobileOrSingleView =>
@@ -390,7 +390,7 @@ namespace Fujify.Services
                 return;
             }
 
-            var vm = new PreferencesViewModel(_settingsService, _licenseService, dialogService: this);
+            var vm = new PreferencesViewModel(_settingsService, _licenseService ?? LicenseService.Instance, dialogService: this);
             var dialog = new PreferencesWindow(vm);
 
             var targetOwner = owner ?? (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;

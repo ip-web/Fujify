@@ -68,6 +68,9 @@ namespace Fujify.Services
         public int MaxActivations => _currentStatus.MaxActivations;
         public string SlotInfoText => $"{UsedActivations} of {MaxActivations} device slots active";
 
+        public static ILicenseService? Instance { get; set; }
+        public static event EventHandler<LicenseStatus>? AnyLicenseChanged;
+
         public static Action<string, string?>? OnOAuthCallbackReceived { get; set; }
         public static Func<string, string, CancellationToken, Task<(string Code, string? State)?>>? PlatformOAuthLauncher { get; set; }
 
@@ -78,6 +81,7 @@ namespace Fujify.Services
 
         public LicenseService(ISettingsService? settingsService = null, HttpClient? httpClient = null)
         {
+            Instance ??= this;
             _settingsService = settingsService ?? new SettingsService();
             _deviceIdentity = new DeviceIdentityService(_settingsService);
             _httpClient = httpClient ?? new HttpClient();
@@ -89,6 +93,27 @@ namespace Fujify.Services
             }
 
             Initialize();
+        }
+
+        public void SyncFromSettings()
+        {
+            Initialize();
+            LicenseChanged?.Invoke(this, _currentStatus);
+        }
+
+        private void NotifyLicenseChanged()
+        {
+            LicenseChanged?.Invoke(this, _currentStatus);
+            AnyLicenseChanged?.Invoke(this, _currentStatus);
+
+            if (Instance != null && !ReferenceEquals(this, Instance))
+            {
+                try
+                {
+                    Instance.SyncFromSettings();
+                }
+                catch { }
+            }
         }
 
         public void Initialize()
@@ -171,7 +196,7 @@ namespace Fujify.Services
             {
                 SetProState(cleanKey, "pro-developer@fujifier.net", LicenseSource.LicenseKey, 1, 3);
                 SaveLicenseSettings(cleanKey, "pro-developer@fujifier.net", 1, 3);
-                LicenseChanged?.Invoke(this, _currentStatus);
+                NotifyLicenseChanged();
                 return new LicenseActivationResult(true, null, _currentStatus);
             }
 
@@ -180,7 +205,7 @@ namespace Fujify.Services
             {
                 SetProState(cleanKey, rsaEmail, LicenseSource.LicenseKey, 1, 3);
                 SaveLicenseSettings(cleanKey, rsaEmail, 1, 3);
-                LicenseChanged?.Invoke(this, _currentStatus);
+                NotifyLicenseChanged();
                 return new LicenseActivationResult(true, null, _currentStatus);
             }
 
@@ -237,7 +262,7 @@ namespace Fujify.Services
                 SetProState(cleanKey, _settingsService.Settings.LicenseeEmail, LicenseSource.LicenseKey, used, max, offlineExpiry);
                 SaveLicenseSettings(cleanKey, _settingsService.Settings.LicenseeEmail, used, max, res.OfflineToken, offlineExpiry);
 
-                LicenseChanged?.Invoke(this, _currentStatus);
+                NotifyLicenseChanged();
                 return new LicenseActivationResult(true, null, _currentStatus);
             }
             catch (Exception ex)
@@ -303,7 +328,7 @@ namespace Fujify.Services
                     return await ActivateLicenseKeyAsync(activeLicense.LicenseKey);
                 }
 
-                LicenseChanged?.Invoke(this, _currentStatus);
+                NotifyLicenseChanged();
                 return new LicenseActivationResult(true, "Signed in successfully. No active Pro license found on this account.", _currentStatus);
             }
             catch (Exception ex)
@@ -508,7 +533,7 @@ namespace Fujify.Services
                 }
 
                 SetFreeState();
-                LicenseChanged?.Invoke(this, _currentStatus);
+                NotifyLicenseChanged();
                 return new LicenseActivationResult(true, $"Signed in as {authRes.User?.Email}. No active Pro license found on fujifier.cc.", _currentStatus);
             }
             catch (Exception ex)
@@ -571,7 +596,7 @@ namespace Fujify.Services
                 }
 
                 SetFreeState();
-                LicenseChanged?.Invoke(this, _currentStatus);
+                NotifyLicenseChanged();
                 return new LicenseActivationResult(true, $"Signed in with Google as {loginRes.User?.Email}. No active Pro license found on fujifier.cc.", _currentStatus);
             }
             catch (Exception ex)
@@ -640,7 +665,7 @@ namespace Fujify.Services
                 }
 
                 SetFreeState();
-                LicenseChanged?.Invoke(this, _currentStatus);
+                NotifyLicenseChanged();
                 return new LicenseActivationResult(true, $"Signed in as {_settingsService.Settings.AccountEmail}. No active Pro license found on fujifier.cc.", _currentStatus);
             }
             catch (Exception ex)
@@ -737,7 +762,7 @@ namespace Fujify.Services
             _settingsService.Settings.UsedActivations = 0;
             _settingsService.Save();
 
-            LicenseChanged?.Invoke(this, _currentStatus);
+            NotifyLicenseChanged();
             return true;
         }
 
@@ -751,7 +776,7 @@ namespace Fujify.Services
 
             _currentStatus.IsAccountBound = false;
             _currentStatus.AccountEmail = null;
-            LicenseChanged?.Invoke(this, _currentStatus);
+            NotifyLicenseChanged();
             return Task.FromResult(true);
         }
 
@@ -817,7 +842,7 @@ namespace Fujify.Services
                     _settingsService.Settings.LicenseKey = null;
                     _settingsService.Settings.OfflineToken = null;
                     _settingsService.Save();
-                    LicenseChanged?.Invoke(this, _currentStatus);
+                    NotifyLicenseChanged();
                     return new LicenseActivationResult(false, "License is no longer active on the server.");
                 }
             }
@@ -871,7 +896,9 @@ namespace Fujify.Services
         private static bool IsDevOverrideKey(string key)
         {
             return key.Equals("FUJIFIER-PRO-DEV-OVERRIDE", StringComparison.OrdinalIgnoreCase) ||
+                   key.Equals("FUJIFIER-DEV-PRO-OVERRIDE", StringComparison.OrdinalIgnoreCase) ||
                    key.Equals("FUJIFY-PRO-DEV-OVERRIDE", StringComparison.OrdinalIgnoreCase) ||
+                   key.Equals("FUJIFY-DEV-PRO-OVERRIDE", StringComparison.OrdinalIgnoreCase) ||
                    key.Equals("FUJIFIER-LIFETIME-PRO-TEST", StringComparison.OrdinalIgnoreCase) ||
                    key.Equals("FUJIFY-LIFETIME-PRO-TEST", StringComparison.OrdinalIgnoreCase);
         }
