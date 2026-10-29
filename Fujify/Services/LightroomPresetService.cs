@@ -342,7 +342,7 @@ namespace Fujify.Services
             }
         }
 
-        public PresetInstallResult InstallPresetsToLightroom()
+        public PresetInstallResult InstallPresetsToLightroom(IProgress<(int current, int total, string presetName)>? progress = null)
         {
             if (!_licenseService.IsPro)
             {
@@ -376,12 +376,14 @@ namespace Fujify.Services
                 }
 
                 int count = 0;
+                int total = Presets.Count;
                 foreach (var preset in Presets)
                 {
                     string xml = GeneratePresetXml(preset);
                     string path = Path.Combine(targetDir, preset.FileName);
                     File.WriteAllText(path, xml, Encoding.UTF8);
                     count++;
+                    progress?.Report((count, total, preset.DisplayName));
                 }
 
                 return new PresetInstallResult(
@@ -404,7 +406,7 @@ namespace Fujify.Services
             }
         }
 
-        public PresetInstallResult ExportPresetsToDirectory(string targetDirectory)
+        public PresetInstallResult ExportPresetsToDirectory(string targetDirectory, IProgress<(int current, int total, string presetName)>? progress = null)
         {
             if (!_licenseService.IsPro)
             {
@@ -425,12 +427,14 @@ namespace Fujify.Services
                 }
 
                 int count = 0;
+                int total = Presets.Count;
                 foreach (var preset in Presets)
                 {
                     string xml = GeneratePresetXml(preset);
                     string path = Path.Combine(targetDirectory, preset.FileName);
                     File.WriteAllText(path, xml, Encoding.UTF8);
                     count++;
+                    progress?.Report((count, total, preset.DisplayName));
                 }
 
                 return new PresetInstallResult(true, count, targetDirectory, null);
@@ -441,17 +445,21 @@ namespace Fujify.Services
             }
         }
 
-        public byte[] GeneratePresetsZip()
+        public byte[] GeneratePresetsZip(IProgress<(int current, int total, string presetName)>? progress = null)
         {
             using var ms = new MemoryStream();
             using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, true))
             {
+                int count = 0;
+                int total = Presets.Count;
                 foreach (var preset in Presets)
                 {
                     var entry = archive.CreateEntry($"Fujifilm Film Simulations (Fujifier)/{preset.FileName}", CompressionLevel.Optimal);
                     using var entryStream = entry.Open();
                     using var writer = new StreamWriter(entryStream, Encoding.UTF8);
                     writer.Write(GeneratePresetXml(preset));
+                    count++;
+                    progress?.Report((count, total, preset.DisplayName));
                 }
 
                 var readmeEntry = archive.CreateEntry("Fujifilm Film Simulations (Fujifier)/README.txt", CompressionLevel.Optimal);

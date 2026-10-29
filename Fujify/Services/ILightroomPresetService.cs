@@ -47,9 +47,9 @@ namespace Fujify.Services
         string? DetectLightroomSettingsDirectory();
         bool IsLightroomDirectoryDetected { get; }
         string GeneratePresetXml(LightroomPresetInfo preset);
-        PresetInstallResult InstallPresetsToLightroom();
-        PresetInstallResult ExportPresetsToDirectory(string targetDirectory);
-        byte[] GeneratePresetsZip();
+        PresetInstallResult InstallPresetsToLightroom(System.IProgress<(int current, int total, string presetName)>? progress = null);
+        PresetInstallResult ExportPresetsToDirectory(string targetDirectory, System.IProgress<(int current, int total, string presetName)>? progress = null);
+        byte[] GeneratePresetsZip(System.IProgress<(int current, int total, string presetName)>? progress = null);
     }
 }
 

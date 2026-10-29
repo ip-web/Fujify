@@ -491,6 +491,33 @@ namespace Fujify.ViewModels
         public bool IsLightroomDirectoryDetected => _lightroomPresetService.IsLightroomDirectoryDetected;
         public string LightroomDetectedPath => _lightroomPresetService.DetectLightroomSettingsDirectory() ?? "Not detected";
 
+        private bool _isInstallingPresets;
+        public bool IsInstallingPresets
+        {
+            get => _isInstallingPresets;
+            set => SetProperty(ref _isInstallingPresets, value);
+        }
+
+        private double _presetInstallProgress;
+        public double PresetInstallProgress
+        {
+            get => _presetInstallProgress;
+            set
+            {
+                if (SetProperty(ref _presetInstallProgress, value))
+                    OnPropertyChanged(nameof(PresetInstallPercentText));
+            }
+        }
+
+        private string _presetInstallStatusText = string.Empty;
+        public string PresetInstallStatusText
+        {
+            get => _presetInstallStatusText;
+            set => SetProperty(ref _presetInstallStatusText, value);
+        }
+
+        public string PresetInstallPercentText => $"{(int)_presetInstallProgress}%";
+
         public PreferencesViewModel(
             ISettingsService settingsService,
             ILicenseService? licenseService = null,
@@ -867,18 +894,67 @@ namespace Fujify.ViewModels
                 return;
             }
 
-            var result = _lightroomPresetService.InstallPresetsToLightroom();
-            if (result.Success)
+            try
             {
-                string msg = $"Successfully installed {result.Count} Fujifilm film simulation presets into Adobe Lightroom & Camera Raw!\n\n" +
-                             $"Installed folder:\n{result.TargetPath}\n\n" +
-                             $"Restart or open Lightroom/Camera Raw to see them in your Develop Presets panel under 'Fujifilm Film Simulations (Fujifier)'.\n\n" +
-                             $"⚠️ Important Notice: Photos must be converted to DNG with Fujifier beforehand for Lightroom to recognize the Fujifilm camera profiles.";
-                await ShowResultDialogAsync("Lightroom Presets Installed", msg, isSuccess: true);
+                IsInstallingPresets = true;
+                PresetInstallProgress = 0;
+                PresetInstallStatusText = "Preparing presets...";
+
+                var progress = new Progress<(int current, int total, string presetName)>(info =>
+                {
+                    PresetInstallProgress = (double)info.current / info.total * 100.0;
+                    PresetInstallStatusText = $"Installing {info.presetName} ({info.current}/{info.total})...";
+                });
+
+                PresetInstallResult result = null!;
+                await Task.Run(async () =>
+                {
+                    string? baseDir = _lightroomPresetService.DetectLightroomSettingsDirectory();
+                    if (string.IsNullOrEmpty(baseDir))
+                    {
+                        result = new PresetInstallResult(false, 0, null, "Adobe Camera Raw / Lightroom settings directory could not be located on this system. You can use 'Export Presets (.zip)' to save the preset pack manually.");
+                        return;
+                    }
+
+                    string targetDir = Path.Combine(baseDir, "Fujifier Film Simulations");
+                    if (!Directory.Exists(targetDir))
+                    {
+                        Directory.CreateDirectory(targetDir);
+                    }
+
+                    int count = 0;
+                    int total = _lightroomPresetService.Presets.Count;
+                    foreach (var preset in _lightroomPresetService.Presets)
+                    {
+                        string xml = _lightroomPresetService.GeneratePresetXml(preset);
+                        string path = Path.Combine(targetDir, preset.FileName);
+                        File.WriteAllText(path, xml, System.Text.Encoding.UTF8);
+                        count++;
+                        ((IProgress<(int, int, string)>)progress).Report((count, total, preset.DisplayName));
+                        await Task.Delay(25);
+                    }
+
+                    result = new PresetInstallResult(true, count, targetDir, null);
+                });
+
+                if (result.Success)
+                {
+                    string msg = $"Successfully installed {result.Count} Fujifilm film simulation presets into Adobe Lightroom & Camera Raw!\n\n" +
+                                 $"Installed folder:\n{result.TargetPath}\n\n" +
+                                 $"Restart or open Lightroom/Camera Raw to see them in your Develop Presets panel under 'Fujifilm Film Simulations (Fujifier)'.\n\n" +
+                                 $"⚠️ Important Notice: Photos must be converted to DNG with Fujifier beforehand for Lightroom to recognize the Fujifilm camera profiles.";
+                    await ShowResultDialogAsync("Lightroom Presets Installed", msg, isSuccess: true);
+                }
+                else
+                {
+                    await ShowResultDialogAsync("Installation Failed", result.ErrorMessage ?? "Could not install presets to Lightroom.", isSuccess: false);
+                }
             }
-            else
+            finally
             {
-                await ShowResultDialogAsync("Installation Failed", result.ErrorMessage ?? "Could not install presets to Lightroom.", isSuccess: false);
+                IsInstallingPresets = false;
+                PresetInstallProgress = 0;
+                PresetInstallStatusText = string.Empty;
             }
         }
 
@@ -895,6 +971,10 @@ namespace Fujify.ViewModels
 
             try
             {
+                IsInstallingPresets = true;
+                PresetInstallProgress = 0;
+                PresetInstallStatusText = "Exporting preset pack...";
+
                 string targetDir = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
                 if (string.IsNullOrEmpty(targetDir) || !Directory.Exists(targetDir))
                 {
@@ -906,7 +986,20 @@ namespace Fujify.ViewModels
                 }
 
                 string zipPath = Path.Combine(targetDir, "Fujifier-Lightroom-Presets.zip");
-                byte[] zipBytes = _lightroomPresetService.GeneratePresetsZip();
+
+                var progress = new Progress<(int current, int total, string presetName)>(info =>
+                {
+                    PresetInstallProgress = (double)info.current / info.total * 100.0;
+                    PresetInstallStatusText = $"Packaging {info.presetName} ({info.current}/{info.total})...";
+                });
+
+                byte[] zipBytes = null!;
+                await Task.Run(async () =>
+                {
+                    zipBytes = _lightroomPresetService.GeneratePresetsZip(progress);
+                    await Task.Delay(100);
+                });
+
                 File.WriteAllBytes(zipPath, zipBytes);
 
                 string msg = $"Lightroom Presets exported successfully!\n\n" +
@@ -918,6 +1011,12 @@ namespace Fujify.ViewModels
             catch (Exception ex)
             {
                 await ShowResultDialogAsync("Export Failed", $"Failed to export presets: {ex.Message}", isSuccess: false);
+            }
+            finally
+            {
+                IsInstallingPresets = false;
+                PresetInstallProgress = 0;
+                PresetInstallStatusText = string.Empty;
             }
         }
 

@@ -825,6 +825,10 @@ namespace Fujify.ViewModels
         {
             get
             {
+                if (IsImporting)
+                {
+                    return !string.IsNullOrEmpty(ImportStatusText) ? ImportStatusText : "Importing photos...";
+                }
                 if (IsProcessing)
                 {
                     int done = Files.Count(f => f.Status == "✔" || (f.Status != null && f.Status != "Pending"));
@@ -1460,6 +1464,47 @@ namespace Fujify.ViewModels
             }
         }
 
+        private bool _isImporting;
+        public bool IsImporting
+        {
+            get => _isImporting;
+            private set
+            {
+                if (SetProperty(ref _isImporting, value))
+                {
+                    OnPropertyChanged(nameof(OverallStatusText));
+                }
+            }
+        }
+
+        private double _importProgress;
+        public double ImportProgress
+        {
+            get => _importProgress;
+            private set
+            {
+                if (SetProperty(ref _importProgress, value))
+                {
+                    OnPropertyChanged(nameof(ImportPercentText));
+                }
+            }
+        }
+
+        private string _importStatusText = string.Empty;
+        public string ImportStatusText
+        {
+            get => _importStatusText;
+            private set
+            {
+                if (SetProperty(ref _importStatusText, value))
+                {
+                    OnPropertyChanged(nameof(OverallStatusText));
+                }
+            }
+        }
+
+        public string ImportPercentText => $"{(int)_importProgress}%";
+
         public bool IsLoading
         {
             get => _isLoading;
@@ -1537,6 +1582,11 @@ namespace Fujify.ViewModels
         public async Task AddFilesAsync(IEnumerable<string> fileOrFolderPaths)
         {
             IsLoading = true;
+            IsImporting = true;
+            ImportProgress = 0;
+            ImportStatusText = "Scanning folders and files...";
+            IsProgressVisible = true;
+            ProgressValue = 0;
             try
             {
                 var inputList = fileOrFolderPaths.ToList();
@@ -1604,6 +1654,13 @@ namespace Fujify.ViewModels
                 }
 
                 var existingPaths = new HashSet<string>(Files.Select(f => f.FilePath), StringComparer.OrdinalIgnoreCase);
+                int totalFiles = filesToAdd.Count;
+                int processedCount = 0;
+
+                Dispatcher.UIThread.Post(() =>
+                {
+                    ImportStatusText = totalFiles > 0 ? $"Importing photos (0 of {totalFiles})..." : "Scanning complete";
+                });
 
                 await Task.Run(() =>
                 {
@@ -1613,7 +1670,11 @@ namespace Fujify.ViewModels
                     {
                         try
                         {
-                            if (existingPaths.Contains(filePath)) continue;
+                            if (existingPaths.Contains(filePath))
+                            {
+                                processedCount++;
+                                continue;
+                            }
 
                             string extension = Path.GetExtension(filePath);
 
@@ -1635,6 +1696,17 @@ namespace Fujify.ViewModels
                                     RemoveCommand = RemoveFileCommand
                                 });
 
+                                processedCount++;
+                                double pct = totalFiles > 0 ? (double)processedCount / totalFiles * 100.0 : 0;
+                                int curr = processedCount;
+
+                                Dispatcher.UIThread.Post(() =>
+                                {
+                                    ImportProgress = pct;
+                                    ProgressValue = pct;
+                                    ImportStatusText = $"Importing photos ({curr} of {totalFiles})...";
+                                });
+
                                 if (batch.Count >= 10)
                                 {
                                     var currentBatch = batch.ToList();
@@ -1651,12 +1723,14 @@ namespace Fujify.ViewModels
                             }
                             else
                             {
+                                processedCount++;
                                 Dispatcher.UIThread.Post(() =>
                                     _dialogService.ShowMessageAsync(OwnerWindow, "Unsupported File Format", $"The file format {extension} is not supported."));
                             }
                         }
                         catch (Exception ex)
                         {
+                            processedCount++;
                             System.Diagnostics.Debug.WriteLine($"[Fujifier] Error processing {filePath}: {ex.Message}");
                         }
                     }
@@ -1684,6 +1758,16 @@ namespace Fujify.ViewModels
             finally
             {
                 IsLoading = false;
+                IsImporting = false;
+                ImportProgress = 0;
+                ImportStatusText = string.Empty;
+                if (!IsProcessing)
+                {
+                    IsProgressVisible = false;
+                    ProgressValue = 0;
+                }
+                OnPropertyChanged(nameof(OverallStatusText));
+                OnPropertyChanged(nameof(ImportPercentText));
             }
         }
 

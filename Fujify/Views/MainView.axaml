@@ -159,6 +159,34 @@
 
                         <!-- Row 1: Phone File List / Empty State -->
                         <Grid Grid.Row="1">
+                            <!-- Mobile Floating Import Progress Banner -->
+                            <Border IsVisible="{Binding IsImporting}"
+                                    Background="{DynamicResource AppSurfaceBrush}"
+                                    BorderBrush="{DynamicResource AppAccentBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="12"
+                                    Padding="14,10"
+                                    Margin="16,10"
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Top"
+                                    ZIndex="100"
+                                    BoxShadow="0 4 16 0 #40000000">
+                                <StackPanel Spacing="6">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <TextBlock Text="📥" FontSize="13" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding ImportStatusText}" FontSize="12" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis"/>
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="1" Text="{Binding ImportPercentText}" FontSize="12" FontWeight="Bold"
+                                                   Foreground="{DynamicResource AppAccentBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                                    </Grid>
+                                    <ProgressBar Minimum="0" Maximum="100" Value="{Binding ImportProgress}" Height="4" CornerRadius="2"
+                                                 Foreground="{DynamicResource AppAccentBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
+                                </StackPanel>
+                            </Border>
+
                             <!-- Empty State -->
                             <ScrollViewer IsVisible="{Binding !HasFiles}" HorizontalScrollBarVisibility="Disabled">
                                 <Border Padding="16,8" VerticalAlignment="Center" HorizontalAlignment="Stretch">
@@ -318,43 +346,58 @@
                         <!-- Phone Bottom Action Bar with Options Fold Toggle -->
                         <Border x:Name="PhoneBottomBar" Grid.Row="2" Background="{DynamicResource AppFooterBrush}"
                                 BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,1,0,0" Padding="16,8">
-                            <Grid ColumnDefinitions="*,Auto,Auto" VerticalAlignment="Center">
-                                <!-- Status & Output Destination Summary (Clickable to fold/unfold sidebar) -->
-                                <Button Grid.Column="0" Command="{Binding ToggleMobileSidebarCommand}"
-                                        Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,8,0"
-                                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Cursor="Hand"
-                                        ToolTip.Tip="Fold / unfold sidebar options and photo info">
-                                    <StackPanel VerticalAlignment="Center" Spacing="2">
-                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                            <Ellipse Width="6" Height="6" Fill="#A5D5B7" VerticalAlignment="Center"/>
-                                            <TextBlock Text="{Binding OverallStatusText}" FontSize="11" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                            <Grid>
+                                <!-- Mini Top Progress Line for Import & Processing -->
+                                <ProgressBar Minimum="0" Maximum="100"
+                                             Value="{Binding ProgressValue}"
+                                             IsVisible="{Binding IsProgressVisible}"
+                                             Height="3"
+                                             VerticalAlignment="Top"
+                                             HorizontalAlignment="Stretch"
+                                             CornerRadius="0"
+                                             Margin="-16,-8,-16,0"
+                                             Foreground="{DynamicResource AppAccentBrush}"
+                                             Background="Transparent"
+                                             ZIndex="10"/>
+
+                                <Grid ColumnDefinitions="*,Auto,Auto" VerticalAlignment="Center">
+                                    <!-- Status & Output Destination Summary (Clickable to fold/unfold sidebar) -->
+                                    <Button Grid.Column="0" Command="{Binding ToggleMobileSidebarCommand}"
+                                            Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,8,0"
+                                            HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Cursor="Hand"
+                                            ToolTip.Tip="Fold / unfold sidebar options and photo info">
+                                        <StackPanel VerticalAlignment="Center" Spacing="2">
+                                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                <Ellipse Width="6" Height="6" Fill="#A5D5B7" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding OverallStatusText}" FontSize="11" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                            <TextBlock Text="{Binding OutputDestinationSummary}" FontSize="9"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
                                         </StackPanel>
-                                        <TextBlock Text="{Binding OutputDestinationSummary}" FontSize="9"
-                                                   Foreground="{DynamicResource AppTextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
-                                    </StackPanel>
-                                </Button>
+                                    </Button>
 
-                                <!-- Sidebar Options Foldable Toggle Button -->
-                                <Button Grid.Column="1" Command="{Binding ToggleMobileSidebarCommand}"
-                                        Classes="secondary" Height="40" Padding="12,0" Margin="0,0,8,0" CornerRadius="20"
-                                        VerticalAlignment="Center"
-                                        ToolTip.Tip="Fold / unfold sidebar menu">
-                                    <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                        <PathIcon Data="M 4 21 v -7 M 4 10 V 3 M 12 21 v -9 M 12 8 V 3 M 20 21 v -5 M 20 12 V 3 M 1 14 h 6 M 9 8 h 6 M 17 16 h 6"
-                                                  Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}" VerticalAlignment="Center"/>
-                                        <TextBlock Text="Options" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                        <TextBlock Text="{Binding MobileSidebarChevron}" FontSize="9" VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource AppAccentBrush}"/>
-                                    </StackPanel>
-                                </Button>
+                                    <!-- Sidebar Options Foldable Toggle Button -->
+                                    <Button Grid.Column="1" Command="{Binding ToggleMobileSidebarCommand}"
+                                            Classes="secondary" Height="40" Padding="12,0" Margin="0,0,8,0" CornerRadius="20"
+                                            VerticalAlignment="Center"
+                                            ToolTip.Tip="Fold / unfold sidebar menu">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <PathIcon Data="M 4 21 v -7 M 4 10 V 3 M 12 21 v -9 M 12 8 V 3 M 20 21 v -5 M 20 12 V 3 M 1 14 h 6 M 9 8 h 6 M 17 16 h 6"
+                                                      Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Options" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <TextBlock Text="{Binding MobileSidebarChevron}" FontSize="9" VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource AppAccentBrush}"/>
+                                        </StackPanel>
+                                    </Button>
 
-                                <!-- Process Action Button -->
-                                <Button Grid.Column="2" Content="{Binding ProcessButtonContent}" Command="{Binding ProcessCommand}"
-                                        IsEnabled="{Binding CanProcessOrStop}" Classes="primary"
-                                        Height="40" Padding="16,0" FontSize="12" FontWeight="SemiBold" CornerRadius="20"
-                                        VerticalAlignment="Center"/>
+                                    <!-- Process Action Button -->
+                                    <Button Grid.Column="2" Content="{Binding ProcessButtonContent}" Command="{Binding ProcessCommand}"
+                                            IsEnabled="{Binding CanProcessOrStop}" Classes="primary"
+                                            Height="40" Padding="16,0" FontSize="12" FontWeight="SemiBold" CornerRadius="20"
+                                            VerticalAlignment="Center"/>
+                                </Grid>
                             </Grid>
                         </Border>
                     </Grid>
@@ -911,6 +954,34 @@
 
                                         <!-- Queue Content -->
                                         <Grid Grid.Row="1">
+                                            <!-- Desktop Floating Import Progress Banner -->
+                                            <Border IsVisible="{Binding IsImporting}"
+                                                    Background="{DynamicResource AppSurfaceBrush}"
+                                                    BorderBrush="{DynamicResource AppAccentBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="14"
+                                                    Padding="18,12"
+                                                    Margin="20"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Top"
+                                                    ZIndex="98"
+                                                    BoxShadow="0 6 20 0 #40000000">
+                                                <StackPanel Spacing="8" MinWidth="320" MaxWidth="440">
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                            <TextBlock Text="📥" FontSize="15" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{Binding ImportStatusText}" FontSize="12" FontWeight="SemiBold"
+                                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"
+                                                                       TextTrimming="CharacterEllipsis"/>
+                                                        </StackPanel>
+                                                        <TextBlock Grid.Column="1" Text="{Binding ImportPercentText}" FontSize="12" FontWeight="Bold"
+                                                                   Foreground="{DynamicResource AppAccentBrush}" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                                    </Grid>
+                                                    <ProgressBar Minimum="0" Maximum="100" Value="{Binding ImportProgress}" Height="4" CornerRadius="2"
+                                                                 Foreground="{DynamicResource AppAccentBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
+                                                </StackPanel>
+                                            </Border>
+
                                             <!-- Drag & Drop Overlay Feedback -->
                                             <Border IsVisible="{Binding IsDragOver}"
                                                     Background="{DynamicResource AppSurfaceBrush}"
@@ -1942,12 +2013,24 @@
                                             </Border>
 
                                             <!-- Action Buttons -->
-                                            <WrapPanel Orientation="Horizontal">
+                                            <WrapPanel Orientation="Horizontal" IsEnabled="{Binding !IsInstallingPresets}">
                                                 <Button Content="Install to Lightroom" Command="{Binding InstallLightroomPresetsCommand}" Classes="secondary"
                                                         Padding="12,6" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
                                                 <Button Content="Export Presets (.zip)" Command="{Binding ExportLightroomPresetsCommand}" Classes="secondary"
                                                         Padding="12,6" FontSize="11" FontWeight="Normal"/>
                                             </WrapPanel>
+
+                                            <!-- Preset Import Progress Bar -->
+                                            <StackPanel IsVisible="{Binding IsInstallingPresets}" Spacing="6" Margin="0,4,0,0">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <TextBlock Grid.Column="0" Text="{Binding PresetInstallStatusText}" FontSize="11"
+                                                               Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding PresetInstallPercentText}" FontSize="11" FontWeight="Bold"
+                                                               Foreground="{DynamicResource AppAccentBrush}" Margin="8,0,0,0"/>
+                                                </Grid>
+                                                <ProgressBar Minimum="0" Maximum="100" Value="{Binding PresetInstallProgress}" Height="4" CornerRadius="2"
+                                                             Foreground="{DynamicResource AppAccentBrush}" Background="{DynamicResource AppSurfaceBrush}"/>
+                                            </StackPanel>
                                         </StackPanel>
                                     </Border>
                                 </StackPanel>
