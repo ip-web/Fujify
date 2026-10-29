@@ -159,34 +159,6 @@
 
                         <!-- Row 1: Phone File List / Empty State -->
                         <Grid Grid.Row="1">
-                            <!-- Mobile Floating Import Progress Banner -->
-                            <Border IsVisible="{Binding IsImporting}"
-                                    Background="{DynamicResource AppSurfaceBrush}"
-                                    BorderBrush="{DynamicResource AppAccentBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="12"
-                                    Padding="14,10"
-                                    Margin="16,10"
-                                    HorizontalAlignment="Stretch"
-                                    VerticalAlignment="Top"
-                                    ZIndex="100"
-                                    BoxShadow="0 4 16 0 #40000000">
-                                <StackPanel Spacing="6">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                            <TextBlock Text="📥" FontSize="13" VerticalAlignment="Center"/>
-                                            <TextBlock Text="{Binding ImportStatusText}" FontSize="12" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"
-                                                       TextTrimming="CharacterEllipsis"/>
-                                        </StackPanel>
-                                        <TextBlock Grid.Column="1" Text="{Binding ImportPercentText}" FontSize="12" FontWeight="Bold"
-                                                   Foreground="{DynamicResource AppAccentBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                                    </Grid>
-                                    <ProgressBar Minimum="0" Maximum="100" Value="{Binding ImportProgress}" Height="4" CornerRadius="2"
-                                                 Foreground="{DynamicResource AppAccentBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
-                                </StackPanel>
-                            </Border>
-
                             <!-- Empty State -->
                             <ScrollViewer IsVisible="{Binding !HasFiles}" HorizontalScrollBarVisibility="Disabled">
                                 <Border Padding="16,8" VerticalAlignment="Center" HorizontalAlignment="Stretch">
@@ -640,47 +612,6 @@
                                                 <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenInLightroom}" OnContent="" OffContent=""/>
                                             </Grid>
                                         </StackPanel>
-
-                                        <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" Margin="0,4"/>
-
-                                        <!-- Available Simulations Section -->
-                                        <StackPanel Spacing="8">
-                                            <TextBlock Text="Available simulations" FontSize="10" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                                            <WrapPanel>
-                                                <Border Classes="chip chosen" Margin="2">
-                                                    <TextBlock Text="Classic Chrome" FontSize="9" FontWeight="SemiBold" Foreground="#E4D4FF"/>
-                                                </Border>
-                                                <Border Classes="chip" Margin="2">
-                                                    <TextBlock Text="Classic Neg." FontSize="9" Foreground="#B2A9C6"/>
-                                                </Border>
-                                                <Border Classes="chip" Margin="2">
-                                                    <TextBlock Text="Nostalgic Neg." FontSize="9" Foreground="#B2A9C6"/>
-                                                </Border>
-                                                <Border Classes="chip" Margin="2">
-                                                    <TextBlock Text="Reala Ace" FontSize="9" Foreground="#B2A9C6"/>
-                                                </Border>
-                                                <Border Classes="chip" Margin="2">
-                                                    <TextBlock Text="Velvia" FontSize="9" Foreground="#B2A9C6"/>
-                                                </Border>
-                                                <Border Classes="chip" Margin="2">
-                                                    <TextBlock Text="Provia" FontSize="9" Foreground="#B2A9C6"/>
-                                                </Border>
-                                                <Border Classes="chip" Margin="2">
-                                                    <TextBlock Text="Astia" FontSize="9" Foreground="#B2A9C6"/>
-                                                </Border>
-                                                <Border Classes="chip" Margin="2">
-                                                    <TextBlock Text="Acros" FontSize="9" Foreground="#B2A9C6"/>
-                                                </Border>
-                                                <Border Classes="chip" Margin="2">
-                                                    <TextBlock Text="Eterna" FontSize="9" Foreground="#B2A9C6"/>
-                                                </Border>
-                                            </WrapPanel>
-
-                                            <!-- Install Lightroom Presets Quick Action -->
-                                            <Button Content="Install Lightroom Presets" Command="{Binding InstallLightroomPresetsCommand}" Classes="secondary"
-                                                    Margin="0,4,0,0" Padding="10,5" FontSize="10" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
-                                        </StackPanel>
                                     </StackPanel>
 
                                     <!-- TAB 2: PHOTO INFO VIEW -->
@@ -954,34 +885,6 @@
 
                                         <!-- Queue Content -->
                                         <Grid Grid.Row="1">
-                                            <!-- Desktop Floating Import Progress Banner -->
-                                            <Border IsVisible="{Binding IsImporting}"
-                                                    Background="{DynamicResource AppSurfaceBrush}"
-                                                    BorderBrush="{DynamicResource AppAccentBrush}"
-                                                    BorderThickness="1"
-                                                    CornerRadius="14"
-                                                    Padding="18,12"
-                                                    Margin="20"
-                                                    HorizontalAlignment="Center"
-                                                    VerticalAlignment="Top"
-                                                    ZIndex="98"
-                                                    BoxShadow="0 6 20 0 #40000000">
-                                                <StackPanel Spacing="8" MinWidth="320" MaxWidth="440">
-                                                    <Grid ColumnDefinitions="*,Auto">
-                                                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                            <TextBlock Text="📥" FontSize="15" VerticalAlignment="Center"/>
-                                                            <TextBlock Text="{Binding ImportStatusText}" FontSize="12" FontWeight="SemiBold"
-                                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"
-                                                                       TextTrimming="CharacterEllipsis"/>
-                                                        </StackPanel>
-                                                        <TextBlock Grid.Column="1" Text="{Binding ImportPercentText}" FontSize="12" FontWeight="Bold"
-                                                                   Foreground="{DynamicResource AppAccentBrush}" VerticalAlignment="Center" Margin="12,0,0,0"/>
-                                                    </Grid>
-                                                    <ProgressBar Minimum="0" Maximum="100" Value="{Binding ImportProgress}" Height="4" CornerRadius="2"
-                                                                 Foreground="{DynamicResource AppAccentBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}"/>
-                                                </StackPanel>
-                                            </Border>
-
                                             <!-- Drag & Drop Overlay Feedback -->
                                             <Border IsVisible="{Binding IsDragOver}"
                                                     Background="{DynamicResource AppSurfaceBrush}"
@@ -1495,49 +1398,6 @@
                                                                    Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenInLightroom}" OnContent="" OffContent=""/>
                                                     </Grid>
-                                                </StackPanel>
-
-                                                <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" Margin="0,4"/>
-
-                                                <!-- Available Simulations Section -->
-                                                <StackPanel Spacing="8">
-                                                    <TextBlock Text="Available simulations" FontSize="10" FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-
-                                                    <!-- Simulation Chips (Purple Aesthetic) -->
-                                                    <WrapPanel>
-                                                        <Border Classes="chip chosen" Margin="2">
-                                                            <TextBlock Text="Classic Chrome" FontSize="9" FontWeight="SemiBold" Foreground="#E4D4FF"/>
-                                                        </Border>
-                                                        <Border Classes="chip" Margin="2">
-                                                            <TextBlock Text="Classic Neg." FontSize="9" Foreground="#B2A9C6"/>
-                                                        </Border>
-                                                        <Border Classes="chip" Margin="2">
-                                                            <TextBlock Text="Nostalgic Neg." FontSize="9" Foreground="#B2A9C6"/>
-                                                        </Border>
-                                                        <Border Classes="chip" Margin="2">
-                                                            <TextBlock Text="Reala Ace" FontSize="9" Foreground="#B2A9C6"/>
-                                                        </Border>
-                                                        <Border Classes="chip" Margin="2">
-                                                            <TextBlock Text="Velvia" FontSize="9" Foreground="#B2A9C6"/>
-                                                        </Border>
-                                                        <Border Classes="chip" Margin="2">
-                                                            <TextBlock Text="Provia" FontSize="9" Foreground="#B2A9C6"/>
-                                                        </Border>
-                                                        <Border Classes="chip" Margin="2">
-                                                            <TextBlock Text="Astia" FontSize="9" Foreground="#B2A9C6"/>
-                                                        </Border>
-                                                        <Border Classes="chip" Margin="2">
-                                                            <TextBlock Text="Acros" FontSize="9" Foreground="#B2A9C6"/>
-                                                        </Border>
-                                                        <Border Classes="chip" Margin="2">
-                                                            <TextBlock Text="Eterna" FontSize="9" Foreground="#B2A9C6"/>
-                                                        </Border>
-                                                    </WrapPanel>
-
-                                                    <!-- Install Lightroom Presets Quick Action -->
-                                                    <Button Content="Install Lightroom Presets" Command="{Binding InstallLightroomPresetsCommand}" Classes="secondary"
-                                                            Margin="0,4,0,0" Padding="10,5" FontSize="10" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"/>
                                                 </StackPanel>
                                             </StackPanel>
 
