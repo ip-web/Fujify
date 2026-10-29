@@ -14,7 +14,8 @@
         Icon="/Assets/images/logo.ico">
 
     <!-- Standalone Dialog Card Block -->
-    <Border Background="{DynamicResource AppSurfaceBrush}"
+    <Border Classes="dialog-card"
+            Background="{DynamicResource AppSurfaceBrush}"
             BorderBrush="{DynamicResource AppEdgeBrush}"
             BorderThickness="1"
             CornerRadius="16"

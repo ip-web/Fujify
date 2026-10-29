@@ -234,7 +234,13 @@
                                                     <!-- Thumbnail -->
                                                     <Border Grid.Column="0" Width="64" Height="64" CornerRadius="10"
                                                             ClipToBounds="True" Background="{DynamicResource AppSurfaceSecondaryBrush}" VerticalAlignment="Center">
-                                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
+                                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill">
+                                                            <Image.Transitions>
+                                                                <Transitions>
+                                                                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                                                                </Transitions>
+                                                            </Image.Transitions>
+                                                        </Image>
                                                     </Border>
 
                                                     <!-- File Info -->
@@ -270,23 +276,26 @@
                                 </ItemsControl>
                             </ScrollViewer>
 
-                            <!-- Mobile Add Menu Backdrop (Dismisses floating menu when tapped) -->
-                            <Border IsVisible="{Binding IsMobileAddMenuOpen}"
-                                    Background="#66070A12"
+                            <!-- Mobile Add Menu Backdrop (Dismisses floating menu when tapped with smooth fade) -->
+                            <Border x:Name="MobileAddBackdrop"
+                                    Background="#77070A12"
                                     ZIndex="150"
+                                    IsHitTestVisible="{Binding IsMobileAddMenuOpen}"
+                                    Classes="mobile-fab-backdrop" Classes.open="{Binding IsMobileAddMenuOpen}"
                                     PointerPressed="OnMobileAddBackdropPointerPressed"/>
 
                             <!-- Mobile Floating Add Button & Speed Dial Menu (Bottom Left) -->
                             <Grid ZIndex="160"
                                   HorizontalAlignment="Left" VerticalAlignment="Bottom"
                                   Margin="20,0,0,20">
-                                <!-- Speed Dial Options (Expand Upwards) -->
-                                <StackPanel IsVisible="{Binding IsMobileAddMenuOpen}"
-                                            Orientation="Vertical" Spacing="10"
+                                <!-- Speed Dial Options (Slide & Spring Upwards) -->
+                                <StackPanel Orientation="Vertical" Spacing="10"
                                             HorizontalAlignment="Left" VerticalAlignment="Bottom"
-                                            Margin="0,0,0,68">
+                                            Margin="0,0,0,68"
+                                            IsHitTestVisible="{Binding IsMobileAddMenuOpen}">
                                     <!-- Option: Add Folder -->
-                                    <Border CornerRadius="21" BoxShadow="0 6 18 0 #50000000">
+                                    <Border Classes="speed-dial-item speed-dial-folder" Classes.open="{Binding IsMobileAddMenuOpen}"
+                                            CornerRadius="21" BoxShadow="0 6 18 0 #50000000">
                                         <Button Command="{Binding MobileAddFolderCommand}"
                                                 Classes="secondary" Height="42" CornerRadius="21"
                                                 Padding="14,0,18,0">
@@ -306,7 +315,8 @@
                                     </Border>
 
                                     <!-- Option: Add Files -->
-                                    <Border CornerRadius="21" BoxShadow="0 6 18 0 #50000000">
+                                    <Border Classes="speed-dial-item speed-dial-files" Classes.open="{Binding IsMobileAddMenuOpen}"
+                                            CornerRadius="21" BoxShadow="0 6 18 0 #50000000">
                                         <Button Command="{Binding MobileAddFilesCommand}"
                                                 Classes="secondary" Height="42" CornerRadius="21"
                                                 Padding="14,0,18,0">
@@ -326,24 +336,20 @@
                                     </Border>
                                 </StackPanel>
 
-                                <!-- Floating + Action Button -->
+                                <!-- Floating 100% Round Action Button -->
                                 <Border Width="56" Height="56" CornerRadius="28"
                                         BoxShadow="0 8 24 0 #60000000"
+                                        ClipToBounds="True"
                                         HorizontalAlignment="Left" VerticalAlignment="Bottom">
                                     <Button Command="{Binding ToggleMobileAddMenuCommand}"
-                                            Classes="primary"
+                                            Classes="fab" Classes.open="{Binding IsMobileAddMenuOpen}"
                                             Width="56" Height="56" CornerRadius="28"
                                             Padding="0"
                                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                             ToolTip.Tip="Add photos or folder">
-                                        <PathIcon Data="M 11 4 A 1 1 0 0 1 13 4 V 11 H 20 A 1 1 0 0 1 20 13 H 13 V 20 A 1 1 0 0 1 11 20 V 13 H 4 A 1 1 0 0 1 4 11 H 11 Z"
-                                                  Width="20" Height="20"
-                                                  Foreground="{DynamicResource AppPrimaryBtnFgBrush}"
-                                                  RenderTransformOrigin="50%,50%">
-                                            <PathIcon.RenderTransform>
-                                                <RotateTransform Angle="{Binding MobileAddMenuAngle}"/>
-                                            </PathIcon.RenderTransform>
-                                        </PathIcon>
+                                        <PathIcon Classes="fab-icon" Classes.open="{Binding IsMobileAddMenuOpen}"
+                                                  Data="M 11 4 A 1 1 0 0 1 13 4 V 11 H 20 A 1 1 0 0 1 20 13 H 13 V 20 A 1 1 0 0 1 11 20 V 13 H 4 A 1 1 0 0 1 4 11 H 11 Z"
+                                                  Width="20" Height="20"/>
                                     </Button>
                                 </Border>
                             </Grid>
@@ -393,21 +399,24 @@
                         </Border>
                     </Grid>
 
-                    <!-- Foldable Menu Backdrop (Dims background and folds down on tap) -->
-                    <Border Background="#99070A12"
+                    <!-- Foldable Menu Backdrop (Dims background and folds down on tap with smooth fade) -->
+                    <Border x:Name="MobileSidebarBackdrop"
+                            Background="#99070A12"
                             ZIndex="400"
-                            IsVisible="{Binding IsMobileSidebarOpen}"
+                            IsHitTestVisible="{Binding IsMobileSidebarOpen}"
+                            Classes="sheet-backdrop" Classes.open="{Binding IsMobileSidebarOpen}"
                             PointerPressed="OnMobileSidebarBackdropPointerPressed"/>
 
-                    <!-- Foldable Bottom Sheet / Drawer containing the Full Sidebar -->
+                    <!-- Foldable Bottom Sheet / Drawer containing the Full Sidebar (Smooth slide-up transition) -->
                     <Border x:Name="MobileSidebarSheet"
                             ZIndex="401"
-                            IsVisible="{Binding IsMobileSidebarOpen}"
+                            IsHitTestVisible="{Binding IsMobileSidebarOpen}"
+                            Classes="bottom-sheet" Classes.open="{Binding IsMobileSidebarOpen}"
                             VerticalAlignment="Bottom"
                             HorizontalAlignment="Stretch"
                             Margin="0,40,0,0"
                             MaxHeight="540"
-                            CornerRadius="20,20,0,0"
+                            CornerRadius="22,22,0,0"
                             Background="{DynamicResource AppSolidBackgroundBrush}"
                             BorderBrush="{DynamicResource AppEdgeBrush}"
                             BorderThickness="1,1,1,0"
@@ -1223,7 +1232,13 @@
                                                                             Background="Transparent" BorderThickness="0" Padding="0"
                                                                             HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                                                                         <Border CornerRadius="8" ClipToBounds="True" Background="{DynamicResource AppSurfaceBrush}">
-                                                                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
+                                                                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill">
+                                                                                <Image.Transitions>
+                                                                                    <Transitions>
+                                                                                        <DoubleTransition Property="Opacity" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                                                                                    </Transitions>
+                                                                                </Image.Transitions>
+                                                                            </Image>
                                                                         </Border>
                                                                     </Button>
 
@@ -1632,14 +1647,12 @@
         <Grid x:Name="PreferencesSlidePanel" ZIndex="10000"
               Background="{DynamicResource AppSolidBackgroundBrush}"
               Opacity="0"
-              IsVisible="{Binding IsPreferencesModal}"
+              RenderTransform="translateX(800px)"
               IsHitTestVisible="False">
-            <Grid.RenderTransform>
-                <TranslateTransform X="800" Y="0"/>
-            </Grid.RenderTransform>
             <Grid.Transitions>
                 <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut"/>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3" Easing="CubicEaseOut"/>
                 </Transitions>
             </Grid.Transitions>
 
@@ -2076,14 +2089,12 @@
         <Grid x:Name="AboutSlidePanel" ZIndex="10000"
               Background="{DynamicResource AppSolidBackgroundBrush}"
               Opacity="0"
-              IsVisible="{Binding IsAboutModal}"
+              RenderTransform="translateX(800px)"
               IsHitTestVisible="False">
-            <Grid.RenderTransform>
-                <TranslateTransform X="800" Y="0"/>
-            </Grid.RenderTransform>
             <Grid.Transitions>
                 <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut"/>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3" Easing="CubicEaseOut"/>
                 </Transitions>
             </Grid.Transitions>
 
@@ -2124,11 +2135,13 @@
 
 
         <!-- 5. IN-APP MODAL OVERLAY (Message / Conflict / Notification) -->
-        <Border IsVisible="{Binding IsBottomSheetOpen}" ZIndex="9999"
+        <Border ZIndex="9999"
                 Background="#99070A12"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                IsHitTestVisible="{Binding IsBottomSheetOpen}"
+                Classes="modal-backdrop" Classes.open="{Binding IsBottomSheetOpen}"
                 PointerPressed="OnBackdropPointerPressed">
-            <Border x:Name="ModalDialogContainer" Classes="panel"
+            <Border x:Name="ModalDialogContainer" Classes="panel modal-card" Classes.open="{Binding IsBottomSheetOpen}"
                     Width="400" MaxWidth="500" Padding="24"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
                 <StackPanel Spacing="14">
