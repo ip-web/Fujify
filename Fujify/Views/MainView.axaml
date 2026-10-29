@@ -751,7 +751,7 @@
                         <Grid Grid.Column="1" RowDefinitions="Auto,*">
 
                             <!-- Top Heading & Step Workflow Indicators -->
-                            <Border Grid.Row="0" Padding="8,12,24,8" Background="Transparent">
+                            <Border Grid.Row="0" Padding="8,10,24,6" Background="Transparent">
                                 <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
                                     <!-- Studio Heading -->
                                     <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
@@ -806,7 +806,7 @@
 
 
                         <!-- Central Workspace (Queue + Inspector) -->
-                        <Grid Grid.Row="1" RowDefinitions="*" ColumnDefinitions="*,295" Margin="8,4,24,14">
+                        <Grid Grid.Row="1" RowDefinitions="*" ColumnDefinitions="*,295" Margin="8,2,24,8">
 
                             <!-- CENTER: Photo Queue Panel -->
                             <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="Auto,*" Margin="0,0,16,0" VerticalAlignment="Stretch">
@@ -1224,18 +1224,19 @@
 
 
                             <!-- RIGHT: Inspector Panel (Settings | Photo info Tabs) -->
-                            <Border Grid.Row="0" Grid.Column="1" Classes="panel" Width="295" VerticalAlignment="Stretch" ClipToBounds="True">
+                            <Border x:Name="InspectorPanelBorder" Grid.Row="0" Grid.Column="1" Classes="panel" Width="295" VerticalAlignment="Stretch" ClipToBounds="True" PointerWheelChanged="InspectorPanel_PointerWheelChanged">
                                 <Grid RowDefinitions="Auto,*">
 
                                     <!-- Inspector Top Tabs -->
-                                    <Border Grid.Row="0" Padding="16,14,16,0" Background="Transparent"
+                                    <Border Grid.Row="0" Padding="14,8,14,0" Background="Transparent"
                                             BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
                                         <Grid ColumnDefinitions="*,*">
                                             <!-- Settings Tab Button -->
                                             <Button Grid.Column="0" Command="{Binding SelectInspectorSettingsTabCommand}"
                                                     Classes="tab-btn" Classes.active="{Binding IsInspectorSettingsTab}"
-                                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
-                                                <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                                    Padding="4,4">
+                                                <StackPanel Spacing="5" HorizontalAlignment="Center">
                                                     <TextBlock Text="Settings" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                                     <Border Height="2" Width="48" Background="{DynamicResource AppAccentBrush}"
                                                             IsVisible="{Binding IsInspectorSettingsTab}"/>
@@ -1245,8 +1246,9 @@
                                             <!-- Photo info Tab Button -->
                                             <Button Grid.Column="1" Command="{Binding SelectInspectorInfoTabCommand}"
                                                     Classes="tab-btn" Classes.active="{Binding IsInspectorInfoTab}"
-                                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center">
-                                                <StackPanel Spacing="6" HorizontalAlignment="Center">
+                                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
+                                                    Padding="4,4">
+                                                <StackPanel Spacing="5" HorizontalAlignment="Center">
                                                     <TextBlock Text="Photo info" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                                     <Border Height="2" Width="48" Background="{DynamicResource AppAccentBrush}"
                                                             IsVisible="{Binding IsInspectorInfoTab}"/>
@@ -1257,25 +1259,27 @@
 
 
                                     <!-- Inspector Body Content -->
-                                    <ScrollViewer Grid.Row="1"
+                                    <ScrollViewer x:Name="InspectorScrollViewer"
+                                                  Grid.Row="1"
                                                   VerticalScrollBarVisibility="Auto"
                                                   HorizontalScrollBarVisibility="Disabled"
+                                                  AllowAutoHide="False"
                                                   IsScrollInertiaEnabled="True"
                                                   Background="Transparent"
-                                                  Padding="18,14,14,14">
-                                        <Panel Margin="0,0,0,24">
+                                                  Padding="16,8,12,8">
+                                        <Panel Margin="0,0,0,8">
 
                                             <!-- TAB 1: SETTINGS VIEW -->
-                                            <StackPanel IsVisible="{Binding IsInspectorSettingsTab}" Spacing="14">
+                                            <StackPanel IsVisible="{Binding IsInspectorSettingsTab}" Spacing="10">
                                                 <!-- Output Destination Section -->
-                                                <StackPanel Spacing="8">
+                                                <StackPanel Spacing="6">
                                                     <TextBlock Text="Output destination" FontSize="10" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource AppTextSecondaryBrush}"/>
 
                                                     <!-- Browse Output Folder with Nested Reset Cross -->
                                                     <Border Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                             BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
-                                                            Height="36" CornerRadius="10" Padding="10,0,6,0" ClipToBounds="True"
+                                                            Height="32" CornerRadius="9" Padding="10,0,6,0" ClipToBounds="True"
                                                             HorizontalAlignment="Stretch" MaxWidth="259">
                                                         <Grid ColumnDefinitions="*,Auto" ClipToBounds="True">
                                                             <Button Grid.Column="0" Command="{Binding BrowseFolderCommand}"
@@ -1315,10 +1319,10 @@
                                                     </Border>
                                                 </StackPanel>
 
-                                                <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" Margin="0,4"/>
+                                                <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" Margin="0,2"/>
 
                                                 <!-- File Handling Section -->
-                                                <StackPanel Spacing="10">
+                                                <StackPanel Spacing="7">
                                                     <TextBlock Text="File handling" FontSize="10" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource AppTextSecondaryBrush}"/>
 
@@ -1344,8 +1348,8 @@
                                                                  Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                                  Foreground="{DynamicResource AppTextPrimaryBrush}"
                                                                  BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                                 Watermark="-fujified" FontSize="11" Height="28"
-                                                                 CornerRadius="8" VerticalContentAlignment="Center"/>
+                                                                 Watermark="-fujified" FontSize="11" Height="26"
+                                                                 CornerRadius="7" VerticalContentAlignment="Center"/>
                                                     </Grid>
 
                                                     <!-- Subfolder Switch -->
@@ -1356,7 +1360,7 @@
                                                     </Grid>
 
                                                     <!-- Expandable Subfolder Settings -->
-                                                    <StackPanel Spacing="8" Margin="8,0,0,4" IsVisible="{Binding CreateSubfolder}">
+                                                    <StackPanel Spacing="6" Margin="8,0,0,2" IsVisible="{Binding CreateSubfolder}">
                                                         <!-- Keep original folder name switch -->
                                                         <Grid ColumnDefinitions="*,Auto">
                                                             <TextBlock Grid.Column="0" Text="Keep original folder name" FontSize="10"
@@ -1372,8 +1376,8 @@
                                                                      Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                                      Foreground="{DynamicResource AppTextPrimaryBrush}"
                                                                      BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                                     Watermark="_fujified" FontSize="10" Height="26"
-                                                                     CornerRadius="7" VerticalContentAlignment="Center"/>
+                                                                     Watermark="_fujified" FontSize="10" Height="24"
+                                                                     CornerRadius="6" VerticalContentAlignment="Center"/>
                                                         </Grid>
 
                                                         <!-- Custom folder name (when NOT using original name) -->
@@ -1384,8 +1388,8 @@
                                                                      Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                                      Foreground="{DynamicResource AppTextPrimaryBrush}"
                                                                      BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                                     Watermark="fujified" FontSize="10" Height="26"
-                                                                     CornerRadius="7" VerticalContentAlignment="Center"/>
+                                                                     Watermark="fujified" FontSize="10" Height="24"
+                                                                     CornerRadius="6" VerticalContentAlignment="Center"/>
                                                         </Grid>
 
                                                         <!-- Subfolder Preview -->

@@ -300,6 +300,22 @@ namespace Fujify.Views
             }
         }
 
+        private void InspectorPanel_PointerWheelChanged(object? sender, PointerWheelEventArgs e)
+        {
+            var sv = this.FindControl<ScrollViewer>("InspectorScrollViewer");
+            if (sv != null && sv.ScrollBarMaximum.Y > 0)
+            {
+                double delta = e.Delta.Y;
+                if (delta != 0)
+                {
+                    double newOffsetY = sv.Offset.Y - (delta * 44);
+                    newOffsetY = Math.Clamp(newOffsetY, 0, sv.ScrollBarMaximum.Y);
+                    sv.Offset = new Avalonia.Vector(sv.Offset.X, newOffsetY);
+                    e.Handled = true;
+                }
+            }
+        }
+
         private void DataGrid_DoubleTapped(object? sender, TappedEventArgs e)
         {
             if (DataContext is MainViewModel vm && vm.SelectedFile != null)
