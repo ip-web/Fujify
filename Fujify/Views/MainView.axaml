@@ -12,8 +12,9 @@
     </UserControl.KeyBindings>
 
     <Grid Background="{DynamicResource AppBackgroundBrush}" ClipToBounds="True">
-        <!-- AMBIENT PURPLE & TEAL GLOW ACCENTS (Smooth & Large without Banding) -->
-        <Canvas IsHitTestVisible="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+        <!-- AMBIENT PURPLE & TEAL GLOW ACCENTS (Desktop/Tablet Studio) -->
+        <Canvas IsHitTestVisible="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                IsVisible="{Binding IsTabletOrDesktopLayout}">
             <!-- Top-Right Smooth Ambient Glow (~80% width, soft dark purple tint matching Settings window) -->
             <Ellipse Width="950" Height="650" Canvas.Right="-100" Canvas.Top="-100" Opacity="0.22">
                 <Ellipse.Fill>
@@ -169,8 +170,14 @@
                             </ScrollViewer>
 
                             <!-- Mobile Card List -->
-                            <ScrollViewer IsVisible="{Binding HasFiles}" HorizontalScrollBarVisibility="Disabled">
+                            <ScrollViewer IsVisible="{Binding HasFiles}" HorizontalScrollBarVisibility="Disabled"
+                                          IsScrollInertiaEnabled="True">
                                 <ItemsControl ItemsSource="{Binding Files}" Margin="16,6,16,80">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <VirtualizingStackPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="models:FileItem">
                                             <Border Classes="mobile-card" Classes.selected="{Binding IsSelected}"
@@ -185,13 +192,7 @@
                                                     <!-- Thumbnail -->
                                                     <Border Grid.Column="0" Width="64" Height="64" CornerRadius="10"
                                                             ClipToBounds="True" Background="{DynamicResource AppSurfaceSecondaryBrush}" VerticalAlignment="Center">
-                                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill">
-                                                            <Image.Transitions>
-                                                                <Transitions>
-                                                                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" Easing="CubicEaseOut"/>
-                                                                </Transitions>
-                                                            </Image.Transitions>
-                                                        </Image>
+                                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
                                                     </Border>
 
                                                     <!-- File Info -->
@@ -246,7 +247,7 @@
                                             IsHitTestVisible="{Binding IsMobileAddMenuOpen}">
                                     <!-- Option: Add Folder -->
                                     <Border Classes="speed-dial-item speed-dial-folder" Classes.open="{Binding IsMobileAddMenuOpen}"
-                                            CornerRadius="21" BoxShadow="0 6 18 0 #50000000">
+                                            CornerRadius="21" BoxShadow="0 3 10 0 #35000000">
                                         <Button Command="{Binding MobileAddFolderCommand}"
                                                 Classes="secondary" Height="42" CornerRadius="21"
                                                 Padding="14,0,18,0">
@@ -267,7 +268,7 @@
 
                                     <!-- Option: Add Files -->
                                     <Border Classes="speed-dial-item speed-dial-files" Classes.open="{Binding IsMobileAddMenuOpen}"
-                                            CornerRadius="21" BoxShadow="0 6 18 0 #50000000">
+                                            CornerRadius="21" BoxShadow="0 3 10 0 #35000000">
                                         <Button Command="{Binding MobileAddFilesCommand}"
                                                 Classes="secondary" Height="42" CornerRadius="21"
                                                 Padding="14,0,18,0">
@@ -289,7 +290,7 @@
 
                                 <!-- Floating 100% Round Action Button -->
                                 <Border Width="56" Height="56" CornerRadius="28"
-                                        BoxShadow="0 8 24 0 #60000000"
+                                        BoxShadow="0 4 12 0 #40000000"
                                         ClipToBounds="True"
                                         HorizontalAlignment="Left" VerticalAlignment="Bottom">
                                     <Button Command="{Binding ToggleMobileAddMenuCommand}"
@@ -1590,13 +1591,11 @@
         <!-- 3. FULL-SCREEN SLIDING PANEL: PREFERENCES / SETTINGS -->
         <Grid x:Name="PreferencesSlidePanel" ZIndex="10000"
               Background="{DynamicResource AppSolidBackgroundBrush}"
-              Opacity="0"
               RenderTransform="translateX(800px)"
               IsHitTestVisible="False">
             <Grid.Transitions>
                 <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" Easing="CubicEaseOut"/>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3" Easing="CubicEaseOut"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut"/>
                 </Transitions>
             </Grid.Transitions>
 
@@ -2045,13 +2044,11 @@
         <!-- 4. FULL-SCREEN SLIDING PANEL: ABOUT -->
         <Grid x:Name="AboutSlidePanel" ZIndex="10000"
               Background="{DynamicResource AppSolidBackgroundBrush}"
-              Opacity="0"
               RenderTransform="translateX(800px)"
               IsHitTestVisible="False">
             <Grid.Transitions>
                 <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" Easing="CubicEaseOut"/>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3" Easing="CubicEaseOut"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut"/>
                 </Transitions>
             </Grid.Transitions>
 

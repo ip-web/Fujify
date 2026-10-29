@@ -197,7 +197,6 @@ namespace Fujify.Views
             {
                 bool isOpen = vm.IsPreferencesModal;
                 _prefPanel.IsHitTestVisible = isOpen;
-                _prefPanel.Opacity = isOpen ? 1 : 0;
                 _prefPanel.RenderTransform = TransformOperations.Parse($"translateX({(isOpen ? 0 : width)}px)");
             }
 
@@ -205,7 +204,6 @@ namespace Fujify.Views
             {
                 bool isOpen = vm.IsAboutModal;
                 _aboutPanel.IsHitTestVisible = isOpen;
-                _aboutPanel.Opacity = isOpen ? 1 : 0;
                 _aboutPanel.RenderTransform = TransformOperations.Parse($"translateX({(isOpen ? 0 : width)}px)");
             }
         }
