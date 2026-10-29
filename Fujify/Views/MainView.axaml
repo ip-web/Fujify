@@ -125,6 +125,14 @@
                                             VerticalContentAlignment="Center"
                                             ToolTip.Tip="Remove all photos from queue"/>
 
+                                    <Button Command="{Binding OpenAboutCommand}"
+                                            Classes="secondary" Width="36" Height="36" Padding="0" CornerRadius="18"
+                                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                            ToolTip.Tip="About &amp; Info">
+                                        <PathIcon Data="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+                                                  Width="16" Height="16" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                    </Button>
+
                                     <Button Command="{Binding OpenPreferencesCommand}"
                                             Classes="secondary" Width="36" Height="36" Padding="0" CornerRadius="18"
                                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
@@ -410,8 +418,17 @@
                                         </Button>
                                     </Grid>
 
-                                    <!-- Right Actions: Preferences Button + Fold Down Button -->
+                                    <!-- Right Actions: About Button + Preferences Button + Fold Down Button -->
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                        <!-- About Button -->
+                                        <Button Command="{Binding OpenAboutCommand}"
+                                                Classes="secondary" Width="30" Height="30" CornerRadius="15" Padding="0"
+                                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                ToolTip.Tip="About &amp; Info">
+                                            <PathIcon Data="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+                                                      Width="14" Height="14" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                        </Button>
+
                                         <!-- Preferences Cog Button -->
                                         <Button Command="{Binding OpenPreferencesCommand}"
                                                 Classes="secondary" Width="30" Height="30" CornerRadius="15" Padding="0"
