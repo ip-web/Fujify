@@ -711,20 +711,24 @@
                     <Grid Grid.Row="0" ColumnDefinitions="60,*">
 
                         <!-- 1. LEFT NAVIGATION RAIL -->
-                        <Border Grid.Column="0" Background="Transparent"
-                                BorderThickness="0"
-                                Padding="6,16">
-                            <Grid RowDefinitions="Auto,*,Auto,Auto">
+                        <ScrollViewer x:Name="NavRailScrollViewer"
+                                      Grid.Column="0"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      IsScrollInertiaEnabled="True">
+                            <Grid MinHeight="{Binding #NavRailScrollViewer.Bounds.Height}"
+                                  RowDefinitions="Auto,*,Auto,Auto"
+                                  Margin="6,16">
                                 <!-- Rail Logo (Fujifier Emblem) -->
                                 <Border Grid.Row="0" Width="41" Height="41" CornerRadius="14"
                                         Background="#10C9FFDF" BorderBrush="#24B4FFDC" BorderThickness="1"
-                                        HorizontalAlignment="Center" Margin="0,0,0,22" ToolTip.Tip="Fujifier">
+                                        HorizontalAlignment="Center" Margin="0,0,0,16" ToolTip.Tip="Fujifier">
                                     <Image Source="/Assets/images/logoXL.png" Width="26" Height="26" Stretch="Uniform"
                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
 
                                 <!-- Spacer -->
-                                <Panel Grid.Row="1"/>
+                                <Panel Grid.Row="1" MinHeight="10"/>
 
                                 <!-- Settings Button -->
                                 <Button Grid.Row="2" Classes="nav" Command="{Binding OpenPreferencesCommand}"
@@ -744,7 +748,7 @@
                                     </StackPanel>
                                 </Button>
                             </Grid>
-                        </Border>
+                        </ScrollViewer>
 
 
                         <!-- 2. MAIN WORKSPACE AREA -->
