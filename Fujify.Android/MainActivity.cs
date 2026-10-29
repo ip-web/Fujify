@@ -2,8 +2,10 @@ using Android.App;
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
+using Android.Views;
 using Avalonia;
 using Avalonia.Android;
+using Avalonia.Skia;
 using Fujify.Services;
 using Fujify.ViewModels;
 using System;
@@ -19,6 +21,7 @@ namespace Fujify.Android;
     Icon = "@drawable/icon",
     MainLauncher = true,
     LaunchMode = LaunchMode.SingleTop,
+    HardwareAccelerated = true,
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize)]
 [IntentFilter(
     new[] { Intent.ActionSend },
@@ -54,6 +57,7 @@ public class MainActivity : AvaloniaMainActivity<App>
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
+        EnableHighRefreshRate();
 
         // Crash interceptor
         global::Android.Runtime.AndroidEnvironment.UnhandledExceptionRaiser += (sender, args) =>
@@ -490,9 +494,60 @@ public class MainActivity : AvaloniaMainActivity<App>
         }
     }
 
+    private void EnableHighRefreshRate()
+    {
+        try
+        {
+            if (Window == null) return;
+            var layoutParams = Window.Attributes;
+            Display? display = null;
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.R)
+            {
+                display = Display;
+            }
+            else
+            {
+#pragma warning disable CS0618
+                display = WindowManager?.DefaultDisplay;
+#pragma warning restore CS0618
+            }
+
+            if (display != null)
+            {
+                var supportedModes = display.GetSupportedModes();
+                if (supportedModes != null && supportedModes.Length > 0)
+                {
+                    int targetModeId = 0;
+                    float maxRefreshRate = 0f;
+                    foreach (var mode in supportedModes)
+                    {
+                        if (mode.RefreshRate > maxRefreshRate)
+                        {
+                            maxRefreshRate = mode.RefreshRate;
+                            targetModeId = mode.ModeId;
+                        }
+                    }
+                    if (targetModeId != 0 && layoutParams != null)
+                    {
+                        layoutParams.PreferredDisplayModeId = targetModeId;
+                        Window.Attributes = layoutParams;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            global::Android.Util.Log.Warn("Fujifier", $"EnableHighRefreshRate warning: {ex.Message}");
+        }
+    }
+
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
         return base.CustomizeAppBuilder(builder)
-            .WithInterFont();
+            .WithInterFont()
+            .With(new SkiaOptions
+            {
+                MaxGpuResourceSizeBytes = 128 * 1024 * 1024
+            });
     }
 }

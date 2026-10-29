@@ -236,21 +236,10 @@
 
         <!-- Grid View & Mobile Card Selection, Hover and Entrance Animations -->
         <Style Selector="Border.mobile-card">
-            <Style.Animations>
-                <Animation Duration="0:0:0.25" FillMode="Forward" Easing="CubicEaseOut">
-                    <KeyFrame Cue="0%">
-                        <Setter Property="Opacity" Value="0.0"/>
-                    </KeyFrame>
-                    <KeyFrame Cue="100%">
-                        <Setter Property="Opacity" Value="1.0"/>
-                    </KeyFrame>
-                </Animation>
-            </Style.Animations>
             <Setter Property="Transitions">
                 <Transitions>
                     <BrushTransition Property="Background" Duration="0:0:0.18" Easing="CubicEaseOut"/>
                     <BrushTransition Property="BorderBrush" Duration="0:0:0.18" Easing="CubicEaseOut"/>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.15" Easing="CubicEaseOut"/>
                 </Transitions>
             </Setter>
         </Style>
@@ -541,16 +530,16 @@
             <Setter Property="RenderTransform" Value="translateY(0px) scale(1.0)"/>
             <Setter Property="Transitions">
                 <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.24" Easing="CubicEaseOut"/>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.28" Easing="BackEaseOut"/>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut"/>
                 </Transitions>
             </Setter>
         </Style>
         <Style Selector="Border.speed-dial-folder.open">
             <Setter Property="Transitions">
                 <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.28" Easing="CubicEaseOut"/>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.34" Easing="BackEaseOut"/>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.24" Easing="CubicEaseOut"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.24" Easing="CubicEaseOut"/>
                 </Transitions>
             </Setter>
         </Style>
@@ -717,7 +706,7 @@
             <Setter Property="BorderBrush" Value="{DynamicResource AppEdgeBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="23"/>
-            <Setter Property="BoxShadow" Value="0 8 24 0 #28000000"/>
+            <Setter Property="BoxShadow" Value="0 4 12 0 #18000000"/>
         </Style>
 
         <!-- Seamless Inspector Panel (No Outer Border) -->
