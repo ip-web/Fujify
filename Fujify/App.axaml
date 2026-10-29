@@ -378,7 +378,7 @@
 
         <!-- Studio Secondary Action Button (Translucent Pill) -->
         <Style Selector="Button.secondary">
-            <Setter Property="Background" Value="#10FFFFFF"/>
+            <Setter Property="Background" Value="{DynamicResource AppGlassPillBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource AppEdgeBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Foreground" Value="{DynamicResource AppTextPrimaryBrush}"/>
@@ -389,7 +389,7 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
         <Style Selector="Button.secondary /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#10FFFFFF"/>
+            <Setter Property="Background" Value="{DynamicResource AppGlassPillBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource AppEdgeBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Foreground" Value="{DynamicResource AppTextPrimaryBrush}"/>
@@ -427,9 +427,9 @@
             <Setter Property="Height" Value="56"/>
             <Setter Property="CornerRadius" Value="28"/>
             <Setter Property="Padding" Value="0"/>
-            <Setter Property="Background" Value="#FFFAF9FC"/>
-            <Setter Property="Foreground" Value="#FF252332"/>
-            <Setter Property="BorderBrush" Value="#B3FFFFFF"/>
+            <Setter Property="Background" Value="{DynamicResource AppPrimaryBtnBgBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppPrimaryBtnFgBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppEdgeBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -438,42 +438,30 @@
             <Setter Property="Transitions">
                 <Transitions>
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18" Easing="CubicEaseOut"/>
-                    <BrushTransition Property="Background" Duration="0:0:0.2" Easing="CubicEaseOut"/>
-                    <BrushTransition Property="Foreground" Duration="0:0:0.2" Easing="CubicEaseOut"/>
-                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" Easing="CubicEaseOut"/>
                 </Transitions>
             </Setter>
         </Style>
         <Style Selector="Button.fab /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="CornerRadius" Value="28"/>
-            <Setter Property="Background" Value="#FFFAF9FC"/>
-            <Setter Property="Foreground" Value="#FF252332"/>
-            <Setter Property="BorderBrush" Value="#B3FFFFFF"/>
+            <Setter Property="Background" Value="{DynamicResource AppPrimaryBtnBgBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppPrimaryBtnFgBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppEdgeBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Transitions">
-                <Transitions>
-                    <BrushTransition Property="Background" Duration="0:0:0.2" Easing="CubicEaseOut"/>
-                    <BrushTransition Property="Foreground" Duration="0:0:0.2" Easing="CubicEaseOut"/>
-                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2" Easing="CubicEaseOut"/>
-                </Transitions>
-            </Setter>
         </Style>
         <Style Selector="Button.fab:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#FFFFFFFF"/>
-            <Setter Property="BorderBrush" Value="#FFFFFFFF"/>
+            <Setter Property="Background" Value="{DynamicResource AppPrimaryBtnBgBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppEdgeBrush}"/>
             <Setter Property="CornerRadius" Value="28"/>
         </Style>
         <Style Selector="Button.fab:pointerover">
-            <Setter Property="Background" Value="#FFFFFFFF"/>
-            <Setter Property="BorderBrush" Value="#FFFFFFFF"/>
-            <Setter Property="RenderTransform" Value="scale(1.06)"/>
+            <Setter Property="RenderTransform" Value="scale(1.05)"/>
         </Style>
         <Style Selector="Button.fab:pressed /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="#FFE5E3F3"/>
+            <Setter Property="Background" Value="{DynamicResource AppPrimaryBtnBgBrush}"/>
             <Setter Property="CornerRadius" Value="28"/>
         </Style>
         <Style Selector="Button.fab:pressed">
-            <Setter Property="RenderTransform" Value="scale(0.92)"/>
+            <Setter Property="RenderTransform" Value="scale(0.94)"/>
         </Style>
         <Style Selector="Button.fab.open">
             <Setter Property="Background" Value="{DynamicResource AppAccentBrush}"/>
@@ -488,12 +476,12 @@
         </Style>
         <Style Selector="Button.fab.open:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource AppAccentLightBrush}"/>
-            <Setter Property="BorderBrush" Value="#FFFFFFFF"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppAccentLightBrush}"/>
             <Setter Property="CornerRadius" Value="28"/>
         </Style>
         <Style Selector="Button.fab.open:pointerover">
             <Setter Property="Background" Value="{DynamicResource AppAccentLightBrush}"/>
-            <Setter Property="BorderBrush" Value="#FFFFFFFF"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppAccentLightBrush}"/>
         </Style>
 
         <!-- FAB Icon Rotation Transition (+ -> ✕) -->
@@ -503,8 +491,7 @@
             <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
             <Setter Property="Transitions">
                 <Transitions>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut"/>
-                    <BrushTransition Property="Foreground" Duration="0:0:0.2" Easing="CubicEaseOut"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut"/>
                 </Transitions>
             </Setter>
         </Style>
@@ -571,17 +558,14 @@
         </Style>
 
         <Style Selector="Border.bottom-sheet">
-            <Setter Property="Opacity" Value="0.0"/>
             <Setter Property="RenderTransform" Value="translateY(560px)"/>
             <Setter Property="Transitions">
                 <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.24" Easing="CubicEaseOut"/>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.32" Easing="CubicEaseOut"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut"/>
                 </Transitions>
             </Setter>
         </Style>
         <Style Selector="Border.bottom-sheet.open">
-            <Setter Property="Opacity" Value="1.0"/>
             <Setter Property="RenderTransform" Value="translateY(0px)"/>
         </Style>
 
@@ -590,7 +574,7 @@
             <Setter Property="Opacity" Value="0.0"/>
             <Setter Property="Transitions">
                 <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.22" Easing="CubicEaseOut"/>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" Easing="CubicEaseOut"/>
                 </Transitions>
             </Setter>
         </Style>
@@ -600,12 +584,12 @@
 
         <Style Selector="Border.modal-card">
             <Setter Property="Opacity" Value="0.0"/>
-            <Setter Property="RenderTransform" Value="scale(0.88) translateY(18px)"/>
+            <Setter Property="RenderTransform" Value="scale(0.92) translateY(12px)"/>
             <Setter Property="RenderTransformOrigin" Value="50%,50%"/>
             <Setter Property="Transitions">
                 <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.24" Easing="CubicEaseOut"/>
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.28" Easing="BackEaseOut"/>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.18" Easing="CubicEaseOut"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.2" Easing="CubicEaseOut"/>
                 </Transitions>
             </Setter>
         </Style>
