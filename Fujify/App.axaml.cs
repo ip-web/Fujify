@@ -224,6 +224,7 @@ public partial class App : Application
             };
         }
 
+        Localization.LocalizationManager.Instance.SetLanguage(settingsService.Settings.Language);
         ApplyTheme(settingsService.Settings.ThemeMode);
         UpdateAccentBrush();
 

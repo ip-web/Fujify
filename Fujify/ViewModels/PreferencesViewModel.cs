@@ -25,6 +25,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Fujify.Common;
+using Fujify.Localization;
 using Fujify.Models;
 using Fujify.Services;
 using Fujify.Views;
@@ -361,6 +362,50 @@ namespace Fujify.ViewModels
             }
         }
 
+        public LocalizationManager Loc => LocalizationManager.Instance;
+
+        private string _language = "en";
+        public string Language
+        {
+            get => _language;
+            set
+            {
+                string normalized = LocalizationManager.NormalizeLanguageCode(value);
+                if (SetProperty(ref _language, normalized))
+                {
+                    OnPropertyChanged(nameof(IsEnglishSelected));
+                    OnPropertyChanged(nameof(IsFrenchSelected));
+                    OnPropertyChanged(nameof(IsSpanishSelected));
+                    OnPropertyChanged(nameof(IsGermanSelected));
+                    LocalizationManager.Instance.SetLanguage(normalized);
+                }
+            }
+        }
+
+        public bool IsEnglishSelected
+        {
+            get => _language.Equals("en", StringComparison.OrdinalIgnoreCase);
+            set { if (value) Language = "en"; }
+        }
+
+        public bool IsFrenchSelected
+        {
+            get => _language.Equals("fr", StringComparison.OrdinalIgnoreCase);
+            set { if (value) Language = "fr"; }
+        }
+
+        public bool IsSpanishSelected
+        {
+            get => _language.Equals("es", StringComparison.OrdinalIgnoreCase);
+            set { if (value) Language = "es"; }
+        }
+
+        public bool IsGermanSelected
+        {
+            get => _language.Equals("de", StringComparison.OrdinalIgnoreCase);
+            set { if (value) Language = "de"; }
+        }
+
         public bool BackupOriginalFile
         {
             get => _backupOriginalFile;
@@ -554,6 +599,7 @@ namespace Fujify.ViewModels
                 OnPropertyChanged(nameof(SlotInfoText));
             };
 
+            _language = LocalizationManager.NormalizeLanguageCode(settings.Language);
             _themeMode = string.IsNullOrEmpty(settings.ThemeMode)
                 ? (settings.IsDarkTheme ? "Dark" : "Light")
                 : settings.ThemeMode;
@@ -580,6 +626,7 @@ namespace Fujify.ViewModels
             SaveCommand = new RelayCommand(Save);
             CancelCommand = new RelayCommand(() =>
             {
+                LocalizationManager.Instance.SetLanguage(_settingsService.Settings.Language);
                 App.ApplyTheme(_settingsService.Settings.ThemeMode);
                 CloseAction?.Invoke(false);
             });
@@ -847,6 +894,8 @@ namespace Fujify.ViewModels
         private void Save()
         {
             var s = _settingsService.Settings;
+            s.Language = _language;
+            LocalizationManager.Instance.SetLanguage(_language);
             s.ThemeMode = _themeMode;
             s.BackupOriginalFile = _backupOriginalFile;
             s.EmbedOriginalRaw = _embedOriginalRaw;

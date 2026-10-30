@@ -31,6 +31,7 @@ using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using Fujify.Common;
+using Fujify.Localization;
 using Fujify.Models;
 using Fujify.Services;
 using Fujify.Views;
@@ -253,6 +254,11 @@ namespace Fujify.ViewModels
             DelayToggleKeyCommand = new RelayCommand(() => IsDelayKeyInputVisible = !IsDelayKeyInputVisible);
             DelayActivateKeyCommand = new AsyncRelayCommand(ExecuteDelayActivateKeyAsync);
 
+            LocalizationManager.Instance.LanguageChanged += (s, e) =>
+            {
+                OnPropertyChanged(nameof(Loc));
+            };
+
             OpenInLightroomCommand = new RelayCommand(() =>
             {
                 CloseModal();
@@ -287,6 +293,7 @@ namespace Fujify.ViewModels
         public bool IsOpenInLightroomSupported => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
         public bool CanOpenInLightroom => IsOpenInLightroomSupported && HasRecentlyConvertedFiles && ModalTitle == "Processing completed";
         public bool CanOpenOutputFolder => !OperatingSystem.IsIOS() && !OperatingSystem.IsAndroid() && HasRecentlyConvertedFiles && (ModalTitle == "Processing completed" || IsBatchSummaryModal);
+        public LocalizationManager Loc => LocalizationManager.Instance;
 
         #region Properties
 
@@ -1112,27 +1119,27 @@ namespace Fujify.ViewModels
             void Action()
             {
                 ModalType = "BatchSummary";
-                ModalTitle = "Batch Conversion Complete";
+                ModalTitle = LocalizationManager.Tr("BatchCompleteTitle");
 
                 int errorCount = Math.Max(0, totalCount - successCount);
 
                 if (errorCount == 0 && !hasErrors)
                 {
-                    BatchSummaryPhotosCountText = $"{successCount} of {totalCount} photos converted";
-                    BatchSummaryBadgeText = "✔ All Photos Converted";
+                    BatchSummaryPhotosCountText = LocalizationManager.TrFormat("PhotosConvertedCount", successCount, totalCount);
+                    BatchSummaryBadgeText = LocalizationManager.Tr("AllPhotosConverted");
                     ModalIcon = "✔";
                     ModalIconColor = new SolidColorBrush(Color.Parse("#00C781"));
                     ModalBadgeBackground = new SolidColorBrush(Color.FromArgb(40, 0, 199, 129));
-                    BatchSummaryNoticeText = "Fujifilm film simulations & sidecar XMP metadata merged.";
+                    BatchSummaryNoticeText = LocalizationManager.Tr("BatchNoticeSuccess");
                 }
                 else
                 {
-                    BatchSummaryPhotosCountText = $"{successCount} of {totalCount} photos converted ({errorCount} failed)";
-                    BatchSummaryBadgeText = "⚠ Completed with Warnings";
+                    BatchSummaryPhotosCountText = LocalizationManager.TrFormat("PhotosConvertedWithFailures", successCount, totalCount, errorCount);
+                    BatchSummaryBadgeText = LocalizationManager.Tr("CompletedWithWarnings");
                     ModalIcon = "⚠";
                     ModalIconColor = new SolidColorBrush(Color.Parse("#E67E22"));
                     ModalBadgeBackground = new SolidColorBrush(Color.FromArgb(40, 230, 126, 34));
-                    BatchSummaryNoticeText = "Some files could not be converted. Check the file list for details.";
+                    BatchSummaryNoticeText = LocalizationManager.Tr("BatchNoticeWarnings");
                 }
 
                 if (duration.TotalSeconds < 60)

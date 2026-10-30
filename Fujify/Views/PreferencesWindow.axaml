@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Fujify.ViewModels"
+        xmlns:loc="using:Fujify.Localization"
         x:Class="Fujify.Views.PreferencesWindow"
         x:DataType="vm:PreferencesViewModel"
         Title="Settings"
@@ -39,7 +40,7 @@
             <Grid Margin="24" RowDefinitions="Auto,*,Auto">
                 <!-- Header with Title and Close X -->
                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="4,0,0,16">
-                    <TextBlock Grid.Column="0" Text="Settings" FontWeight="SemiBold" FontSize="20"
+                    <TextBlock Grid.Column="0" Text="{loc:Loc Settings}" FontWeight="SemiBold" FontSize="20"
                                Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                     <Button Grid.Column="1" Command="{Binding CancelCommand}"
                             Width="30" Height="30" CornerRadius="15" Padding="0"
@@ -60,19 +61,45 @@
             <ScrollViewer Grid.Row="1" Padding="0,0,6,0" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel Spacing="16">
 
-                    <!-- 1. THEME -->
+                    <!-- 1. LANGUAGE -->
                     <Border Classes="panel" ClipToBounds="True">
                         <Grid RowDefinitions="Auto,*">
                             <!-- Inner Group Header -->
                             <Border Grid.Row="0" Padding="18,12" Background="Transparent"
                                     BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
-                                <TextBlock Text="Theme" FontWeight="SemiBold" FontSize="13"
+                                <TextBlock Text="{loc:Loc Language}" FontWeight="SemiBold" FontSize="13"
                                            Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                             </Border>
 
                             <!-- Group Content -->
                             <StackPanel Grid.Row="1" Margin="18,14" Spacing="10">
-                                <TextBlock Text="Appearance Mode" FontWeight="SemiBold" FontSize="12"
+                                <TextBlock Text="{loc:Loc SelectLanguage}" FontWeight="SemiBold" FontSize="12"
+                                           Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                <Grid ColumnDefinitions="*,*,*,*" Margin="0,2,0,2">
+                                    <RadioButton Grid.Column="0" Content="English" IsChecked="{Binding IsEnglishSelected, Mode=TwoWay}" GroupName="DesktopLanguage"/>
+                                    <RadioButton Grid.Column="1" Content="Français" IsChecked="{Binding IsFrenchSelected, Mode=TwoWay}" GroupName="DesktopLanguage"/>
+                                    <RadioButton Grid.Column="2" Content="Español" IsChecked="{Binding IsSpanishSelected, Mode=TwoWay}" GroupName="DesktopLanguage"/>
+                                    <RadioButton Grid.Column="3" Content="Deutsch" IsChecked="{Binding IsGermanSelected, Mode=TwoWay}" GroupName="DesktopLanguage"/>
+                                </Grid>
+                                <TextBlock Text="{loc:Loc LanguageHint}"
+                                           FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- 2. THEME -->
+                    <Border Classes="panel" ClipToBounds="True">
+                        <Grid RowDefinitions="Auto,*">
+                            <!-- Inner Group Header -->
+                            <Border Grid.Row="0" Padding="18,12" Background="Transparent"
+                                    BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
+                                <TextBlock Text="{loc:Loc Theme}" FontWeight="SemiBold" FontSize="13"
+                                           Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                            </Border>
+
+                            <!-- Group Content -->
+                            <StackPanel Grid.Row="1" Margin="18,14" Spacing="10">
+                                <TextBlock Text="{loc:Loc AppearanceMode}" FontWeight="SemiBold" FontSize="12"
                                            Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                 <Grid ColumnDefinitions="*,*,*,*" Margin="0,2,0,2">
                                     <RadioButton Grid.Column="0" Content="Automatic" IsChecked="{Binding IsAutoThemeSelected, Mode=TwoWay}" GroupName="DesktopTheme"/>
@@ -511,9 +538,9 @@
 
             <!-- Footer Buttons -->
             <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,16,0,0">
-                <Button Content="Cancel" Command="{Binding CancelCommand}" Classes="secondary" Width="90" Height="36" CornerRadius="18"
+                <Button Content="{loc:Loc Cancel}" Command="{Binding CancelCommand}" Classes="secondary" Width="90" Height="36" CornerRadius="18"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                <Button Content="Save" Command="{Binding SaveCommand}" Classes="primary" Width="90" Height="36" CornerRadius="18"
+                <Button Content="{loc:Loc Done}" Command="{Binding SaveCommand}" Classes="primary" Width="90" Height="36" CornerRadius="18"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
             </StackPanel>
         </Grid>
