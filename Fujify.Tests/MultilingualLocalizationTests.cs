@@ -289,7 +289,95 @@ namespace Fujify.Tests
             }
         }
 
+
+        [Fact]
+        public void PreferencesViewModel_SelectedLanguageItem_Dropdown_SwitchesLanguageAndNotifies()
+        {
+            string tempDir = Path.Combine(Path.GetTempPath(), "FujifyTest_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDir);
+            try
+            {
+                string settingsFile = Path.Combine(tempDir, "settings.json");
+                var settingsService = new SettingsService(settingsFile);
+                var licenseService = new LicenseService(settingsService);
+                var vm = new PreferencesViewModel(settingsService, licenseService);
+
+                var languages = vm.AvailableLanguages;
+                Assert.NotNull(languages);
+                Assert.True(languages.Count >= 4);
+
+                var frenchItem = languages.First(l => l.Code == "fr");
+                vm.SelectedLanguageItem = frenchItem;
+
+                Assert.Equal("fr", vm.Language);
+                Assert.Equal("fr", LocalizationManager.Instance.CurrentLanguage);
+                Assert.True(vm.IsFrenchSelected);
+                Assert.Equal("Paramètres", LocalizationManager.Tr("Settings"));
+
+                var germanItem = languages.First(l => l.Code == "de");
+                vm.SelectedLanguageItem = germanItem;
+
+                Assert.Equal("de", vm.Language);
+                Assert.Equal("de", LocalizationManager.Instance.CurrentLanguage);
+                Assert.True(vm.IsGermanSelected);
+                Assert.Equal("Einstellungen", LocalizationManager.Tr("Settings"));
+            }
+            finally
+            {
+                if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
+            }
+        }
+
+        [Fact]
+        public void FileItem_LocalizedStatus_TranslatesAcrossAllLanguages()
+        {
+            var item = new Models.FileItem { FilePath = "test.raf", Status = "Pending" };
+
+            LocalizationManager.Instance.SetLanguage("en");
+            Assert.Equal("Pending", item.LocalizedStatus);
+
+            LocalizationManager.Instance.SetLanguage("fr");
+            Assert.Equal("En attente", item.LocalizedStatus);
+
+            LocalizationManager.Instance.SetLanguage("es");
+            Assert.Equal("Pendiente", item.LocalizedStatus);
+
+            LocalizationManager.Instance.SetLanguage("de");
+            Assert.Equal("Ausstehend", item.LocalizedStatus);
+        }
+
+        [Theory]
+        [InlineData("en")]
+        [InlineData("fr")]
+        [InlineData("es")]
+        [InlineData("de")]
+        public void Translations_AllLanguagesContainAllCriticalKeys(string langCode)
+        {
+            try
+            {
+                LocalizationManager.Instance.SetLanguage(langCode);
+
+                string[] criticalKeys = new[]
+                {
+                    "AppTitle", "Settings", "About", "Status", "Theme", "Language",
+                    "AddFiles", "AddFolder", "ClearQueue", "DropPhotosHere",
+                    "Close", "Cancel", "Save", "Done", "GotIt", "GetPro", "BuyPro",
+                    "NonWorkingCameras", "PartiallyWorkingCameras", "FreeTierDialogTitle",
+                    "FileConflictTitle", "NewVersionAvailable", "Updates"
+                };
+
+                foreach (var key in criticalKeys)
+                {
+                    string val = LocalizationManager.Tr(key);
+                    Assert.False(string.IsNullOrWhiteSpace(val), $"Key '{key}' was empty in language '{langCode}'");
+                }
+            }
+            finally
+            {
+                LocalizationManager.Instance.SetLanguage("en");
+            }
+        }
+
         #endregion
     }
 }
-

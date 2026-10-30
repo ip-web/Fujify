@@ -364,6 +364,30 @@ namespace Fujify.ViewModels
 
         public LocalizationManager Loc => LocalizationManager.Instance;
 
+        public System.Collections.Generic.IReadOnlyList<LanguageItem> AvailableLanguages => LocalizationManager.AvailableLanguages;
+
+        public LanguageItem? SelectedLanguageItem
+        {
+            get
+            {
+                string norm = LocalizationManager.NormalizeLanguageCode(_language);
+                foreach (var item in AvailableLanguages)
+                {
+                    if (item.Code.Equals(norm, StringComparison.OrdinalIgnoreCase))
+                        return item;
+                }
+                return AvailableLanguages.Count > 0 ? AvailableLanguages[0] : null;
+            }
+            set
+            {
+                if (value != null && !string.Equals(value.Code, _language, StringComparison.OrdinalIgnoreCase))
+                {
+                    Language = value.Code;
+                    OnPropertyChanged(nameof(SelectedLanguageItem));
+                }
+            }
+        }
+
         private string _language = "en";
         public string Language
         {
@@ -373,6 +397,7 @@ namespace Fujify.ViewModels
                 string normalized = LocalizationManager.NormalizeLanguageCode(value);
                 if (SetProperty(ref _language, normalized))
                 {
+                    OnPropertyChanged(nameof(SelectedLanguageItem));
                     OnPropertyChanged(nameof(IsEnglishSelected));
                     OnPropertyChanged(nameof(IsFrenchSelected));
                     OnPropertyChanged(nameof(IsSpanishSelected));

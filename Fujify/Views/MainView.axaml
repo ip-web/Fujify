@@ -58,7 +58,7 @@
                                 PointerPressed="TitleBar_PointerPressed"
                                 DoubleTapped="TitleBar_DoubleTapped">
                         <Image Source="/Assets/images/logoXL.png" Width="14" Height="14" Stretch="Uniform" VerticalAlignment="Center" IsHitTestVisible="False"/>
-                        <TextBlock Text="Fujifier — Film simulation engine" FontSize="11" Foreground="#8C8A9F" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                        <TextBlock Text="{loc:Loc AppSubtitle}" FontSize="11" Foreground="#8C8A9F" VerticalAlignment="Center" IsHitTestVisible="False"/>
                     </StackPanel>
 
                     <!-- Center: Draggable Spacer -->
@@ -70,15 +70,15 @@
                     <StackPanel x:Name="CaptionButtonsPanel" Grid.Column="2" Orientation="Horizontal" Spacing="0" VerticalAlignment="Stretch" HorizontalAlignment="Right"
                                 IsVisible="{Binding ShowCaptionButtons}">
                         <!-- Minimize Button -->
-                        <Button x:Name="TitleBarMinimizeButton" Classes="win-caption" Click="TitleBar_Minimize_Click" ToolTip.Tip="Minimize">
+                        <Button x:Name="TitleBarMinimizeButton" Classes="win-caption" Click="TitleBar_Minimize_Click" ToolTip.Tip="{loc:Loc Minimize}">
                             <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                         <!-- Maximize / Restore Button -->
-                        <Button x:Name="TitleBarMaximizeButton" Classes="win-caption" Click="TitleBar_Maximize_Click" ToolTip.Tip="Maximize">
+                        <Button x:Name="TitleBarMaximizeButton" Classes="win-caption" Click="TitleBar_Maximize_Click" ToolTip.Tip="{loc:Loc Maximize}">
                             <TextBlock Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                         <!-- Close Button -->
-                        <Button x:Name="TitleBarCloseButton" Classes="win-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="Close">
+                        <Button x:Name="TitleBarCloseButton" Classes="win-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="{loc:Loc Close}">
                             <TextBlock Text="&#x2715;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                     </StackPanel>
@@ -107,7 +107,7 @@
                                     <StackPanel VerticalAlignment="Center" Spacing="1">
                                         <TextBlock Text="Fujifier" FontSize="16" FontWeight="Bold"
                                                    Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                        <TextBlock Text="Film Simulation Engine" FontSize="10" FontWeight="Medium"
+                                        <TextBlock Text="{loc:Loc AppSubtitle}" FontSize="10" FontWeight="Medium"
                                                    Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                     </StackPanel>
                                 </StackPanel>
@@ -122,14 +122,14 @@
                                     <Button Command="{Binding ClearCommand}"
                                             IsVisible="{Binding HasFiles}"
                                             Classes="secondary" Height="36" Padding="14,0" CornerRadius="18"
-                                            Content="Clear" FontSize="11" FontWeight="SemiBold"
+                                            Content="{loc:Loc Clear}" FontSize="11" FontWeight="SemiBold"
                                             VerticalContentAlignment="Center"
-                                            ToolTip.Tip="Remove all photos from queue"/>
+                                            ToolTip.Tip="{loc:Loc TooltipClearQueue}"/>
 
                                     <Button Command="{Binding OpenAboutCommand}"
                                             Classes="secondary" Width="36" Height="36" Padding="0" CornerRadius="18"
                                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                            ToolTip.Tip="About &amp; Info">
+                                            ToolTip.Tip="{loc:Loc About}">
                                         <PathIcon Data="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
                                                   Width="16" Height="16" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                     </Button>
@@ -137,20 +137,20 @@
                                     <Button Command="{Binding OpenPreferencesCommand}"
                                             Classes="secondary" Width="36" Height="36" Padding="0" CornerRadius="18"
                                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                            ToolTip.Tip="Settings">
+                                            ToolTip.Tip="{loc:Loc Settings}">
                                         <PathIcon Data="M 12 15 A 3 3 0 1 0 12 9 A 3 3 0 1 0 12 15 M 19.4 15 a 1.65 1.65 0 0 0 .33 1.82 l .06 .06 a 2 2 0 1 1 -2.83 2.83 l -.06 -.06 a 1.65 1.65 0 0 0 -1.82 -.33 1.65 1.65 0 0 0 -1 1.51 V 21 a 2 2 0 1 1 -4 0 v -.09 A 1.65 1.65 0 0 0 9 19.4 a 1.65 1.65 0 0 0 -1.82 .33 l -.06 .06 a 2 2 0 1 1 -2.83 -2.83 l .06 -.06 a 1.65 1.65 0 0 0 .33 -1.82 1.65 1.65 0 0 0 -1.51 -1 H 3 a 2 2 0 1 1 0 -4 h .09 A 1.65 1.65 0 0 0 4.6 9 a 1.65 1.65 0 0 0 -.33 -1.82 l -.06 -.06 a 2 2 0 1 1 2.83 -2.83 l .06 .06 a 1.65 1.65 0 0 0 1.82 .33 H 9 a 1.65 1.65 0 0 0 1 -1.51 V 3 a 2 2 0 1 1 4 0 v .09 a 1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82 -.33 l .06 -.06 a 2 2 0 1 1 2.83 2.83 l -.06 .06 a 1.65 1.65 0 0 0 -.33 1.82 V 9 a 1.65 1.65 0 0 0 1.51 1 H 21 a 2 2 0 1 1 0 4 h -.09 a 1.65 1.65 0 0 0 -1.51 1 Z"
                                                   Width="16" Height="16" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                     </Button>
 
                                     <!-- Optional Desktop Caption Buttons when running on desktop window -->
                                     <StackPanel Orientation="Horizontal" Spacing="0" IsVisible="{Binding ShowCaptionButtons}">
-                                        <Button Classes="win-caption" Click="TitleBar_Minimize_Click" Width="32" Height="32" ToolTip.Tip="Minimize">
+                                        <Button Classes="win-caption" Click="TitleBar_Minimize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Minimize}">
                                             <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                                         </Button>
-                                        <Button Classes="win-caption" Click="TitleBar_Maximize_Click" Width="32" Height="32" ToolTip.Tip="Maximize">
+                                        <Button Classes="win-caption" Click="TitleBar_Maximize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Maximize}">
                                             <TextBlock Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                                         </Button>
-                                        <Button Classes="win-caption close" Click="TitleBar_Close_Click" Width="32" Height="32" ToolTip.Tip="Close">
+                                        <Button Classes="win-caption close" Click="TitleBar_Close_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Close}">
                                             <TextBlock Text="&#x2715;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                                         </Button>
                                     </StackPanel>
@@ -169,9 +169,9 @@
                                                 HorizontalAlignment="Center">
                                             <TextBlock Text="📸" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
-                                        <TextBlock Text="Add RAW Photos to Begin" FontWeight="Bold" FontSize="17"
+                                        <TextBlock Text="{loc:Loc AddRawPhotosToBegin}" FontWeight="Bold" FontSize="17"
                                                    Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="Tap the '+' button below to import RAW files from your camera, SD card, or photo library."
+                                        <TextBlock Text="{loc:Loc MobileEmptyStateHint}"
                                                    FontSize="12" Foreground="{DynamicResource AppTextSecondaryBrush}"
                                                    TextAlignment="Center" TextWrapping="Wrap"/>
                                     </StackPanel>
@@ -269,7 +269,7 @@
                                                               Foreground="{DynamicResource AppAccentBrush}"
                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
-                                                <TextBlock Text="Add Folder" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc AddFolder}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
@@ -290,7 +290,7 @@
                                                               Foreground="{DynamicResource AppAccentBrush}"
                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Border>
-                                                <TextBlock Text="Add Files" FontSize="12" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc AddFiles}" FontSize="12" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                             </StackPanel>
                                         </Button>
@@ -307,7 +307,7 @@
                                             Width="56" Height="56" CornerRadius="28"
                                             Padding="0"
                                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                            ToolTip.Tip="Add photos or folder">
+                                            ToolTip.Tip="{loc:Loc TooltipAddPhotos}">
                                         <PathIcon Classes="fab-icon" Classes.open="{Binding IsMobileAddMenuOpen}"
                                                   Data="M 11 4 A 1 1 0 0 1 13 4 V 11 H 20 A 1 1 0 0 1 20 13 H 13 V 20 A 1 1 0 0 1 11 20 V 13 H 4 A 1 1 0 0 1 4 11 H 11 Z"
                                                   Width="20" Height="20"/>
@@ -338,7 +338,7 @@
                                     <Button Grid.Column="0" Command="{Binding ToggleMobileSidebarCommand}"
                                             Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,8,0"
                                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Cursor="Hand"
-                                            ToolTip.Tip="Fold / unfold sidebar options and photo info">
+                                            ToolTip.Tip="{loc:Loc TooltipFoldSidebar}">
                                         <StackPanel VerticalAlignment="Center" Spacing="2">
                                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                                 <Ellipse Width="6" Height="6" Fill="#A5D5B7" VerticalAlignment="Center"/>
@@ -354,11 +354,11 @@
                                     <Button Grid.Column="1" Command="{Binding ToggleMobileSidebarCommand}"
                                             Classes="secondary" Height="40" Padding="12,0" Margin="0,0,8,0" CornerRadius="20"
                                             VerticalAlignment="Center"
-                                            ToolTip.Tip="Fold / unfold sidebar menu">
+                                            ToolTip.Tip="{loc:Loc TooltipFoldSidebar}">
                                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                             <PathIcon Data="M 4 21 v -7 M 4 10 V 3 M 12 21 v -9 M 12 8 V 3 M 20 21 v -5 M 20 12 V 3 M 1 14 h 6 M 9 8 h 6 M 17 16 h 6"
                                                       Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Options" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"
+                                            <TextBlock Text="{loc:Loc Options}" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"
                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                             <TextBlock Text="{Binding MobileSidebarChevron}" FontSize="9" VerticalAlignment="Center"
                                                        Foreground="{DynamicResource AppAccentBrush}"/>
@@ -416,7 +416,7 @@
                                                 Classes="tab-btn" Classes.active="{Binding IsInspectorSettingsTab}"
                                                 Margin="0,0,12,0" Padding="8,6">
                                             <StackPanel Spacing="4" HorizontalAlignment="Center">
-                                                <TextBlock Text="Settings" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                                <TextBlock Text="{loc:Loc Settings}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                                 <Border Height="2" Width="48" Background="{DynamicResource AppAccentBrush}"
                                                         IsVisible="{Binding IsInspectorSettingsTab}"/>
                                             </StackPanel>
@@ -427,7 +427,7 @@
                                                 Classes="tab-btn" Classes.active="{Binding IsInspectorInfoTab}"
                                                 Padding="8,6">
                                             <StackPanel Spacing="4" HorizontalAlignment="Center">
-                                                <TextBlock Text="Photo info" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                                <TextBlock Text="{loc:Loc PhotoInfo}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                                 <Border Height="2" Width="48" Background="{DynamicResource AppAccentBrush}"
                                                         IsVisible="{Binding IsInspectorInfoTab}"/>
                                             </StackPanel>
@@ -440,7 +440,7 @@
                                         <Button Command="{Binding OpenAboutCommand}"
                                                 Classes="secondary" Width="30" Height="30" CornerRadius="15" Padding="0"
                                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                                ToolTip.Tip="About &amp; Info">
+                                                ToolTip.Tip="{loc:Loc About}">
                                             <PathIcon Data="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
                                                       Width="14" Height="14" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                         </Button>
@@ -449,7 +449,7 @@
                                         <Button Command="{Binding OpenPreferencesCommand}"
                                                 Classes="secondary" Width="30" Height="30" CornerRadius="15" Padding="0"
                                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                                ToolTip.Tip="Application Settings">
+                                                ToolTip.Tip="{loc:Loc Settings}">
                                             <PathIcon Data="M 12 15 A 3 3 0 1 0 12 9 A 3 3 0 1 0 12 15 M 19.4 15 a 1.65 1.65 0 0 0 .33 1.82 l .06 .06 a 2 2 0 1 1 -2.83 2.83 l -.06 -.06 a 1.65 1.65 0 0 0 -1.82 -.33 1.65 1.65 0 0 0 -1 1.51 V 21 a 2 2 0 1 1 -4 0 v -.09 A 1.65 1.65 0 0 0 9 19.4 a 1.65 1.65 0 0 0 -1.82 .33 l -.06 .06 a 2 2 0 1 1 -2.83 -2.83 l .06 -.06 a 1.65 1.65 0 0 0 .33 -1.82 1.65 1.65 0 0 0 -1.51 -1 H 3 a 2 2 0 1 1 0 -4 h .09 A 1.65 1.65 0 0 0 4.6 9 a 1.65 1.65 0 0 0 -.33 -1.82 l -.06 -.06 a 2 2 0 1 1 2.83 -2.83 l .06 .06 a 1.65 1.65 0 0 0 1.82 .33 H 9 a 1.65 1.65 0 0 0 1 -1.51 V 3 a 2 2 0 1 1 4 0 v .09 a 1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82 -.33 l .06 -.06 a 2 2 0 1 1 2.83 2.83 l -.06 .06 a 1.65 1.65 0 0 0 -.33 1.82 V 9 a 1.65 1.65 0 0 0 1.51 1 H 21 a 2 2 0 1 1 0 4 h -.09 a 1.65 1.65 0 0 0 -1.51 1 Z"
                                                       Width="14" Height="14" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                         </Button>
@@ -458,7 +458,7 @@
                                         <Button Command="{Binding CloseMobileSidebarCommand}"
                                                 Classes="secondary" Width="30" Height="30" CornerRadius="15" Padding="0"
                                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                                ToolTip.Tip="Fold down">
+                                                ToolTip.Tip="{loc:Loc TooltipFoldSidebar}">
                                             <TextBlock Text="✕" FontSize="11" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}"
                                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -475,7 +475,7 @@
                                     <StackPanel IsVisible="{Binding IsInspectorSettingsTab}" Spacing="14">
                                         <!-- Output Destination Section -->
                                         <StackPanel Spacing="8">
-                                            <TextBlock Text="Output destination" FontSize="10" FontWeight="SemiBold"
+                                            <TextBlock Text="{loc:Loc OutputDestination}" FontSize="10" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                             <!-- Browse Output Folder with Nested Reset Cross -->
                                             <Border Background="{DynamicResource AppSurfaceSecondaryBrush}"
@@ -487,7 +487,7 @@
                                                             Background="Transparent" BorderThickness="0" Padding="0"
                                                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center"
                                                             ClipToBounds="True"
-                                                            ToolTip.Tip="Select custom output folder (Default: same as originals)">
+                                                            ToolTip.Tip="{loc:Loc OutputDestinationTooltip}">
                                                         <Button.Styles>
                                                             <Style Selector="Button:pointerover /template/ ContentPresenter">
                                                                 <Setter Property="Background" Value="Transparent"/>
@@ -508,7 +508,7 @@
                                                             Width="20" Height="20" Padding="0" Margin="4,0,0,0"
                                                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                                             Background="Transparent" Foreground="{DynamicResource AppTextSecondaryBrush}"
-                                                            BorderThickness="0" Cursor="Hand" ToolTip.Tip="Reset to source folder">
+                                                            BorderThickness="0" Cursor="Hand" ToolTip.Tip="{loc:Loc ResetToSourceFolder}">
                                                         <Button.Styles>
                                                             <Style Selector="Button:pointerover">
                                                                 <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}"/>
@@ -524,26 +524,26 @@
 
                                         <!-- File Handling Section -->
                                         <StackPanel Spacing="10">
-                                            <TextBlock Text="File handling" FontSize="10" FontWeight="SemiBold"
+                                            <TextBlock Text="{loc:Loc FileHandling}" FontSize="10" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}"/>
 
                                             <!-- Backup Switch -->
                                             <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0" Text="Backup original file" FontSize="11"
+                                                <TextBlock Grid.Column="0" Text="{loc:Loc BackupOriginalFile}" FontSize="11"
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                 <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateBackup}" OnContent="" OffContent=""/>
                                             </Grid>
 
                                             <!-- Suffix Switch -->
                                             <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0" Text="Add filename suffix" FontSize="11"
+                                                <TextBlock Grid.Column="0" Text="{loc:Loc AddFilenameSuffix}" FontSize="11"
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                 <ToggleSwitch Grid.Column="1" IsChecked="{Binding AppendSuffix}" OnContent="" OffContent=""/>
                                             </Grid>
 
                                             <!-- Inline Suffix Input -->
                                             <Grid ColumnDefinitions="Auto,*" Margin="0,-4,0,2" IsVisible="{Binding AppendSuffix}">
-                                                <TextBlock Grid.Column="0" Text="Suffix:" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
+                                                <TextBlock Grid.Column="0" Text="{loc:Loc SuffixLabel}" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
                                                            Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                                 <TextBox Grid.Column="1" Text="{Binding Suffix}"
                                                          Background="{DynamicResource AppSurfaceSecondaryBrush}"
@@ -555,7 +555,7 @@
 
                                             <!-- Subfolder Switch -->
                                             <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0" Text="Save in subfolder" FontSize="11"
+                                                <TextBlock Grid.Column="0" Text="{loc:Loc SaveInSubfolder}" FontSize="11"
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                 <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateSubfolder}" OnContent="" OffContent=""/>
                                             </Grid>
@@ -564,14 +564,14 @@
                                             <StackPanel Spacing="8" Margin="8,0,0,4" IsVisible="{Binding CreateSubfolder}">
                                                 <!-- Keep original folder name switch -->
                                                 <Grid ColumnDefinitions="*,Auto">
-                                                    <TextBlock Grid.Column="0" Text="Keep original folder name" FontSize="10"
+                                                    <TextBlock Grid.Column="0" Text="{loc:Loc KeepOriginalFolderName}" FontSize="10"
                                                                Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
                                                     <ToggleSwitch Grid.Column="1" IsChecked="{Binding SubfolderUseOriginalName}" OnContent="" OffContent=""/>
                                                 </Grid>
 
                                                 <!-- Dir suffix (when using original name) -->
                                                 <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding SubfolderUseOriginalName}">
-                                                    <TextBlock Grid.Column="0" Text="Dir suffix:" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
+                                                    <TextBlock Grid.Column="0" Text="{loc:Loc DirSuffix}" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
                                                                Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                                     <TextBox Grid.Column="1" Text="{Binding SubfolderSuffix}"
                                                              Background="{DynamicResource AppSurfaceSecondaryBrush}"
@@ -583,7 +583,7 @@
 
                                                 <!-- Custom folder name (when NOT using original name) -->
                                                 <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
-                                                    <TextBlock Grid.Column="0" Text="Folder name:" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
+                                                    <TextBlock Grid.Column="0" Text="{loc:Loc FolderName}" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
                                                                Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                                     <TextBox Grid.Column="1" Text="{Binding SubfolderCustomName}"
                                                              Background="{DynamicResource AppSurfaceSecondaryBrush}"
@@ -601,14 +601,14 @@
 
                                             <!-- Open Folder When Done Switch -->
                                             <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0" Text="Open folder when done" FontSize="11"
+                                                <TextBlock Grid.Column="0" Text="{loc:Loc OpenFolderWhenDone}" FontSize="11"
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                 <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenOutputFolder}" OnContent="" OffContent=""/>
                                             </Grid>
 
                                             <!-- Open in Lightroom Switch (Mobile & Supported Platforms) -->
                                             <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsOpenInLightroomSupported}">
-                                                <TextBlock Grid.Column="0" Text="Open in Lightroom" FontSize="11"
+                                                <TextBlock Grid.Column="0" Text="{loc:Loc OpenInLightroom}" FontSize="11"
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                 <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenInLightroom}" OnContent="" OffContent=""/>
                                             </Grid>
@@ -618,7 +618,7 @@
                                     <!-- TAB 2: PHOTO INFO VIEW -->
                                     <StackPanel IsVisible="{Binding IsInspectorInfoTab}" Spacing="14">
                                         <!-- Empty Photo Selection State -->
-                                        <TextBlock Text="Select a photo from the queue to view metadata and exposure details."
+                                        <TextBlock Text="{loc:Loc SelectPhotoHint}"
                                                    FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"
                                                    TextWrapping="Wrap" TextAlignment="Center" Margin="0,20"
                                                    IsVisible="{Binding SelectedFile, Converter={x:Static ObjectConverters.IsNull}}"/>
@@ -648,50 +648,50 @@
                                             <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,4">
                                                 <!-- Aperture -->
                                                 <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,12">
-                                                    <TextBlock Text="Aperture" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                    <TextBlock Text="{loc:Loc Aperture}" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
                                                     <TextBlock Text="{Binding SelectedFile.Aperture, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                 </StackPanel>
 
                                                 <!-- Shutter Speed -->
                                                 <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,12">
-                                                    <TextBlock Text="Shutter speed" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                    <TextBlock Text="{loc:Loc ShutterSpeed}" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
                                                     <TextBlock Text="{Binding SelectedFile.ShutterSpeed, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                 </StackPanel>
 
                                                 <!-- Focal Length -->
                                                 <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,12">
-                                                    <TextBlock Text="Focal length" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                    <TextBlock Text="{loc:Loc FocalLength}" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
                                                     <TextBlock Text="{Binding SelectedFile.FocalLength, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                 </StackPanel>
 
                                                 <!-- File Size -->
                                                 <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,12">
-                                                    <TextBlock Text="File size" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                    <TextBlock Text="{loc:Loc FileSize}" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
                                                     <TextBlock Text="{Binding SelectedFile.FormattedFileSize, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                 </StackPanel>
 
                                                 <!-- ISO -->
                                                 <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,12">
-                                                    <TextBlock Text="ISO" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                    <TextBlock Text="{loc:Loc Iso}" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
                                                     <TextBlock Text="{Binding SelectedFile.Iso, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                 </StackPanel>
 
                                                 <!-- Date Taken (EXIF) -->
                                                 <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,12">
-                                                    <TextBlock Text="Date taken" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                    <TextBlock Text="{loc:Loc DateTaken}" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
                                                     <TextBlock Text="{Binding SelectedFile.DateTimeOriginal, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
                                                 </StackPanel>
 
                                                 <!-- Status -->
                                                 <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
-                                                    <TextBlock Text="Status" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
-                                                    <TextBlock Text="{Binding SelectedFile.Status, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
+                                                    <TextBlock Text="{loc:Loc Status}" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                    <TextBlock Text="{Binding SelectedFile.LocalizedStatus, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource AppAccentLightBrush}"/>
                                                 </StackPanel>
                                             </Grid>
@@ -728,19 +728,19 @@
 
                                 <!-- Settings Button -->
                                 <Button Grid.Row="2" Classes="nav" Command="{Binding OpenPreferencesCommand}"
-                                        HorizontalAlignment="Center" Margin="0,0,0,10" ToolTip.Tip="Settings">
+                                        HorizontalAlignment="Center" Margin="0,0,0,10" ToolTip.Tip="{loc:Loc Settings}">
                                     <StackPanel Spacing="5" HorizontalAlignment="Center">
                                         <PathIcon Data="M 12 15 A 3 3 0 1 0 12 9 A 3 3 0 1 0 12 15 M 19.4 15 a 1.65 1.65 0 0 0 .33 1.82 l .06 .06 a 2 2 0 1 1 -2.83 2.83 l -.06 -.06 a 1.65 1.65 0 0 0 -1.82 -.33 1.65 1.65 0 0 0 -1 1.51 V 21 a 2 2 0 1 1 -4 0 v -.09 A 1.65 1.65 0 0 0 9 19.4 a 1.65 1.65 0 0 0 -1.82 .33 l -.06 .06 a 2 2 0 1 1 -2.83 -2.83 l .06 -.06 a 1.65 1.65 0 0 0 .33 -1.82 1.65 1.65 0 0 0 -1.51 -1 H 3 a 2 2 0 1 1 0 -4 h .09 A 1.65 1.65 0 0 0 4.6 9 a 1.65 1.65 0 0 0 -.33 -1.82 l -.06 -.06 a 2 2 0 1 1 2.83 -2.83 l .06 .06 a 1.65 1.65 0 0 0 1.82 .33 H 9 a 1.65 1.65 0 0 0 1 -1.51 V 3 a 2 2 0 1 1 4 0 v .09 a 1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82 -.33 l .06 -.06 a 2 2 0 1 1 2.83 2.83 l -.06 .06 a 1.65 1.65 0 0 0 -.33 1.82 V 9 a 1.65 1.65 0 0 0 1.51 1 H 21 a 2 2 0 1 1 0 4 h -.09 a 1.65 1.65 0 0 0 -1.51 1 Z" Width="18" Height="18" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="Settings" FontSize="9" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{loc:Loc Settings}" FontSize="9" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
 
                                 <!-- Info / About Button -->
                                 <Button Grid.Row="3" Classes="nav" Command="{Binding OpenAboutCommand}"
-                                        HorizontalAlignment="Center" Margin="0,0,0,6" ToolTip.Tip="About &amp; Info">
+                                        HorizontalAlignment="Center" Margin="0,0,0,6" ToolTip.Tip="{loc:Loc About}">
                                     <StackPanel Spacing="5" HorizontalAlignment="Center">
                                         <PathIcon Data="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" Width="18" Height="18" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="About" FontSize="9" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{loc:Loc About}" FontSize="9" HorizontalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                             </Grid>
@@ -755,11 +755,11 @@
                                 <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
                                     <!-- Studio Heading -->
                                     <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                                        <TextBlock Text="FUJIFILM PICTURE PROFILES FOR EVERYONE" FontSize="9.5" FontWeight="SemiBold"
+                                        <TextBlock Text="{loc:Loc TaglineMain}" FontSize="9.5" FontWeight="SemiBold"
                                                    Foreground="#9D96B6" LetterSpacing="1.8"/>
                                         <TextBlock Text="Fujifier" FontSize="26" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource AppTextPrimaryBrush}" LetterSpacing="-0.8"/>
-                                        <TextBlock Text="Import your RAW photos. Unlock Fujifilm film simulation. Enjoy" FontSize="11"
+                                        <TextBlock Text="{loc:Loc TaglineSub}" FontSize="11"
                                                    Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                     </StackPanel>
 
@@ -771,7 +771,7 @@
                                             <Border Classes="step-badge" Width="19" Height="19" CornerRadius="10">
                                                 <TextBlock Text="1" FontSize="9" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
-                                            <TextBlock Text="Import" FontSize="10" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{loc:Loc StepImport}" FontSize="10" VerticalAlignment="Center"/>
                                         </StackPanel>
 
                                         <!-- Step 2: Configure -->
@@ -780,7 +780,7 @@
                                             <Border Classes="step-badge" Width="19" Height="19" CornerRadius="10">
                                                 <TextBlock Text="2" FontSize="9" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
-                                            <TextBlock Text="Configure" FontSize="10" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{loc:Loc StepConfigure}" FontSize="10" VerticalAlignment="Center"/>
                                         </StackPanel>
 
                                         <!-- Step 3: Process -->
@@ -789,7 +789,7 @@
                                             <Border Classes="step-badge" Width="19" Height="19" CornerRadius="10">
                                                 <TextBlock Text="3" FontSize="9" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
-                                            <TextBlock Text="Process" FontSize="10" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{loc:Loc StepProcess}" FontSize="10" VerticalAlignment="Center"/>
                                         </StackPanel>
 
                                         <!-- Step 4: Done -->
@@ -798,7 +798,7 @@
                                             <Border Classes="step-badge" Width="19" Height="19" CornerRadius="10">
                                                 <TextBlock Text="4" FontSize="9" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             </Border>
-                                            <TextBlock Text="Done" FontSize="10" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{loc:Loc StepDone}" FontSize="10" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Grid>
@@ -822,7 +822,7 @@
                                                 <!-- Primary + Add Files -->
                                                 <Button Classes="primary" Command="{Binding AddFilesCommand}"
                                                         Height="32" Padding="14,0" CornerRadius="16"
-                                                        ToolTip.Tip="Import RAW photos from computer">
+                                                        ToolTip.Tip="{loc:Loc ChooseFiles}">
                                                     <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
                                                         <PathIcon Data="M 11 4 A 1 1 0 0 1 13 4 V 11 H 20 A 1 1 0 0 1 20 13 H 13 V 20 A 1 1 0 0 1 11 20 V 13 H 4 A 1 1 0 0 1 4 11 H 11 Z" Width="11" Height="11" Foreground="{DynamicResource AppPrimaryBtnFgBrush}"/>
                                                         <TextBlock Text="{loc:Loc AddFiles}" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource AppPrimaryBtnFgBrush}" VerticalAlignment="Center"/>
@@ -832,7 +832,7 @@
                                                 <!-- Secondary + Add Folder -->
                                                 <Button Classes="secondary" Command="{Binding AddFolderCommand}"
                                                         Height="32" Padding="14,0" CornerRadius="16"
-                                                        ToolTip.Tip="Import folder containing RAW photos">
+                                                        ToolTip.Tip="{loc:Loc ChooseFolder}">
                                                     <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
                                                         <PathIcon Data="M 3 7 V 5 h 7 l 2 3 h 9 v 12 H 3 Z" Width="11" Height="11" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                         <TextBlock Text="{loc:Loc AddFolder}" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
@@ -842,7 +842,7 @@
                                                 <!-- Secondary Clear -->
                                                 <Button Classes="secondary" Command="{Binding ClearCommand}"
                                                         Height="32" Padding="12,0" CornerRadius="16"
-                                                        IsVisible="{Binding HasFiles}" ToolTip.Tip="Remove all photos from queue">
+                                                        IsVisible="{Binding HasFiles}" ToolTip.Tip="{loc:Loc TooltipClearQueue}">
                                                     <TextBlock Text="{loc:Loc ClearQueue}" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                 </Button>
 
@@ -871,17 +871,17 @@
                                                     CornerRadius="10" Padding="3" VerticalAlignment="Center">
                                                 <StackPanel Orientation="Horizontal" Spacing="2">
                                                     <Button Classes="view-toggle" Classes.active="{Binding IsListView}"
-                                                            Command="{Binding SetListViewCommand}" ToolTip.Tip="List View">
+                                                            Command="{Binding SetListViewCommand}" ToolTip.Tip="{loc:Loc ListView}">
                                                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                                             <PathIcon Data="M 8 4.5 h 13 v 1.5 H 8 Z M 8 11.25 h 13 v 1.5 H 8 Z M 8 18 h 13 v 1.5 H 8 Z M 3 4.5 h 2.5 v 1.5 H 3 Z M 3 11.25 h 2.5 v 1.5 H 3 Z M 3 18 h 2.5 v 1.5 H 3 Z" Width="11" Height="11"/>
-                                                            <TextBlock Text="List" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{loc:Loc List}" VerticalAlignment="Center"/>
                                                         </StackPanel>
                                                     </Button>
                                                     <Button Classes="view-toggle" Classes.active="{Binding IsGridView}"
-                                                            Command="{Binding SetGridViewCommand}" ToolTip.Tip="Grid View">
+                                                            Command="{Binding SetGridViewCommand}" ToolTip.Tip="{loc:Loc GridView}">
                                                         <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                                             <PathIcon Data="M 3 3 h 7 v 7 H 3 Z M 14 3 h 7 v 7 H 14 Z M 3 14 h 7 v 7 H 3 Z M 14 14 h 7 v 7 H 14 Z" Width="11" Height="11"/>
-                                                            <TextBlock Text="Grid" VerticalAlignment="Center"/>
+                                                            <TextBlock Text="{loc:Loc Grid}" VerticalAlignment="Center"/>
                                                         </StackPanel>
                                                     </Button>
                                                 </StackPanel>
@@ -909,7 +909,7 @@
                                                     <TextBlock Text="{loc:Loc DropPhotosHere}"
                                                                FontWeight="SemiBold" FontSize="16"
                                                                Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="Release mouse to add files to queue"
+                                                    <TextBlock Text="{loc:Loc ReleaseToAddToQueue}"
                                                                FontSize="12" Foreground="{DynamicResource AppAccentBrush}" HorizontalAlignment="Center"/>
                                                 </StackPanel>
                                             </Border>
@@ -950,21 +950,21 @@
                                                     <Style Selector="DataGridRow" x:DataType="models:FileItem">
                                                         <Setter Property="ContextMenu">
                                                             <ContextMenu>
-                                                                <MenuItem Header="Open Image"
+                                                                <MenuItem Header="{loc:Loc OpenImage}"
                                                                           Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).OpenFileCommand}"
                                                                           CommandParameter="{Binding}">
                                                                     <MenuItem.Icon>
                                                                         <PathIcon Data="M 3 3 h 18 v 18 H 3 Z M 8 8 A 1.5 1.5 0 1 0 8 11 A 1.5 1.5 0 1 0 8 8 M 3 17 l 6 -6 l 4 4 l 3 -3 l 5 5" Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}"/>
                                                                     </MenuItem.Icon>
                                                                 </MenuItem>
-                                                                <MenuItem Header="Open With..."
+                                                                <MenuItem Header="{loc:Loc OpenWith}"
                                                                           Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).OpenWithCommand}"
                                                                           CommandParameter="{Binding}">
                                                                     <MenuItem.Icon>
                                                                         <PathIcon Data="M 18 13 v 6 a 2 2 0 0 1 -2 2 H 5 a 2 2 0 0 1 -2 -2 V 8 a 2 2 0 0 1 2 -2 h 6 M 15 3 h 6 v 6 M 10 14 L 21 3" Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}"/>
                                                                     </MenuItem.Icon>
                                                                 </MenuItem>
-                                                                <MenuItem Header="Open Containing Folder"
+                                                                <MenuItem Header="{loc:Loc OpenContainingFolder}"
                                                                           Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).OpenFolderCommand}"
                                                                           CommandParameter="{Binding}">
                                                                     <MenuItem.Icon>
@@ -972,7 +972,7 @@
                                                                     </MenuItem.Icon>
                                                                 </MenuItem>
                                                                 <Separator/>
-                                                                <MenuItem Header="Reset to Pending"
+                                                                <MenuItem Header="{loc:Loc ResetToPending}"
                                                                           Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).ResetStatusCommand}"
                                                                           CommandParameter="{Binding #QueueDataGrid.SelectedItems}">
                                                                     <MenuItem.Icon>
@@ -980,7 +980,7 @@
                                                                     </MenuItem.Icon>
                                                                 </MenuItem>
                                                                 <Separator/>
-                                                                <MenuItem Header="Properties"
+                                                                <MenuItem Header="{loc:Loc Properties}"
                                                                           Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).ShowPropertiesCommand}"
                                                                           CommandParameter="{Binding}">
                                                                     <MenuItem.Icon>
@@ -988,7 +988,7 @@
                                                                     </MenuItem.Icon>
                                                                 </MenuItem>
                                                                 <Separator/>
-                                                                <MenuItem Header="Remove from Selection"
+                                                                <MenuItem Header="{loc:Loc RemoveFromSelection}"
                                                                           Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).RemoveFileCommand}"
                                                                           CommandParameter="{Binding #QueueDataGrid.SelectedItems}">
                                                                     <MenuItem.Icon>
@@ -1021,7 +1021,7 @@
                                                     </DataGridTemplateColumn>
 
                                                     <!-- File Name + Size Subtitle Column -->
-                                                    <DataGridTemplateColumn Header="File name" Width="*" MinWidth="160" SortMemberPath="FileName">
+                                                    <DataGridTemplateColumn Header="{loc:Loc HeaderFileName}" Width="*" MinWidth="160" SortMemberPath="FileName">
                                                         <DataGridTemplateColumn.CellTemplate>
                                                             <DataTemplate x:DataType="models:FileItem">
                                                                 <StackPanel VerticalAlignment="Center" Spacing="2">
@@ -1035,7 +1035,7 @@
                                                     </DataGridTemplateColumn>
 
                                                     <!-- Detected Camera Column (Matching Font Size) -->
-                                                    <DataGridTemplateColumn Header="Detected camera" Width="150" MinWidth="100" SortMemberPath="CameraMakeAndModel">
+                                                    <DataGridTemplateColumn Header="{loc:Loc HeaderCameraModel}" Width="150" MinWidth="100" SortMemberPath="CameraMakeAndModel">
                                                         <DataGridTemplateColumn.CellTemplate>
                                                             <DataTemplate x:DataType="models:FileItem">
                                                                 <TextBlock Text="{Binding CameraMakeAndModel}" FontSize="11"
@@ -1048,14 +1048,14 @@
                                                     <!-- Status Column (Center Aligned Single Icon) -->
                                                     <DataGridTemplateColumn Width="90" MinWidth="60" SortMemberPath="Status">
                                                         <DataGridTemplateColumn.Header>
-                                                            <TextBlock Text="Status" HorizontalAlignment="Center" TextAlignment="Center"/>
+                                                            <TextBlock Text="{loc:Loc Status}" HorizontalAlignment="Center" TextAlignment="Center"/>
                                                         </DataGridTemplateColumn.Header>
                                                         <DataGridTemplateColumn.CellTemplate>
                                                             <DataTemplate x:DataType="models:FileItem">
                                                                 <Grid HorizontalAlignment="Stretch" VerticalAlignment="Center">
                                                                     <!-- Completed: Show single center-aligned status arrow -->
                                                                     <TextBlock IsVisible="{Binding IsCompleted}"
-                                                                               Text="{Binding Status}"
+                                                                               Text="{Binding LocalizedStatus}"
                                                                                FontSize="13"
                                                                                HorizontalAlignment="Center"
                                                                                TextAlignment="Center"
@@ -1068,7 +1068,7 @@
                                                                                 VerticalAlignment="Center"
                                                                                 Spacing="4">
                                                                         <TextBlock Text="{Binding StatusIcon}" VerticalAlignment="Center" FontSize="11" Foreground="{Binding StatusColor}"/>
-                                                                        <TextBlock Text="{Binding Status}" VerticalAlignment="Center" FontSize="10" TextTrimming="CharacterEllipsis" Foreground="{Binding StatusColor}"/>
+                                                                        <TextBlock Text="{Binding LocalizedStatus}" VerticalAlignment="Center" FontSize="10" TextTrimming="CharacterEllipsis" Foreground="{Binding StatusColor}"/>
                                                                     </StackPanel>
                                                                 </Grid>
                                                             </DataTemplate>
@@ -1090,7 +1090,7 @@
                                                                         BorderThickness="0"
                                                                         FontSize="11"
                                                                         Cursor="Hand"
-                                                                        ToolTip.Tip="Remove from batch">
+                                                                        ToolTip.Tip="{loc:Loc RemoveFromBatch}">
                                                                     <Button.Styles>
                                                                         <Style Selector="Button:pointerover">
                                                                             <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}"/>
@@ -1123,21 +1123,21 @@
                                                                     Cursor="Hand">
                                                                 <Border.ContextMenu>
                                                                     <ContextMenu>
-                                                                        <MenuItem Header="Open Image"
+                                                                        <MenuItem Header="{loc:Loc OpenImage}"
                                                                                   Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).OpenFileCommand}"
                                                                                   CommandParameter="{Binding}">
                                                                             <MenuItem.Icon>
                                                                                 <PathIcon Data="M 3 3 h 18 v 18 H 3 Z M 8 8 A 1.5 1.5 0 1 0 8 11 A 1.5 1.5 0 1 0 8 8 M 3 17 l 6 -6 l 4 4 l 3 -3 l 5 5" Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}"/>
                                                                             </MenuItem.Icon>
                                                                         </MenuItem>
-                                                                        <MenuItem Header="Open With..."
+                                                                        <MenuItem Header="{loc:Loc OpenWith}"
                                                                                   Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).OpenWithCommand}"
                                                                                   CommandParameter="{Binding}">
                                                                             <MenuItem.Icon>
                                                                                 <PathIcon Data="M 18 13 v 6 a 2 2 0 0 1 -2 2 H 5 a 2 2 0 0 1 -2 -2 V 8 a 2 2 0 0 1 2 -2 h 6 M 15 3 h 6 v 6 M 10 14 L 21 3" Width="13" Height="13" Foreground="{DynamicResource AppAccentBrush}"/>
                                                                             </MenuItem.Icon>
                                                                         </MenuItem>
-                                                                        <MenuItem Header="Open Containing Folder"
+                                                                        <MenuItem Header="{loc:Loc OpenContainingFolder}"
                                                                                   Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).OpenFolderCommand}"
                                                                                   CommandParameter="{Binding}">
                                                                             <MenuItem.Icon>
@@ -1145,7 +1145,7 @@
                                                                             </MenuItem.Icon>
                                                                         </MenuItem>
                                                                         <Separator/>
-                                                                        <MenuItem Header="Reset to Pending"
+                                                                        <MenuItem Header="{loc:Loc ResetToPending}"
                                                                                   Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).ResetStatusCommand}"
                                                                                   CommandParameter="{Binding}">
                                                                             <MenuItem.Icon>
@@ -1153,7 +1153,7 @@
                                                                             </MenuItem.Icon>
                                                                         </MenuItem>
                                                                         <Separator/>
-                                                                        <MenuItem Header="Properties"
+                                                                        <MenuItem Header="{loc:Loc Properties}"
                                                                                   Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).ShowPropertiesCommand}"
                                                                                   CommandParameter="{Binding}">
                                                                             <MenuItem.Icon>
@@ -1161,7 +1161,7 @@
                                                                             </MenuItem.Icon>
                                                                         </MenuItem>
                                                                         <Separator/>
-                                                                        <MenuItem Header="Remove from Selection"
+                                                                        <MenuItem Header="{loc:Loc RemoveFromSelection}"
                                                                                   Command="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).RemoveFileCommand}"
                                                                                   CommandParameter="{Binding}">
                                                                             <MenuItem.Icon>
@@ -1206,7 +1206,7 @@
                                                                                 Width="20" Height="20" Padding="0"
                                                                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                                                                 Background="Transparent" Foreground="{DynamicResource AppTextSecondaryBrush}"
-                                                                                BorderThickness="0" FontSize="11" Cursor="Hand" ToolTip.Tip="Remove from batch">
+                                                                                BorderThickness="0" FontSize="11" Cursor="Hand" ToolTip.Tip="{loc:Loc RemoveFromBatch}">
                                                                             <Button.Styles>
                                                                                 <Style Selector="Button:pointerover">
                                                                                     <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}"/>
@@ -1256,7 +1256,7 @@
                                                                     <TextBlock Text="✕" FontSize="11" Foreground="{DynamicResource AppDangerBrush}"
                                                                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                                 </Border>
-                                                                <TextBlock Text="Clear Queue" FontSize="11.5" FontWeight="SemiBold"
+                                                                <TextBlock Text="{loc:Loc ClearQueue}" FontSize="11.5" FontWeight="SemiBold"
                                                                            Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                             </StackPanel>
                                                         </Button>
@@ -1278,7 +1278,7 @@
                                                                               Foreground="{DynamicResource AppAccentBrush}"
                                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                                 </Border>
-                                                                <TextBlock Text="Add Folder" FontSize="11.5" FontWeight="SemiBold"
+                                                                <TextBlock Text="{loc:Loc AddFolder}" FontSize="11.5" FontWeight="SemiBold"
                                                                            Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                             </StackPanel>
                                                         </Button>
@@ -1300,7 +1300,7 @@
                                                                               Foreground="{DynamicResource AppAccentBrush}"
                                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                                 </Border>
-                                                                <TextBlock Text="Add Files" FontSize="11.5" FontWeight="SemiBold"
+                                                                <TextBlock Text="{loc:Loc AddFiles}" FontSize="11.5" FontWeight="SemiBold"
                                                                            Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                             </StackPanel>
                                                         </Button>
@@ -1317,7 +1317,7 @@
                                                             Width="48" Height="48" CornerRadius="24"
                                                             Padding="0"
                                                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                                            ToolTip.Tip="Add photos or folder">
+                                                            ToolTip.Tip="{loc:Loc TooltipAddPhotos}">
                                                         <PathIcon Classes="fab-icon" Classes.open="{Binding IsQueueFabMenuOpen}"
                                                                   Data="M 11 4 A 1 1 0 0 1 13 4 V 11 H 20 A 1 1 0 0 1 20 13 H 13 V 20 A 1 1 0 0 1 11 20 V 13 H 4 A 1 1 0 0 1 4 11 H 11 Z"
                                                                   Width="16" Height="16"/>
@@ -1343,7 +1343,7 @@
                                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                                                     Padding="4,4">
                                                 <StackPanel Spacing="5" HorizontalAlignment="Center">
-                                                    <TextBlock Text="Settings" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="{loc:Loc Settings}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                                     <Border Height="2" Width="48" Background="{DynamicResource AppAccentBrush}"
                                                             IsVisible="{Binding IsInspectorSettingsTab}"/>
                                                 </StackPanel>
@@ -1355,7 +1355,7 @@
                                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                                                     Padding="4,4">
                                                 <StackPanel Spacing="5" HorizontalAlignment="Center">
-                                                    <TextBlock Text="Photo info" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="{loc:Loc PhotoInfo}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                                     <Border Height="2" Width="48" Background="{DynamicResource AppAccentBrush}"
                                                             IsVisible="{Binding IsInspectorInfoTab}"/>
                                                 </StackPanel>
@@ -1378,7 +1378,7 @@
                                             <StackPanel IsVisible="{Binding IsInspectorSettingsTab}" Spacing="10">
                                                 <!-- Output Destination Section -->
                                                 <StackPanel Spacing="6">
-                                                    <TextBlock Text="Output destination" FontSize="10" FontWeight="SemiBold"
+                                                    <TextBlock Text="{loc:Loc OutputDestination}" FontSize="10" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource AppTextSecondaryBrush}"/>
 
                                                     <!-- Browse Output Folder with Nested Reset Cross -->
@@ -1391,7 +1391,7 @@
                                                                     Background="Transparent" BorderThickness="0" Padding="0"
                                                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Center"
                                                                     ClipToBounds="True"
-                                                                    ToolTip.Tip="Select custom output folder (Default: same as originals)">
+                                                                    ToolTip.Tip="{loc:Loc OutputDestinationTooltip}">
                                                                 <Button.Styles>
                                                                     <Style Selector="Button:pointerover /template/ ContentPresenter">
                                                                         <Setter Property="Background" Value="Transparent"/>
@@ -1412,7 +1412,7 @@
                                                                     Width="20" Height="20" Padding="0" Margin="4,0,0,0"
                                                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                                                     Background="Transparent" Foreground="{DynamicResource AppTextSecondaryBrush}"
-                                                                    BorderThickness="0" Cursor="Hand" ToolTip.Tip="Reset to source folder">
+                                                                    BorderThickness="0" Cursor="Hand" ToolTip.Tip="{loc:Loc ResetToSourceFolder}">
                                                                 <Button.Styles>
                                                                     <Style Selector="Button:pointerover">
                                                                         <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}"/>
@@ -1428,26 +1428,26 @@
 
                                                 <!-- File Handling Section -->
                                                 <StackPanel Spacing="7">
-                                                    <TextBlock Text="File handling" FontSize="10" FontWeight="SemiBold"
+                                                    <TextBlock Text="{loc:Loc FileHandling}" FontSize="10" FontWeight="SemiBold"
                                                                Foreground="{DynamicResource AppTextSecondaryBrush}"/>
 
                                                     <!-- Backup Switch -->
                                                     <Grid ColumnDefinitions="*,Auto">
-                                                        <TextBlock Grid.Column="0" Text="Backup original file" FontSize="11"
+                                                        <TextBlock Grid.Column="0" Text="{loc:Loc BackupOriginalFile}" FontSize="11"
                                                                    Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateBackup}" OnContent="" OffContent=""/>
                                                     </Grid>
 
                                                     <!-- Suffix Switch -->
                                                     <Grid ColumnDefinitions="*,Auto">
-                                                        <TextBlock Grid.Column="0" Text="Add filename suffix" FontSize="11"
+                                                        <TextBlock Grid.Column="0" Text="{loc:Loc AddFilenameSuffix}" FontSize="11"
                                                                    Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding AppendSuffix}" OnContent="" OffContent=""/>
                                                     </Grid>
 
                                                     <!-- Inline Suffix Input -->
                                                     <Grid ColumnDefinitions="Auto,*" Margin="0,-4,0,2" IsVisible="{Binding AppendSuffix}">
-                                                        <TextBlock Grid.Column="0" Text="Suffix:" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
+                                                        <TextBlock Grid.Column="0" Text="{loc:Loc SuffixLabel}" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
                                                                    Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                                         <TextBox Grid.Column="1" Text="{Binding Suffix}"
                                                                  Background="{DynamicResource AppSurfaceSecondaryBrush}"
@@ -1459,7 +1459,7 @@
 
                                                     <!-- Subfolder Switch -->
                                                     <Grid ColumnDefinitions="*,Auto">
-                                                        <TextBlock Grid.Column="0" Text="Save in subfolder" FontSize="11"
+                                                        <TextBlock Grid.Column="0" Text="{loc:Loc SaveInSubfolder}" FontSize="11"
                                                                    Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateSubfolder}" OnContent="" OffContent=""/>
                                                     </Grid>
@@ -1468,14 +1468,14 @@
                                                     <StackPanel Spacing="6" Margin="8,0,0,2" IsVisible="{Binding CreateSubfolder}">
                                                         <!-- Keep original folder name switch -->
                                                         <Grid ColumnDefinitions="*,Auto">
-                                                            <TextBlock Grid.Column="0" Text="Keep original folder name" FontSize="10"
+                                                            <TextBlock Grid.Column="0" Text="{loc:Loc KeepOriginalFolderName}" FontSize="10"
                                                                        Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
                                                             <ToggleSwitch Grid.Column="1" IsChecked="{Binding SubfolderUseOriginalName}" OnContent="" OffContent=""/>
                                                         </Grid>
 
                                                         <!-- Dir suffix (when using original name) -->
                                                         <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding SubfolderUseOriginalName}">
-                                                            <TextBlock Grid.Column="0" Text="Dir suffix:" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
+                                                            <TextBlock Grid.Column="0" Text="{loc:Loc DirSuffix}" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
                                                                        Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                                             <TextBox Grid.Column="1" Text="{Binding SubfolderSuffix}"
                                                                      Background="{DynamicResource AppSurfaceSecondaryBrush}"
@@ -1487,7 +1487,7 @@
 
                                                         <!-- Custom folder name (when NOT using original name) -->
                                                         <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
-                                                            <TextBlock Grid.Column="0" Text="Folder name:" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
+                                                            <TextBlock Grid.Column="0" Text="{loc:Loc FolderName}" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
                                                                        Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                                             <TextBox Grid.Column="1" Text="{Binding SubfolderCustomName}"
                                                                      Background="{DynamicResource AppSurfaceSecondaryBrush}"
@@ -1505,14 +1505,14 @@
 
                                                     <!-- Open Folder When Done Switch -->
                                                     <Grid ColumnDefinitions="*,Auto">
-                                                        <TextBlock Grid.Column="0" Text="Open folder when done" FontSize="11"
+                                                        <TextBlock Grid.Column="0" Text="{loc:Loc OpenFolderWhenDone}" FontSize="11"
                                                                    Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenOutputFolder}" OnContent="" OffContent=""/>
                                                     </Grid>
 
                                                     <!-- Open in Lightroom Switch (Mobile & Supported Platforms) -->
                                                     <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsOpenInLightroomSupported}">
-                                                        <TextBlock Grid.Column="0" Text="Open in Lightroom" FontSize="11"
+                                                        <TextBlock Grid.Column="0" Text="{loc:Loc OpenInLightroom}" FontSize="11"
                                                                    Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenInLightroom}" OnContent="" OffContent=""/>
                                                     </Grid>
@@ -1526,7 +1526,7 @@
                                             <!-- TAB 2: PHOTO INFO VIEW -->
                                             <StackPanel IsVisible="{Binding IsInspectorInfoTab}" Spacing="14">
                                                 <!-- Empty Photo Selection State -->
-                                                <TextBlock Text="Select a photo from the queue to view metadata and exposure details."
+                                                <TextBlock Text="{loc:Loc SelectPhotoHint}"
                                                            FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"
                                                            TextWrapping="Wrap" TextAlignment="Center" Margin="0,20"
                                                            IsVisible="{Binding SelectedFile, Converter={x:Static ObjectConverters.IsNull}}"/>
@@ -1558,50 +1558,50 @@
                                                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto" Margin="0,4">
                                                         <!-- Aperture -->
                                                         <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,12">
-                                                            <TextBlock Text="Aperture" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                            <TextBlock Text="{loc:Loc Aperture}" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
                                                             <TextBlock Text="{Binding SelectedFile.Aperture, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                         </StackPanel>
 
                                                         <!-- Shutter Speed -->
                                                         <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,12">
-                                                            <TextBlock Text="Shutter speed" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                            <TextBlock Text="{loc:Loc ShutterSpeed}" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
                                                             <TextBlock Text="{Binding SelectedFile.ShutterSpeed, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                         </StackPanel>
 
                                                         <!-- Focal Length -->
                                                         <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,12">
-                                                            <TextBlock Text="Focal length" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                            <TextBlock Text="{loc:Loc FocalLength}" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
                                                             <TextBlock Text="{Binding SelectedFile.FocalLength, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                         </StackPanel>
 
                                                         <!-- File Size -->
                                                         <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,12">
-                                                            <TextBlock Text="File size" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                            <TextBlock Text="{loc:Loc FileSize}" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
                                                             <TextBlock Text="{Binding SelectedFile.FormattedFileSize, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                         </StackPanel>
 
                                                         <!-- ISO -->
                                                         <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,0,12">
-                                                            <TextBlock Text="ISO" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                            <TextBlock Text="{loc:Loc Iso}" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
                                                             <TextBlock Text="{Binding SelectedFile.Iso, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                         </StackPanel>
 
                                                         <!-- Date Taken (EXIF) -->
                                                         <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,0,12">
-                                                            <TextBlock Text="Date taken" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                            <TextBlock Text="{loc:Loc DateTaken}" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
                                                             <TextBlock Text="{Binding SelectedFile.DateTimeOriginal, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                        Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
                                                         </StackPanel>
 
                                                         <!-- Status -->
                                                         <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2">
-                                                            <TextBlock Text="Status" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
-                                                            <TextBlock Text="{Binding SelectedFile.Status, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
+                                                            <TextBlock Text="{loc:Loc Status}" FontSize="8.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="0,0,0,3"/>
+                                                            <TextBlock Text="{Binding SelectedFile.LocalizedStatus, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold"
                                                                        Foreground="{DynamicResource AppAccentLightBrush}"/>
                                                         </StackPanel>
                                                     </Grid>
@@ -1645,14 +1645,14 @@
 
                             <!-- Right: Protection Notice & Primary Process Action -->
                             <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="20" VerticalAlignment="Center">
-                                <TextBlock Text="Original files stay protected" FontSize="10"
+                                <TextBlock Text="{loc:Loc ProtectedFilesNotice}" FontSize="10"
                                            Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
 
                                 <!-- Studio Process Batch Action Button with centered text and sparkle icon -->
                                 <Button Command="{Binding ProcessCommand}"
                                         IsEnabled="{Binding CanProcessOrStop}" Classes="primary"
                                         Height="42" Padding="20,0" CornerRadius="21"
-                                        VerticalAlignment="Center" ToolTip.Tip="Process batch with Fujifilm simulation profiles">
+                                        VerticalAlignment="Center" ToolTip.Tip="{loc:Loc TooltipProcessBatch}">
                                     <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" HorizontalAlignment="Center">
                                         <TextBlock Text="{Binding ProcessButtonContent}" FontSize="12" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource AppPrimaryBtnFgBrush}" VerticalAlignment="Center"/>
@@ -1691,15 +1691,15 @@
                                 Background="Transparent" BorderThickness="0" Padding="6,8">
                             <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                 <TextBlock Text="‹" FontSize="24" FontWeight="Bold" Margin="0,-4,0,0" Foreground="{DynamicResource AppAccentBrush}"/>
-                                <TextBlock Text="Back" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource AppAccentBrush}"/>
+                                <TextBlock Text="{loc:Loc Back}" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource AppAccentBrush}"/>
                             </StackPanel>
                         </Button>
 
-                        <TextBlock Grid.Column="1" Text="Settings" FontWeight="Bold" FontSize="17"
+                        <TextBlock Grid.Column="1" Text="{loc:Loc Settings}" FontWeight="Bold" FontSize="17"
                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Foreground="{DynamicResource AppTextPrimaryBrush}"/>
 
-                        <Button Grid.Column="2" Content="Save" Command="{Binding SaveCommand}"
+                        <Button Grid.Column="2" Content="{loc:Loc Save}" Command="{Binding SaveCommand}"
                                 Classes="primary" Height="36" Padding="16,0" CornerRadius="18"
                                 FontWeight="SemiBold" FontSize="13" VerticalAlignment="Center"/>
                     </Grid>
@@ -1724,20 +1724,24 @@
                                 <StackPanel Grid.Row="1" Margin="18,14" Spacing="10">
                                     <TextBlock Text="{loc:Loc SelectLanguage}" FontWeight="SemiBold" FontSize="12"
                                                Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" Margin="0,4,0,4">
-                                        <RadioButton Grid.Row="0" Grid.Column="0" Content="English"
-                                                     IsChecked="{Binding IsEnglishSelected, Mode=TwoWay}"
-                                                     GroupName="MobileLanguage" Margin="0,0,6,8"/>
-                                        <RadioButton Grid.Row="0" Grid.Column="1" Content="Français"
-                                                     IsChecked="{Binding IsFrenchSelected, Mode=TwoWay}"
-                                                     GroupName="MobileLanguage" Margin="6,0,0,8"/>
-                                        <RadioButton Grid.Row="1" Grid.Column="0" Content="Español"
-                                                     IsChecked="{Binding IsSpanishSelected, Mode=TwoWay}"
-                                                     GroupName="MobileLanguage" Margin="0,0,6,0"/>
-                                        <RadioButton Grid.Row="1" Grid.Column="1" Content="Deutsch"
-                                                     IsChecked="{Binding IsGermanSelected, Mode=TwoWay}"
-                                                     GroupName="MobileLanguage" Margin="6,0,0,0"/>
-                                    </Grid>
+                                    <ComboBox ItemsSource="{Binding AvailableLanguages}"
+                                              SelectedItem="{Binding SelectedLanguageItem, Mode=TwoWay}"
+                                              HorizontalAlignment="Stretch"
+                                              Height="36"
+                                              CornerRadius="8"
+                                              BorderThickness="1"
+                                              BorderBrush="{DynamicResource AppEdgeBrush}"
+                                              Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                              Foreground="{DynamicResource AppTextPrimaryBrush}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <TextBlock Text="{Binding NativeName}" FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding DisplayName, StringFormat='({0})'}" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
                                     <TextBlock Text="{loc:Loc LanguageHint}"
                                                FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                 </StackPanel>
@@ -1750,29 +1754,29 @@
                                 <!-- Inner Group Header -->
                                 <Border Grid.Row="0" Padding="18,12" Background="Transparent"
                                         BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Theme" FontWeight="SemiBold" FontSize="13"
+                                    <TextBlock Text="{loc:Loc Theme}" FontWeight="SemiBold" FontSize="13"
                                                Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                 </Border>
 
                                 <!-- Group Content -->
                                 <StackPanel Grid.Row="1" Margin="18,14" Spacing="10">
-                                    <TextBlock Text="Appearance Mode" FontWeight="SemiBold" FontSize="12"
+                                    <TextBlock Text="{loc:Loc AppearanceMode}" FontWeight="SemiBold" FontSize="12"
                                                Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" Margin="0,4,0,4">
-                                        <RadioButton Grid.Row="0" Grid.Column="0" Content="Automatic"
+                                        <RadioButton Grid.Row="0" Grid.Column="0" Content="{loc:Loc Automatic}"
                                                      IsChecked="{Binding IsAutoThemeSelected, Mode=TwoWay}"
                                                      GroupName="MobileTheme" Margin="0,0,6,8"/>
-                                        <RadioButton Grid.Row="0" Grid.Column="1" Content="Dark"
+                                        <RadioButton Grid.Row="0" Grid.Column="1" Content="{loc:Loc Dark}"
                                                      IsChecked="{Binding IsDarkThemeSelected, Mode=TwoWay}"
                                                      GroupName="MobileTheme" Margin="6,0,0,8"/>
-                                        <RadioButton Grid.Row="1" Grid.Column="0" Content="AMOLED"
+                                        <RadioButton Grid.Row="1" Grid.Column="0" Content="{loc:Loc Amoled}"
                                                      IsChecked="{Binding IsAmoledThemeSelected, Mode=TwoWay}"
                                                      GroupName="MobileTheme" Margin="0,0,6,0"/>
-                                        <RadioButton Grid.Row="1" Grid.Column="1" Content="Light"
+                                        <RadioButton Grid.Row="1" Grid.Column="1" Content="{loc:Loc Light}"
                                                      IsChecked="{Binding IsLightThemeSelected, Mode=TwoWay}"
                                                      GroupName="MobileTheme" Margin="6,0,0,0"/>
                                     </Grid>
-                                    <TextBlock Text="Automatic adapts to system mode. Dark features refined slate tones. AMOLED provides true pitch-black contrast."
+                                    <TextBlock Text="{loc:Loc ThemeHint}"
                                                FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                 </StackPanel>
                             </Grid>
@@ -1784,7 +1788,7 @@
                                 <!-- Inner Group Header -->
                                 <Border Grid.Row="0" Padding="18,12" Background="Transparent"
                                         BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Performance" FontWeight="SemiBold" FontSize="13"
+                                    <TextBlock Text="{loc:Loc Performance}" FontWeight="SemiBold" FontSize="13"
                                                Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                 </Border>
 
@@ -1794,7 +1798,7 @@
                                     <StackPanel Spacing="8">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,12,0">
-                                                <TextBlock Text="Concurrent Conversions" FontWeight="SemiBold" FontSize="12"
+                                                <TextBlock Text="{loc:Loc ConcurrentConversions}" FontWeight="SemiBold" FontSize="12"
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                 <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="4" Padding="5,1" IsVisible="{Binding !IsPro}" VerticalAlignment="Center">
                                                     <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="#252332"/>
@@ -1815,9 +1819,9 @@
                                     <!-- Import Pictures Instantly Toggle -->
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
-                                            <TextBlock Text="Import Pictures Instantly" FontWeight="SemiBold" FontSize="12"
+                                            <TextBlock Text="{loc:Loc ImportPicturesInstantly}" FontWeight="SemiBold" FontSize="12"
                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                            <TextBlock Text="Skips thumbnail generation for performance, importing photos into the queue instantly" FontSize="11"
+                                            <TextBlock Text="{loc:Loc ImportPicturesInstantlyDesc}" FontSize="11"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding SkipThumbnailGeneration}" OnContent="" OffContent=""/>
@@ -1832,7 +1836,7 @@
                                 <!-- Inner Group Header -->
                                 <Border Grid.Row="0" Padding="18,12" Background="Transparent"
                                         BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
-                                    <TextBlock Text="File Handling" FontWeight="SemiBold" FontSize="13"
+                                    <TextBlock Text="{loc:Loc FileHandling}" FontWeight="SemiBold" FontSize="13"
                                                Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                 </Border>
 
@@ -1841,16 +1845,16 @@
                                     <!-- Custom File Suffix -->
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
-                                            <TextBlock Text="Add Suffix to Converted File Name" FontWeight="SemiBold" FontSize="12"
+                                            <TextBlock Text="{loc:Loc AddSuffixToConvertedFileName}" FontWeight="SemiBold" FontSize="12"
                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                            <TextBlock Text="Appends custom text identifier before .dng extension" FontSize="11"
+                                            <TextBlock Text="{loc:Loc AddSuffixDesc}" FontSize="11"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding AppendSuffix}" OnContent="" OffContent=""/>
                                     </Grid>
 
                                     <Grid ColumnDefinitions="Auto,*" Margin="0,2,0,0" IsVisible="{Binding AppendSuffix}">
-                                        <TextBlock Grid.Column="0" Text="Suffix:" VerticalAlignment="Center" FontSize="11" Margin="0,0,10,0"
+                                        <TextBlock Grid.Column="0" Text="{loc:Loc SuffixLabel}" VerticalAlignment="Center" FontSize="11" Margin="0,0,10,0"
                                                    Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                         <TextBox Grid.Column="1" Text="{Binding Suffix}"
                                                  Background="{DynamicResource AppSurfaceSecondaryBrush}"
@@ -1858,7 +1862,7 @@
                                                  BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
                                                  Watermark="-fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
                                     </Grid>
-                                    <TextBlock Text="Example: DSC0001.ARW → DSC0001-fujified.dng" FontSize="11"
+                                    <TextBlock Text="{loc:Loc ExampleSuffix}" FontSize="11"
                                                Foreground="{DynamicResource AppAccentLightBrush}"
                                                IsVisible="{Binding AppendSuffix}" Margin="0,-4,0,2" TextWrapping="Wrap"/>
 
@@ -1867,9 +1871,9 @@
                                     <!-- Subfolder Option -->
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
-                                            <TextBlock Text="Save Converted Photos in Subfolder" FontWeight="SemiBold" FontSize="12"
+                                            <TextBlock Text="{loc:Loc SaveConvertedPhotosInSubfolder}" FontWeight="SemiBold" FontSize="12"
                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                            <TextBlock Text="Creates a subfolder for converted DNGs instead of saving directly in source folder" FontSize="11"
+                                            <TextBlock Text="{loc:Loc SaveSubfolderDesc}" FontSize="11"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateSubfolder}" OnContent="" OffContent=""/>
@@ -1878,16 +1882,16 @@
                                     <StackPanel Spacing="8" Margin="0,4,0,2" IsVisible="{Binding CreateSubfolder}">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
-                                                <TextBlock Text="Keep Original Directory Name" FontSize="11" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc KeepOriginalDirectoryName}" FontSize="11" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                                <TextBlock Text="Uses the source directory name as base for the subfolder" FontSize="10.5"
+                                                <TextBlock Text="{loc:Loc KeepOriginalDirectoryNameDesc}" FontSize="10.5"
                                                            Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                             </StackPanel>
                                             <ToggleSwitch Grid.Column="1" IsChecked="{Binding SubfolderUseOriginalName}" OnContent="" OffContent=""/>
                                         </Grid>
 
                                         <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding SubfolderUseOriginalName}">
-                                            <TextBlock Grid.Column="0" Text="Directory Suffix:" VerticalAlignment="Center" FontSize="11" Margin="0,0,10,0"
+                                            <TextBlock Grid.Column="0" Text="{loc:Loc DirectorySuffixLabel}" VerticalAlignment="Center" FontSize="11" Margin="0,0,10,0"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                             <TextBox Grid.Column="1" Text="{Binding SubfolderSuffix}"
                                                      Background="{DynamicResource AppSurfaceSecondaryBrush}"
@@ -1897,7 +1901,7 @@
                                         </Grid>
 
                                         <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
-                                            <TextBlock Grid.Column="0" Text="Subfolder Name:" VerticalAlignment="Center" FontSize="11" Margin="0,0,10,0"
+                                            <TextBlock Grid.Column="0" Text="{loc:Loc SubfolderNameLabel}" VerticalAlignment="Center" FontSize="11" Margin="0,0,10,0"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                             <TextBox Grid.Column="1" Text="{Binding SubfolderCustomName}"
                                                      Background="{DynamicResource AppSurfaceSecondaryBrush}"
@@ -1915,9 +1919,9 @@
                                     <!-- Auto-Open Destination Folder -->
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
-                                            <TextBlock Text="Open Destination Folder After Conversion" FontWeight="SemiBold" FontSize="12"
+                                            <TextBlock Text="{loc:Loc OpenDestinationFolderAfterConversion}" FontWeight="SemiBold" FontSize="12"
                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                            <TextBlock Text="Automatically opens the destination folder in file manager when processing finishes" FontSize="11"
+                                            <TextBlock Text="{loc:Loc OpenDestinationFolderDesc}" FontSize="11"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenOutputFolder}" OnContent="" OffContent=""/>
@@ -1929,13 +1933,13 @@
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
                                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                <TextBlock Text="Lossless DNG Compression" FontWeight="SemiBold" FontSize="12"
+                                                <TextBlock Text="{loc:Loc LosslessDngCompression}" FontWeight="SemiBold" FontSize="12"
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                 <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="4" Padding="5,1" IsVisible="{Binding !IsPro}" VerticalAlignment="Center">
                                                     <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="#252332"/>
                                                 </Border>
                                             </StackPanel>
-                                            <TextBlock Text="Reduces DNG file size with zero image quality loss (Pro only)" FontSize="11"
+                                            <TextBlock Text="{loc:Loc LosslessDngCompressionDesc}" FontSize="11"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding LosslessCompression}" IsEnabled="{Binding IsPro}" OnContent="" OffContent=""/>
@@ -1946,9 +1950,9 @@
                                     <!-- Backup Original File -->
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
-                                            <TextBlock Text="Backup Original File" FontWeight="SemiBold" FontSize="12"
+                                            <TextBlock Text="{loc:Loc BackupOriginalFile}" FontWeight="SemiBold" FontSize="12"
                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                            <TextBlock Text="Preserves original file (renames in-place DNGs to filenameORIG.DNG). When disabled, files that succeed are sent to Trash." FontSize="11"
+                                            <TextBlock Text="{loc:Loc BackupOriginalFileDesc}" FontSize="11"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding BackupOriginalFile}" OnContent="" OffContent=""/>
@@ -1959,9 +1963,9 @@
                                     <!-- Embed RAW -->
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
-                                            <TextBlock Text="Embed Original RAW inside DNG" FontWeight="SemiBold" FontSize="12"
+                                            <TextBlock Text="{loc:Loc EmbedOriginalRaw}" FontWeight="SemiBold" FontSize="12"
                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                            <TextBlock Text="Preserves original unmodified camera sensor file inside DNG" FontSize="11"
+                                            <TextBlock Text="{loc:Loc EmbedOriginalRawDesc}" FontSize="11"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding EmbedOriginalRaw}" OnContent="" OffContent=""/>
@@ -1972,9 +1976,9 @@
                                     <!-- Auto-open in Lightroom -->
                                     <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsOpenInLightroomSupported}">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
-                                            <TextBlock Text="Auto-Open Converted Photos in Lightroom" FontWeight="SemiBold" FontSize="12"
+                                            <TextBlock Text="{loc:Loc AutoOpenInLightroom}" FontWeight="SemiBold" FontSize="12"
                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                            <TextBlock Text="Automatically launches Lightroom with processed DNGs" FontSize="11"
+                                            <TextBlock Text="{loc:Loc AutoOpenInLightroomDesc}" FontSize="11"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenInLightroom}" OnContent="" OffContent=""/>
@@ -1986,14 +1990,14 @@
                                     <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsWindows}">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <TextBlock Text="Windows Context Menu (Fujifier)" FontWeight="SemiBold" FontSize="12"
+                                                <TextBlock Text="{loc:Loc WindowsContextMenuTitle}" FontWeight="SemiBold" FontSize="12"
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                 <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="4" Padding="5,1"
                                                         IsVisible="{Binding !IsPro}" VerticalAlignment="Center">
                                                     <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="#252332"/>
                                                 </Border>
                                             </StackPanel>
-                                            <TextBlock Text="Adds 'Fujifier' cascading options to right-click menu on RAW files" FontSize="11"
+                                            <TextBlock Text="{loc:Loc WindowsContextMenuDesc}" FontSize="11"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsWindowsContextMenuEnabled}" OnContent="" OffContent=""/>
@@ -2008,14 +2012,14 @@
                                             <Grid ColumnDefinitions="*,Auto">
                                                 <StackPanel Grid.Column="0" Spacing="2">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <TextBlock Text="Lightroom Film Simulation Presets" FontWeight="SemiBold" FontSize="12"
+                                                        <TextBlock Text="{loc:Loc LightroomPresetsTitle}" FontWeight="SemiBold" FontSize="12"
                                                                    Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                                         <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="4" Padding="5,1" 
                                                                 IsVisible="{Binding !IsPro}" VerticalAlignment="Center">
                                                             <TextBlock Text="PRO" FontSize="9" FontWeight="Bold" Foreground="#252332"/>
                                                         </Border>
                                                     </StackPanel>
-                                                    <TextBlock Text="Installs 20 develop presets into Adobe Lightroom &amp; Camera Raw to switch between Fujifilm film simulations with 1 click." 
+                                                    <TextBlock Text="{loc:Loc LightroomPresetsDesc}" 
                                                                FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                                 </StackPanel>
                                             </Grid>
@@ -2026,17 +2030,17 @@
                                                     <PathIcon Grid.Column="0" Data="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" 
                                                               Width="14" Height="14" Foreground="{DynamicResource AppAccentBrush}" VerticalAlignment="Top" Margin="0,1,8,0"/>
                                                     <TextBlock Grid.Column="1" FontSize="10.5" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap" LineHeight="15">
-                                                        <Run FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}">Notice:</Run>
-                                                        <Run Text=" Photos must be converted with Fujifier beforehand. Fujifilm film simulation profiles only apply to Fujified DNGs or genuine Fujifilm cameras."/>
+                                                        <Run FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}" Text="{loc:Loc NoticeLabel}"/>
+                                                        <Run Text="{loc:Loc LightroomPresetsNotice}"/>
                                                     </TextBlock>
                                                 </Grid>
                                             </Border>
 
                                             <!-- Action Buttons -->
                                             <WrapPanel Orientation="Horizontal" IsEnabled="{Binding !IsInstallingPresets}">
-                                                <Button Content="Install to Lightroom" Command="{Binding InstallLightroomPresetsCommand}" Classes="secondary"
+                                                <Button Content="{loc:Loc InstallToLightroom}" Command="{Binding InstallLightroomPresetsCommand}" Classes="secondary"
                                                         Padding="12,6" FontSize="11" FontWeight="SemiBold" Margin="0,0,8,0"/>
-                                                <Button Content="Export Presets (.zip)" Command="{Binding ExportLightroomPresetsCommand}" Classes="secondary"
+                                                <Button Content="{loc:Loc ExportPresetsZip}" Command="{Binding ExportLightroomPresetsCommand}" Classes="secondary"
                                                         Padding="12,6" FontSize="11" FontWeight="Normal"/>
                                             </WrapPanel>
 
@@ -2063,7 +2067,7 @@
                                 <!-- Inner Group Header -->
                                 <Border Grid.Row="0" Padding="18,12" Background="Transparent"
                                         BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
-                                    <TextBlock Text="License &amp; Plan" FontWeight="SemiBold" FontSize="13"
+                                    <TextBlock Text="{loc:Loc LicenseAndPlan}" FontWeight="SemiBold" FontSize="13"
                                                Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                 </Border>
 
@@ -2079,19 +2083,19 @@
                                             </StackPanel>
                                             <TextBlock Text="{Binding LicenseDescriptionText}" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                         </StackPanel>
-                                        <Button Grid.Column="1" Content="⭐ Get Pro" Command="{Binding UpgradeToProCommand}" Classes="primary" IsVisible="{Binding !IsPro}" Height="34" Padding="14,0" CornerRadius="17" VerticalContentAlignment="Center"/>
-                                        <Button Grid.Column="1" Content="Deactivate" Command="{Binding DeactivateLicenseCommand}" Classes="secondary" IsVisible="{Binding IsPro}" Height="34" Padding="14,0" CornerRadius="17" VerticalContentAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="{loc:Loc GetPro}" Command="{Binding UpgradeToProCommand}" Classes="primary" IsVisible="{Binding !IsPro}" Height="34" Padding="14,0" CornerRadius="17" VerticalContentAlignment="Center"/>
+                                        <Button Grid.Column="1" Content="{loc:Loc DeactivateDevice}" Command="{Binding DeactivateLicenseCommand}" Classes="secondary" IsVisible="{Binding IsPro}" Height="34" Padding="14,0" CornerRadius="17" VerticalContentAlignment="Center"/>
                                     </Grid>
 
                                     <!-- Connected Account Section (Visible when user is signed in) -->
                                     <Border Background="{DynamicResource AppSurfaceSecondaryBrush}" BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,2,0,0" IsVisible="{Binding IsAccountLoggedIn}">
                                         <Grid ColumnDefinitions="*,Auto,Auto">
                                             <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center" Margin="0,0,8,0">
-                                                <TextBlock Text="Fujifier Account" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource AppAccentLightBrush}"/>
+                                                <TextBlock Text="{loc:Loc FujifierAccount}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource AppAccentLightBrush}"/>
                                                 <TextBlock Text="{Binding AccountDisplayText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
                                             </StackPanel>
-                                            <Button Grid.Column="1" Content="🔄 Retrieve" Command="{Binding RetrieveLicenseCommand}" IsEnabled="{Binding !IsRetrievingLicense}" Classes="secondary" Height="30" Padding="10,0" CornerRadius="15" VerticalContentAlignment="Center" Margin="0,0,6,0" FontSize="11"/>
-                                            <Button Grid.Column="2" Content="Sign Out" Command="{Binding LogoutAccountCommand}" Classes="secondary" Height="30" Padding="10,0" CornerRadius="15" VerticalContentAlignment="Center" FontSize="11"/>
+                                            <Button Grid.Column="1" Content="{loc:Loc RetrieveLicense}" Command="{Binding RetrieveLicenseCommand}" IsEnabled="{Binding !IsRetrievingLicense}" Classes="secondary" Height="30" Padding="10,0" CornerRadius="15" VerticalContentAlignment="Center" Margin="0,0,6,0" FontSize="11"/>
+                                            <Button Grid.Column="2" Content="{loc:Loc SignOut}" Command="{Binding LogoutAccountCommand}" Classes="secondary" Height="30" Padding="10,0" CornerRadius="15" VerticalContentAlignment="Center" FontSize="11"/>
                                         </Grid>
                                     </Border>
 
@@ -2101,8 +2105,8 @@
 
                                         <!-- Tabs for Activation Mode: Account/Google vs Key -->
                                         <StackPanel Orientation="Horizontal" Spacing="12">
-                                            <RadioButton Content="Sign In (Google / Account)" IsChecked="{Binding IsAccountTabActive, Mode=OneWay}" Command="{Binding SetAccountTabCommand}" GroupName="MobileActivationMode" FontSize="11.5"/>
-                                            <RadioButton Content="Enter Key" IsChecked="{Binding IsKeyTabActive, Mode=OneWay}" Command="{Binding SetKeyTabCommand}" GroupName="MobileActivationMode" FontSize="11.5"/>
+                                            <RadioButton Content="{loc:Loc SignInGoogleOrAccount}" IsChecked="{Binding IsAccountTabActive, Mode=OneWay}" Command="{Binding SetAccountTabCommand}" GroupName="MobileActivationMode" FontSize="11.5"/>
+                                            <RadioButton Content="{loc:Loc EnterLicenseKeyTab}" IsChecked="{Binding IsKeyTabActive, Mode=OneWay}" Command="{Binding SetKeyTabCommand}" GroupName="MobileActivationMode" FontSize="11.5"/>
                                         </StackPanel>
 
                                         <!-- Option A: Google OAuth & Account Sign In -->
@@ -2120,27 +2124,27 @@
                                                             <Path Fill="#EA4335" Data="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.25 2.69 1.25 6.62l4.02 3.13c.95-2.85 3.6-4.96 6.73-4.96z"/>
                                                         </Canvas>
                                                     </Viewbox>
-                                                    <TextBlock Text="Continue with Google" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{loc:Loc ContinueWithGoogle}" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
 
                                             <!-- Divider -->
                                             <Grid ColumnDefinitions="*,Auto,*" Margin="0,2">
                                                 <Separator Grid.Column="0" Height="1" Background="{DynamicResource AppEdgeBrush}" VerticalAlignment="Center"/>
-                                                <TextBlock Grid.Column="1" Text="or account login" FontSize="10.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="8,0" VerticalAlignment="Center"/>
+                                                <TextBlock Grid.Column="1" Text="{loc:Loc OrSignInWithAccount}" FontSize="10.5" Foreground="{DynamicResource AppTextSecondaryBrush}" Margin="8,0" VerticalAlignment="Center"/>
                                                 <Separator Grid.Column="2" Height="1" Background="{DynamicResource AppEdgeBrush}" VerticalAlignment="Center"/>
                                             </Grid>
 
                                             <!-- Email and Password -->
-                                            <TextBox Text="{Binding AccountEmailInput, Mode=TwoWay}" Watermark="Account Email" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center"/>
-                                            <TextBox Text="{Binding AccountPasswordInput, Mode=TwoWay}" PasswordChar="●" Watermark="Account Password" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center"/>
-                                            <Button Content="Sign In &amp; Sync License" Command="{Binding AccountLoginCommand}" Classes="primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Height="34" CornerRadius="17" VerticalContentAlignment="Center"/>
+                                            <TextBox Text="{Binding AccountEmailInput, Mode=TwoWay}" Watermark="{loc:Loc AccountEmailWatermark}" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center"/>
+                                            <TextBox Text="{Binding AccountPasswordInput, Mode=TwoWay}" PasswordChar="●" Watermark="{loc:Loc AccountPasswordWatermark}" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center"/>
+                                            <Button Content="{loc:Loc SignInAndSyncLicense}" Command="{Binding AccountLoginCommand}" Classes="primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Height="34" CornerRadius="17" VerticalContentAlignment="Center"/>
                                         </StackPanel>
 
                                         <!-- Option B: Direct License Key Input -->
                                         <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsKeyTabActive}">
-                                            <TextBox Grid.Column="0" Text="{Binding LicenseKeyInput, Mode=TwoWay}" Watermark="Enter license key" Height="34" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
-                                            <Button Grid.Column="1" Content="Activate" Command="{Binding ActivateLicenseCommand}" Classes="primary" Height="34" Padding="16,0" CornerRadius="17" VerticalContentAlignment="Center"/>
+                                            <TextBox Grid.Column="0" Text="{Binding LicenseKeyInput, Mode=TwoWay}" Watermark="{loc:Loc LicenseKeyWatermark}" Height="34" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                                            <Button Grid.Column="1" Content="{loc:Loc ActivateKey}" Command="{Binding ActivateLicenseCommand}" Classes="primary" Height="34" Padding="16,0" CornerRadius="17" VerticalContentAlignment="Center"/>
                                         </Grid>
                                     </StackPanel>
 
@@ -2156,7 +2160,7 @@
                                 <!-- Inner Group Header -->
                                 <Border Grid.Row="0" Padding="18,12" Background="Transparent"
                                         BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
-                                    <TextBlock Text="Updates" FontWeight="SemiBold" FontSize="13"
+                                    <TextBlock Text="{loc:Loc Updates}" FontWeight="SemiBold" FontSize="13"
                                                Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                 </Border>
 
@@ -2165,9 +2169,9 @@
                                     <!-- Check on startup toggle -->
                                     <Grid ColumnDefinitions="*,Auto">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
-                                            <TextBlock Text="Check for Updates on Startup" FontWeight="SemiBold" FontSize="12"
+                                            <TextBlock Text="{loc:Loc CheckForUpdatesOnStartup}" FontWeight="SemiBold" FontSize="12"
                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                            <TextBlock Text="Automatically check GitHub releases when Fujifier opens" FontSize="11"
+                                            <TextBlock Text="{loc:Loc CheckForUpdatesOnStartupDesc}" FontSize="11"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding CheckForUpdatesOnStartup}" OnContent="" OffContent=""/>
@@ -2183,11 +2187,11 @@
                                             <TextBlock Text="{Binding UpdateStatusMessage}" FontSize="11"
                                                        Foreground="{Binding UpdateStatusColor}"
                                                        IsVisible="{Binding HasUpdateStatusMessage}" TextWrapping="Wrap"/>
-                                            <TextBlock Text="Check GitHub releases for updates" FontSize="11"
+                                            <TextBlock Text="{loc:Loc CheckUpdatesDesc}" FontSize="11"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}"
                                                        IsVisible="{Binding !HasUpdateStatusMessage}" TextWrapping="Wrap"/>
                                         </StackPanel>
-                                        <Button Grid.Column="1" Content="Check Now" Command="{Binding CheckForUpdatesCommand}"
+                                        <Button Grid.Column="1" Content="{loc:Loc CheckNow}" Command="{Binding CheckForUpdatesCommand}"
                                                 IsEnabled="{Binding !IsCheckingForUpdate}"
                                                 Classes="secondary" Height="34" Padding="16,0" CornerRadius="17"
                                                 VerticalContentAlignment="Center"/>
@@ -2198,9 +2202,9 @@
 
                         <!-- Bottom Action Buttons -->
                         <Grid ColumnDefinitions="*,*" Margin="0,8,0,16">
-                            <Button Grid.Column="0" Content="Cancel" Command="{Binding CancelCommand}" Classes="secondary"
+                            <Button Grid.Column="0" Content="{loc:Loc Cancel}" Command="{Binding CancelCommand}" Classes="secondary"
                                     Height="40" CornerRadius="20" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
-                            <Button Grid.Column="1" Content="Save Settings" Command="{Binding SaveCommand}" Classes="primary"
+                            <Button Grid.Column="1" Content="{loc:Loc Save}" Command="{Binding SaveCommand}" Classes="primary"
                                     Height="40" CornerRadius="20" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="8,0,0,0"/>
                         </Grid>
 
@@ -2233,10 +2237,10 @@
                                 Background="Transparent" BorderThickness="0" Padding="6,8">
                             <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
                                 <TextBlock Text="‹" FontSize="24" FontWeight="Bold" Margin="0,-4,0,0" Foreground="{DynamicResource AppAccentBrush}"/>
-                                <TextBlock Text="Back" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource AppAccentBrush}"/>
+                                <TextBlock Text="{loc:Loc Back}" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" Foreground="{DynamicResource AppAccentBrush}"/>
                             </StackPanel>
                         </Button>
-                        <TextBlock Grid.Column="1" Text="About Fujifier" FontWeight="Bold" FontSize="17"
+                        <TextBlock Grid.Column="1" Text="{loc:Loc AboutFujifier}" FontWeight="Bold" FontSize="17"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" Margin="-40,0,0,0"
                                    Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                     </Grid>
@@ -2257,31 +2261,31 @@
                                 BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
                                 CornerRadius="12" Padding="14">
                             <StackPanel Spacing="9">
-                                <TextBlock Text="Fujifilm Film Simulation Profiles for All Cameras" FontWeight="SemiBold" FontSize="12"
+                                <TextBlock Text="{loc:Loc AboutSubheader}" FontWeight="SemiBold" FontSize="12"
                                            Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
-                                <TextBlock Text="Converts camera RAW images to DNG while embedding Fujifilm camera profiles and metadata so Adobe Lightroom and Camera Raw (ACR) can apply authentic Fujifilm film simulations."
+                                <TextBlock Text="{loc:Loc AboutDescription}"
                                            FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap" LineHeight="16"/>
                                 
                                 <Separator Margin="0,2" Background="{DynamicResource AppEdgeBrush}"/>
 
                                 <!-- Functional Link Buttons -->
                                 <Grid ColumnDefinitions="*,*,*">
-                                    <Button Grid.Column="0" Content="Website" Command="{Binding OpenWebsiteCommand}" Classes="secondary"
+                                    <Button Grid.Column="0" Content="{loc:Loc Website}" Command="{Binding OpenWebsiteCommand}" Classes="secondary"
                                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                             FontSize="11" Height="30" Padding="0" CornerRadius="15" Margin="0,0,4,0"/>
                                     <Button Grid.Column="1" Content="GitHub" Command="{Binding OpenGitHubCommand}" Classes="secondary"
                                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                             FontSize="11" Height="30" Padding="0" CornerRadius="15" Margin="2,0,2,0"/>
-                                    <Button Grid.Column="2" Content="Updates" Command="{Binding OpenReleasesCommand}" Classes="secondary"
+                                    <Button Grid.Column="2" Content="{loc:Loc Updates}" Command="{Binding OpenReleasesCommand}" Classes="secondary"
                                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                             FontSize="11" Height="30" Padding="0" CornerRadius="15" Margin="4,0,0,0"/>
                                 </Grid>
 
                                 <Separator Margin="0,2" Background="{DynamicResource AppEdgeBrush}"/>
 
-                                <TextBlock Text="Developed by Isidore Paulin (ipweb.dev)" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                                <TextBlock Text="Powered by: DNGLab, ExifTool, Avalonia UI" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                                <TextBlock Text="Licensed under GNU General Public License v3" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                <TextBlock Text="{loc:Loc DevelopedBy}" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                <TextBlock Text="{loc:Loc PoweredBy}" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                <TextBlock Text="{loc:Loc LicenseGpl}" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                             </StackPanel>
                         </Border>
 
@@ -2290,14 +2294,14 @@
                                 BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
                                 CornerRadius="12" Padding="14">
                             <StackPanel Spacing="8">
-                                <TextBlock Text="Camera Compatibility" FontWeight="SemiBold" FontSize="12"
+                                <TextBlock Text="{loc:Loc CameraCompatibility}" FontWeight="SemiBold" FontSize="12"
                                            Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                <TextBlock Text="Supports direct RAW conversion for Canon, Nikon, Sony, Fujifilm, Olympus/OM, Panasonic, Leica, Pentax, and more. Any RAW file pre-converted to DNG is also compatible."
+                                <TextBlock Text="{loc:Loc CameraCompatDesc}"
                                            FontSize="10.5" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap" LineHeight="15"/>
                                 
                                 <Separator Margin="0,2" Background="{DynamicResource AppEdgeBrush}"/>
 
-                                <TextBlock Text="Non working cameras:" FontSize="10.5" FontWeight="SemiBold"
+                                <TextBlock Text="{loc:Loc NonWorkingCameras}" FontSize="10.5" FontWeight="SemiBold"
                                            Foreground="{DynamicResource AppDangerBrush}"/>
                                 <StackPanel Margin="6,0,0,0" Spacing="2">
                                     <TextBlock Text="• Canon G1" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
@@ -2307,7 +2311,7 @@
 
                                 <Separator Margin="0,2" Background="{DynamicResource AppEdgeBrush}"/>
 
-                                <TextBlock Text="Partially working (have to be converted to DNG first in Lightroom to work):" FontSize="10.5" FontWeight="SemiBold"
+                                <TextBlock Text="{loc:Loc PartiallyWorkingCameras}" FontSize="10.5" FontWeight="SemiBold"
                                            Foreground="{DynamicResource AppAccentLightBrush}"/>
                                 <StackPanel Margin="6,0,0,0" Spacing="2">
                                     <TextBlock Text="• Hasselblad Flash sync" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
@@ -2316,7 +2320,7 @@
                         </Border>
 
                         <!-- Close Button -->
-                        <Button Content="Close" Command="{Binding CloseModalCommand}" Classes="primary" Height="34" Width="90" Padding="0" CornerRadius="17"
+                        <Button Content="{loc:Loc Close}" Command="{Binding CloseModalCommand}" Classes="primary" Height="34" Width="90" Padding="0" CornerRadius="17"
                                 HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="0,6,0,0"/>
                         <Border Height="24"/>
                     </StackPanel>
@@ -2371,13 +2375,13 @@
                         <StackPanel IsVisible="{Binding IsDelayKeyInputVisible}" Spacing="6" Margin="0,4,0,0">
                             <Grid ColumnDefinitions="*, Auto">
                                 <TextBox Text="{Binding DelayLicenseKey, Mode=TwoWay}" Grid.Column="0" 
-                                         Watermark="Paste FUJIFIER-PRO license key here..." 
+                                         Watermark="{loc:Loc LicenseKeyWatermark}" 
                                          Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                          Foreground="{DynamicResource AppTextPrimaryBrush}"
                                          BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
                                          FontSize="11" Height="34" CornerRadius="8" 
                                          VerticalContentAlignment="Center" Margin="0,0,8,0"/>
-                                <Button Grid.Column="1" Content="Activate" Command="{Binding DelayActivateKeyCommand}" 
+                                <Button Grid.Column="1" Content="{loc:Loc ActivateKey}" Command="{Binding DelayActivateKeyCommand}" 
                                         Classes="primary" Height="34" Padding="16,0" CornerRadius="17"
                                         VerticalContentAlignment="Center"/>
                             </Grid>
@@ -2388,7 +2392,7 @@
 
                         <!-- Middle Links (Buy Pro, Google Sign In & License Key) -->
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="0,8,0,8">
-                            <Button Content="⭐ Buy Pro" Command="{Binding BuyProCommand}" Classes="primary" 
+                            <Button Content="{loc:Loc BuyPro}" Command="{Binding BuyProCommand}" Classes="primary" 
                                     Height="34" Padding="14,0" CornerRadius="17"
                                     VerticalContentAlignment="Center" FontWeight="SemiBold" FontSize="11.5"/>
                             <Button Command="{Binding DelayGoogleSignInCommand}" Classes="secondary"
@@ -2403,10 +2407,10 @@
                                             <Path Fill="#EA4335" Data="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.35 0 3.25 2.69 1.25 6.62l4.02 3.13c.95-2.85 3.6-4.96 6.73-4.96z"/>
                                         </Canvas>
                                     </Viewbox>
-                                    <TextBlock Text="Login" FontSize="11.5" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{loc:Loc Login}" FontSize="11.5" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </Button>
-                            <Button Content="License Key" Command="{Binding DelayToggleKeyCommand}" Classes="secondary"
+                            <Button Content="{loc:Loc EnterLicenseKeyTab}" Command="{Binding DelayToggleKeyCommand}" Classes="secondary"
                                     Height="34" Padding="12,0" CornerRadius="17"
                                     VerticalContentAlignment="Center" FontSize="11.5"/>
                         </StackPanel>
@@ -2433,7 +2437,7 @@
                         <TextBlock Text="{Binding ModalMessage}" FontSize="12" Foreground="{DynamicResource AppTextSecondaryBrush}"
                                    TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"/>
                         <!-- Centered Dismiss Button -->
-                        <Button Content="Got it" Command="{Binding CloseModalCommand}" Classes="primary"
+                        <Button Content="{loc:Loc GotIt}" Command="{Binding CloseModalCommand}" Classes="primary"
                                 Height="38" CornerRadius="19" Padding="24,0" HorizontalAlignment="Center"/>
                     </StackPanel>
 

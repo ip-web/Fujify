@@ -191,8 +191,12 @@ namespace Fujify.Services
         {
             if (Application.Current == null) return new FileConflictResolution(ConflictChoice.Skip, false);
 
-            var targetOwner = owner ?? (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
-            if (targetOwner == null && MainViewModel.Instance == null)
+            var desktopLifetime = Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
+            var singleViewLifetime = Application.Current.ApplicationLifetime as ISingleViewApplicationLifetime;
+            var targetOwner = owner ?? desktopLifetime?.MainWindow;
+
+            // In headless/test environments with no visible window or view, skip prompt to prevent deadlocks
+            if (targetOwner == null && singleViewLifetime?.MainView == null)
             {
                 return new FileConflictResolution(ConflictChoice.Skip, false);
             }

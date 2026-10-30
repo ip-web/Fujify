@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="using:Fujify.Localization"
         x:Class="Fujify.Views.MessageDialog"
-        Title="Notification"
+        Title="{loc:Loc Notification}"
         Width="360" Height="220"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
@@ -42,7 +43,7 @@
             </StackPanel>
 
             <!-- Centered Action -->
-            <Button Grid.Row="2" Content="Done" Click="Ok_Click" Classes="primary"
+            <Button Grid.Row="2" Content="{loc:Loc Done}" Click="Ok_Click" Classes="primary"
                     Height="34" Padding="28,0" CornerRadius="17"
                     HorizontalAlignment="Center" HorizontalContentAlignment="Center"
                     VerticalContentAlignment="Center" Margin="0,14,0,0"/>

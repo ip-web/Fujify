@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="using:Fujify.Localization"
         x:Class="Fujify.Views.AboutWindow"
-        Title="About Fujifier"
+        Title="{loc:Loc AboutFujifier}"
         Width="440" Height="470"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
@@ -34,7 +35,7 @@
                 <Button HorizontalAlignment="Right" VerticalAlignment="Top" Click="Close_Click"
                         Width="28" Height="28" CornerRadius="14" Padding="0"
                         Background="Transparent" Foreground="{DynamicResource AppTextSecondaryBrush}"
-                        BorderThickness="0" Cursor="Hand" ToolTip.Tip="Close"
+                        BorderThickness="0" Cursor="Hand" ToolTip.Tip="{loc:Loc Close}"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
                     <Button.Styles>
                         <Style Selector="Button:pointerover">
@@ -52,22 +53,22 @@
                     CornerRadius="12" Padding="14">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                     <StackPanel Spacing="9">
-                        <TextBlock Text="Fujifilm Film Simulation Profiles for All Cameras" FontWeight="SemiBold" FontSize="12"
+                        <TextBlock Text="{loc:Loc AboutSubheader}" FontWeight="SemiBold" FontSize="12"
                                    Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
-                        <TextBlock Text="Converts camera RAW images to DNG while embedding Fujifilm camera profiles and metadata so Adobe Lightroom and Camera Raw (ACR) can apply authentic Fujifilm film simulations."
+                        <TextBlock Text="{loc:Loc AboutDescription}"
                                    FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap" LineHeight="16"/>
                         
                         <Separator Margin="0,2" Background="{DynamicResource AppEdgeBrush}"/>
 
                         <!-- Functional Link Buttons -->
                         <Grid ColumnDefinitions="*,*,*">
-                            <Button Grid.Column="0" Content="Website" Click="Website_Click" Classes="secondary"
+                            <Button Grid.Column="0" Content="{loc:Loc Website}" Click="Website_Click" Classes="secondary"
                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                     FontSize="11" Height="30" Padding="0" CornerRadius="15" Margin="0,0,4,0"/>
                             <Button Grid.Column="1" Content="GitHub" Click="GitHub_Click" Classes="secondary"
                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                     FontSize="11" Height="30" Padding="0" CornerRadius="15" Margin="2,0,2,0"/>
-                            <Button Grid.Column="2" Content="Updates" Click="Releases_Click" Classes="secondary"
+                            <Button Grid.Column="2" Content="{loc:Loc Updates}" Click="Releases_Click" Classes="secondary"
                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                     FontSize="11" Height="30" Padding="0" CornerRadius="15" Margin="4,0,0,0"/>
                         </Grid>
@@ -75,9 +76,9 @@
                         <Separator Margin="0,2" Background="{DynamicResource AppEdgeBrush}"/>
 
                         <!-- Camera Compatibility -->
-                        <TextBlock Text="Camera Compatibility" FontWeight="SemiBold" FontSize="11.5"
+                        <TextBlock Text="{loc:Loc CameraCompatibility}" FontWeight="SemiBold" FontSize="11.5"
                                    Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                        <TextBlock Text="Non working cameras:" FontSize="10" FontWeight="SemiBold"
+                        <TextBlock Text="{loc:Loc NonWorkingCameras}" FontSize="10" FontWeight="SemiBold"
                                    Foreground="{DynamicResource AppDangerBrush}"/>
                         <StackPanel Margin="6,0,0,0" Spacing="2">
                             <TextBlock Text="• Canon G1" FontSize="9.5" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
@@ -85,7 +86,7 @@
                             <TextBlock Text="• Canon PowerShot Pro70" FontSize="9.5" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                         </StackPanel>
 
-                        <TextBlock Text="Partially working (have to be converted to DNG first in Lightroom to work):" FontSize="10" FontWeight="SemiBold"
+                        <TextBlock Text="{loc:Loc PartiallyWorkingCameras}" FontSize="10" FontWeight="SemiBold"
                                    Foreground="{DynamicResource AppAccentLightBrush}" Margin="0,2,0,0"/>
                         <StackPanel Margin="6,0,0,0" Spacing="2">
                             <TextBlock Text="• Hasselblad Flash sync" FontSize="9.5" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
@@ -93,15 +94,15 @@
 
                         <Separator Margin="0,2" Background="{DynamicResource AppEdgeBrush}"/>
 
-                        <TextBlock Text="Developed by Isidore Paulin (ipweb.dev)" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                        <TextBlock Text="Powered by: DNGLab, ExifTool, Avalonia UI" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                        <TextBlock Text="Licensed under GNU General Public License v3" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                        <TextBlock Text="{loc:Loc DevelopedBy}" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                        <TextBlock Text="{loc:Loc PoweredBy}" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                        <TextBlock Text="{loc:Loc LicenseGpl}" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                     </StackPanel>
                 </ScrollViewer>
             </Border>
 
             <!-- Footer -->
-            <Button Grid.Row="2" Content="Close" Click="Close_Click" Classes="primary" Height="34" Width="90" Padding="0" CornerRadius="17"
+            <Button Grid.Row="2" Content="{loc:Loc Close}" Click="Close_Click" Classes="primary" Height="34" Width="90" Padding="0" CornerRadius="17"
                     HorizontalAlignment="Right" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="0,14,0,0"/>
         </Grid>
     </Border>
