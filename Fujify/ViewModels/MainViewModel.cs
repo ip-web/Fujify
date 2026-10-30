@@ -27,6 +27,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.Input;
 using Fujify.Common;
@@ -1049,14 +1050,14 @@ namespace Fujify.ViewModels
             set => SetProperty(ref _modalIcon, value);
         }
 
-        private IBrush _modalIconColor = new SolidColorBrush(Color.Parse("#00C781"));
+        private IBrush _modalIconColor = new ImmutableSolidColorBrush(Color.Parse("#00C781"));
         public IBrush ModalIconColor
         {
             get => _modalIconColor;
             set => SetProperty(ref _modalIconColor, value);
         }
 
-        private IBrush _modalBadgeBackground = new SolidColorBrush(Color.FromArgb(40, 0, 199, 129));
+        private IBrush _modalBadgeBackground = new ImmutableSolidColorBrush(Color.FromArgb(40, 0, 199, 129));
         public IBrush ModalBadgeBackground
         {
             get => _modalBadgeBackground;
@@ -1686,99 +1687,129 @@ namespace Fujify.ViewModels
                 }
 
                 var existingPaths = new HashSet<string>(Files.Select(f => f.FilePath), StringComparer.OrdinalIgnoreCase);
-                int totalFiles = filesToAdd.Count;
+
+                var validFiles = new List<string>();
+                foreach (var filePath in filesToAdd)
+                {
+                    if (existingPaths.Contains(filePath)) continue;
+
+                    string extension = Path.GetExtension(filePath);
+                    if (_supportedFormats.Contains(extension))
+                    {
+                        existingPaths.Add(filePath);
+                        validFiles.Add(filePath);
+                    }
+                    else
+                    {
+                        Dispatcher.UIThread.Post(() =>
+                            _dialogService.ShowMessageAsync(OwnerWindow, "Unsupported File Format", $"The file format {extension} is not supported."));
+                    }
+                }
+
+                int totalFiles = validFiles.Count;
+                if (totalFiles == 0)
+                {
+                    return;
+                }
+
+                // Stage 1: Instant Ingestion.
+                // Add FileItem records with lightweight placeholders to the queue immediately in batches so user gets instant visual feedback.
+                var placeholder = _thumbnailService.GetPlaceholderImage();
+                var createdItems = new List<FileItem>(totalFiles);
+
+                foreach (var filePath in validFiles)
+                {
+                    createdItems.Add(new FileItem
+                    {
+                        FilePath = filePath,
+                        Status = "Pending",
+                        Thumbnail = placeholder,
+                        CameraMakeAndModel = string.Empty,
+                        RemoveCommand = RemoveFileCommand
+                    });
+                }
+
+                // Batch dispatch to UI collection
+                const int uiBatchSize = 100;
+                for (int i = 0; i < totalFiles; i += uiBatchSize)
+                {
+                    int count = Math.Min(uiBatchSize, totalFiles - i);
+                    var batchSlice = createdItems.GetRange(i, count);
+                    Dispatcher.UIThread.Post(() =>
+                    {
+                        foreach (var item in batchSlice)
+                        {
+                            Files.Add(item);
+                        }
+                        if (SelectedFile == null && Files.Count > 0)
+                        {
+                            SelectedFile = Files[0];
+                        }
+                    });
+                }
+
+                // Stage 2: Concurrent Multi-Threaded Thumbnail & Metadata Processing
+                bool skipThumbnails = _settingsService.Settings.SkipThumbnailGeneration;
+                int maxConcurrency = Math.Clamp(Environment.ProcessorCount, 2, 8);
+                var parallelOptions = new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = maxConcurrency
+                };
+
                 int processedCount = 0;
+                long lastProgressUpdateTicks = 0;
+                var progressSw = System.Diagnostics.Stopwatch.StartNew();
 
                 Dispatcher.UIThread.Post(() =>
                 {
-                    ImportStatusText = totalFiles > 0 ? $"Importing photos (0 of {totalFiles})..." : "Scanning complete";
+                    ImportStatusText = $"Loading photo details (0 of {totalFiles})...";
+                    ImportProgress = 0;
+                    ProgressValue = 0;
                 });
 
-                await Task.Run(() =>
+                await Task.Run(async () =>
                 {
-                    var batch = new List<FileItem>();
-
-                    foreach (var filePath in filesToAdd)
+                    await Parallel.ForEachAsync(createdItems, parallelOptions, async (item, ct) =>
                     {
                         try
                         {
-                            if (existingPaths.Contains(filePath))
+                            string cameraModel = _metadataService.GetCameraMakeAndModel(item.FilePath);
+                            if (!string.IsNullOrEmpty(cameraModel))
                             {
-                                processedCount++;
-                                continue;
+                                item.CameraMakeAndModel = cameraModel;
                             }
 
-                            string extension = Path.GetExtension(filePath);
-
-                            if (_supportedFormats.Contains(extension))
+                            if (!skipThumbnails)
                             {
-                                existingPaths.Add(filePath);
-                                bool skipThumbnails = _settingsService.Settings.SkipThumbnailGeneration;
-                                var thumbnail = skipThumbnails
-                                    ? _thumbnailService.GetPlaceholderImage()
-                                    : _thumbnailService.GenerateThumbnail(filePath);
-                                string cameraMakeAndModel = _metadataService.GetCameraMakeAndModel(filePath);
-
-                                batch.Add(new FileItem
+                                var thumbnail = _thumbnailService.GenerateThumbnail(item.FilePath);
+                                if (thumbnail != null)
                                 {
-                                    FilePath = filePath,
-                                    Status = "Pending",
-                                    Thumbnail = thumbnail,
-                                    CameraMakeAndModel = cameraMakeAndModel,
-                                    RemoveCommand = RemoveFileCommand
-                                });
-
-                                processedCount++;
-                                double pct = totalFiles > 0 ? (double)processedCount / totalFiles * 100.0 : 0;
-                                int curr = processedCount;
-
-                                Dispatcher.UIThread.Post(() =>
-                                {
-                                    ImportProgress = pct;
-                                    ProgressValue = pct;
-                                    ImportStatusText = $"Importing photos ({curr} of {totalFiles})...";
-                                });
-
-                                if (batch.Count >= 10)
-                                {
-                                    var currentBatch = batch.ToList();
-                                    batch.Clear();
-                                    Dispatcher.UIThread.Post(() =>
-                                    {
-                                        foreach (var item in currentBatch) Files.Add(item);
-                                        if (SelectedFile == null && Files.Count > 0)
-                                        {
-                                            SelectedFile = Files[0];
-                                        }
-                                    });
+                                    item.Thumbnail = thumbnail;
                                 }
-                            }
-                            else
-                            {
-                                processedCount++;
-                                Dispatcher.UIThread.Post(() =>
-                                    _dialogService.ShowMessageAsync(OwnerWindow, "Unsupported File Format", $"The file format {extension} is not supported."));
                             }
                         }
                         catch (Exception ex)
                         {
-                            processedCount++;
-                            System.Diagnostics.Debug.WriteLine($"[Fujifier] Error processing {filePath}: {ex.Message}");
+                            System.Diagnostics.Debug.WriteLine($"[Fujifier] Error loading details for {item.FilePath}: {ex.Message}");
                         }
-                    }
-
-                    if (batch.Count > 0)
-                    {
-                        var remaining = batch.ToList();
-                        Dispatcher.UIThread.Post(() =>
+                        finally
                         {
-                            foreach (var item in remaining) Files.Add(item);
-                            if (SelectedFile == null && Files.Count > 0)
+                            int curr = Interlocked.Increment(ref processedCount);
+                            long elapsed = progressSw.ElapsedMilliseconds;
+                            // Throttle progress bar & status text updates to at most once per 60ms to prevent UI event loop congestion
+                            if (elapsed - Interlocked.Read(ref lastProgressUpdateTicks) > 60 || curr == totalFiles)
                             {
-                                SelectedFile = Files[0];
+                                Interlocked.Exchange(ref lastProgressUpdateTicks, elapsed);
+                                double pct = (double)curr / totalFiles * 100.0;
+                                Dispatcher.UIThread.Post(() =>
+                                {
+                                    ImportProgress = pct;
+                                    ProgressValue = pct;
+                                    ImportStatusText = $"Loading photo details ({curr} of {totalFiles})...";
+                                });
                             }
-                        });
-                    }
+                        }
+                    });
                 });
             }
             catch (Exception ex)

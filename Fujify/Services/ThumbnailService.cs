@@ -100,54 +100,75 @@ namespace Fujify.Services
                     orientation = (int)codec.EncodedOrigin;
                 }
 
-                using var originalBitmap = SKBitmap.Decode(codec);
+                int origW = codec.Info.Width;
+                int origH = codec.Info.Height;
+                int maxDim = Math.Max(origW, origH);
+
+                SKBitmap? originalBitmap = null;
+                // High-performance hardware DCT sub-sampling: decodes directly at thumbnail scale
+                if (maxDim > 320)
+                {
+                    float targetScale = 320f / maxDim;
+                    var scaledDim = codec.GetScaledDimensions(targetScale);
+                    var scaledInfo = new SKImageInfo(scaledDim.Width, scaledDim.Height, codec.Info.ColorType, codec.Info.AlphaType);
+                    originalBitmap = SKBitmap.Decode(codec, scaledInfo);
+                }
+
+                if (originalBitmap == null)
+                {
+                    originalBitmap = SKBitmap.Decode(codec);
+                }
+
                 if (originalBitmap == null) return null;
 
-                var orientedBitmap = ApplyOrientation(originalBitmap, orientation);
-                bool isOrientedSeparate = !ReferenceEquals(orientedBitmap, originalBitmap);
-
-                try
+                using (originalBitmap)
                 {
-                    // Scale down to max dimension 320 for optimal memory footprint and crisp preview
-                    int maxDim = Math.Max(orientedBitmap.Width, orientedBitmap.Height);
-                    SKBitmap displayBitmap;
-                    bool shouldDisposeDisplay = false;
-
-                    if (maxDim > 320)
-                    {
-                        float scale = 320f / maxDim;
-                        int targetW = Math.Max(1, (int)(orientedBitmap.Width * scale));
-                        int targetH = Math.Max(1, (int)(orientedBitmap.Height * scale));
-                        displayBitmap = orientedBitmap.Resize(new SKImageInfo(targetW, targetH), SKFilterQuality.Medium);
-                        shouldDisposeDisplay = true;
-                    }
-                    else
-                    {
-                        displayBitmap = orientedBitmap;
-                    }
+                    var orientedBitmap = ApplyOrientation(originalBitmap, orientation);
+                    bool isOrientedSeparate = !ReferenceEquals(orientedBitmap, originalBitmap);
 
                     try
                     {
-                        using var image = SKImage.FromBitmap(displayBitmap);
-                        using var data = image.Encode(SKEncodedImageFormat.Jpeg, 85);
-                        using var outMs = new MemoryStream();
-                        data.SaveTo(outMs);
-                        outMs.Position = 0;
-                        return new Bitmap(outMs);
+                        // Scale down to max dimension 320 for optimal memory footprint and crisp preview
+                        int currentMax = Math.Max(orientedBitmap.Width, orientedBitmap.Height);
+                        SKBitmap displayBitmap;
+                        bool shouldDisposeDisplay = false;
+
+                        if (currentMax > 320)
+                        {
+                            float scale = 320f / currentMax;
+                            int targetW = Math.Max(1, (int)(orientedBitmap.Width * scale));
+                            int targetH = Math.Max(1, (int)(orientedBitmap.Height * scale));
+                            displayBitmap = orientedBitmap.Resize(new SKImageInfo(targetW, targetH), SKFilterQuality.Medium);
+                            shouldDisposeDisplay = true;
+                        }
+                        else
+                        {
+                            displayBitmap = orientedBitmap;
+                        }
+
+                        try
+                        {
+                            using var image = SKImage.FromBitmap(displayBitmap);
+                            using var data = image.Encode(SKEncodedImageFormat.Jpeg, 80);
+                            using var outMs = new MemoryStream();
+                            data.SaveTo(outMs);
+                            outMs.Position = 0;
+                            return new Bitmap(outMs);
+                        }
+                        finally
+                        {
+                            if (shouldDisposeDisplay)
+                            {
+                                displayBitmap.Dispose();
+                            }
+                        }
                     }
                     finally
                     {
-                        if (shouldDisposeDisplay)
+                        if (isOrientedSeparate)
                         {
-                            displayBitmap.Dispose();
+                            orientedBitmap.Dispose();
                         }
-                    }
-                }
-                finally
-                {
-                    if (isOrientedSeparate)
-                    {
-                        orientedBitmap.Dispose();
                     }
                 }
             }

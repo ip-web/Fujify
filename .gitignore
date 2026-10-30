@@ -377,3 +377,6 @@ DSC00381*
 *.dng_original
 Fujify/settings.json
 /*.png
+
+*.CR2
+*.cr2
