@@ -218,6 +218,11 @@ namespace Fujify.Views
                 if (DataContext is MainViewModel vm)
                 {
                     vm.UpdateLayoutMode(e.NewSize.Width, e.NewSize.Height);
+                    var queueCard = this.FindControl<Border>("PhotoQueuePanel");
+                    if (queueCard != null && queueCard.Bounds.Width > 0)
+                    {
+                        vm.IsQueueFabMode = queueCard.Bounds.Width < 460;
+                    }
                 }
                 UpdateSlidePanels(animated: false);
             }
@@ -244,6 +249,11 @@ namespace Fujify.Views
                 if (Bounds.Width > 0)
                 {
                     vm.UpdateLayoutMode(Bounds.Width, Bounds.Height);
+                    var queueCard = this.FindControl<Border>("PhotoQueuePanel");
+                    if (queueCard != null && queueCard.Bounds.Width > 0)
+                    {
+                        vm.IsQueueFabMode = queueCard.Bounds.Width < 460;
+                    }
                 }
                 UpdateSlidePanels(animated: false);
             }
@@ -396,6 +406,14 @@ namespace Fujify.Views
             if (DataContext is MainViewModel vm)
             {
                 vm.IsMobileAddMenuOpen = false;
+            }
+        }
+
+        private void OnQueueFabBackdropPointerPressed(object? sender, PointerPressedEventArgs e)
+        {
+            if (DataContext is MainViewModel vm)
+            {
+                vm.IsQueueFabMenuOpen = false;
             }
         }
 

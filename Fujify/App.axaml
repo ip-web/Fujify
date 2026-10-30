@@ -530,6 +530,9 @@
                 </Transitions>
             </Setter>
         </Style>
+        <Style Selector="Border.speed-dial-right">
+            <Setter Property="RenderTransformOrigin" Value="85%,100%"/>
+        </Style>
 
         <!-- Mobile FAB Backdrop -->
         <Style Selector="Border.mobile-fab-backdrop">
