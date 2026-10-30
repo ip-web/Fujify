@@ -195,6 +195,8 @@ namespace Fujify.ViewModels
                 IsMobileAddMenuOpen = false;
                 await ExecuteAddFolderAsync();
             });
+            ToggleQueueFabMenuCommand = new RelayCommand(() => IsQueueFabMenuOpen = !IsQueueFabMenuOpen);
+            CloseQueueFabMenuCommand = new RelayCommand(() => IsQueueFabMenuOpen = false);
             NavPhotosCommand = new RelayCommand(() => ActiveNavTab = "photos");
             NavHomeCommand = new RelayCommand(() => ActiveNavTab = "home");
             NavPresetsCommand = new RelayCommand(() =>
@@ -335,6 +337,31 @@ namespace Fujify.ViewModels
         public ICommand NavPhotosCommand { get; }
         public ICommand NavHomeCommand { get; }
         public ICommand NavPresetsCommand { get; }
+        public IRelayCommand ToggleQueueFabMenuCommand { get; }
+        public IRelayCommand CloseQueueFabMenuCommand { get; }
+
+        private bool _isQueueFabMode;
+        public bool IsQueueFabMode
+        {
+            get => _isQueueFabMode;
+            set
+            {
+                if (SetProperty(ref _isQueueFabMode, value))
+                {
+                    if (!value)
+                    {
+                        IsQueueFabMenuOpen = false;
+                    }
+                }
+            }
+        }
+
+        private bool _isQueueFabMenuOpen;
+        public bool IsQueueFabMenuOpen
+        {
+            get => _isQueueFabMenuOpen;
+            set => SetProperty(ref _isQueueFabMenuOpen, value);
+        }
 
         private bool _isMobileAddMenuOpen;
         public bool IsMobileAddMenuOpen
@@ -908,9 +935,14 @@ namespace Fujify.ViewModels
 
             IsPhoneLayout = width < 650;
             IsTabletLayout = width >= 650 && width < 900;
+            IsQueueFabMode = width < 920;
             if (!IsPhoneLayout)
             {
                 IsMobileSidebarOpen = false;
+            }
+            if (!IsQueueFabMode)
+            {
+                IsQueueFabMenuOpen = false;
             }
             if (_selectedFile == null && Files.Count > 0)
             {
@@ -2298,6 +2330,7 @@ namespace Fujify.ViewModels
 
         private async Task ExecuteClearAsync()
         {
+            IsQueueFabMenuOpen = false;
             if (Files.Count == 0) return;
             Files.Clear();
             IsProgressVisible = false;
@@ -2316,6 +2349,7 @@ namespace Fujify.ViewModels
 
         private async Task ExecuteAddFilesAsync()
         {
+            IsQueueFabMenuOpen = false;
             try
             {
                 IReadOnlyList<string>? selectedFiles = null;
@@ -2342,6 +2376,7 @@ namespace Fujify.ViewModels
 
         private async Task ExecuteAddFolderAsync()
         {
+            IsQueueFabMenuOpen = false;
             string? selectedFolder = await _dialogService.ShowFolderBrowserDialogAsync(OwnerWindow, "Select folder containing RAW pictures");
             if (!string.IsNullOrEmpty(selectedFolder))
             {

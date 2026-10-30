@@ -319,7 +319,26 @@ namespace Fujify.Services
                 if (errorMsg.Contains("PowerShot Pro70", StringComparison.OrdinalIgnoreCase) ||
                     errorMsg.Contains("PowerShot Pr070", StringComparison.OrdinalIgnoreCase))
                 {
-                    return (false, "Canon PowerShot Pro70 uses a legacy non-Bayer CYGM sensor which is unsupported for DNG conversion.");
+                    return (false, "Canon PowerShot Pro70 is non-working (legacy non-Bayer CYGM sensor).");
+                }
+
+                if (errorMsg.Contains("PowerShot G1", StringComparison.OrdinalIgnoreCase) ||
+                    errorMsg.Contains("Canon G1", StringComparison.OrdinalIgnoreCase) ||
+                    (errorMsg.Contains("G1", StringComparison.OrdinalIgnoreCase) && errorMsg.Contains("Canon", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return (false, "Canon G1 is non-working for direct RAW conversion.");
+                }
+
+                if (errorMsg.Contains("E5700", StringComparison.OrdinalIgnoreCase) ||
+                    errorMsg.Contains("COOLPIX 5700", StringComparison.OrdinalIgnoreCase))
+                {
+                    return (false, "Nikon e5700 is non-working for direct RAW conversion.");
+                }
+
+                if (errorMsg.Contains("Flash sync", StringComparison.OrdinalIgnoreCase) ||
+                    (errorMsg.Contains("Hasselblad", StringComparison.OrdinalIgnoreCase) && errorMsg.Contains("Flash", StringComparison.OrdinalIgnoreCase)))
+                {
+                    return (false, "Hasselblad Flash sync is partially working: photos must be converted to DNG first in Lightroom to work.");
                 }
 
                 return (false, errorMsg);

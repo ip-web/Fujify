@@ -624,15 +624,17 @@
 
                                         <!-- Photo Info Details -->
                                         <StackPanel IsVisible="{Binding SelectedFile, Converter={x:Static ObjectConverters.IsNotNull}}" Spacing="12">
-                                            <!-- Image Preview -->
-                                            <Border MaxWidth="320" Height="175" CornerRadius="12" ClipToBounds="True"
-                                                    Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                    BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
-                                                    HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,8">
-                                                <Image Source="{Binding SelectedFile.Thumbnail}" Stretch="Uniform"
-                                                       MaxWidth="320" MaxHeight="175"
-                                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                            </Border>
+                                            <!-- Image Preview (Limited strictly to 90% width of sidebar with 5% margin on each side) -->
+                                            <Grid ColumnDefinitions="5*,90*,5*" Margin="-18,0,-18,8">
+                                                <Border Grid.Column="1" Height="175" CornerRadius="12" ClipToBounds="True"
+                                                        Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                        BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
+                                                        HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                                                    <Image Source="{Binding SelectedFile.Thumbnail}" Stretch="Uniform"
+                                                           MaxHeight="175"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </Grid>
 
                                             <!-- Photo Title & Camera Subhead -->
                                             <StackPanel Spacing="3">
@@ -809,15 +811,16 @@
                         <Grid Grid.Row="1" RowDefinitions="*" ColumnDefinitions="*,295" Margin="8,2,24,8">
 
                             <!-- CENTER: Photo Queue Panel -->
-                            <Border Grid.Row="0" Grid.Column="0" Classes="panel" Margin="0,0,16,0" ClipToBounds="True">
+                            <Border x:Name="PhotoQueuePanel" Grid.Row="0" Grid.Column="0" Classes="panel" Margin="0,0,16,0" ClipToBounds="True">
                                 <Grid RowDefinitions="Auto,*">
 
                                     <!-- Panel Subhead: Action Buttons + Count Badge + View Mode Switcher -->
                                     <Border Grid.Row="0" Padding="14,8,14,8" Background="Transparent"
                                             BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
                                         <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                                            <!-- Action Buttons & Badge (Add Files, Add Folder, Clear, Count) -->
-                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                            <!-- Action Buttons & Badge (Add Files, Add Folder, Clear, Count) - DESKTOP / WIDE MODE -->
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                                                        IsVisible="{Binding !IsQueueFabMode}">
                                                 <!-- Primary + Add Files -->
                                                 <Button Classes="primary" Command="{Binding AddFilesCommand}"
                                                         Height="32" Padding="14,0" CornerRadius="16"
@@ -846,6 +849,17 @@
                                                 </Button>
 
                                                 <!-- Photos Count Badge -->
+                                                <Border Background="#10FFFFFF" BorderBrush="#15FFFFFF" BorderThickness="1"
+                                                        CornerRadius="7" Padding="7,3" VerticalAlignment="Center"
+                                                        IsVisible="{Binding HasFiles}">
+                                                    <TextBlock Text="{Binding Files.Count, StringFormat='{}{0} photos'}"
+                                                               FontSize="9" Foreground="{DynamicResource AppTextSecondaryBrush}" FontWeight="SemiBold"/>
+                                                </Border>
+                                            </StackPanel>
+
+                                            <!-- Photos Count Badge Only - COMPACT / FAB MODE -->
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                                                        IsVisible="{Binding IsQueueFabMode}">
                                                 <Border Background="#10FFFFFF" BorderBrush="#15FFFFFF" BorderThickness="1"
                                                         CornerRadius="7" Padding="7,3" VerticalAlignment="Center"
                                                         IsVisible="{Binding HasFiles}">
@@ -1209,6 +1223,109 @@
                                                     </ItemsControl.ItemTemplate>
                                                 </ItemsControl>
                                             </ScrollViewer>
+
+                                            <!-- Queue FAB Dismiss Backdrop (Dismisses speed dial when tapped) -->
+                                            <Border x:Name="QueueFabBackdrop"
+                                                    Background="#77070A12"
+                                                    ZIndex="150"
+                                                    IsVisible="{Binding IsQueueFabMode}"
+                                                    IsHitTestVisible="{Binding IsQueueFabMenuOpen}"
+                                                    Classes="mobile-fab-backdrop" Classes.open="{Binding IsQueueFabMenuOpen}"
+                                                    PointerPressed="OnQueueFabBackdropPointerPressed"/>
+
+                                            <!-- Queue Floating Action Button & Speed Dial Menu (Bottom Right) -->
+                                            <Grid ZIndex="160"
+                                                  IsVisible="{Binding IsQueueFabMode}"
+                                                  HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                  Margin="0,0,18,18">
+                                                <!-- Speed Dial Options (Slide & Spring Upwards) -->
+                                                <StackPanel Orientation="Vertical" Spacing="10"
+                                                            HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                            Margin="0,0,0,62"
+                                                            IsHitTestVisible="{Binding IsQueueFabMenuOpen}">
+                                                    <!-- Option: Clear Queue (Only if HasFiles) -->
+                                                    <Border Classes="speed-dial-item speed-dial-right" Classes.open="{Binding IsQueueFabMenuOpen}"
+                                                            CornerRadius="20" BoxShadow="0 4 14 0 #40000000"
+                                                            IsVisible="{Binding HasFiles}"
+                                                            HorizontalAlignment="Right">
+                                                        <Button Command="{Binding ClearCommand}"
+                                                                Classes="secondary" Height="38" CornerRadius="19"
+                                                                Padding="12,0,16,0">
+                                                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                                <Border Width="24" Height="24" CornerRadius="12"
+                                                                        Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                                        VerticalAlignment="Center">
+                                                                    <TextBlock Text="✕" FontSize="11" Foreground="{DynamicResource AppDangerBrush}"
+                                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
+                                                                <TextBlock Text="Clear Queue" FontSize="11.5" FontWeight="SemiBold"
+                                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                            </StackPanel>
+                                                        </Button>
+                                                    </Border>
+
+                                                    <!-- Option: Add Folder -->
+                                                    <Border Classes="speed-dial-item speed-dial-right speed-dial-folder" Classes.open="{Binding IsQueueFabMenuOpen}"
+                                                            CornerRadius="20" BoxShadow="0 4 14 0 #40000000"
+                                                            HorizontalAlignment="Right">
+                                                        <Button Command="{Binding AddFolderCommand}"
+                                                                Classes="secondary" Height="38" CornerRadius="19"
+                                                                Padding="12,0,16,0">
+                                                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                                <Border Width="24" Height="24" CornerRadius="12"
+                                                                        Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                                        VerticalAlignment="Center">
+                                                                    <PathIcon Data="M 3 7 V 5 h 7 l 2 3 h 9 v 12 H 3 Z"
+                                                                              Width="12" Height="12"
+                                                                              Foreground="{DynamicResource AppAccentBrush}"
+                                                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
+                                                                <TextBlock Text="Add Folder" FontSize="11.5" FontWeight="SemiBold"
+                                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                            </StackPanel>
+                                                        </Button>
+                                                    </Border>
+
+                                                    <!-- Option: Add Files -->
+                                                    <Border Classes="speed-dial-item speed-dial-right speed-dial-files" Classes.open="{Binding IsQueueFabMenuOpen}"
+                                                            CornerRadius="20" BoxShadow="0 4 14 0 #40000000"
+                                                            HorizontalAlignment="Right">
+                                                        <Button Command="{Binding AddFilesCommand}"
+                                                                Classes="secondary" Height="38" CornerRadius="19"
+                                                                Padding="12,0,16,0">
+                                                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                                <Border Width="24" Height="24" CornerRadius="12"
+                                                                        Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                                        VerticalAlignment="Center">
+                                                                    <PathIcon Data="M 11 4 A 1 1 0 0 1 13 4 V 11 H 20 A 1 1 0 0 1 20 13 H 13 V 20 A 1 1 0 0 1 11 20 V 13 H 4 A 1 1 0 0 1 4 11 H 11 Z"
+                                                                              Width="12" Height="12"
+                                                                              Foreground="{DynamicResource AppAccentBrush}"
+                                                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                </Border>
+                                                                <TextBlock Text="Add Files" FontSize="11.5" FontWeight="SemiBold"
+                                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                            </StackPanel>
+                                                        </Button>
+                                                    </Border>
+                                                </StackPanel>
+
+                                                <!-- Floating 100% Round Action Button -->
+                                                <Border Width="48" Height="48" CornerRadius="24"
+                                                        BoxShadow="0 4 14 0 #50000000"
+                                                        ClipToBounds="True"
+                                                        HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                                                    <Button Command="{Binding ToggleQueueFabMenuCommand}"
+                                                            Classes="fab" Classes.open="{Binding IsQueueFabMenuOpen}"
+                                                            Width="48" Height="48" CornerRadius="24"
+                                                            Padding="0"
+                                                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                            ToolTip.Tip="Add photos or folder">
+                                                        <PathIcon Classes="fab-icon" Classes.open="{Binding IsQueueFabMenuOpen}"
+                                                                  Data="M 11 4 A 1 1 0 0 1 13 4 V 11 H 20 A 1 1 0 0 1 20 13 H 13 V 20 A 1 1 0 0 1 11 20 V 13 H 4 A 1 1 0 0 1 4 11 H 11 Z"
+                                                                  Width="16" Height="16"/>
+                                                    </Button>
+                                                </Border>
+                                            </Grid>
                                         </Grid>
                                     </Grid>
                                 </Border>
@@ -1256,7 +1373,7 @@
                                                   HorizontalScrollBarVisibility="Disabled"
                                                   IsScrollInertiaEnabled="True"
                                                   Background="Transparent"
-                                                  Padding="16,8,12,8">
+                                                  Padding="14,8,14,8">
                                         <Panel Margin="0,0,0,8">
 
                                             <!-- TAB 1: SETTINGS VIEW -->
@@ -1418,15 +1535,17 @@
 
                                                 <!-- Photo Info Details -->
                                                 <StackPanel IsVisible="{Binding SelectedFile, Converter={x:Static ObjectConverters.IsNotNull}}" Spacing="12">
-                                                    <!-- Image Preview (Full-width card with small margin, cleanly contained) -->
-                                                    <Border MaxWidth="259" Height="175" CornerRadius="12" ClipToBounds="True"
-                                                            Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                            BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
-                                                            HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,8">
-                                                        <Image Source="{Binding SelectedFile.Thumbnail}" Stretch="Uniform"
-                                                               MaxWidth="259" MaxHeight="175"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                    </Border>
+                                                    <!-- Image Preview (Limited strictly to 90% width of sidebar with 5% margin on each side) -->
+                                                    <Grid ColumnDefinitions="5*,90*,5*" Margin="-14,0,-14,8">
+                                                        <Border Grid.Column="1" Height="175" CornerRadius="12" ClipToBounds="True"
+                                                                Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                                BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
+                                                                HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                                                            <Image Source="{Binding SelectedFile.Thumbnail}" Stretch="Uniform"
+                                                                   MaxHeight="175"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                        </Border>
+                                                    </Grid>
 
                                                     <!-- Photo Title & Camera Subhead -->
                                                     <StackPanel Spacing="3">
@@ -2132,6 +2251,36 @@
                                 <TextBlock Text="Developed by Isidore Paulin (ipweb.dev)" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                 <TextBlock Text="Powered by: DNGLab, ExifTool, Avalonia UI" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                 <TextBlock Text="Licensed under GNU General Public License v3" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Camera Compatibility Card -->
+                        <Border Background="{DynamicResource AppSurfaceSecondaryBrush}" 
+                                BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
+                                CornerRadius="12" Padding="14">
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Camera Compatibility" FontWeight="SemiBold" FontSize="12"
+                                           Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                <TextBlock Text="Supports direct RAW conversion for Canon, Nikon, Sony, Fujifilm, Olympus/OM, Panasonic, Leica, Pentax, and more. Any RAW file pre-converted to DNG is also compatible."
+                                           FontSize="10.5" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap" LineHeight="15"/>
+                                
+                                <Separator Margin="0,2" Background="{DynamicResource AppEdgeBrush}"/>
+
+                                <TextBlock Text="Non working cameras:" FontSize="10.5" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AppDangerBrush}"/>
+                                <StackPanel Margin="6,0,0,0" Spacing="2">
+                                    <TextBlock Text="• Canon G1" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    <TextBlock Text="• Nikon e5700" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    <TextBlock Text="• Canon PowerShot Pro70" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                </StackPanel>
+
+                                <Separator Margin="0,2" Background="{DynamicResource AppEdgeBrush}"/>
+
+                                <TextBlock Text="Partially working (have to be converted to DNG first in Lightroom to work):" FontSize="10.5" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AppAccentLightBrush}"/>
+                                <StackPanel Margin="6,0,0,0" Spacing="2">
+                                    <TextBlock Text="• Hasselblad Flash sync" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
 

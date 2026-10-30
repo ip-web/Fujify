@@ -43,8 +43,19 @@ See the [Release](https://github.com/ip-web/Fujify/releases) page to download th
 **Q: Does it work with Capture One or other editors?**  
 **A:** Currently, only Adobe Lightroom is supported. I do not own or use Capture One or other editors. If there is enough interest, I might look into adding support, but I can't guarantee its feasibility.
 
-**Q: What RAW files are currently supported?**  
-**A:** Here is a list of currently supproted RAW files for direct use in Fujifier "ARI, CR3, CR2, CRW, ERF, RAF, 3FR, KDC, DCS, DCR, IIQ, MOS, MEF, MRW, NEF, NRW, ORF, RW2, PEF, IIQ, SRW, ARW, SRF, SR2" any RAW file converted to DNG should be compatible. For a list of supported camera you can refere to [DNGLab supported camera list](https://github.com/dnglab/dnglab/blob/main/SUPPORTED_CAMERAS.md)
+**Q: What RAW files and cameras are currently supported?**  
+**A:** Here is a list of currently supported RAW files for direct use in Fujifier: "ARI, CR3, CR2, CRW, ERF, RAF, 3FR, KDC, DCS, DCR, IIQ, MOS, MEF, MRW, NEF, NRW, ORF, RW2, PEF, IIQ, SRW, ARW, SRF, SR2". Any RAW file converted to DNG beforehand should also be compatible.
+
+For a full list of supported cameras, refer to the [DNGLab supported camera list](https://github.com/dnglab/dnglab/blob/main/SUPPORTED_CAMERAS.md).
+
+### Camera Compatibility
+
+- **Non working**:
+  - Canon G1
+  - Nikon e5700
+  - Canon PowerShot Pro70
+- **Partially working** (Have to be converted to DNG first in lightroom to work):
+  - Hasselblad Flash sync
 
 **Q: Can I use this on Fujifilm RAF file?**  
 **A:** Yes it should work on Fujifilm files and will unlock newer simulations on older Fujifilm bodies, but better techniques exist to achieve this without modifying your original RAF files. I refer you to the [pal2tech video](https://www.youtube.com/watch?v=UUce-04DoSM) on how to do this.
