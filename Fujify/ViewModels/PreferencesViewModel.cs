@@ -431,10 +431,61 @@ namespace Fujify.ViewModels
             set { if (value) Language = "de"; }
         }
 
+        public bool SuppressBackupConfirmation { get; set; }
+        private static bool HasActiveWindowOrView(Avalonia.Controls.Window? owner)
+        {
+            if (owner != null) return true;
+            if (Avalonia.Application.Current == null) return false;
+            if (Avalonia.Application.Current.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
+                return true;
+            if (Avalonia.Application.Current.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ISingleViewApplicationLifetime singleView && singleView.MainView != null)
+                return true;
+            return false;
+        }
+
+        private bool _isConfirmingDisableBackup;
+
         public bool BackupOriginalFile
         {
             get => _backupOriginalFile;
-            set => SetProperty(ref _backupOriginalFile, value);
+            set
+            {
+                if (_backupOriginalFile == value) return;
+
+                if (!value && HasActiveWindowOrView(OwnerWindow) && !SuppressBackupConfirmation)
+                {
+                    if (_isConfirmingDisableBackup) return;
+                    _isConfirmingDisableBackup = true;
+
+                    Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+                    {
+                        try
+                        {
+                            var dialogService = _dialogService ?? new DialogService(_settingsService, _licenseService);
+                            bool confirmed = await dialogService.ShowConfirmationAsync(
+                                OwnerWindow,
+                                LocalizationManager.Tr("DisableBackupTitle"),
+                                LocalizationManager.Tr("DisableBackupWarning"),
+                                LocalizationManager.Tr("DisableBackupConfirm"),
+                                LocalizationManager.Tr("DisableBackupCancel"));
+
+                            if (confirmed)
+                            {
+                                _backupOriginalFile = false;
+                            }
+                        }
+                        finally
+                        {
+                            _isConfirmingDisableBackup = false;
+                            OnPropertyChanged(nameof(BackupOriginalFile));
+                        }
+                    });
+                    return;
+                }
+
+                _backupOriginalFile = value;
+                OnPropertyChanged(nameof(BackupOriginalFile));
+            }
         }
 
         public bool EmbedOriginalRaw

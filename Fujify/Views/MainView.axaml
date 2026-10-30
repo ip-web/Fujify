@@ -2424,6 +2424,30 @@
                                 HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                     </StackPanel>
 
+                    <!-- Confirmation Modal -->
+                    <StackPanel Spacing="14" IsVisible="{Binding IsConfirmationModal}">
+                        <!-- Status Icon -->
+                        <Border Width="48" Height="48" CornerRadius="24" Background="{Binding ModalBadgeBackground}" HorizontalAlignment="Center">
+                            <TextBlock Text="{Binding ModalIcon}" FontSize="24" Foreground="{Binding ModalIconColor}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <!-- Title & Message -->
+                        <TextBlock Text="{Binding ModalTitle}" FontSize="17" FontWeight="Bold"
+                                   Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center" TextAlignment="Center"/>
+                        <TextBlock Text="{Binding ModalMessage}" FontSize="12" Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                   TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" LineHeight="16"/>
+                        <!-- Two Action Buttons: Cancel and Confirm -->
+                        <Grid ColumnDefinitions="*,*" Margin="0,6,0,0">
+                            <Button Grid.Column="0" Content="{Binding ConfirmationCancelText}" Command="{Binding CancelModalActionCommand}"
+                                    Classes="secondary" Height="38" CornerRadius="19" Margin="0,0,6,0"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            <Button Grid.Column="1" Content="{Binding ConfirmationConfirmText}" Command="{Binding ConfirmModalActionCommand}"
+                                    Classes="primary" Background="#E74C3C" Foreground="White"
+                                    Height="38" CornerRadius="19" Margin="6,0,0,0"
+                                    HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                        </Grid>
+                    </StackPanel>
+
                     <!-- Standard Message Modal -->
                     <StackPanel Spacing="14" IsVisible="{Binding IsMessageModal}">
                         <!-- Status Icon -->

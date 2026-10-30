@@ -187,6 +187,52 @@ namespace Fujify.Services
             }
         }
 
+        public async Task<bool> ShowConfirmationAsync(Window? owner, string title, string message, string? confirmText = null, string? cancelText = null)
+        {
+            if (Application.Current == null) return true;
+
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                return await Dispatcher.UIThread.InvokeAsync(() => ShowConfirmationAsync(owner, title, message, confirmText, cancelText));
+            }
+
+            var desktopLifetime = Application.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
+            var singleViewLifetime = Application.Current.ApplicationLifetime as ISingleViewApplicationLifetime;
+            var targetOwner = owner ?? desktopLifetime?.MainWindow;
+
+            if (targetOwner == null && singleViewLifetime?.MainView == null)
+            {
+                return true;
+            }
+
+            if (IsMobileOrSingleView || targetOwner == null)
+            {
+                if (MainViewModel.Instance != null)
+                {
+                    return await MainViewModel.Instance.ShowConfirmationModalAsync(title, message, confirmText, cancelText);
+                }
+                return false;
+            }
+
+            var dialog = new ConfirmationDialog(title, message, confirmText, cancelText);
+            if (targetOwner != null)
+            {
+                if (targetOwner.WindowState == WindowState.Minimized)
+                {
+                    targetOwner.WindowState = WindowState.Normal;
+                }
+                targetOwner.Activate();
+                return await dialog.ShowDialog<bool>(targetOwner);
+            }
+            else
+            {
+                var tcs = new TaskCompletionSource<bool>();
+                dialog.Closed += (s, e) => tcs.TrySetResult(dialog.Result);
+                dialog.Show();
+                return await tcs.Task;
+            }
+        }
+
         public async Task<FileConflictResolution> PromptFileConflictAsync(Window? owner, string destinationFilePath)
         {
             if (Application.Current == null) return new FileConflictResolution(ConflictChoice.Skip, false);

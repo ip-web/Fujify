@@ -1,0 +1,57 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="using:Fujify.Localization"
+        x:Class="Fujify.Views.ConfirmationDialog"
+        Title="{loc:Loc Warning}"
+        Width="380" Height="240"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="0"
+        SystemDecorations="None"
+        TransparencyLevelHint="Transparent"
+        Background="Transparent"
+        Icon="/Assets/images/logo.ico">
+
+    <!-- Standalone Dialog Card Block -->
+    <Border Classes="dialog-card"
+            Background="{DynamicResource AppSurfaceBrush}"
+            BorderBrush="{DynamicResource AppEdgeBrush}"
+            BorderThickness="1"
+            CornerRadius="16"
+            Padding="24"
+            ClipToBounds="True"
+            PointerPressed="Window_PointerPressed">
+        <Grid RowDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+            <!-- Icon -->
+            <Border x:Name="IconBorder" Grid.Row="0" Width="44" Height="44" CornerRadius="22"
+                    Background="#26E74C3C"
+                    HorizontalAlignment="Center" Margin="0,0,0,10">
+                <TextBlock x:Name="IconText" Text="⚠" FontSize="20" Foreground="#E74C3C"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+
+            <!-- Text Content -->
+            <StackPanel Grid.Row="1" Spacing="6" HorizontalAlignment="Center">
+                <TextBlock x:Name="TitleText" FontWeight="SemiBold" FontSize="15"
+                           Foreground="{DynamicResource AppTextPrimaryBrush}"
+                           HorizontalAlignment="Center" TextAlignment="Center"/>
+                <TextBlock x:Name="MessageContent" FontSize="11.5" TextWrapping="Wrap" 
+                           Foreground="{DynamicResource AppTextSecondaryBrush}"
+                           HorizontalAlignment="Center" TextAlignment="Center" MaxWidth="320" LineHeight="16"/>
+            </StackPanel>
+
+            <!-- Actions (Cancel / Confirm) -->
+            <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,16,0,0">
+                <Button x:Name="CancelButton" Grid.Column="0" Content="{loc:Loc Cancel}" Click="Cancel_Click" Classes="secondary"
+                        Height="34" CornerRadius="17" Margin="0,0,6,0"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                <Button x:Name="ConfirmButton" Grid.Column="1" Content="{loc:Loc Done}" Click="Confirm_Click" Classes="primary"
+                        Background="#E74C3C" Foreground="White"
+                        Height="34" CornerRadius="17" Margin="6,0,0,0"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

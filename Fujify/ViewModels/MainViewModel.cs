@@ -66,6 +66,8 @@ namespace Fujify.ViewModels
         private bool _isProgressVisible;
         private double _progressValue;
         private string _processButtonContent = "Process";
+        private bool _isStopping;
+        public bool SuppressBackupConfirmation { get; set; }
 
         public Window? OwnerWindow { get; set; }
 
@@ -254,9 +256,21 @@ namespace Fujify.ViewModels
             DelayToggleKeyCommand = new RelayCommand(() => IsDelayKeyInputVisible = !IsDelayKeyInputVisible);
             DelayActivateKeyCommand = new AsyncRelayCommand(ExecuteDelayActivateKeyAsync);
 
+            ConfirmModalActionCommand = new RelayCommand(() => ResolveConfirmation(true));
+            CancelModalActionCommand = new RelayCommand(() => ResolveConfirmation(false));
+
             LocalizationManager.Instance.LanguageChanged += (s, e) =>
             {
                 OnPropertyChanged(nameof(Loc));
+                OnPropertyChanged(nameof(OverallStatusText));
+                OnPropertyChanged(nameof(ProgressSummaryText));
+                OnPropertyChanged(nameof(OutputDestinationSummary));
+                OnPropertyChanged(nameof(FormattedOutputFolderPath));
+                OnPropertyChanged(nameof(ProcessButtonContent));
+                OnPropertyChanged(nameof(QuickSettingsSummary));
+                OnPropertyChanged(nameof(SuffixPreview));
+                OnPropertyChanged(nameof(SubfolderPreview));
+                OnPropertyChanged(nameof(ActiveStep));
                 foreach (var file in Files)
                 {
                     file.NotifyLanguageChanged();
@@ -304,6 +318,8 @@ namespace Fujify.ViewModels
         public ICommand RemoveFileCommand { get; }
         public ICommand SelectFileCommand { get; }
         public ICommand CloseModalCommand { get; }
+        public IRelayCommand ConfirmModalActionCommand { get; }
+        public IRelayCommand CancelModalActionCommand { get; }
         public ICommand ClearQueueAndCloseModalCommand { get; }
         public ICommand OpenGitHubCommand { get; }
         public ICommand OpenReleasesCommand { get; }
@@ -425,13 +441,13 @@ namespace Fujify.ViewModels
                 if (CreateSubfolder)
                 {
                     string folderName = SubfolderUseOriginalName ? $"(original){SubfolderSuffix}" : SubfolderCustomName;
-                    return $"Subfolder: {folderName}";
+                    return LocalizationManager.TrFormat("SubfolderPrefix", folderName);
                 }
                 if (!string.IsNullOrEmpty(_outputFolderPath))
                 {
                     return _outputFolderPath;
                 }
-                return "Same folder as originals";
+                return LocalizationManager.Tr("SameFolderAsOriginals");
             }
         }
 
@@ -820,24 +836,28 @@ namespace Fujify.ViewModels
             {
                 if (IsImporting)
                 {
-                    return !string.IsNullOrEmpty(ImportStatusText) ? ImportStatusText : "Importing photos...";
+                    return !string.IsNullOrEmpty(ImportStatusText) ? ImportStatusText : LocalizationManager.Tr("ImportingPhotos");
                 }
                 if (IsProcessing)
                 {
                     int done = Files.Count(f => f.Status == "✔" || (f.Status != null && f.Status != "Pending"));
-                    return $"Processing photo {Math.Min(done + 1, Files.Count)} of {Files.Count}...";
+                    return LocalizationManager.TrFormat("ProcessingPhotoCount", Math.Min(done + 1, Files.Count), Files.Count);
                 }
                 if (!HasFiles)
                 {
-                    return "Ready";
+                    return LocalizationManager.Tr("Ready");
                 }
                 int pendingCount = Files.Count(f => f.Status == "Pending");
                 int successCount = Files.Count(f => f.Status == "✔");
                 if (successCount > 0 && pendingCount == 0)
                 {
-                    return $"All {Files.Count} photos converted successfully ✔";
+                    return LocalizationManager.TrFormat("AllPhotosConvertedSuccess", Files.Count);
                 }
-                return $"{Files.Count} photo{(Files.Count > 1 ? "s" : "")} in queue ({pendingCount} pending)";
+                if (Files.Count == 1)
+                {
+                    return LocalizationManager.TrFormat("PhotoInQueueSingle", Files.Count, pendingCount);
+                }
+                return LocalizationManager.TrFormat("PhotosInQueue", Files.Count, pendingCount);
             }
         }
 
@@ -951,6 +971,7 @@ namespace Fujify.ViewModels
                     OnPropertyChanged(nameof(IsAboutModal));
                     OnPropertyChanged(nameof(IsMessageModal));
                     OnPropertyChanged(nameof(IsFreeTierDelayModal));
+                    OnPropertyChanged(nameof(IsConfirmationModal));
                     OnPropertyChanged(nameof(IsBatchSummaryModal));
                     OnPropertyChanged(nameof(IsBottomSheetOpen));
                 }
@@ -962,9 +983,10 @@ namespace Fujify.ViewModels
         public bool IsPreferencesModal => _modalType == "Preferences" && _isModalOpen;
         public bool IsAboutModal => _modalType == "About" && _isModalOpen;
         public bool IsMessageModal => _modalType == "Message";
+        public bool IsConfirmationModal => _modalType == "Confirmation";
         public bool IsFreeTierDelayModal => _modalType == "FreeTierDelay";
         public bool IsBatchSummaryModal => _modalType == "BatchSummary";
-        public bool IsBottomSheetOpen => _isModalOpen && (IsCameraPickerModal || IsConflictModal || IsMessageModal || IsFreeTierDelayModal || IsBatchSummaryModal);
+        public bool IsBottomSheetOpen => _isModalOpen && (IsCameraPickerModal || IsConflictModal || IsMessageModal || IsConfirmationModal || IsFreeTierDelayModal || IsBatchSummaryModal);
 
         private string _modalTitle = string.Empty;
         public string ModalTitle
@@ -1007,7 +1029,7 @@ namespace Fujify.ViewModels
         private PreferencesViewModel? _preferences;
         public PreferencesViewModel Preferences
         {
-            get => _preferences ??= new PreferencesViewModel(_settingsService, _licenseService);
+            get => _preferences ??= new PreferencesViewModel(_settingsService, _licenseService, updateService: null, dialogService: _dialogService);
             set => SetProperty(ref _preferences, value);
         }
 
@@ -1185,7 +1207,7 @@ namespace Fujify.ViewModels
         {
             void Action()
             {
-                Preferences = new PreferencesViewModel(_settingsService, _licenseService)
+                Preferences = new PreferencesViewModel(_settingsService, _licenseService, updateService: null, dialogService: _dialogService)
                 {
                     CloseAction = ok =>
                     {
@@ -1227,6 +1249,59 @@ namespace Fujify.ViewModels
             {
                 Dispatcher.UIThread.Post(Action);
             }
+        }
+
+        private TaskCompletionSource<bool>? _confirmationTcs;
+        private string _confirmationConfirmText = string.Empty;
+        public string ConfirmationConfirmText
+        {
+            get => _confirmationConfirmText;
+            set => SetProperty(ref _confirmationConfirmText, value);
+        }
+
+        private string _confirmationCancelText = string.Empty;
+        public string ConfirmationCancelText
+        {
+            get => _confirmationCancelText;
+            set => SetProperty(ref _confirmationCancelText, value);
+        }
+
+        public Task<bool> ShowConfirmationModalAsync(string title, string message, string? confirmText = null, string? cancelText = null)
+        {
+            var tcs = new TaskCompletionSource<bool>();
+            _confirmationTcs = tcs;
+
+            void Action()
+            {
+                ModalTitle = string.IsNullOrWhiteSpace(title) ? LocalizationManager.Tr("Warning") : title;
+                ModalMessage = message;
+                ConfirmationConfirmText = string.IsNullOrWhiteSpace(confirmText) ? LocalizationManager.Tr("Done") : confirmText;
+                ConfirmationCancelText = string.IsNullOrWhiteSpace(cancelText) ? LocalizationManager.Tr("Cancel") : cancelText;
+                ModalIcon = "⚠";
+                ModalIconColor = new SolidColorBrush(Color.Parse("#E74C3C"));
+                ModalBadgeBackground = new SolidColorBrush(Color.FromArgb(40, 231, 76, 60));
+                ModalType = "Confirmation";
+                IsModalOpen = true;
+            }
+
+            if (Dispatcher.UIThread.CheckAccess())
+            {
+                Action();
+            }
+            else
+            {
+                Dispatcher.UIThread.Post(Action);
+            }
+
+            return tcs.Task;
+        }
+
+        public void ResolveConfirmation(bool confirmed)
+        {
+            IsModalOpen = false;
+            ModalType = "None";
+            _confirmationTcs?.TrySetResult(confirmed);
+            _confirmationTcs = null;
         }
 
         public Task<FileConflictResolution> ShowConflictModalAsync(string filePath)
@@ -1499,6 +1574,8 @@ namespace Fujify.ViewModels
             ModalType = "None";
             _conflictTcs?.TrySetResult(new FileConflictResolution(ConflictChoice.Skip, false));
             _conflictTcs = null;
+            _confirmationTcs?.TrySetResult(false);
+            _confirmationTcs = null;
             OnPropertyChanged(nameof(CanOpenInLightroom));
             OnPropertyChanged(nameof(CanOpenOutputFolder));
         }
@@ -1537,20 +1614,75 @@ namespace Fujify.ViewModels
 
         public string FormattedOutputFolderPath =>
             string.IsNullOrWhiteSpace(_outputFolderPath)
-                ? "(Optional)"
+                ? LocalizationManager.Tr("Optional")
                 : _outputFolderPath.Replace(Path.DirectorySeparatorChar.ToString(), "  >  ");
+
+        private static bool HasActiveWindowOrView(Window? owner)
+        {
+            if (owner != null) return true;
+            if (Avalonia.Application.Current == null) return false;
+            if (Avalonia.Application.Current.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop && desktop.MainWindow != null)
+                return true;
+            if (Avalonia.Application.Current.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ISingleViewApplicationLifetime singleView && singleView.MainView != null)
+                return true;
+            return false;
+        }
+
+        private bool _isConfirmingDisableBackup;
 
         public bool CreateBackup
         {
             get => _createBackup;
             set
             {
-                if (SetProperty(ref _createBackup, value))
+                if (_createBackup == value) return;
+
+                if (!value && HasActiveWindowOrView(OwnerWindow) && !SuppressBackupConfirmation)
                 {
-                    _settingsService.Settings.BackupOriginalFile = value;
-                    _settingsService.Save();
-                    OnPropertyChanged(nameof(QuickSettingsSummary));
+                    if (_isConfirmingDisableBackup) return;
+                    _isConfirmingDisableBackup = true;
+
+                    Dispatcher.UIThread.Post(async () =>
+                    {
+                        try
+                        {
+                            bool confirmed = await _dialogService.ShowConfirmationAsync(
+                                OwnerWindow,
+                                LocalizationManager.Tr("DisableBackupTitle"),
+                                LocalizationManager.Tr("DisableBackupWarning"),
+                                LocalizationManager.Tr("DisableBackupConfirm"),
+                                LocalizationManager.Tr("DisableBackupCancel"));
+
+                            if (confirmed)
+                            {
+                                _createBackup = false;
+                                _settingsService.Settings.BackupOriginalFile = false;
+                                _settingsService.Save();
+                                if (_preferences != null)
+                                {
+                                    _preferences.BackupOriginalFile = false;
+                                }
+                            }
+                        }
+                        finally
+                        {
+                            _isConfirmingDisableBackup = false;
+                            OnPropertyChanged(nameof(CreateBackup));
+                            OnPropertyChanged(nameof(QuickSettingsSummary));
+                        }
+                    });
+                    return;
                 }
+
+                _createBackup = value;
+                _settingsService.Settings.BackupOriginalFile = value;
+                _settingsService.Save();
+                if (_preferences != null)
+                {
+                    _preferences.BackupOriginalFile = value;
+                }
+                OnPropertyChanged(nameof(CreateBackup));
+                OnPropertyChanged(nameof(QuickSettingsSummary));
             }
         }
 
@@ -1644,7 +1776,12 @@ namespace Fujify.ViewModels
 
         public string ProcessButtonContent
         {
-            get => _processButtonContent;
+            get
+            {
+                if (_isStopping) return LocalizationManager.Tr("Stopping");
+                if (IsProcessing) return LocalizationManager.Tr("Stop");
+                return LocalizationManager.Tr("Process");
+            }
             set => SetProperty(ref _processButtonContent, value);
         }
 
@@ -1918,10 +2055,11 @@ namespace Fujify.ViewModels
         {
             if (IsProcessing)
             {
-                if (ProcessButtonContent == "Stop")
+                if (!_isStopping)
                 {
+                    _isStopping = true;
                     _processingCts?.Cancel();
-                    ProcessButtonContent = "Stopping...";
+                    OnPropertyChanged(nameof(ProcessButtonContent));
                     OnPropertyChanged(nameof(CanProcessOrStop));
                 }
                 return;
@@ -2048,8 +2186,9 @@ namespace Fujify.ViewModels
             {
                 _processingCts?.Dispose();
                 _processingCts = null;
+                _isStopping = false;
                 IsProcessing = false;
-                ProcessButtonContent = "Process";
+                OnPropertyChanged(nameof(ProcessButtonContent));
             }
 
             if (cancelled)
