@@ -255,15 +255,10 @@ namespace Fujify.ViewModels
                 Subtitle = $"Processing {totalCount} photo{(totalCount == 1 ? "" : "s")}...";
 
                 int configuredConcurrency = _settingsService.Settings.MaxConcurrentConversions;
-                int maxConcurrency = (configuredConcurrency > 0 && configuredConcurrency <= Environment.ProcessorCount)
-                    ? configuredConcurrency
-                    : Math.Max(1, Environment.ProcessorCount / 2);
-
-                // Free tier restriction: sequential conversion (1 thread at a time)
-                if (!_licenseService.IsPro)
-                {
-                    maxConcurrency = 1;
-                }
+                int maxConcurrency = DrivePerformanceHelper.GetOptimalConversionConcurrency(
+                    filesToProcess.FirstOrDefault(),
+                    configuredConcurrency,
+                    _licenseService.IsPro);
 
                 var parallelOptions = new ParallelOptions
                 {
@@ -478,7 +473,8 @@ namespace Fujify.ViewModels
                 createBackup: false,
                 isOriginallyDng: isOriginallyDng,
                 customOutputFilePath: customOutputPath,
-                targetUniqueCameraModel: "Fujifilm X-T5"), ct);
+                targetUniqueCameraModel: "Fujifilm X-T5",
+                sourceRawFilePath: filePath), ct);
 
             if (!metaResult.Success)
             {
@@ -501,6 +497,17 @@ namespace Fujify.ViewModels
             else if (!createBackup)
             {
                 FileTrashHelper.SendToTrash(filePath);
+
+                // Also trash original sidecar if it was copied or embedded and differs from the final output sidecar
+                string? origSidecar = DngMetadataEditor.FindSidecarXmp(filePath);
+                if (!string.IsNullOrEmpty(origSidecar) && File.Exists(origSidecar))
+                {
+                    string targetSidecar = Path.ChangeExtension(finalDestFilePath, ".xmp");
+                    if (!string.Equals(Path.GetFullPath(origSidecar), Path.GetFullPath(targetSidecar), StringComparison.OrdinalIgnoreCase))
+                    {
+                        FileTrashHelper.SendToTrash(origSidecar);
+                    }
+                }
             }
 
             return finalDestFilePath;

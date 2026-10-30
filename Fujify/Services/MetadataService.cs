@@ -193,7 +193,7 @@ namespace Fujify.Services
             return directExif;
         }
 
-        public MetadataResult InjectFujifilmMetadata(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null, string targetUniqueCameraModel = "Fujifilm X-T5")
+        public MetadataResult InjectFujifilmMetadata(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null, string targetUniqueCameraModel = "Fujifilm X-T5", string? sourceRawFilePath = null)
         {
             // 1. On Linux: Prefer system-installed ExifTool dependency first to leverage the latest installed version
             if (OperatingSystem.IsLinux())
@@ -217,7 +217,8 @@ namespace Fujify.Services
                 createBackup,
                 isOriginallyDng,
                 customOutputFilePath,
-                targetUniqueCameraModel: targetUniqueCameraModel);
+                targetUniqueCameraModel: targetUniqueCameraModel,
+                sourceRawFilePath: sourceRawFilePath);
 
             if (nativeResult.Success)
             {
@@ -237,7 +238,7 @@ namespace Fujify.Services
             return nativeResult;
         }
 
-        public async Task<MetadataResult> InjectFujifilmMetadataAsync(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null, string targetUniqueCameraModel = "Fujifilm X-T5", CancellationToken cancellationToken = default)
+        public async Task<MetadataResult> InjectFujifilmMetadataAsync(string dngFilePath, string? outputFolder, bool createBackup, bool isOriginallyDng, string? customOutputFilePath = null, string targetUniqueCameraModel = "Fujifilm X-T5", string? sourceRawFilePath = null, CancellationToken cancellationToken = default)
         {
             // 1. On Linux: Prefer system-installed ExifTool dependency first to leverage the latest installed version
             if (OperatingSystem.IsLinux())
@@ -262,6 +263,7 @@ namespace Fujify.Services
                 isOriginallyDng,
                 customOutputFilePath,
                 targetUniqueCameraModel: targetUniqueCameraModel,
+                sourceRawFilePath: sourceRawFilePath,
                 cancellationToken: cancellationToken);
 
             if (nativeResult.Success)
@@ -292,10 +294,11 @@ namespace Fujify.Services
         {
             string baseArguments = CommonArgs;
             bool useOutputPath = !string.IsNullOrEmpty(outputFolder) || !string.IsNullOrEmpty(customOutputFilePath);
+            string? outputFilePath = null;
 
             if (useOutputPath)
             {
-                string outputFilePath = !string.IsNullOrEmpty(customOutputFilePath)
+                outputFilePath = !string.IsNullOrEmpty(customOutputFilePath)
                     ? customOutputFilePath
                     : Path.Combine(outputFolder!, Path.GetFileNameWithoutExtension(dngFilePath) + ".dng");
 
@@ -341,6 +344,22 @@ namespace Fujify.Services
                 {
                     if (output.Contains("image files updated") || output.Contains("image files created"))
                     {
+                        if (useOutputPath)
+                        {
+                            string? sidecar = DngMetadataEditor.FindSidecarXmp(dngFilePath);
+                            if (!string.IsNullOrEmpty(sidecar) && File.Exists(sidecar))
+                            {
+                                try
+                                {
+                                    string targetSidecar = Path.ChangeExtension(outputFilePath, ".xmp");
+                                    if (!string.Equals(Path.GetFullPath(sidecar), Path.GetFullPath(targetSidecar), StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        File.Copy(sidecar, targetSidecar, overwrite: true);
+                                    }
+                                }
+                                catch { }
+                            }
+                        }
                         CleanupTemporaryFiles(dngFilePath, useOutputPath, createBackup, isOriginallyDng);
                         return new MetadataResult(true, null);
                     }
@@ -370,10 +389,11 @@ namespace Fujify.Services
         {
             string baseArguments = CommonArgs;
             bool useOutputPath = !string.IsNullOrEmpty(outputFolder) || !string.IsNullOrEmpty(customOutputFilePath);
+            string? outputFilePath = null;
 
             if (useOutputPath)
             {
-                string outputFilePath = !string.IsNullOrEmpty(customOutputFilePath)
+                outputFilePath = !string.IsNullOrEmpty(customOutputFilePath)
                     ? customOutputFilePath
                     : Path.Combine(outputFolder!, Path.GetFileNameWithoutExtension(dngFilePath) + ".dng");
 
@@ -419,6 +439,22 @@ namespace Fujify.Services
                 {
                     if (output.Contains("image files updated") || output.Contains("image files created"))
                     {
+                        if (useOutputPath)
+                        {
+                            string? sidecar = DngMetadataEditor.FindSidecarXmp(dngFilePath);
+                            if (!string.IsNullOrEmpty(sidecar) && File.Exists(sidecar))
+                            {
+                                try
+                                {
+                                    string targetSidecar = Path.ChangeExtension(outputFilePath, ".xmp");
+                                    if (!string.Equals(Path.GetFullPath(sidecar), Path.GetFullPath(targetSidecar), StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        File.Copy(sidecar, targetSidecar, overwrite: true);
+                                    }
+                                }
+                                catch { }
+                            }
+                        }
                         CleanupTemporaryFiles(dngFilePath, useOutputPath, createBackup, isOriginallyDng);
                         return new MetadataResult(true, null);
                     }
