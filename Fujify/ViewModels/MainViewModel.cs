@@ -239,6 +239,11 @@ namespace Fujify.ViewModels
             ClearOutputFolderCommand = new RelayCommand(() => OutputFolderPath = null);
 
             CloseModalCommand = new RelayCommand(CloseModal);
+            ClearQueueAndCloseModalCommand = new AsyncRelayCommand(async () =>
+            {
+                CloseModal();
+                await ExecuteClearAsync();
+            });
 
             OpenWebsiteCommand = new RelayCommand(() => CrossPlatformLauncher.OpenUrl("https://fujifier.cc"));
             OpenGitHubCommand = new RelayCommand(() => CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujify"));
@@ -281,13 +286,14 @@ namespace Fujify.ViewModels
         public bool HasRecentlyConvertedFiles => _recentlyConvertedDngFiles.Count > 0;
         public bool IsOpenInLightroomSupported => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
         public bool CanOpenInLightroom => IsOpenInLightroomSupported && HasRecentlyConvertedFiles && ModalTitle == "Processing completed";
-        public bool CanOpenOutputFolder => !OperatingSystem.IsIOS() && !OperatingSystem.IsAndroid() && HasRecentlyConvertedFiles && ModalTitle == "Processing completed";
+        public bool CanOpenOutputFolder => !OperatingSystem.IsIOS() && !OperatingSystem.IsAndroid() && HasRecentlyConvertedFiles && (ModalTitle == "Processing completed" || IsBatchSummaryModal);
 
         #region Properties
 
         public ICommand RemoveFileCommand { get; }
         public ICommand SelectFileCommand { get; }
         public ICommand CloseModalCommand { get; }
+        public ICommand ClearQueueAndCloseModalCommand { get; }
         public ICommand OpenGitHubCommand { get; }
         public ICommand OpenReleasesCommand { get; }
         public ICommand BuyProCommand { get; }
@@ -915,6 +921,7 @@ namespace Fujify.ViewModels
                     OnPropertyChanged(nameof(IsConflictModal));
                     OnPropertyChanged(nameof(IsMessageModal));
                     OnPropertyChanged(nameof(IsFreeTierDelayModal));
+                    OnPropertyChanged(nameof(IsBatchSummaryModal));
                 }
             }
         }
@@ -933,6 +940,7 @@ namespace Fujify.ViewModels
                     OnPropertyChanged(nameof(IsAboutModal));
                     OnPropertyChanged(nameof(IsMessageModal));
                     OnPropertyChanged(nameof(IsFreeTierDelayModal));
+                    OnPropertyChanged(nameof(IsBatchSummaryModal));
                     OnPropertyChanged(nameof(IsBottomSheetOpen));
                 }
             }
@@ -944,7 +952,8 @@ namespace Fujify.ViewModels
         public bool IsAboutModal => _modalType == "About" && _isModalOpen;
         public bool IsMessageModal => _modalType == "Message";
         public bool IsFreeTierDelayModal => _modalType == "FreeTierDelay";
-        public bool IsBottomSheetOpen => _isModalOpen && (IsCameraPickerModal || IsConflictModal || IsMessageModal || IsFreeTierDelayModal);
+        public bool IsBatchSummaryModal => _modalType == "BatchSummary";
+        public bool IsBottomSheetOpen => _isModalOpen && (IsCameraPickerModal || IsConflictModal || IsMessageModal || IsFreeTierDelayModal || IsBatchSummaryModal);
 
         private string _modalTitle = string.Empty;
         public string ModalTitle
@@ -1042,6 +1051,111 @@ namespace Fujify.ViewModels
                 }
 
                 OnPropertyChanged(nameof(CanOpenInLightroom));
+                OnPropertyChanged(nameof(CanOpenOutputFolder));
+                IsModalOpen = true;
+            }
+
+            if (Dispatcher.UIThread.CheckAccess())
+            {
+                Action();
+            }
+            else
+            {
+                Dispatcher.UIThread.Post(Action);
+            }
+        }
+
+        private string _batchSummaryPhotosCountText = string.Empty;
+        public string BatchSummaryPhotosCountText
+        {
+            get => _batchSummaryPhotosCountText;
+            set => SetProperty(ref _batchSummaryPhotosCountText, value);
+        }
+
+        private string _batchSummaryDurationText = string.Empty;
+        public string BatchSummaryDurationText
+        {
+            get => _batchSummaryDurationText;
+            set => SetProperty(ref _batchSummaryDurationText, value);
+        }
+
+        private string _batchSummarySpeedText = string.Empty;
+        public string BatchSummarySpeedText
+        {
+            get => _batchSummarySpeedText;
+            set => SetProperty(ref _batchSummarySpeedText, value);
+        }
+
+        private string _batchSummaryVolumeText = string.Empty;
+        public string BatchSummaryVolumeText
+        {
+            get => _batchSummaryVolumeText;
+            set => SetProperty(ref _batchSummaryVolumeText, value);
+        }
+
+        private string _batchSummaryBadgeText = string.Empty;
+        public string BatchSummaryBadgeText
+        {
+            get => _batchSummaryBadgeText;
+            set => SetProperty(ref _batchSummaryBadgeText, value);
+        }
+
+        private string _batchSummaryNoticeText = string.Empty;
+        public string BatchSummaryNoticeText
+        {
+            get => _batchSummaryNoticeText;
+            set => SetProperty(ref _batchSummaryNoticeText, value);
+        }
+
+        public void ShowBatchSummaryModal(int totalCount, int successCount, TimeSpan duration, long totalBytes, bool hasErrors)
+        {
+            void Action()
+            {
+                ModalType = "BatchSummary";
+                ModalTitle = "Batch Conversion Complete";
+
+                int errorCount = Math.Max(0, totalCount - successCount);
+
+                if (errorCount == 0 && !hasErrors)
+                {
+                    BatchSummaryPhotosCountText = $"{successCount} of {totalCount} photos converted";
+                    BatchSummaryBadgeText = "✔ All Photos Converted";
+                    ModalIcon = "✔";
+                    ModalIconColor = new SolidColorBrush(Color.Parse("#00C781"));
+                    ModalBadgeBackground = new SolidColorBrush(Color.FromArgb(40, 0, 199, 129));
+                    BatchSummaryNoticeText = "Fujifilm film simulations & sidecar XMP metadata merged.";
+                }
+                else
+                {
+                    BatchSummaryPhotosCountText = $"{successCount} of {totalCount} photos converted ({errorCount} failed)";
+                    BatchSummaryBadgeText = "⚠ Completed with Warnings";
+                    ModalIcon = "⚠";
+                    ModalIconColor = new SolidColorBrush(Color.Parse("#E67E22"));
+                    ModalBadgeBackground = new SolidColorBrush(Color.FromArgb(40, 230, 126, 34));
+                    BatchSummaryNoticeText = "Some files could not be converted. Check the file list for details.";
+                }
+
+                if (duration.TotalSeconds < 60)
+                {
+                    BatchSummaryDurationText = $"{duration.TotalSeconds:F1}s";
+                }
+                else
+                {
+                    BatchSummaryDurationText = $"{(int)duration.TotalMinutes}m {duration.Seconds}s";
+                }
+
+                double photosPerSec = duration.TotalSeconds > 0 ? successCount / duration.TotalSeconds : successCount;
+                BatchSummarySpeedText = $"{photosPerSec:F1} photos/s";
+
+                if (totalBytes >= 1024L * 1024 * 1024)
+                {
+                    BatchSummaryVolumeText = $"{(totalBytes / (1024.0 * 1024.0 * 1024.0)):F2} GB";
+                }
+                else
+                {
+                    BatchSummaryVolumeText = $"{(totalBytes / (1024.0 * 1024.0)):F1} MB";
+                }
+
                 OnPropertyChanged(nameof(CanOpenOutputFolder));
                 IsModalOpen = true;
             }
@@ -1698,7 +1812,7 @@ namespace Fujify.ViewModels
 
                 // Stage 2: Concurrent Multi-Threaded Thumbnail & Metadata Processing
                 bool skipThumbnails = _settingsService.Settings.SkipThumbnailGeneration;
-                int maxConcurrency = Math.Clamp(Environment.ProcessorCount, 2, 8);
+                int maxConcurrency = DrivePerformanceHelper.GetOptimalIngestionConcurrency(createdItems.FirstOrDefault()?.FilePath);
                 var parallelOptions = new ParallelOptions
                 {
                     MaxDegreeOfParallelism = maxConcurrency
@@ -1830,16 +1944,27 @@ namespace Fujify.ViewModels
 
             int totalFiles = files.Count;
             int configuredConcurrency = _settingsService.Settings.MaxConcurrentConversions;
-            int maxConcurrency = (configuredConcurrency > 0 && configuredConcurrency <= Environment.ProcessorCount)
-                ? configuredConcurrency
-                : Math.Max(1, Environment.ProcessorCount / 2);
-
-            // Free tier restriction: sequential conversion (1 thread at a time)
-            if (!_licenseService.IsPro)
-            {
-                maxConcurrency = 1;
-            }
+            int maxConcurrency = DrivePerformanceHelper.GetOptimalConversionConcurrency(
+                files.FirstOrDefault(),
+                configuredConcurrency,
+                _licenseService.IsPro);
             int processedCount = 0;
+            int successCount = 0;
+
+            var batchStopwatch = System.Diagnostics.Stopwatch.StartNew();
+            long totalBytes = 0;
+            foreach (var f in files)
+            {
+                try
+                {
+                    var fi = new FileInfo(f);
+                    if (fi.Exists)
+                    {
+                        totalBytes += fi.Length;
+                    }
+                }
+                catch { }
+            }
 
             bool cancelled = false;
             Exception? error = null;
@@ -1873,6 +1998,7 @@ namespace Fujify.ViewModels
                             choice => batchConflictChoice = choice,
                             reservedOutputPaths,
                             ct);
+                        Interlocked.Increment(ref successCount);
                     }
                     catch (OperationCanceledException)
                     {
@@ -1947,12 +2073,14 @@ namespace Fujify.ViewModels
                     OpenInLightroom(convertedToOpen);
                 }
 
+                batchStopwatch.Stop();
+
                 if (_settingsService.Settings.AutoOpenOutputFolder)
                 {
                     ExecuteOpenOutputFolder();
                 }
 
-                await _dialogService.ShowMessageAsync(OwnerWindow, "Processing completed", message);
+                ShowBatchSummaryModal(totalFiles, successCount, batchStopwatch.Elapsed, totalBytes, hasProcessingErrors);
 
                 if (!_licenseService.IsPro)
                 {
@@ -2241,7 +2369,8 @@ namespace Fujify.ViewModels
                     createBackup: false,
                     isOriginallyDng: isOriginallyDng,
                     customOutputFilePath: customOutputPath,
-                    targetUniqueCameraModel: TargetCameraModel), ct);
+                    targetUniqueCameraModel: TargetCameraModel,
+                    sourceRawFilePath: filePath), ct);
 
                 if (metaResult.Success)
                 {
@@ -2255,6 +2384,17 @@ namespace Fujify.ViewModels
                     {
                         // If backup is deactivated, send original file to trash for all files that succeeded
                         FileTrashHelper.SendToTrash(filePath);
+
+                        // Also trash original sidecar if it was copied or embedded and differs from the final output sidecar
+                        string? origSidecar = DngMetadataEditor.FindSidecarXmp(filePath);
+                        if (!string.IsNullOrEmpty(origSidecar) && File.Exists(origSidecar))
+                        {
+                            string targetSidecar = Path.ChangeExtension(finalDestFilePath, ".xmp");
+                            if (!string.Equals(Path.GetFullPath(origSidecar), Path.GetFullPath(targetSidecar), StringComparison.OrdinalIgnoreCase))
+                            {
+                                FileTrashHelper.SendToTrash(origSidecar);
+                            }
+                        }
                     }
 
                     UpdateFileStatus(filePath, "✔");

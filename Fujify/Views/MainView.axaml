@@ -2401,6 +2401,77 @@
                         <Button Content="Got it" Command="{Binding CloseModalCommand}" Classes="primary"
                                 Height="38" CornerRadius="19" Padding="24,0" HorizontalAlignment="Center"/>
                     </StackPanel>
+
+                    <!-- Batch Summary Card Modal -->
+                    <StackPanel Spacing="16" IsVisible="{Binding IsBatchSummaryModal}">
+                        <!-- Header: Icon & Badge -->
+                        <StackPanel Spacing="8" HorizontalAlignment="Center">
+                            <Border Width="48" Height="48" CornerRadius="24" Background="{Binding ModalBadgeBackground}" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding ModalIcon}" FontSize="24" Foreground="{Binding ModalIconColor}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="{Binding BatchSummaryBadgeText}" FontSize="16" FontWeight="SemiBold"
+                                       Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center" TextAlignment="Center"/>
+                            <TextBlock Text="{Binding BatchSummaryPhotosCountText}" FontSize="12"
+                                       Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center" TextAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- 2x2 Performance & Volume Stats Grid -->
+                        <Border Background="{DynamicResource AppSurfaceSecondaryBrush}" CornerRadius="10" Padding="14,10"
+                                BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1">
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto">
+                                <!-- Stat 1: Duration -->
+                                <StackPanel Grid.Row="0" Grid.Column="0" Spacing="2" Margin="6,4">
+                                    <TextBlock Text="Duration" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    <TextBlock Text="{Binding BatchSummaryDurationText}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                </StackPanel>
+
+                                <!-- Stat 2: Throughput Speed -->
+                                <StackPanel Grid.Row="0" Grid.Column="1" Spacing="2" Margin="6,4">
+                                    <TextBlock Text="Throughput" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    <TextBlock Text="{Binding BatchSummarySpeedText}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                </StackPanel>
+
+                                <!-- Stat 3: Volume Converted -->
+                                <StackPanel Grid.Row="1" Grid.Column="0" Spacing="2" Margin="6,4">
+                                    <TextBlock Text="Volume Converted" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    <TextBlock Text="{Binding BatchSummaryVolumeText}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                </StackPanel>
+
+                                <!-- Stat 4: Simulation -->
+                                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="2" Margin="6,4">
+                                    <TextBlock Text="Simulation" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                    <TextBlock Text="{Binding TargetCameraModel}" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource AppAccentBrush}"
+                                               TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Sidecar / Status Notice -->
+                        <TextBlock Text="{Binding BatchSummaryNoticeText}" FontSize="11" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center" TextAlignment="Center" LineHeight="16"/>
+
+                        <!-- Action Buttons -->
+                        <StackPanel Spacing="8">
+                            <!-- Open Output Folder (Desktop only) -->
+                            <Button Content="📁 Open Output Folder" Command="{Binding OpenOutputFolderCommand}"
+                                    IsVisible="{Binding CanOpenOutputFolder}" Classes="primary"
+                                    Height="36" CornerRadius="18" HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+
+                            <Grid ColumnDefinitions="*,*">
+                                <!-- Clear Queue -->
+                                <Button Grid.Column="0" Content="Clear Queue" Command="{Binding ClearQueueAndCloseModalCommand}"
+                                        Classes="secondary" Height="36" CornerRadius="18" HorizontalAlignment="Stretch" Margin="0,0,4,0"
+                                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+
+                                <!-- Done -->
+                                <Button Grid.Column="1" Content="Done" Command="{Binding CloseModalCommand}"
+                                        Classes="secondary" Height="36" CornerRadius="18" HorizontalAlignment="Stretch" Margin="4,0,0,0"
+                                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
                 </Panel>
             </Border>
         </Border>

@@ -252,7 +252,7 @@ namespace Fujify.Services
 
         /// <summary>
         /// Injects Fujifilm profile simulation metadata (UniqueCameraModel 0xC614 and XMP CameraProfiles 0x02BC)
-        /// into the target DNG file.
+        /// into the target DNG file, seamlessly preserving any ratings, labels, and metadata from sidecar .xmp files.
         /// </summary>
         public static MetadataResult InjectFujifilmMetadata(
             string dngFilePath,
@@ -262,11 +262,24 @@ namespace Fujify.Services
             string? customOutputFilePath = null,
             string targetUniqueCameraModel = "Fujifilm X-T5",
             string targetMake = "FUJIFILM",
-            string targetModel = "X-T5")
+            string targetModel = "X-T5",
+            string? sourceRawFilePath = null)
         {
             if (!File.Exists(dngFilePath))
             {
                 return new MetadataResult(false, $"Source file does not exist: {dngFilePath}");
+            }
+
+            // Detect source sidecar XMP if present
+            string? sidecarPath = FindSidecarXmp(sourceRawFilePath ?? dngFilePath);
+            string? sidecarContent = null;
+            if (!string.IsNullOrEmpty(sidecarPath) && File.Exists(sidecarPath))
+            {
+                try
+                {
+                    sidecarContent = File.ReadAllText(sidecarPath);
+                }
+                catch { }
             }
 
             bool useOutputPath = !string.IsNullOrEmpty(outputFolder) || !string.IsNullOrEmpty(customOutputFilePath);
@@ -344,7 +357,7 @@ namespace Fujify.Services
                 }
 
                 // 3. Prepare updated XMP and UniqueCameraModel payloads
-                string newXmpString = MergeCameraProfilesIntoXmp(existingXmp, targetMake, targetModel, targetUniqueCameraModel);
+                string newXmpString = MergeCameraProfilesIntoXmp(existingXmp, targetMake, targetModel, targetUniqueCameraModel, sidecarContent);
                 byte[] newXmpBytes = Encoding.UTF8.GetBytes(newXmpString);
 
                 string modelStr = targetUniqueCameraModel + "\0";
@@ -421,6 +434,20 @@ namespace Fujify.Services
                 return new MetadataResult(false, $"Failed to inject metadata: {ex.Message}");
             }
 
+            // 8. Copy sidecar .xmp alongside output .dng if output path was used
+            if (!string.IsNullOrEmpty(sidecarPath) && File.Exists(sidecarPath) && useOutputPath)
+            {
+                try
+                {
+                    string targetSidecar = Path.ChangeExtension(targetFilePath, ".xmp");
+                    if (!string.Equals(Path.GetFullPath(sidecarPath), Path.GetFullPath(targetSidecar), StringComparison.OrdinalIgnoreCase))
+                    {
+                        File.Copy(sidecarPath, targetSidecar, overwrite: true);
+                    }
+                }
+                catch { }
+            }
+
             // Cleanup intermediate DNG if it was converted from another RAW format and output path was used
             if (useOutputPath && !isOriginallyDng && !string.Equals(dngFilePath, targetFilePath, StringComparison.OrdinalIgnoreCase))
             {
@@ -449,6 +476,7 @@ namespace Fujify.Services
             string targetUniqueCameraModel = "Fujifilm X-T5",
             string targetMake = "FUJIFILM",
             string targetModel = "X-T5",
+            string? sourceRawFilePath = null,
             CancellationToken cancellationToken = default)
         {
             return Task.Run(() =>
@@ -462,7 +490,8 @@ namespace Fujify.Services
                     customOutputFilePath,
                     targetUniqueCameraModel,
                     targetMake,
-                    targetModel);
+                    targetModel,
+                    sourceRawFilePath);
             }, cancellationToken);
         }
 
@@ -652,34 +681,52 @@ namespace Fujify.Services
                 : (uint)((buf[offset] << 24) | (buf[offset + 1] << 16) | (buf[offset + 2] << 8) | buf[offset + 3]);
         }
 
-        private static string MergeCameraProfilesIntoXmp(string? existingXmp, string make, string model, string uniqueModel)
+        public static string MergeCameraProfilesIntoXmp(
+            string? existingXmp,
+            string make,
+            string model,
+            string uniqueModel,
+            string? sidecarXmp = null)
         {
-            if (string.IsNullOrWhiteSpace(existingXmp))
+            XDocument doc;
+            XNamespace rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+            XNamespace photoshop = "http://ns.adobe.com/photoshop/1.0/";
+            XNamespace stCamera = "http://ns.adobe.com/photoshop/1.0/camera-profile";
+
+            if (!string.IsNullOrWhiteSpace(existingXmp))
             {
-                return BuildDefaultXmp(make, model, uniqueModel);
+                try
+                {
+                    int xmpStart = existingXmp.IndexOf("<x:xmpmeta", StringComparison.OrdinalIgnoreCase);
+                    int xmpEnd = existingXmp.LastIndexOf("</x:xmpmeta>", StringComparison.OrdinalIgnoreCase);
+
+                    if (xmpStart >= 0 && xmpEnd > xmpStart)
+                    {
+                        string xmlContent = existingXmp.Substring(xmpStart, xmpEnd + "</x:xmpmeta>".Length - xmpStart);
+                        doc = XDocument.Parse(xmlContent);
+                    }
+                    else
+                    {
+                        doc = XDocument.Parse(BuildDefaultXmpXml(make, model, uniqueModel));
+                    }
+                }
+                catch
+                {
+                    doc = XDocument.Parse(BuildDefaultXmpXml(make, model, uniqueModel));
+                }
+            }
+            else
+            {
+                doc = XDocument.Parse(BuildDefaultXmpXml(make, model, uniqueModel));
             }
 
             try
             {
-                int xmpStart = existingXmp.IndexOf("<x:xmpmeta", StringComparison.OrdinalIgnoreCase);
-                int xmpEnd = existingXmp.LastIndexOf("</x:xmpmeta>", StringComparison.OrdinalIgnoreCase);
-
-                if (xmpStart < 0 || xmpEnd <= xmpStart)
-                {
-                    return BuildDefaultXmp(make, model, uniqueModel);
-                }
-
-                string xmlContent = existingXmp.Substring(xmpStart, xmpEnd + "</x:xmpmeta>".Length - xmpStart);
-                var doc = XDocument.Parse(xmlContent);
-
-                XNamespace rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
-                XNamespace photoshop = "http://ns.adobe.com/photoshop/1.0/";
-                XNamespace stCamera = "http://ns.adobe.com/photoshop/1.0/camera-profile";
-
                 var rdfElem = doc.Descendants(rdf + "RDF").FirstOrDefault();
                 if (rdfElem == null)
                 {
-                    return BuildDefaultXmp(make, model, uniqueModel);
+                    rdfElem = new XElement(rdf + "RDF");
+                    doc.Root?.Add(rdfElem);
                 }
 
                 var descElem = rdfElem.Elements(rdf + "Description").FirstOrDefault();
@@ -687,6 +734,12 @@ namespace Fujify.Services
                 {
                     descElem = new XElement(rdf + "Description", new XAttribute(rdf + "about", ""));
                     rdfElem.Add(descElem);
+                }
+
+                // Seamlessly merge sidecar metadata (rating, color label, develop settings, keywords) if provided
+                if (!string.IsNullOrWhiteSpace(sidecarXmp))
+                {
+                    MergeSidecarElements(descElem, sidecarXmp, rdf);
                 }
 
                 // Remove existing photoshop:CameraProfiles
@@ -717,10 +770,9 @@ namespace Fujify.Services
             }
         }
 
-        private static string BuildDefaultXmp(string make, string model, string uniqueModel)
+        private static string BuildDefaultXmpXml(string make, string model, string uniqueModel)
         {
-            return $@"<?xpacket begin='﻿' id='W5M0MpCehiHzreSzNTczkc9d'?>
-<x:xmpmeta xmlns:x='adobe:ns:meta/' x:xmptk='Fujify Native'>
+            return $@"<x:xmpmeta xmlns:x='adobe:ns:meta/' x:xmptk='Fujify Native'>
 <rdf:RDF xmlns:rdf='http://www.w3.org/1999/02/22-rdf-syntax-ns#'>
  <rdf:Description rdf:about=''
   xmlns:photoshop='http://ns.adobe.com/photoshop/1.0/'
@@ -737,8 +789,142 @@ namespace Fujify.Services
   </photoshop:CameraProfiles>
  </rdf:Description>
 </rdf:RDF>
-</x:xmpmeta>
+</x:xmpmeta>";
+        }
+
+        public static string BuildDefaultXmp(string make, string model, string uniqueModel)
+        {
+            return $@"<?xpacket begin='﻿' id='W5M0MpCehiHzreSzNTczkc9d'?>
+{BuildDefaultXmpXml(make, model, uniqueModel)}
 <?xpacket end='w'?>";
+        }
+
+        /// <summary>
+        /// Finds an associated sidecar .xmp or .XMP file for the given photo file path.
+        /// Checks standard naming: photo.xmp, photo.XMP, photo.ext.xmp, photo.ext.XMP.
+        /// </summary>
+        public static string? FindSidecarXmp(string? rawOrDngPath)
+        {
+            if (string.IsNullOrWhiteSpace(rawOrDngPath))
+                return null;
+
+            string? dir = Path.GetDirectoryName(rawOrDngPath);
+            if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir))
+                return null;
+
+            string nameWithoutExt = Path.GetFileNameWithoutExtension(rawOrDngPath);
+            string fullName = Path.GetFileName(rawOrDngPath);
+
+            string[] candidates = new[]
+            {
+                Path.Combine(dir, $"{nameWithoutExt}.xmp"),
+                Path.Combine(dir, $"{nameWithoutExt}.XMP"),
+                Path.Combine(dir, $"{fullName}.xmp"),
+                Path.Combine(dir, $"{fullName}.XMP")
+            };
+
+            foreach (var candidate in candidates)
+            {
+                if (File.Exists(candidate))
+                    return candidate;
+            }
+
+            // Case-insensitive fallback directory lookup for case-sensitive filesystems (Linux/macOS)
+            try
+            {
+                var dirFiles = Directory.GetFiles(dir);
+                foreach (var file in dirFiles)
+                {
+                    string fileName = Path.GetFileName(file);
+                    if (fileName.EndsWith(".xmp", StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (fileName.StartsWith(nameWithoutExt + ".", StringComparison.OrdinalIgnoreCase) ||
+                            fileName.StartsWith(fullName + ".", StringComparison.OrdinalIgnoreCase))
+                        {
+                            return file;
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Merges attributes and child elements from a sidecar XMP into the target RDF Description element.
+        /// Preserves ratings, color labels, crop, keywords, and Camera Raw develop settings.
+        /// </summary>
+        public static void MergeSidecarElements(XElement targetDesc, string sidecarXmp, XNamespace rdf)
+        {
+            try
+            {
+                int xmpStart = sidecarXmp.IndexOf("<x:xmpmeta", StringComparison.OrdinalIgnoreCase);
+                int xmpEnd = sidecarXmp.LastIndexOf("</x:xmpmeta>", StringComparison.OrdinalIgnoreCase);
+                string xmlToParse;
+
+                if (xmpStart >= 0 && xmpEnd > xmpStart)
+                {
+                    xmlToParse = sidecarXmp.Substring(xmpStart, xmpEnd + "</x:xmpmeta>".Length - xmpStart);
+                }
+                else
+                {
+                    int rdfStart = sidecarXmp.IndexOf("<rdf:RDF", StringComparison.OrdinalIgnoreCase);
+                    int rdfEnd = sidecarXmp.LastIndexOf("</rdf:RDF>", StringComparison.OrdinalIgnoreCase);
+                    if (rdfStart >= 0 && rdfEnd > rdfStart)
+                    {
+                        xmlToParse = sidecarXmp.Substring(rdfStart, rdfEnd + "</rdf:RDF>".Length - rdfStart);
+                    }
+                    else
+                    {
+                        xmlToParse = sidecarXmp.Trim();
+                    }
+                }
+
+                var sidecarDoc = XDocument.Parse(xmlToParse);
+                XNamespace photoshop = "http://ns.adobe.com/photoshop/1.0/";
+
+                var sidecarDescriptions = sidecarDoc.Descendants(rdf + "Description").ToList();
+                if (sidecarDescriptions.Count == 0 && sidecarDoc.Root?.Name == rdf + "Description")
+                {
+                    sidecarDescriptions.Add(sidecarDoc.Root);
+                }
+
+                foreach (var sDesc in sidecarDescriptions)
+                {
+                    // Copy attributes (rating, label, crop parameters, etc.)
+                    foreach (var attr in sDesc.Attributes())
+                    {
+                        if (attr.IsNamespaceDeclaration || attr.Name == rdf + "about")
+                        {
+                            continue;
+                        }
+                        if (attr.Name.Namespace == photoshop && attr.Name.LocalName == "CameraProfiles")
+                        {
+                            continue;
+                        }
+
+                        targetDesc.SetAttributeValue(attr.Name, attr.Value);
+                    }
+
+                    // Copy child elements (hierarchical keywords, CRS develop settings, etc.)
+                    foreach (var elem in sDesc.Elements())
+                    {
+                        if (elem.Name.Namespace == photoshop && elem.Name.LocalName == "CameraProfiles")
+                        {
+                            continue;
+                        }
+
+                        // Remove existing element with same name so sidecar values override
+                        targetDesc.Elements(elem.Name).Remove();
+                        targetDesc.Add(new XElement(elem));
+                    }
+                }
+            }
+            catch
+            {
+                // Gracefully ignore malformed sidecar XML
+            }
         }
 
         public static string? ReadCanonCr3CameraInfo(Stream stream)
