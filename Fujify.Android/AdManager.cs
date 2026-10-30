@@ -25,7 +25,7 @@ public class AdManager
     public const string ProdBannerUnitId = "ca-app-pub-7034111600506292/6391160201";
 
     // Google's official Test Ad Unit IDs (guaranteed fill, safe for testing)
-    public const string TestSplashAppOpenUnitId = "ca-app-pub-3940256099942544/9257390708";
+    public const string TestSplashAppOpenUnitId = "ca-app-pub-3940256099942544/9257395921";
     public const string TestInterstitialUnitId = "ca-app-pub-3940256099942544/1033173712";
     public const string TestBannerUnitId = "ca-app-pub-3940256099942544/6300978111";
 
@@ -185,7 +185,7 @@ public class AdManager
                     if (adUnitId != TestSplashAppOpenUnitId)
                     {
                         Log.Info("FujifierAds", "Falling back to Google Test Splash App Open Unit...");
-                        LoadAndShowSplashInternal(TestSplashAppOpenUnitId);
+                        _activity?.RunOnUiThread(() => LoadAndShowSplashInternal(TestSplashAppOpenUnitId));
                     }
                 });
 
@@ -256,7 +256,7 @@ public class AdManager
                     if (adUnitId != TestInterstitialUnitId)
                     {
                         Log.Info("FujifierAds", "Falling back to Google Test Interstitial Unit...");
-                        PreloadInterstitialInternal(TestInterstitialUnitId);
+                        _activity?.RunOnUiThread(() => PreloadInterstitialInternal(TestInterstitialUnitId));
                     }
                 });
 
@@ -273,17 +273,20 @@ public class AdManager
         if (_activity == null || _activity.IsFinishing || _activity.IsDestroyed) return;
         if (AdService.Instance?.ShouldShowAds == false) return;
 
-        if (_interstitialAd != null && !_isShowingAd)
+        _activity.RunOnUiThread(() =>
         {
-            Log.Info("FujifierAds", "Showing Interstitial Ad...");
-            _isShowingAd = true;
-            _interstitialAd.Show(_activity);
-        }
-        else
-        {
-            Log.Info("FujifierAds", "Interstitial Ad not ready yet. Preloading...");
-            PreloadInterstitial();
-        }
+            if (_interstitialAd != null && !_isShowingAd)
+            {
+                Log.Info("FujifierAds", "Showing Interstitial Ad...");
+                _isShowingAd = true;
+                _interstitialAd.Show(_activity);
+            }
+            else
+            {
+                Log.Info("FujifierAds", $"Interstitial Ad not ready yet (Ad is null: {_interstitialAd == null}, Showing: {_isShowingAd}). Preloading...");
+                PreloadInterstitial();
+            }
+        });
     }
 
     #endregion
@@ -309,10 +312,37 @@ public class AdManager
             _bannerContainer.Elevation = 100f;
             _bannerContainer.TranslationZ = 100f;
 
-            // AdView
-            _bannerAdView = new AdView(_activity)
+            // Add container to the Activity's content view hierarchy on top of Avalonia
+            _activity.AddContentView(_bannerContainer, containerParams);
+            _bannerContainer.BringToFront();
+
+            LoadBannerInternal(BannerUnitId);
+        }
+        catch (Exception ex)
+        {
+            Log.Error("FujifierAds", $"Failed to setup Banner Ad: {ex}");
+        }
+    }
+
+    private void LoadBannerInternal(string adUnitId)
+    {
+        if (_activity == null || _activity.IsFinishing || _activity.IsDestroyed || _bannerContainer == null) return;
+
+        try
+        {
+            Log.Info("FujifierAds", $"Loading Banner Ad (Unit: {adUnitId})...");
+
+            // Clean up existing banner AdView if replacing for fallback
+            if (_bannerAdView != null)
             {
-                AdUnitId = BannerUnitId,
+                _bannerContainer.RemoveView(_bannerAdView);
+                try { _bannerAdView.Destroy(); } catch { }
+                _bannerAdView = null;
+            }
+
+            var adView = new AdView(_activity)
+            {
+                AdUnitId = adUnitId,
                 AdSize = AdSize.Banner
             };
 
@@ -322,12 +352,12 @@ public class AdManager
             {
                 Gravity = GravityFlags.CenterHorizontal
             };
-            _bannerAdView.LayoutParameters = adParams;
+            adView.LayoutParameters = adParams;
 
             _bannerListener = new BannerAdListener(
                 onLoaded: () =>
                 {
-                    Log.Info("FujifierAds", "Banner Ad loaded successfully!");
+                    Log.Info("FujifierAds", $"Banner Ad loaded successfully! (Unit: {adUnitId})");
                     if (_bannerContainer != null)
                     {
                         _bannerContainer.Visibility = ViewStates.Visible;
@@ -336,91 +366,82 @@ public class AdManager
                 },
                 onFailed: (err) =>
                 {
-                    Log.Warn("FujifierAds", $"Banner Ad failed to load ({_bannerAdView?.AdUnitId}): {err.Message} (Code: {err.Code})");
+                    Log.Warn("FujifierAds", $"Banner Ad failed to load ({adUnitId}): {err.Message} (Code: {err.Code})");
 
                     // Fallback to Google Test Banner Unit if production has no fill
-                    if (_bannerAdView != null && _bannerAdView.AdUnitId != TestBannerUnitId)
+                    if (adUnitId != TestBannerUnitId)
                     {
                         Log.Info("FujifierAds", "Falling back to Google Test Banner Unit...");
-                        _activity?.RunOnUiThread(() =>
-                        {
-                            try
-                            {
-                                _bannerAdView.AdUnitId = TestBannerUnitId;
-                                _bannerAdView.LoadAd(new AdRequest.Builder().Build());
-                            }
-                            catch (Exception ex)
-                            {
-                                Log.Error("FujifierAds", $"Error loading test banner fallback: {ex}");
-                            }
-                        });
+                        _activity?.RunOnUiThread(() => LoadBannerInternal(TestBannerUnitId));
                     }
                 });
 
-            _bannerAdView.AdListener = _bannerListener;
-            _bannerContainer.AddView(_bannerAdView);
+            adView.AdListener = _bannerListener;
+            _bannerAdView = adView;
+            _bannerContainer.AddView(adView);
 
-            // Add container to the Activity's content view hierarchy on top of Avalonia
-            _activity.AddContentView(_bannerContainer, containerParams);
-            _bannerContainer.BringToFront();
-
-            // Load ad request
             var adRequest = new AdRequest.Builder().Build();
-            _bannerAdView.LoadAd(adRequest);
+            adView.LoadAd(adRequest);
 
-            Log.Info("FujifierAds", $"Banner Ad created and added to screen (Unit: {BannerUnitId}).");
+            Log.Info("FujifierAds", $"Banner Ad created and added to screen (Unit: {adUnitId}).");
         }
         catch (Exception ex)
         {
-            Log.Error("FujifierAds", $"Failed to setup Banner Ad: {ex}");
+            Log.Error("FujifierAds", $"Error in LoadBannerInternal: {ex}");
         }
     }
 
     public void SetBannerVisible(bool visible)
     {
-        if (_bannerContainer != null)
+        _activity?.RunOnUiThread(() =>
         {
-            _bannerContainer.Visibility = visible ? ViewStates.Visible : ViewStates.Gone;
-            if (visible)
+            if (_bannerContainer != null)
             {
-                _bannerContainer.BringToFront();
+                _bannerContainer.Visibility = visible ? ViewStates.Visible : ViewStates.Gone;
+                if (visible)
+                {
+                    _bannerContainer.BringToFront();
+                }
             }
-        }
 
-        if (_bannerAdView != null)
-        {
-            if (visible)
+            if (_bannerAdView != null)
             {
-                _bannerAdView.Resume();
+                if (visible)
+                {
+                    _bannerAdView.Resume();
+                }
+                else
+                {
+                    _bannerAdView.Pause();
+                }
             }
-            else
-            {
-                _bannerAdView.Pause();
-            }
-        }
+        });
     }
 
     public void Resume()
     {
-        _bannerAdView?.Resume();
+        _activity?.RunOnUiThread(() => _bannerAdView?.Resume());
     }
 
     public void Pause()
     {
-        _bannerAdView?.Pause();
+        _activity?.RunOnUiThread(() => _bannerAdView?.Pause());
     }
 
     public void Destroy()
     {
-        _bannerAdView?.Destroy();
-        _bannerAdView = null;
-        _bannerContainer = null;
-        _interstitialAd = null;
-        _appOpenAd = null;
-        _initListener = null;
-        _appOpenCallback = null;
-        _interstitialCallback = null;
-        _bannerListener = null;
+        _activity?.RunOnUiThread(() =>
+        {
+            _bannerAdView?.Destroy();
+            _bannerAdView = null;
+            _bannerContainer = null;
+            _interstitialAd = null;
+            _appOpenAd = null;
+            _initListener = null;
+            _appOpenCallback = null;
+            _interstitialCallback = null;
+            _bannerListener = null;
+        });
     }
 
     #endregion
@@ -451,13 +472,11 @@ public class AdManager
 
         public override void OnAdLoaded()
         {
-            base.OnAdLoaded();
             _onLoaded();
         }
 
         public override void OnAdFailedToLoad(LoadAdError loadAdError)
         {
-            base.OnAdFailedToLoad(loadAdError);
             _onFailed(loadAdError);
         }
     }
@@ -475,13 +494,11 @@ public class AdManager
 
         public override void OnAdLoaded(AppOpenAd appOpenAd)
         {
-            base.OnAdLoaded(appOpenAd);
             _onLoaded(appOpenAd);
         }
 
         public override void OnAdFailedToLoad(LoadAdError loadAdError)
         {
-            base.OnAdFailedToLoad(loadAdError);
             _onFailed(loadAdError);
         }
     }
@@ -499,13 +516,11 @@ public class AdManager
 
         public override void OnAdLoaded(InterstitialAd interstitialAd)
         {
-            base.OnAdLoaded(interstitialAd);
             _onLoaded(interstitialAd);
         }
 
         public override void OnAdFailedToLoad(LoadAdError loadAdError)
         {
-            base.OnAdFailedToLoad(loadAdError);
             _onFailed(loadAdError);
         }
     }
@@ -523,13 +538,11 @@ public class AdManager
 
         public override void OnAdDismissedFullScreenContent()
         {
-            base.OnAdDismissedFullScreenContent();
             _onDismissed?.Invoke();
         }
 
         public override void OnAdFailedToShowFullScreenContent(AdError adError)
         {
-            base.OnAdFailedToShowFullScreenContent(adError);
             _onFailed?.Invoke(adError);
         }
     }
