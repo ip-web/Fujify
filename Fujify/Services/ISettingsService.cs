@@ -22,6 +22,7 @@ namespace Fujify.Services
     public class AppSettings
     {
         public string ThemeMode { get; set; } = "Automatic"; // "Automatic", "Dark", "Amoled", "Light"
+        public string Language { get; set; } = "en"; // "en", "fr", "es", "de"
 
         [System.Text.Json.Serialization.JsonIgnore]
         public bool IsDarkTheme

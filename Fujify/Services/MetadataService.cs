@@ -344,15 +344,15 @@ namespace Fujify.Services
                 {
                     if (output.Contains("image files updated") || output.Contains("image files created"))
                     {
-                        if (useOutputPath)
+                        if (useOutputPath && !string.IsNullOrEmpty(outputFilePath))
                         {
                             string? sidecar = DngMetadataEditor.FindSidecarXmp(dngFilePath);
                             if (!string.IsNullOrEmpty(sidecar) && File.Exists(sidecar))
                             {
                                 try
                                 {
-                                    string targetSidecar = Path.ChangeExtension(outputFilePath, ".xmp");
-                                    if (!string.Equals(Path.GetFullPath(sidecar), Path.GetFullPath(targetSidecar), StringComparison.OrdinalIgnoreCase))
+                                    string? targetSidecar = Path.ChangeExtension(outputFilePath, ".xmp");
+                                    if (!string.IsNullOrEmpty(targetSidecar) && !string.Equals(Path.GetFullPath(sidecar), Path.GetFullPath(targetSidecar), StringComparison.OrdinalIgnoreCase))
                                     {
                                         File.Copy(sidecar, targetSidecar, overwrite: true);
                                     }
@@ -439,15 +439,15 @@ namespace Fujify.Services
                 {
                     if (output.Contains("image files updated") || output.Contains("image files created"))
                     {
-                        if (useOutputPath)
+                        if (useOutputPath && !string.IsNullOrEmpty(outputFilePath))
                         {
                             string? sidecar = DngMetadataEditor.FindSidecarXmp(dngFilePath);
                             if (!string.IsNullOrEmpty(sidecar) && File.Exists(sidecar))
                             {
                                 try
                                 {
-                                    string targetSidecar = Path.ChangeExtension(outputFilePath, ".xmp");
-                                    if (!string.Equals(Path.GetFullPath(sidecar), Path.GetFullPath(targetSidecar), StringComparison.OrdinalIgnoreCase))
+                                    string? targetSidecar = Path.ChangeExtension(outputFilePath, ".xmp");
+                                    if (!string.IsNullOrEmpty(targetSidecar) && !string.Equals(Path.GetFullPath(sidecar), Path.GetFullPath(targetSidecar), StringComparison.OrdinalIgnoreCase))
                                     {
                                         File.Copy(sidecar, targetSidecar, overwrite: true);
                                     }

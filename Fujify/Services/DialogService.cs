@@ -190,12 +190,32 @@ namespace Fujify.Services
         public async Task<FileConflictResolution> PromptFileConflictAsync(Window? owner, string destinationFilePath)
         {
             if (Application.Current == null) return new FileConflictResolution(ConflictChoice.Skip, false);
-            if (!Dispatcher.UIThread.CheckAccess())
+
+            var targetOwner = owner ?? (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+            if (targetOwner == null && MainViewModel.Instance == null)
             {
-                return await Dispatcher.UIThread.InvokeAsync(() => PromptFileConflictAsync(owner, destinationFilePath));
+                return new FileConflictResolution(ConflictChoice.Skip, false);
             }
 
-            if (IsMobileOrSingleView || (owner == null && (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow == null))
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                try
+                {
+                    var task = Dispatcher.UIThread.InvokeAsync(() => PromptFileConflictAsync(owner, destinationFilePath));
+                    var completed = await Task.WhenAny(task, Task.Delay(5000));
+                    if (completed == task)
+                    {
+                        return await task;
+                    }
+                    return new FileConflictResolution(ConflictChoice.Skip, false);
+                }
+                catch
+                {
+                    return new FileConflictResolution(ConflictChoice.Skip, false);
+                }
+            }
+
+            if (IsMobileOrSingleView || targetOwner == null)
             {
                 if (MainViewModel.Instance != null)
                 {
@@ -207,7 +227,6 @@ namespace Fujify.Services
             var vm = new FileConflictDialogViewModel(destinationFilePath);
             var dialog = new FileConflictDialog(vm);
 
-            var targetOwner = owner ?? (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
             if (targetOwner != null)
             {
                 if (targetOwner.WindowState == WindowState.Minimized)
