@@ -80,8 +80,11 @@ namespace Fujify.Tests
                 if (tb is TextBlock textBlock && textBlock.Text != null && 
                     (textBlock.Text.Contains("Open folder") || textBlock.Text.Contains("Save in subfolder") || textBlock.Text.Contains("Backup original") || textBlock.Text.Contains("Keep original")))
                 {
-                    var pt = textBlock.TranslatePoint(new Point(0, 0), inspectorBorder);
-                    _output.WriteLine($"TextBlock '{textBlock.Text}' point in InspectorPanelBorder: {pt}, Bounds={textBlock.Bounds}");
+                    if (inspectorBorder != null)
+                    {
+                        var pt = textBlock.TranslatePoint(new Point(0, 0), inspectorBorder);
+                        _output.WriteLine($"TextBlock '{textBlock.Text}' point in InspectorPanelBorder: {pt}, Bounds={textBlock.Bounds}");
+                    }
                 }
             }
 

@@ -184,7 +184,21 @@ public class MainActivity : AvaloniaMainActivity<App>
 
         if (action == Intent.ActionSend)
         {
-            if (intent.GetParcelableExtra(Intent.ExtraStream) is global::Android.Net.Uri streamUri)
+            global::Android.Net.Uri? streamUri = null;
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
+            {
+#pragma warning disable CA1416
+                streamUri = intent.GetParcelableExtra(Intent.ExtraStream, Java.Lang.Class.FromType(typeof(global::Android.Net.Uri))) as global::Android.Net.Uri;
+#pragma warning restore CA1416
+            }
+            else
+            {
+#pragma warning disable CA1422
+                streamUri = intent.GetParcelableExtra(Intent.ExtraStream) as global::Android.Net.Uri;
+#pragma warning restore CA1422
+            }
+
+            if (streamUri != null)
             {
                 uris.Add(streamUri);
             }
@@ -203,7 +217,20 @@ public class MainActivity : AvaloniaMainActivity<App>
         }
         else if (action == Intent.ActionSendMultiple)
         {
-            var list = intent.GetParcelableArrayListExtra(Intent.ExtraStream);
+            System.Collections.IList? list = null;
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
+            {
+#pragma warning disable CA1416
+                list = intent.GetParcelableArrayListExtra(Intent.ExtraStream, Java.Lang.Class.FromType(typeof(global::Android.Net.Uri)));
+#pragma warning restore CA1416
+            }
+            else
+            {
+#pragma warning disable CA1422
+                list = intent.GetParcelableArrayListExtra(Intent.ExtraStream);
+#pragma warning restore CA1422
+            }
+
             if (list != null)
             {
                 foreach (var item in list)
@@ -511,10 +538,12 @@ public class MainActivity : AvaloniaMainActivity<App>
             if (layoutParams == null) return;
 
             Display? display = null;
+#pragma warning disable CA1416
             if (Build.VERSION.SdkInt >= BuildVersionCodes.R)
             {
                 display = Display;
             }
+#pragma warning restore CA1416
             else
             {
 #pragma warning disable CS0618

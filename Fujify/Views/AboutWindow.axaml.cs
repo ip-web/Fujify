@@ -24,7 +24,7 @@ namespace Fujify.Views
 
         private void GitHub_Click(object? sender, RoutedEventArgs e)
         {
-            Common.CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujifier");
+            Common.CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujify");
         }
 
         private async void Releases_Click(object? sender, RoutedEventArgs e)
@@ -39,12 +39,12 @@ namespace Fujify.Views
                 }
                 else
                 {
-                    Common.CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujifier/releases");
+                    Common.CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujify/releases");
                 }
             }
             catch
             {
-                Common.CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujifier/releases");
+                Common.CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujify/releases");
             }
         }
 
