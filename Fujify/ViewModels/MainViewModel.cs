@@ -836,7 +836,7 @@ namespace Fujify.ViewModels
                 }
                 if (!HasFiles)
                 {
-                    return "Ready - Drop RAW photos or click + Add Files to begin";
+                    return "Ready";
                 }
                 int pendingCount = Files.Count(f => f.Status == "Pending");
                 int successCount = Files.Count(f => f.Status == "✔");

@@ -809,79 +809,73 @@
                         <Grid Grid.Row="1" RowDefinitions="*" ColumnDefinitions="*,295" Margin="8,2,24,8">
 
                             <!-- CENTER: Photo Queue Panel -->
-                            <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="Auto,*" Margin="0,0,16,0" VerticalAlignment="Stretch">
+                            <Border Grid.Row="0" Grid.Column="0" Classes="panel" Margin="0,0,16,0" ClipToBounds="True">
+                                <Grid RowDefinitions="Auto,*">
 
-                                <!-- Queue Top Section Header (Action buttons without "X photos in queue" sentence) -->
-                                <Grid Grid.Row="0" Margin="0,0,0,14" VerticalAlignment="Center">
-                                    <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                        <!-- Primary + Add Files -->
-                                        <Button Classes="primary" Command="{Binding AddFilesCommand}"
-                                                ToolTip.Tip="Import RAW photos from computer">
-                                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                <PathIcon Data="M 11 4 A 1 1 0 0 1 13 4 V 11 H 20 A 1 1 0 0 1 20 13 H 13 V 20 A 1 1 0 0 1 11 20 V 13 H 4 A 1 1 0 0 1 4 11 H 11 Z" Width="12" Height="12" Foreground="{DynamicResource AppPrimaryBtnFgBrush}"/>
-                                                <TextBlock Text="Add files" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource AppPrimaryBtnFgBrush}" VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Button>
-
-                                        <!-- Secondary + Add Folder -->
-                                        <Button Classes="secondary" Command="{Binding AddFolderCommand}"
-                                                ToolTip.Tip="Import folder containing RAW photos">
-                                            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                <PathIcon Data="M 3 7 V 5 h 7 l 2 3 h 9 v 12 H 3 Z" Width="12" Height="12" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                                <TextBlock Text="Add folder" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
-                                            </StackPanel>
-                                        </Button>
-
-                                        <!-- Secondary Clear -->
-                                        <Button Classes="secondary" Command="{Binding ClearCommand}"
-                                                IsVisible="{Binding HasFiles}" ToolTip.Tip="Remove all photos from queue">
-                                            <TextBlock Text="Clear" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
-                                        </Button>
-                                    </StackPanel>
-                                </Grid>
-
-
-                                <!-- Queue Panel Card -->
-                                <Border Grid.Row="1" Classes="panel" ClipToBounds="True">
-                                    <Grid RowDefinitions="Auto,*">
-
-                                        <!-- Panel Subhead: Title + Count Badge + View Mode Switcher -->
-                                        <Border Grid.Row="0" Padding="20,16" Background="Transparent"
-                                                BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
-                                            <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
-                                                <!-- Queue Title & Badge -->
-                                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                                    <TextBlock Text="Photo queue" FontSize="13" FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
-                                                    <Border Background="#10FFFFFF" BorderBrush="#15FFFFFF" BorderThickness="1"
-                                                            CornerRadius="7" Padding="7,3" VerticalAlignment="Center">
-                                                        <TextBlock Text="{Binding Files.Count, StringFormat='{}{0} photos'}"
-                                                                   FontSize="9" Foreground="{DynamicResource AppTextSecondaryBrush}" FontWeight="SemiBold"/>
-                                                    </Border>
-                                                </StackPanel>
-
-                                                <!-- Segmented View Toggle (List vs Grid) with Icons -->
-                                                <Border Grid.Column="1" Background="#101118" BorderBrush="#15FFFFFF" BorderThickness="1"
-                                                        CornerRadius="10" Padding="3" VerticalAlignment="Center">
-                                                    <StackPanel Orientation="Horizontal" Spacing="2">
-                                                        <Button Classes="view-toggle" Classes.active="{Binding IsListView}"
-                                                                Command="{Binding SetListViewCommand}" ToolTip.Tip="List View">
-                                                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                                <PathIcon Data="M 8 4.5 h 13 v 1.5 H 8 Z M 8 11.25 h 13 v 1.5 H 8 Z M 8 18 h 13 v 1.5 H 8 Z M 3 4.5 h 2.5 v 1.5 H 3 Z M 3 11.25 h 2.5 v 1.5 H 3 Z M 3 18 h 2.5 v 1.5 H 3 Z" Width="11" Height="11"/>
-                                                                <TextBlock Text="List" VerticalAlignment="Center"/>
-                                                            </StackPanel>
-                                                        </Button>
-                                                        <Button Classes="view-toggle" Classes.active="{Binding IsGridView}"
-                                                                Command="{Binding SetGridViewCommand}" ToolTip.Tip="Grid View">
-                                                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                                <PathIcon Data="M 3 3 h 7 v 7 H 3 Z M 14 3 h 7 v 7 H 14 Z M 3 14 h 7 v 7 H 3 Z M 14 14 h 7 v 7 H 14 Z" Width="11" Height="11"/>
-                                                                <TextBlock Text="Grid" VerticalAlignment="Center"/>
-                                                            </StackPanel>
-                                                        </Button>
+                                    <!-- Panel Subhead: Action Buttons + Count Badge + View Mode Switcher -->
+                                    <Border Grid.Row="0" Padding="14,8,14,8" Background="Transparent"
+                                            BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
+                                        <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
+                                            <!-- Action Buttons & Badge (Add Files, Add Folder, Clear, Count) -->
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                <!-- Primary + Add Files -->
+                                                <Button Classes="primary" Command="{Binding AddFilesCommand}"
+                                                        Height="32" Padding="14,0" CornerRadius="16"
+                                                        ToolTip.Tip="Import RAW photos from computer">
+                                                    <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
+                                                        <PathIcon Data="M 11 4 A 1 1 0 0 1 13 4 V 11 H 20 A 1 1 0 0 1 20 13 H 13 V 20 A 1 1 0 0 1 11 20 V 13 H 4 A 1 1 0 0 1 4 11 H 11 Z" Width="11" Height="11" Foreground="{DynamicResource AppPrimaryBtnFgBrush}"/>
+                                                        <TextBlock Text="Add files" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource AppPrimaryBtnFgBrush}" VerticalAlignment="Center"/>
                                                     </StackPanel>
+                                                </Button>
+
+                                                <!-- Secondary + Add Folder -->
+                                                <Button Classes="secondary" Command="{Binding AddFolderCommand}"
+                                                        Height="32" Padding="14,0" CornerRadius="16"
+                                                        ToolTip.Tip="Import folder containing RAW photos">
+                                                    <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
+                                                        <PathIcon Data="M 3 7 V 5 h 7 l 2 3 h 9 v 12 H 3 Z" Width="11" Height="11" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                                        <TextBlock Text="Add folder" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                    </StackPanel>
+                                                </Button>
+
+                                                <!-- Secondary Clear -->
+                                                <Button Classes="secondary" Command="{Binding ClearCommand}"
+                                                        Height="32" Padding="12,0" CornerRadius="16"
+                                                        IsVisible="{Binding HasFiles}" ToolTip.Tip="Remove all photos from queue">
+                                                    <TextBlock Text="Clear" FontWeight="SemiBold" FontSize="11" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                </Button>
+
+                                                <!-- Photos Count Badge -->
+                                                <Border Background="#10FFFFFF" BorderBrush="#15FFFFFF" BorderThickness="1"
+                                                        CornerRadius="7" Padding="7,3" VerticalAlignment="Center"
+                                                        IsVisible="{Binding HasFiles}">
+                                                    <TextBlock Text="{Binding Files.Count, StringFormat='{}{0} photos'}"
+                                                               FontSize="9" Foreground="{DynamicResource AppTextSecondaryBrush}" FontWeight="SemiBold"/>
                                                 </Border>
-                                            </Grid>
-                                        </Border>
+                                            </StackPanel>
+
+                                            <!-- Segmented View Toggle (List vs Grid) with Icons -->
+                                            <Border Grid.Column="1" Background="#101118" BorderBrush="#15FFFFFF" BorderThickness="1"
+                                                    CornerRadius="10" Padding="3" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal" Spacing="2">
+                                                    <Button Classes="view-toggle" Classes.active="{Binding IsListView}"
+                                                            Command="{Binding SetListViewCommand}" ToolTip.Tip="List View">
+                                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                            <PathIcon Data="M 8 4.5 h 13 v 1.5 H 8 Z M 8 11.25 h 13 v 1.5 H 8 Z M 8 18 h 13 v 1.5 H 8 Z M 3 4.5 h 2.5 v 1.5 H 3 Z M 3 11.25 h 2.5 v 1.5 H 3 Z M 3 18 h 2.5 v 1.5 H 3 Z" Width="11" Height="11"/>
+                                                            <TextBlock Text="List" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <Button Classes="view-toggle" Classes.active="{Binding IsGridView}"
+                                                            Command="{Binding SetGridViewCommand}" ToolTip.Tip="Grid View">
+                                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                                            <PathIcon Data="M 3 3 h 7 v 7 H 3 Z M 14 3 h 7 v 7 H 14 Z M 3 14 h 7 v 7 H 3 Z M 14 14 h 7 v 7 H 14 Z" Width="11" Height="11"/>
+                                                            <TextBlock Text="Grid" VerticalAlignment="Center"/>
+                                                        </StackPanel>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
 
                                         <!-- Queue Content -->
                                         <Grid Grid.Row="1">
@@ -921,8 +915,6 @@
                                                         <TextBlock Text="Drag &amp; Drop RAW Photos Here"
                                                                    FontWeight="SemiBold" FontSize="15"
                                                                    Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
-                                                        <TextBlock Text="Add more RAW files to include them in this batch."
-                                                                   FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center"/>
                                                         <TextBlock Text="Supported: RAF, ARW, CR2, CR3, NEF, DNG, RW2, ORF, PEF"
                                                                    FontSize="10" Foreground="#747080" HorizontalAlignment="Center"/>
                                                     </StackPanel>
@@ -1220,7 +1212,6 @@
                                         </Grid>
                                     </Grid>
                                 </Border>
-                            </Grid>
 
 
                             <!-- RIGHT: Inspector Panel (Settings | Photo info Tabs) -->
