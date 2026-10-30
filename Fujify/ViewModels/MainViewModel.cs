@@ -160,7 +160,6 @@ namespace Fujify.ViewModels
             OpenHelpCommand = new RelayCommand(ExecuteOpenHelp);
             OpenUpdateCommand = new AsyncRelayCommand(ExecuteOpenUpdateAsync);
             ReportBugCommand = new RelayCommand(ExecuteReportBug);
-            OpenWebsiteCommand = new RelayCommand(ExecuteOpenWebsite);
             ToggleQuickSettingsCommand = new RelayCommand(() => IsQuickSettingsExpanded = !IsQuickSettingsExpanded);
             _isQuickSettingsExpanded = _settingsService.Settings.IsQuickSettingsExpanded;
 
@@ -198,13 +197,6 @@ namespace Fujify.ViewModels
             });
             ToggleQueueFabMenuCommand = new RelayCommand(() => IsQueueFabMenuOpen = !IsQueueFabMenuOpen);
             CloseQueueFabMenuCommand = new RelayCommand(() => IsQueueFabMenuOpen = false);
-            NavPhotosCommand = new RelayCommand(() => ActiveNavTab = "photos");
-            NavHomeCommand = new RelayCommand(() => ActiveNavTab = "home");
-            NavPresetsCommand = new RelayCommand(() =>
-            {
-                ActiveNavTab = "presets";
-                InspectorTabIndex = 0;
-            });
 
             RemoveFileCommand = new RelayCommand<object>(param =>
             {
@@ -246,21 +238,11 @@ namespace Fujify.ViewModels
             OpenOutputFolderCommand = new RelayCommand(ExecuteOpenOutputFolder);
             ClearOutputFolderCommand = new RelayCommand(() => OutputFolderPath = null);
 
-            OpenCameraPickerCommand = new RelayCommand(() =>
-            {
-                // X-T5 is the standard unified simulation target profile
-            });
-
-            SelectCameraModelCommand = new RelayCommand<string>(model =>
-            {
-                CloseModal();
-            });
-
             CloseModalCommand = new RelayCommand(CloseModal);
 
             OpenWebsiteCommand = new RelayCommand(() => CrossPlatformLauncher.OpenUrl("https://fujifier.cc"));
-            OpenGitHubCommand = new RelayCommand(() => CrossPlatformLauncher.OpenUrl("https://github.com/isidore-paulin/FujifyNET"));
-            OpenReleasesCommand = new RelayCommand(() => CrossPlatformLauncher.OpenUrl("https://github.com/isidore-paulin/FujifyNET/releases"));
+            OpenGitHubCommand = new RelayCommand(() => CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujify"));
+            OpenReleasesCommand = new RelayCommand(() => CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujify/releases"));
             BuyProCommand = new RelayCommand(() => CrossPlatformLauncher.OpenUrl("https://fujifier.cc/pro"));
             DelayGoogleSignInCommand = new AsyncRelayCommand(ExecuteDelayGoogleSignInAsync);
             DelayToggleKeyCommand = new RelayCommand(() => IsDelayKeyInputVisible = !IsDelayKeyInputVisible);
@@ -305,8 +287,6 @@ namespace Fujify.ViewModels
 
         public ICommand RemoveFileCommand { get; }
         public ICommand SelectFileCommand { get; }
-        public ICommand OpenCameraPickerCommand { get; }
-        public ICommand SelectCameraModelCommand { get; }
         public ICommand CloseModalCommand { get; }
         public ICommand OpenGitHubCommand { get; }
         public ICommand OpenReleasesCommand { get; }
@@ -335,9 +315,6 @@ namespace Fujify.ViewModels
         public ICommand CloseMobileAddMenuCommand { get; }
         public ICommand MobileAddFilesCommand { get; }
         public ICommand MobileAddFolderCommand { get; }
-        public ICommand NavPhotosCommand { get; }
-        public ICommand NavHomeCommand { get; }
-        public ICommand NavPresetsCommand { get; }
         public IRelayCommand ToggleQueueFabMenuCommand { get; }
         public IRelayCommand CloseQueueFabMenuCommand { get; }
 
@@ -409,13 +386,6 @@ namespace Fujify.ViewModels
         }
         public bool IsInspectorSettingsTab => InspectorTabIndex == 0;
         public bool IsInspectorInfoTab => InspectorTabIndex == 1;
-
-        private string _activeNavTab = "photos";
-        public string ActiveNavTab
-        {
-            get => _activeNavTab;
-            set => SetProperty(ref _activeNavTab, value);
-        }
 
         public string AvatarInitials
         {
@@ -561,30 +531,8 @@ namespace Fujify.ViewModels
         public string TargetCameraModel
         {
             get => _targetCameraModel;
-            set
-            {
-                if (SetProperty(ref _targetCameraModel, value))
-                {
-                    OnPropertyChanged(nameof(ShortTargetModelName));
-                }
-            }
+            set => SetProperty(ref _targetCameraModel, value);
         }
-
-        public string ShortTargetModelName =>
-            _targetCameraModel.StartsWith("Fujifilm ", StringComparison.OrdinalIgnoreCase)
-                ? _targetCameraModel.Substring("Fujifilm ".Length).Trim()
-                : _targetCameraModel;
-
-        public List<string> TargetCameraModels { get; } = new()
-        {
-            "Fujifilm X-T5",
-            "Fujifilm X-H2",
-            "Fujifilm X-T4",
-            "Fujifilm X-T3",
-            "Fujifilm GFX 100S",
-            "Fujifilm X100V",
-            "Fujifilm X-Pro3"
-        };
 
         // Adaptive Layout Support (Phone, Tablet, Desktop)
         private bool _isPhoneLayout;
@@ -2363,7 +2311,12 @@ namespace Fujify.ViewModels
         {
             IsQueueFabMenuOpen = false;
             if (Files.Count == 0) return;
+            foreach (var file in Files)
+            {
+                file.Dispose();
+            }
             Files.Clear();
+            SelectedFile = null;
             IsProgressVisible = false;
             ProgressValue = 0;
             await Task.CompletedTask;
@@ -2420,10 +2373,7 @@ namespace Fujify.ViewModels
             if (selectedList == null || selectedList.Count == 0) return;
 
             var itemsToRemove = selectedList.OfType<FileItem>().ToList();
-            foreach (var item in itemsToRemove)
-            {
-                Files.Remove(item);
-            }
+            RemoveFiles(itemsToRemove);
         }
 
         private void ExecuteOpenFile(FileItem? item)
@@ -2477,6 +2427,7 @@ namespace Fujify.ViewModels
             if (list.Count == 0) return;
             foreach (var file in list)
             {
+                file.Dispose();
                 Files.Remove(file);
             }
             if (_selectedFile != null && !Files.Contains(_selectedFile))
@@ -2518,7 +2469,7 @@ namespace Fujify.ViewModels
 
         private void ExecuteOpenHelp()
         {
-            CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujifier");
+            CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujify");
         }
 
         private async Task ExecuteOpenUpdateAsync()
@@ -2554,12 +2505,7 @@ namespace Fujify.ViewModels
 
         private void ExecuteReportBug()
         {
-            CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujifier/issues");
-        }
-
-        private void ExecuteOpenWebsite()
-        {
-            CrossPlatformLauncher.OpenUrl("https://ipweb.dev");
+            CrossPlatformLauncher.OpenUrl("https://github.com/ip-web/Fujify/issues");
         }
 
         #endregion

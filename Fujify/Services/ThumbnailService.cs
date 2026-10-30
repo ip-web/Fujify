@@ -33,6 +33,7 @@ namespace Fujify.Services
     {
         private readonly IProcessRunner _processRunner;
         private static Bitmap? _cachedPlaceholder;
+        public static Bitmap? CachedPlaceholder => _cachedPlaceholder;
         private static readonly object _placeholderLock = new();
 
         public ThumbnailService(IProcessRunner? processRunner = null)

@@ -44,7 +44,6 @@ namespace Fujify.Services
         }
         public double WindowHeight { get; set; } = 770;
         public double WindowWidth { get; set; } = 700;
-        public bool BatchProcessing { get; set; } = false;
         public bool BackupOriginalFile { get; set; } = true;
         public bool EmbedOriginalRaw { get; set; } = false;
         public int MaxConcurrentConversions { get; set; } = 0;

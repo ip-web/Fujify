@@ -35,8 +35,8 @@ namespace Fujify.Services
 {
     public class UpdateService : IUpdateService
     {
-        public const string PrimaryRepo = "ip-web/Fujifier";
-        public const string FallbackRepo = "ip-web/Fujify";
+        public const string PrimaryRepo = "ip-web/Fujify";
+        public const string FallbackRepo = "ip-web/Fujifier";
 
         private readonly ISettingsService _settingsService;
         private readonly HttpClient _httpClient;

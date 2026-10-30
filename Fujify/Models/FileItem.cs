@@ -17,6 +17,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+using System;
 using System.ComponentModel;
 using System.IO;
 using Avalonia.Media.Imaging;
@@ -24,7 +25,7 @@ using Avalonia.Threading;
 
 namespace Fujify.Models
 {
-    public class FileItem : INotifyPropertyChanged
+    public class FileItem : INotifyPropertyChanged, IDisposable
     {
         private string _filePath = string.Empty;
         private string _status = "Pending";
@@ -286,6 +287,21 @@ namespace Fujify.Models
         public string ErrorBackground => IsError ? "#22E74C3C" : "Transparent";
         public string ErrorBorderBrush => IsError ? "#80E74C3C" : "Transparent";
         public double ErrorBorderThickness => IsError ? 1.0 : 0.0;
+
+        public void Dispose()
+        {
+            DisposeThumbnail();
+        }
+
+        public void DisposeThumbnail()
+        {
+            var thumb = _thumbnail;
+            _thumbnail = null;
+            if (thumb != null && !ReferenceEquals(thumb, Services.ThumbnailService.CachedPlaceholder))
+            {
+                thumb.Dispose();
+            }
+        }
 
         public event PropertyChangedEventHandler? PropertyChanged;
 

@@ -41,6 +41,7 @@ public class AdManager
     private InterstitialAd? _interstitialAd;
     private AppOpenAd? _appOpenAd;
     private bool _isInitialized;
+    public bool IsInitialized => _isInitialized;
 
     public void Initialize(UIWindow? window)
     {
@@ -73,7 +74,7 @@ public class AdManager
 
     public void ShowSplashAppOpenAd()
     {
-        if (AdService.Instance?.ShouldShowAds == false) return;
+        if (!_isInitialized || AdService.Instance?.ShouldShowAds == false) return;
 
         try
         {
@@ -106,7 +107,7 @@ public class AdManager
 
     public void PreloadInterstitial()
     {
-        if (_interstitialAd != null) return;
+        if (!_isInitialized || _interstitialAd != null) return;
         if (AdService.Instance?.ShouldShowAds == false) return;
 
         try
@@ -135,7 +136,7 @@ public class AdManager
 
     public void ShowInterstitialAd()
     {
-        if (AdService.Instance?.ShouldShowAds == false) return;
+        if (!_isInitialized || AdService.Instance?.ShouldShowAds == false) return;
 
         try
         {
