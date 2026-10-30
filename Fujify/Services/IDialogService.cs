@@ -27,6 +27,7 @@ namespace Fujify.Services
     public interface IDialogService
     {
         Task ShowMessageAsync(Window? owner, string title, string message, bool isSuccess = true);
+        Task<bool> ShowConfirmationAsync(Window? owner, string title, string message, string? confirmText = null, string? cancelText = null);
         Task<FileConflictResolution> PromptFileConflictAsync(Window? owner, string destinationFilePath);
         Task<IReadOnlyList<string>> ShowOpenFileDialogAsync(Window? owner, string title, bool allowMultiple = true);
         Task<string?> ShowFolderBrowserDialogAsync(Window? owner, string title);

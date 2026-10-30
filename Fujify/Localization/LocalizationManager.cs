@@ -146,6 +146,7 @@ namespace Fujify.Localization
                 }
             }
 
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item"));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Item[]"));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CurrentLanguage)));
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
@@ -367,6 +368,20 @@ namespace Fujify.Localization
                 ["StatusPending"] = "Pending",
                 ["StatusProcessing"] = "Converting...",
                 ["StatusError"] = "Error",
+                ["Ready"] = "Ready",
+                ["SameFolderAsOriginals"] = "Same folder as originals",
+                ["SubfolderPrefix"] = "Subfolder: {0}",
+                ["ImportingPhotos"] = "Importing photos...",
+                ["ProcessingPhotoCount"] = "Processing photo {0} of {1}...",
+                ["AllPhotosConvertedSuccess"] = "All {0} photos converted successfully ✔",
+                ["PhotosInQueue"] = "{0} photos in queue ({1} pending)",
+                ["PhotoInQueueSingle"] = "{0} photo in queue ({1} pending)",
+                ["Stopping"] = "Stopping...",
+                ["Optional"] = "(Optional)",
+                ["DisableBackupTitle"] = "Disable Original Backup?",
+                ["DisableBackupWarning"] = "Disabling backup will permanently delete original pictures after successful conversion. Are you sure you want to disable backups?",
+                ["DisableBackupConfirm"] = "Disable Backup",
+                ["DisableBackupCancel"] = "Keep Backup",
             };
             _translations["en"] = en;
 
@@ -583,6 +598,20 @@ namespace Fujify.Localization
                 ["StatusPending"] = "En attente",
                 ["StatusProcessing"] = "Conversion en cours...",
                 ["StatusError"] = "Erreur",
+                ["Ready"] = "Prêt",
+                ["SameFolderAsOriginals"] = "Même dossier que les originaux",
+                ["SubfolderPrefix"] = "Sous-dossier : {0}",
+                ["ImportingPhotos"] = "Importation des photos...",
+                ["ProcessingPhotoCount"] = "Traitement de la photo {0} sur {1}...",
+                ["AllPhotosConvertedSuccess"] = "Toutes les {0} photos ont été converties avec succès ✔",
+                ["PhotosInQueue"] = "{0} photos dans la file ({1} en attente)",
+                ["PhotoInQueueSingle"] = "{0} photo dans la file ({1} en attente)",
+                ["Stopping"] = "Arrêt en cours...",
+                ["Optional"] = "(Optionnel)",
+                ["DisableBackupTitle"] = "Désactiver la sauvegarde de l'original ?",
+                ["DisableBackupWarning"] = "La désactivation de la sauvegarde supprimera définitivement les photos originales après leur conversion réussie. Voulez-vous vraiment désactiver la sauvegarde ?",
+                ["DisableBackupConfirm"] = "Désactiver la sauvegarde",
+                ["DisableBackupCancel"] = "Garder la sauvegarde",
             };
             _translations["fr"] = fr;
 
@@ -799,6 +828,20 @@ namespace Fujify.Localization
                 ["StatusPending"] = "Pendiente",
                 ["StatusProcessing"] = "Convirtiendo...",
                 ["StatusError"] = "Error",
+                ["Ready"] = "Listo",
+                ["SameFolderAsOriginals"] = "Misma carpeta que los originales",
+                ["SubfolderPrefix"] = "Subcarpeta: {0}",
+                ["ImportingPhotos"] = "Importando fotos...",
+                ["ProcessingPhotoCount"] = "Procesando foto {0} de {1}...",
+                ["AllPhotosConvertedSuccess"] = "Las {0} fotos se convirtieron con éxito ✔",
+                ["PhotosInQueue"] = "{0} fotos en cola ({1} pendientes)",
+                ["PhotoInQueueSingle"] = "{0} foto en cola ({1} pendiente)",
+                ["Stopping"] = "Deteniendo...",
+                ["Optional"] = "(Opcional)",
+                ["DisableBackupTitle"] = "¿Desactivar copia del original?",
+                ["DisableBackupWarning"] = "Desactivar la copia de seguridad eliminará de forma permanente las fotos originales después de la conversión exitosa. ¿Seguro que deseas desactivar las copias?",
+                ["DisableBackupConfirm"] = "Desactivar copia",
+                ["DisableBackupCancel"] = "Mantener copia",
             };
             _translations["es"] = es;
 
@@ -1015,6 +1058,20 @@ namespace Fujify.Localization
                 ["StatusPending"] = "Ausstehend",
                 ["StatusProcessing"] = "Wird konvertiert...",
                 ["StatusError"] = "Fehler",
+                ["Ready"] = "Bereit",
+                ["SameFolderAsOriginals"] = "Gleicher Ordner wie Originale",
+                ["SubfolderPrefix"] = "Unterordner: {0}",
+                ["ImportingPhotos"] = "Fotos werden importiert...",
+                ["ProcessingPhotoCount"] = "Foto {0} von {1} wird verarbeitet...",
+                ["AllPhotosConvertedSuccess"] = "Alle {0} Fotos erfolgreich konvertiert ✔",
+                ["PhotosInQueue"] = "{0} Fotos in der Warteschlange ({1} ausstehend)",
+                ["PhotoInQueueSingle"] = "{0} Foto in der Warteschlange ({1} ausstehend)",
+                ["Stopping"] = "Wird angehalten...",
+                ["Optional"] = "(Optional)",
+                ["DisableBackupTitle"] = "Original-Sicherung deaktivieren?",
+                ["DisableBackupWarning"] = "Das Deaktivieren der Sicherung löscht die Originalfotos nach erfolgreicher Konvertierung unwiderruflich. Möchten Sie die Sicherung wirklich deaktivieren?",
+                ["DisableBackupConfirm"] = "Sicherung deaktivieren",
+                ["DisableBackupCancel"] = "Sicherung behalten",
             };
             _translations["de"] = de;
         }
