@@ -324,5 +324,64 @@ namespace Fujify.Tests
 
             Assert.True(File.Exists(outputPath));
         }
+
+        [Fact]
+        public void TestRenderBreakLayoutCr2()
+        {
+            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch {}
+
+            var vm = new MainViewModel();
+            string rootDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\.."));
+            string? cr2Path = Directory.GetFiles(rootDir, "*.CR2").FirstOrDefault();
+            if (string.IsNullOrEmpty(cr2Path) || !File.Exists(cr2Path))
+            {
+                return;
+            }
+
+            var thumbService = new Services.ThumbnailService();
+            var metaService = new Services.MetadataService();
+
+            var fileItem = new Models.FileItem
+            {
+                FilePath = cr2Path,
+                CameraMakeAndModel = metaService.GetCameraMakeAndModel(cr2Path),
+                Thumbnail = thumbService.GenerateThumbnail(cr2Path),
+                Status = "Pending"
+            };
+
+            _output.WriteLine($"Loaded break_layout.CR2: Camera={fileItem.CameraMakeAndModel}, Thumbnail={fileItem.Thumbnail?.Size.Width}x{fileItem.Thumbnail?.Size.Height}");
+
+            vm.Files.Add(fileItem);
+            vm.SelectedFile = fileItem;
+            vm.InspectorTabIndex = 1;
+
+            var view = new MainView { DataContext = vm };
+            var window = new Window { Content = view, Width = 1000, Height = 650 };
+            
+            vm.UpdateLayoutMode(1000, 650);
+            window.Measure(new Size(1000, 650));
+            window.Arrange(new Rect(0, 0, 1000, 650));
+            try { Avalonia.Threading.Dispatcher.UIThread.RunJobs(); } catch { }
+
+            string outputPath = @"C:\Users\isisk\.gemini\antigravity\brain\c46d5a16-3ee0-4345-84e3-d6ee5f489f1c\break_layout_render.png";
+            using var rtb = new RenderTargetBitmap(new PixelSize(1000, 650), new Vector(96, 96));
+            rtb.Render(view);
+            rtb.Save(outputPath);
+
+            // Crop sidebar
+            using (var stream = File.OpenRead(outputPath))
+            using (var skBitmap = SkiaSharp.SKBitmap.Decode(stream))
+            {
+                var cropRect = new SkiaSharp.SKRectI(675, 95, 985, 595);
+                using var cropped = new SkiaSharp.SKBitmap(cropRect.Width, cropRect.Height);
+                skBitmap.ExtractSubset(cropped, cropRect);
+
+                string cropPath = @"C:\Users\isisk\.gemini\antigravity\brain\c46d5a16-3ee0-4345-84e3-d6ee5f489f1c\break_layout_sidebar_crop.png";
+                using var outStream = File.OpenWrite(cropPath);
+                cropped.Encode(outStream, SkiaSharp.SKEncodedImageFormat.Png, 100);
+            }
+
+            Assert.True(File.Exists(outputPath));
+        }
     }
 }

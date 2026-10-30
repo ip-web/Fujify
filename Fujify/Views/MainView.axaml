@@ -625,7 +625,7 @@
                                         <!-- Photo Info Details -->
                                         <StackPanel IsVisible="{Binding SelectedFile, Converter={x:Static ObjectConverters.IsNotNull}}" Spacing="12">
                                             <!-- Image Preview (Limited strictly to 90% width of sidebar with 5% margin on each side) -->
-                                            <Grid ColumnDefinitions="5*,90*,5*" Margin="-18,0,-18,8">
+                                            <Grid ColumnDefinitions="5*,90*,5*" Margin="0,0,0,8">
                                                 <Border Grid.Column="1" Height="175" CornerRadius="12" ClipToBounds="True"
                                                         Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                         BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
@@ -639,9 +639,9 @@
                                             <!-- Photo Title & Camera Subhead -->
                                             <StackPanel Spacing="3">
                                                 <TextBlock Text="{Binding SelectedFile.FileName}" FontSize="12" FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
                                                 <TextBlock Text="{Binding SelectedFile.CameraMakeAndModel}" FontSize="10"
-                                                           Foreground="{DynamicResource AppTextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                           Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                             </StackPanel>
 
                                             <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
@@ -1536,23 +1536,23 @@
                                                 <!-- Photo Info Details -->
                                                 <StackPanel IsVisible="{Binding SelectedFile, Converter={x:Static ObjectConverters.IsNotNull}}" Spacing="12">
                                                     <!-- Image Preview (Limited strictly to 90% width of sidebar with 5% margin on each side) -->
-                                                    <Grid ColumnDefinitions="5*,90*,5*" Margin="-14,0,-14,8">
-                                                        <Border Grid.Column="1" Height="175" CornerRadius="12" ClipToBounds="True"
-                                                                Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                                BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
-                                                                HorizontalAlignment="Stretch" VerticalAlignment="Center">
-                                                            <Image Source="{Binding SelectedFile.Thumbnail}" Stretch="Uniform"
-                                                                   MaxHeight="175"
-                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                        </Border>
-                                                    </Grid>
+                                                    <Border Width="265" MaxWidth="265" Height="175" MaxHeight="175" CornerRadius="12" ClipToBounds="True"
+                                                            Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                            BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
+                                                            HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,0,0,8">
+                                                        <Image Source="{Binding SelectedFile.Thumbnail}" Stretch="Uniform"
+                                                               MaxWidth="265" MaxHeight="175"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
 
                                                     <!-- Photo Title & Camera Subhead -->
-                                                    <StackPanel Spacing="3">
+                                                    <StackPanel Spacing="3" MaxWidth="265" HorizontalAlignment="Stretch">
                                                         <TextBlock Text="{Binding SelectedFile.FileName}" FontSize="12" FontWeight="SemiBold"
-                                                                   Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                                   TextWrapping="Wrap" MaxWidth="265"/>
                                                         <TextBlock Text="{Binding SelectedFile.CameraMakeAndModel}" FontSize="10"
-                                                                   Foreground="{DynamicResource AppTextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"
+                                                                   TextWrapping="Wrap" MaxWidth="265"/>
                                                     </StackPanel>
 
                                                     <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>

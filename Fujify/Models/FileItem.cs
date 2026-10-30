@@ -20,6 +20,7 @@
 using System.ComponentModel;
 using System.IO;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 
 namespace Fujify.Models
 {
@@ -267,15 +268,18 @@ namespace Fujify.Models
             }
         }
 
-        public bool IsCompleted => _status.Contains("Done", System.StringComparison.OrdinalIgnoreCase) 
+        public bool IsCompleted => _status.Contains("Done", System.StringComparison.OrdinalIgnoreCase)
+
             || _status.Contains("Complete", System.StringComparison.OrdinalIgnoreCase)
             || _status == "✔" || _status == "✓";
 
-        public bool IsError => _status.Contains("Error", System.StringComparison.OrdinalIgnoreCase) 
+        public bool IsError => _status.Contains("Error", System.StringComparison.OrdinalIgnoreCase)
+
             || _status.Contains("Fail", System.StringComparison.OrdinalIgnoreCase)
             || _status.Contains("Invalid", System.StringComparison.OrdinalIgnoreCase);
 
-        public bool IsActive => _status.Contains("...", System.StringComparison.OrdinalIgnoreCase) 
+        public bool IsActive => _status.Contains("...", System.StringComparison.OrdinalIgnoreCase)
+
             || _status.Contains("Converting", System.StringComparison.OrdinalIgnoreCase);
 
         public string StatusColor => IsError ? "#E74C3C" : (IsCompleted ? "#01D701" : "#A0A0AC");
@@ -287,7 +291,14 @@ namespace Fujify.Models
 
         protected virtual void OnPropertyChanged(string propertyName)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            if (Dispatcher.UIThread.CheckAccess())
+            {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
+            else
+            {
+                Dispatcher.UIThread.Post(() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName)));
+            }
         }
     }
 }
