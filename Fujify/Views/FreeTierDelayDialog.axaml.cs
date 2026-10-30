@@ -47,7 +47,7 @@ namespace Fujify.Views
 
             if (isPostConversion)
             {
-                TitleText.Text = "Conversion Finished (Free Tier)";
+                TitleText.Text = Localization.LocalizationManager.Tr("ConversionFinishedFreeTier");
                 MessageText.Text = "Your photos have been processed! Under the Free tier, a 15-second cooldown is required after conversions. Upgrade to Fujifier Pro to enjoy instant batch processing, unlimited queues, and Windows Explorer integration.";
             }
 
@@ -76,16 +76,16 @@ namespace Fujify.Views
 
             if (_remainingSeconds > 0)
             {
-                ContinueButton.Content = $"Continue with Free Version ({_remainingSeconds}s)";
-                CountdownStatusText.Text = $"Cooldown active: {_remainingSeconds}s remaining...";
+                ContinueButton.Content = $"{Localization.LocalizationManager.Tr("ContinueWithFreeVersion")} ({_remainingSeconds}s)";
+                CountdownStatusText.Text = Localization.LocalizationManager.TrFormat("CooldownActive", _remainingSeconds);
                 CountdownProgressBar.Value = 15 - _remainingSeconds;
             }
             else
             {
                 _timer.Stop();
                 ContinueButton.IsEnabled = true;
-                ContinueButton.Content = "Continue with Free Version";
-                CountdownStatusText.Text = "Cooldown finished. You may now continue.";
+                ContinueButton.Content = Localization.LocalizationManager.Tr("ContinueWithFreeVersion");
+                CountdownStatusText.Text = Localization.LocalizationManager.Tr("CooldownFinished");
                 CountdownProgressBar.Value = 15;
             }
         }

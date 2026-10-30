@@ -22,6 +22,7 @@ using System.ComponentModel;
 using System.IO;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Fujify.Localization;
 
 namespace Fujify.Models
 {
@@ -74,6 +75,7 @@ namespace Fujify.Models
                 {
                     _status = value;
                     OnPropertyChanged(nameof(Status));
+                    OnPropertyChanged(nameof(LocalizedStatus));
                     OnPropertyChanged(nameof(StatusIcon));
                     OnPropertyChanged(nameof(StatusColor));
                     OnPropertyChanged(nameof(IsCompleted));
@@ -84,6 +86,24 @@ namespace Fujify.Models
                     OnPropertyChanged(nameof(ErrorBorderThickness));
                 }
             }
+        }
+
+        public string LocalizedStatus
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(_status)) return "—";
+                if (IsCompleted) return _status == "✔" || _status == "✓" ? _status : LocalizationManager.Tr("StatusDone");
+                if (_status.Equals("Pending", StringComparison.OrdinalIgnoreCase)) return LocalizationManager.Tr("StatusPending");
+                if (IsActive) return LocalizationManager.Tr("StatusProcessing");
+                if (IsError) return LocalizationManager.Tr("StatusError");
+                return _status;
+            }
+        }
+
+        public void NotifyLanguageChanged()
+        {
+            OnPropertyChanged(nameof(LocalizedStatus));
         }
 
         public string StatusIcon => IsCompleted ? "✓" : (IsError ? "✕" : (IsActive ? "⚡" : "⏳"));

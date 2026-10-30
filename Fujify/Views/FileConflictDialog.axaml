@@ -1,9 +1,10 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Fujify.ViewModels"
+        xmlns:loc="using:Fujify.Localization"
         x:Class="Fujify.Views.FileConflictDialog"
         x:DataType="vm:FileConflictDialogViewModel"
-        Title="File Conflict"
+        Title="{loc:Loc FileConflictTitle}"
         Width="470" Height="290"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
@@ -32,9 +33,9 @@
                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
                 <StackPanel VerticalAlignment="Center" Spacing="2">
-                    <TextBlock Text="Destination File Exists" FontWeight="SemiBold" FontSize="15"
+                    <TextBlock Text="{loc:Loc FileConflictTitle}" FontWeight="SemiBold" FontSize="15"
                                Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                    <TextBlock Text="A file with this name already exists in the destination folder." 
+                    <TextBlock Text="{loc:Loc FileConflictPrompt}" 
                                Foreground="{DynamicResource AppTextSecondaryBrush}" FontSize="11"/>
                 </StackPanel>
             </StackPanel>
@@ -52,16 +53,16 @@
             </Border>
 
             <!-- Apply to All Checkbox -->
-            <CheckBox Grid.Row="2" Content="Apply for all the pictures in queue" 
+            <CheckBox Grid.Row="2" Content="{loc:Loc ApplyToAllConflicts}" 
                       IsChecked="{Binding ApplyToAll}" Margin="0,0,0,14" FontSize="11.5"/>
 
             <!-- Action Buttons -->
             <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-                <Button Content="Skip" Command="{Binding SkipCommand}" Classes="secondary" Height="36" Padding="16,0" CornerRadius="18"
+                <Button Content="{loc:Loc ConflictSkip}" Command="{Binding SkipCommand}" Classes="secondary" Height="36" Padding="16,0" CornerRadius="18"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                <Button Content="Use Unique Name" Command="{Binding UseUniqueNameCommand}" Classes="secondary" Height="36" Padding="16,0" CornerRadius="18"
+                <Button Content="{loc:Loc ConflictKeepBoth}" Command="{Binding UseUniqueNameCommand}" Classes="secondary" Height="36" Padding="16,0" CornerRadius="18"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                <Button Content="Overwrite" Command="{Binding OverwriteCommand}" Classes="primary" Height="36" Padding="18,0" CornerRadius="18"
+                <Button Content="{loc:Loc ConflictOverwrite}" Command="{Binding OverwriteCommand}" Classes="primary" Height="36" Padding="18,0" CornerRadius="18"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
             </StackPanel>
         </Grid>

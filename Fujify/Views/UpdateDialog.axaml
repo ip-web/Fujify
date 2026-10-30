@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="using:Fujify.Localization"
         x:Class="Fujify.Views.UpdateDialog"
-        Title="New Update Available - Fujifier"
+        Title="{loc:Loc NewVersionAvailable}"
         Width="490" Height="470"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
@@ -32,7 +33,7 @@
                 </Border>
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                     <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                        <TextBlock Text="New Version Available" FontWeight="SemiBold" FontSize="15" 
+                        <TextBlock Text="{loc:Loc NewVersionAvailable}" FontWeight="SemiBold" FontSize="15" 
                                    Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                         <Border Background="{DynamicResource AppAccentBrush}" CornerRadius="6" Padding="6,2" VerticalAlignment="Center">
                             <TextBlock x:Name="VersionBadgeText" Text="v2.2.0" FontSize="10" FontWeight="Bold" Foreground="#252332"/>
@@ -44,7 +45,7 @@
                 <Button Grid.Column="2" Click="Later_Click"
                         Width="28" Height="28" CornerRadius="14" Padding="0"
                         Background="Transparent" Foreground="{DynamicResource AppTextSecondaryBrush}"
-                        BorderThickness="0" Cursor="Hand" ToolTip.Tip="Close"
+                        BorderThickness="0" Cursor="Hand" ToolTip.Tip="{loc:Loc Close}"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
                     <Button.Styles>
                         <Style Selector="Button:pointerover">
@@ -64,7 +65,7 @@
                     <Border Grid.Row="0" Padding="14,9" Background="Transparent"
                             BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="0,0,0,1">
                         <Grid ColumnDefinitions="*, Auto">
-                            <TextBlock x:Name="ReleaseTitleText" Text="Release Highlights" FontWeight="SemiBold" FontSize="12" 
+                            <TextBlock x:Name="ReleaseTitleText" Text="{loc:Loc ReleaseHighlights}" FontWeight="SemiBold" FontSize="12" 
                                        Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
                             <TextBlock x:Name="ReleaseDateText" Grid.Column="1" Text="Just now" FontSize="10.5" 
                                        Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
@@ -74,7 +75,7 @@
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="14">
                         <TextBlock x:Name="ReleaseNotesText" FontSize="11" TextWrapping="Wrap" LineHeight="16"
                                    Foreground="{DynamicResource AppTextSecondaryBrush}"
-                                   Text="Loading release notes..."/>
+                                   Text="{loc:Loc LoadingReleaseNotes}"/>
                     </ScrollViewer>
                 </Grid>
             </Border>
@@ -82,7 +83,7 @@
             <!-- 3. Download Progress & Status Area -->
             <StackPanel Grid.Row="2" Spacing="6" Margin="0,10,0,10">
                 <Grid ColumnDefinitions="*, Auto">
-                    <TextBlock x:Name="DownloadStatusText" Text="Ready to update" FontSize="11" 
+                    <TextBlock x:Name="DownloadStatusText" Text="{loc:Loc ReadyToUpdate}" FontSize="11" 
                                Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                     <TextBlock x:Name="DownloadPercentText" Grid.Column="1" Text="" FontSize="11" FontWeight="SemiBold"
                                Foreground="{DynamicResource AppAccentLightBrush}"/>
@@ -98,15 +99,15 @@
 
             <!-- 4. Actions Toolbar -->
             <Grid Grid.Row="3" ColumnDefinitions="Auto, *, Auto, Auto">
-                <Button Grid.Column="0" Content="Skip This Version" Click="SkipVersion_Click" 
+                <Button Grid.Column="0" Content="{loc:Loc SkipThisVersion}" Click="SkipVersion_Click" 
                         Background="Transparent" BorderThickness="0" Foreground="{DynamicResource AppTextSecondaryBrush}"
                         FontSize="11" Padding="8,4" VerticalAlignment="Center"/>
 
-                <Button Grid.Column="2" Content="Later" Click="Later_Click" Classes="secondary"
+                <Button Grid.Column="2" Content="{loc:Loc Later}" Click="Later_Click" Classes="secondary"
                         Height="34" Padding="18,0" CornerRadius="17" Margin="0,0,8,0"
                         VerticalContentAlignment="Center"/>
 
-                <Button x:Name="InstallButton" Grid.Column="3" Content="Update Now" Click="Install_Click" 
+                <Button x:Name="InstallButton" Grid.Column="3" Content="{loc:Loc UpdateNow}" Click="Install_Click" 
                         Classes="primary" Height="34" Padding="20,0" CornerRadius="17" FontWeight="SemiBold"
                         VerticalContentAlignment="Center"/>
             </Grid>

@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:Fujify.ViewModels"
+        xmlns:loc="using:Fujify.Localization"
         x:Class="Fujify.Views.QuickProcessWindow"
         x:DataType="vm:QuickProcessViewModel"
         Title="{Binding Title}"
@@ -62,13 +63,13 @@
 
             <!-- Action Buttons Footer -->
             <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
-                <Button Content="Open Output Folder" Command="{Binding OpenFolderCommand}" 
+                <Button Content="{loc:Loc OpenOutputFolder}" Command="{Binding OpenFolderCommand}" 
                         IsVisible="{Binding CanOpenFolder}" Classes="secondary" Height="34" Padding="14,0" CornerRadius="17"
                         VerticalContentAlignment="Center"/>
-                <Button Content="Cancel" Command="{Binding CancelCommand}" 
+                <Button Content="{loc:Loc Cancel}" Command="{Binding CancelCommand}" 
                         IsVisible="{Binding IsProcessing}" Classes="secondary" Height="34" Width="90" CornerRadius="17"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
-                <Button Content="Done" Command="{Binding DoneCommand}" 
+                <Button Content="{loc:Loc Done}" Command="{Binding DoneCommand}" 
                         IsVisible="{Binding IsCompleted}" Classes="primary" Height="34" Width="90" CornerRadius="17"
                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
             </StackPanel>

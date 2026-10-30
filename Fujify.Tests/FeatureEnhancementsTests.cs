@@ -31,6 +31,11 @@ namespace Fujify.Tests
 {
     public class FeatureEnhancementsTests
     {
+        public FeatureEnhancementsTests()
+        {
+            Localization.LocalizationManager.Instance.SetLanguage("en");
+        }
+
         #region 1. Sidecar XMP Preservation Tests
 
         [Fact]

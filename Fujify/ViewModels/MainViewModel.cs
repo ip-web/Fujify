@@ -257,6 +257,10 @@ namespace Fujify.ViewModels
             LocalizationManager.Instance.LanguageChanged += (s, e) =>
             {
                 OnPropertyChanged(nameof(Loc));
+                foreach (var file in Files)
+                {
+                    file.NotifyLanguageChanged();
+                }
             };
 
             OpenInLightroomCommand = new RelayCommand(() =>
@@ -291,7 +295,7 @@ namespace Fujify.ViewModels
         public IReadOnlyList<string> RecentlyConvertedDngFiles => _recentlyConvertedDngFiles;
         public bool HasRecentlyConvertedFiles => _recentlyConvertedDngFiles.Count > 0;
         public bool IsOpenInLightroomSupported => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
-        public bool CanOpenInLightroom => IsOpenInLightroomSupported && HasRecentlyConvertedFiles && ModalTitle == "Processing completed";
+        public bool CanOpenInLightroom => IsOpenInLightroomSupported && HasRecentlyConvertedFiles && (IsBatchSummaryModal || ModalTitle == "Processing completed" || ModalTitle == LocalizationManager.Tr("BatchCompleteTitle"));
         public bool CanOpenOutputFolder => !OperatingSystem.IsIOS() && !OperatingSystem.IsAndroid() && HasRecentlyConvertedFiles && (ModalTitle == "Processing completed" || IsBatchSummaryModal);
         public LocalizationManager Loc => LocalizationManager.Instance;
 
@@ -1227,6 +1231,13 @@ namespace Fujify.ViewModels
 
         public Task<FileConflictResolution> ShowConflictModalAsync(string filePath)
         {
+            var desktopLifetime = Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime;
+            var singleViewLifetime = Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.ISingleViewApplicationLifetime;
+            if (desktopLifetime?.MainWindow == null && singleViewLifetime?.MainView == null)
+            {
+                return Task.FromResult(new FileConflictResolution(ConflictChoice.Skip, false));
+            }
+
             var tcs = new TaskCompletionSource<FileConflictResolution>();
             _conflictTcs = tcs;
 
@@ -1234,7 +1245,7 @@ namespace Fujify.ViewModels
             {
                 ConflictFilePath = filePath;
                 ConflictApplyToAll = false;
-                ModalTitle = "File Conflict";
+                ModalTitle = LocalizationManager.Tr("FileConflictTitle");
                 ModalType = "Conflict";
                 IsModalOpen = true;
             });
@@ -1349,8 +1360,8 @@ namespace Fujify.ViewModels
                 DelayLicenseError = string.Empty;
                 DelayRemainingSeconds = 15;
                 DelayProgressBarValue = 0;
-                DelayStatusText = "Cooldown active: 15s remaining...";
-                DelayDismissButtonText = "Continue with Free Version (15s)";
+                DelayStatusText = LocalizationManager.TrFormat("CooldownActive", 15);
+                DelayDismissButtonText = $"{LocalizationManager.Tr("ContinueWithFreeVersion")} (15s)";
 
                 _delayTimer?.Stop();
                 _delayTimer = new DispatcherTimer
@@ -1374,16 +1385,16 @@ namespace Fujify.ViewModels
                     if (DelayRemainingSeconds > 0)
                     {
                         DelayProgressBarValue = 15 - DelayRemainingSeconds;
-                        DelayStatusText = $"Cooldown active: {DelayRemainingSeconds}s remaining...";
-                        DelayDismissButtonText = $"Continue with Free Version ({DelayRemainingSeconds}s)";
+                        DelayStatusText = LocalizationManager.TrFormat("CooldownActive", DelayRemainingSeconds);
+                        DelayDismissButtonText = $"{LocalizationManager.Tr("ContinueWithFreeVersion")} ({DelayRemainingSeconds}s)";
                     }
                     else
                     {
                         _delayTimer?.Stop();
                         CanDismissModal = true;
                         DelayProgressBarValue = 15;
-                        DelayStatusText = "Cooldown finished. You may now continue.";
-                        DelayDismissButtonText = "Continue with Free Version";
+                        DelayStatusText = LocalizationManager.Tr("CooldownFinished");
+                        DelayDismissButtonText = LocalizationManager.Tr("ContinueWithFreeVersion");
                     }
                 };
 
