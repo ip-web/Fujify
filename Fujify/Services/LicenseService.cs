@@ -60,7 +60,7 @@ namespace Fujify.Services
         public LicenseStatus CurrentStatus => _currentStatus;
         public bool IsPro => _currentStatus.IsPro;
         public int MaxFreeQueueSize => 10;
-        public int DelaySeconds => 15;
+        public int DelaySeconds => 3;
 
         public string? AccountEmail => _settingsService.Settings.AccountEmail;
         public bool IsAccountLoggedIn => !string.IsNullOrWhiteSpace(_settingsService.Settings.AccessToken);

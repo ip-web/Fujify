@@ -34,7 +34,7 @@ namespace Fujify.Tests
             Assert.False(service.IsPro);
             Assert.Equal(LicenseTier.Free, service.CurrentStatus.Tier);
             Assert.Equal(10, service.MaxFreeQueueSize);
-            Assert.Equal(15, service.DelaySeconds);
+            Assert.Equal(3, service.DelaySeconds);
         }
 
         [Fact]
@@ -869,7 +869,7 @@ namespace Fujify.Tests
             Assert.True(mainVm.IsFreeTierDelayModal);
             Assert.True(mainVm.IsBottomSheetOpen);
             Assert.False(mainVm.CanDismissModal);
-            Assert.Contains("15s", mainVm.DelayDismissButtonText);
+            Assert.Contains("3s", mainVm.DelayDismissButtonText);
 
             // Attempting to close modal while timer is running MUST be rejected
             mainVm.CloseModal();

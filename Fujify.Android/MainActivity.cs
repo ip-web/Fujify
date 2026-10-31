@@ -612,6 +612,19 @@ public class MainActivity : AvaloniaMainActivity<App>
         }
     }
 
+    public override bool OnKeyDown(Keycode keyCode, KeyEvent? e)
+    {
+        if (keyCode == Keycode.Back && e?.Action == KeyEventActions.Down)
+        {
+            if (MainViewModel.Instance != null && MainViewModel.Instance.IsModalOpen)
+            {
+                MainViewModel.Instance.CloseModal();
+                return true;
+            }
+        }
+        return base.OnKeyDown(keyCode, e);
+    }
+
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
     {
         return base.CustomizeAppBuilder(builder)

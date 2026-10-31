@@ -33,7 +33,7 @@ namespace Fujify.Views
     {
         private readonly ILicenseService _licenseService;
         private readonly DispatcherTimer _timer;
-        private int _remainingSeconds = 15;
+        private int _remainingSeconds = 3;
         private bool _isUnlocked = false;
 
         public FreeTierDelayDialog() : this(LicenseService.Instance ?? new LicenseService(), false)
@@ -48,7 +48,7 @@ namespace Fujify.Views
             if (isPostConversion)
             {
                 TitleText.Text = Localization.LocalizationManager.Tr("ConversionFinishedFreeTier");
-                MessageText.Text = "Your photos have been processed! Under the Free tier, a 15-second cooldown is required after conversions. Upgrade to Fujifier Pro to enjoy instant batch processing, unlimited queues, and Windows Explorer integration.";
+                MessageText.Text = $"Your photos have been processed! Under the Free tier, a {_licenseService.DelaySeconds}-second cooldown is required after conversions. Upgrade to Fujifier Pro to enjoy instant batch processing, unlimited queues, and Windows Explorer integration.";
             }
 
             _timer = new DispatcherTimer
@@ -59,7 +59,7 @@ namespace Fujify.Views
 
             Loaded += (s, e) =>
             {
-                CountdownProgressBar.Maximum = 15;
+                CountdownProgressBar.Maximum = _licenseService.DelaySeconds;
                 CountdownProgressBar.Value = 0;
                 _timer.Start();
             };
@@ -78,7 +78,7 @@ namespace Fujify.Views
             {
                 ContinueButton.Content = $"{Localization.LocalizationManager.Tr("ContinueWithFreeVersion")} ({_remainingSeconds}s)";
                 CountdownStatusText.Text = Localization.LocalizationManager.TrFormat("CooldownActive", _remainingSeconds);
-                CountdownProgressBar.Value = 15 - _remainingSeconds;
+                CountdownProgressBar.Value = _licenseService.DelaySeconds - _remainingSeconds;
             }
             else
             {
@@ -86,7 +86,7 @@ namespace Fujify.Views
                 ContinueButton.IsEnabled = true;
                 ContinueButton.Content = Localization.LocalizationManager.Tr("ContinueWithFreeVersion");
                 CountdownStatusText.Text = Localization.LocalizationManager.Tr("CooldownFinished");
-                CountdownProgressBar.Value = 15;
+                CountdownProgressBar.Value = _licenseService.DelaySeconds;
             }
         }
 
@@ -118,7 +118,7 @@ namespace Fujify.Views
                 ContinueButton.IsEnabled = true;
                 ContinueButton.Content = "Start Using Fujifier Pro";
                 ContinueButton.Classes.Add("accent");
-                CountdownProgressBar.Value = 15;
+                CountdownProgressBar.Value = _licenseService.DelaySeconds;
                 CountdownStatusText.Text = "Pro license active.";
                 LicenseKeySection.IsVisible = false;
                 ToggleKeyButton.IsVisible = false;
@@ -173,7 +173,7 @@ namespace Fujify.Views
                 ContinueButton.IsEnabled = true;
                 ContinueButton.Content = "Start Using Fujifier Pro";
                 ContinueButton.Classes.Add("accent");
-                CountdownProgressBar.Value = 15;
+                CountdownProgressBar.Value = _licenseService.DelaySeconds;
                 CountdownStatusText.Text = "License active.";
                 LicenseKeySection.IsVisible = false;
                 ToggleKeyButton.IsVisible = false;
@@ -205,7 +205,7 @@ namespace Fujify.Views
                     return await ShowMobileDelayAsync(MainViewModel.Instance, licenseService, isPostConversion);
                 }
 
-                await Task.Delay(15000);
+                await Task.Delay(licenseService.DelaySeconds * 1000);
                 return licenseService.IsPro;
             }
 

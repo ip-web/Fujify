@@ -1338,15 +1338,17 @@ namespace Fujify.ViewModels
 
         private TaskCompletionSource<bool>? _freeTierDelayTcs;
         private DispatcherTimer? _delayTimer;
-        private int _delayRemainingSeconds = 15;
+        private int _delayRemainingSeconds = 3;
         private bool _canDismissModal = true;
         private bool _isDelayUnlocked = false;
-        private string _delayStatusText = "Cooldown active: 15s remaining...";
-        private string _delayDismissButtonText = "Continue with Free Version (15s)";
+        private string _delayStatusText = "Cooldown active: 3s remaining...";
+        private string _delayDismissButtonText = "Continue with Free Version (3s)";
         private double _delayProgressBarValue = 0;
         private bool _isDelayKeyInputVisible = false;
         private string _delayLicenseKey = string.Empty;
         private string _delayLicenseError = string.Empty;
+
+        public int DelayTotalSeconds => _licenseService?.DelaySeconds ?? 3;
 
         public bool CanDismissModal
         {
@@ -1422,10 +1424,11 @@ namespace Fujify.ViewModels
 
             void Action()
             {
+                int totalDelay = licenseService.DelaySeconds;
                 ModalTitle = isPostConversion ? "Conversion Finished (Free Tier)" : "Fujifier Free Tier";
                 ModalMessage = isPostConversion
-                    ? "Your photos have been processed! Under the Free tier, a 15-second cooldown is required after conversions. Upgrade to Fujifier Pro to enjoy instant batch processing, unlimited queues, and all pro features."
-                    : "You are currently using the Free tier of Fujifier. Free version is limited to 10 photos per queue with a 15-second cooldown timer. Upgrade to Fujifier Pro to enjoy unlimited batch processing, instant execution, and all pro features!";
+                    ? $"Your photos have been processed! Under the Free tier, a {totalDelay}-second cooldown is required after conversions. Upgrade to Fujifier Pro to enjoy instant batch processing, unlimited queues, and all pro features."
+                    : $"You are currently using the Free tier of Fujifier. Free version is limited to 10 photos per queue with a {totalDelay}-second cooldown timer. Upgrade to Fujifier Pro to enjoy unlimited batch processing, instant execution, and all pro features!";
                 ModalIcon = "⏳";
                 ModalType = "FreeTierDelay";
                 CanDismissModal = false;
@@ -1433,10 +1436,10 @@ namespace Fujify.ViewModels
                 IsDelayKeyInputVisible = false;
                 DelayLicenseKey = string.Empty;
                 DelayLicenseError = string.Empty;
-                DelayRemainingSeconds = 15;
+                DelayRemainingSeconds = totalDelay;
                 DelayProgressBarValue = 0;
-                DelayStatusText = LocalizationManager.TrFormat("CooldownActive", 15);
-                DelayDismissButtonText = $"{LocalizationManager.Tr("ContinueWithFreeVersion")} (15s)";
+                DelayStatusText = LocalizationManager.TrFormat("CooldownActive", totalDelay);
+                DelayDismissButtonText = $"{LocalizationManager.Tr("ContinueWithFreeVersion")} ({totalDelay}s)";
 
                 _delayTimer?.Stop();
                 _delayTimer = new DispatcherTimer
@@ -1452,14 +1455,14 @@ namespace Fujify.ViewModels
                         CanDismissModal = true;
                         DelayStatusText = "Pro license active.";
                         DelayDismissButtonText = "Start Using Fujifier Pro";
-                        DelayProgressBarValue = 15;
+                        DelayProgressBarValue = totalDelay;
                         return;
                     }
 
                     DelayRemainingSeconds--;
                     if (DelayRemainingSeconds > 0)
                     {
-                        DelayProgressBarValue = 15 - DelayRemainingSeconds;
+                        DelayProgressBarValue = totalDelay - DelayRemainingSeconds;
                         DelayStatusText = LocalizationManager.TrFormat("CooldownActive", DelayRemainingSeconds);
                         DelayDismissButtonText = $"{LocalizationManager.Tr("ContinueWithFreeVersion")} ({DelayRemainingSeconds}s)";
                     }
@@ -1467,7 +1470,7 @@ namespace Fujify.ViewModels
                     {
                         _delayTimer?.Stop();
                         CanDismissModal = true;
-                        DelayProgressBarValue = 15;
+                        DelayProgressBarValue = totalDelay;
                         DelayStatusText = LocalizationManager.Tr("CooldownFinished");
                         DelayDismissButtonText = LocalizationManager.Tr("ContinueWithFreeVersion");
                     }
@@ -1506,7 +1509,7 @@ namespace Fujify.ViewModels
                 ModalMessage = "Welcome to Fujifier Pro! All tier limits, countdown delays, and advertisements have been removed permanently.";
                 DelayStatusText = "Pro license active.";
                 DelayDismissButtonText = "Start Using Fujifier Pro";
-                DelayProgressBarValue = 15;
+                DelayProgressBarValue = _licenseService?.DelaySeconds ?? 3;
                 IsDelayKeyInputVisible = false;
                 RefreshSettings();
             }
@@ -1540,7 +1543,7 @@ namespace Fujify.ViewModels
                 ModalMessage = "Thank you for upgrading to Fujifier Pro! All tier limits, countdown delays, and advertisements have been removed permanently.";
                 DelayStatusText = "License active.";
                 DelayDismissButtonText = "Start Using Fujifier Pro";
-                DelayProgressBarValue = 15;
+                DelayProgressBarValue = _licenseService?.DelaySeconds ?? 3;
                 IsDelayKeyInputVisible = false;
                 RefreshSettings();
             }

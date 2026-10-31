@@ -17,7 +17,7 @@ namespace Fujify.Tests
             public bool IsPro { get; set; } = false;
             public LicenseStatus CurrentStatus => new() { Tier = IsPro ? LicenseTier.Pro : LicenseTier.Free };
             public int MaxFreeQueueSize => 10;
-            public int DelaySeconds => 15;
+            public int DelaySeconds => 3;
             public string? AccountEmail => null;
             public bool IsAccountLoggedIn => false;
             public int UsedActivations => 0;
