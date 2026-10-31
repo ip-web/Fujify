@@ -107,7 +107,7 @@
                                     <StackPanel VerticalAlignment="Center" Spacing="1">
                                         <TextBlock Text="Fujifier" FontSize="16" FontWeight="Bold"
                                                    Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                        <TextBlock Text="{loc:Loc AppSubtitle}" FontSize="10" FontWeight="Medium"
+                                        <TextBlock Text="{loc:Loc AppSubtitle}" FontSize="10" FontWeight="Medium" IsVisible="{Binding IsMobileSubtitleVisible}"
                                                    Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                     </StackPanel>
                                 </StackPanel>
@@ -391,13 +391,14 @@
                             VerticalAlignment="Bottom"
                             HorizontalAlignment="Stretch"
                             Margin="0,40,0,0"
-                            MaxHeight="540"
+                            MinHeight="480"
+                            MaxHeight="680"
                             CornerRadius="22,22,0,0"
                             Background="{DynamicResource AppSolidBackgroundBrush}"
                             BorderBrush="{DynamicResource AppEdgeBrush}"
                             BorderThickness="1,1,1,0"
                             ClipToBounds="True">
-                        <Grid RowDefinitions="Auto,Auto,*">
+                        <Grid RowDefinitions="Auto,Auto,*" PointerWheelChanged="MobileSidebar_PointerWheelChanged">
                             <!-- 1. Centered Fold Handle -->
                             <Border Grid.Row="0" HorizontalAlignment="Center" Margin="0,10,0,4"
                                     Width="36" Height="4" CornerRadius="2"
@@ -468,8 +469,8 @@
                             </Border>
 
                             <!-- 3. Scrollable Sidebar Content (Settings / Photo info) -->
-                            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
-                                          Padding="18,14,18,24">
+                            <ScrollViewer x:Name="MobileSidebarScrollViewer" Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" IsScrollInertiaEnabled="True" Background="Transparent"
+                                          Padding="18,14,18,16">
                                 <Panel>
                                     <!-- TAB 1: SETTINGS VIEW -->
                                     <StackPanel IsVisible="{Binding IsInspectorSettingsTab}" Spacing="14">
@@ -1707,7 +1708,8 @@
 
                 <!-- Scrollable Settings Body -->
                 <ScrollViewer x:Name="PreferencesScrollViewer" Grid.Row="1"
-                              HorizontalScrollBarVisibility="Disabled">
+                              HorizontalScrollBarVisibility="Disabled"
+                              IsScrollInertiaEnabled="True">
                     <StackPanel x:Name="PreferencesContentStack" Spacing="16" MaxWidth="600" HorizontalAlignment="Stretch" Margin="16,12,16,24">
 
                         <!-- 1. LANGUAGE -->
@@ -2246,7 +2248,7 @@
                     </Grid>
                 </Border>
 
-                <ScrollViewer x:Name="AboutScrollViewer" Grid.Row="1" HorizontalScrollBarVisibility="Disabled">
+                <ScrollViewer x:Name="AboutScrollViewer" Grid.Row="1" HorizontalScrollBarVisibility="Disabled" IsScrollInertiaEnabled="True">
                     <StackPanel x:Name="AboutContentStack" Spacing="16" MaxWidth="440" HorizontalAlignment="Center" Margin="20,20,20,24">
                         <!-- Header with Logo & Version -->
                         <StackPanel HorizontalAlignment="Center" Spacing="6">

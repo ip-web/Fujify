@@ -621,6 +621,11 @@ public class MainActivity : AvaloniaMainActivity<App>
                 MainViewModel.Instance.CloseModal();
                 return true;
             }
+            if (MainViewModel.Instance != null && MainViewModel.Instance.IsMobileSidebarOpen)
+            {
+                MainViewModel.Instance.IsMobileSidebarOpen = false;
+                return true;
+            }
         }
         return base.OnKeyDown(keyCode, e);
     }

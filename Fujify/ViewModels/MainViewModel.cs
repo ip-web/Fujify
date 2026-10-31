@@ -311,6 +311,8 @@ namespace Fujify.ViewModels
         public bool IsOpenInLightroomSupported => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
         public bool CanOpenInLightroom => IsOpenInLightroomSupported && HasRecentlyConvertedFiles && (IsBatchSummaryModal || ModalTitle == "Processing completed" || ModalTitle == LocalizationManager.Tr("BatchCompleteTitle"));
         public bool CanOpenOutputFolder => !OperatingSystem.IsIOS() && !OperatingSystem.IsAndroid() && HasRecentlyConvertedFiles && (ModalTitle == "Processing completed" || IsBatchSummaryModal);
+        public bool IsAndroid => OperatingSystem.IsAndroid();
+        public bool IsMobileSubtitleVisible => !OperatingSystem.IsAndroid();
         public LocalizationManager Loc => LocalizationManager.Instance;
 
         #region Properties
