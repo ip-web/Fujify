@@ -88,7 +88,7 @@ namespace Fujify.ViewModels
             ? (!string.IsNullOrWhiteSpace(_licenseService.CurrentStatus.LicenseeEmail)
                 ? $"Licensed to: {_licenseService.CurrentStatus.LicenseeEmail} ({SlotInfoText})"
                 : $"Lifetime Pro License Active ({SlotInfoText})")
-            : "Queue limited to 10 photos, 15s cooldown timer, context menu locked.";
+            : $"Queue limited to 10 photos, {_licenseService.DelaySeconds}s cooldown timer, context menu locked.";
 
         public string LicenseKeyInput
         {

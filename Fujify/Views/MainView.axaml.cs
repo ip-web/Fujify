@@ -34,6 +34,8 @@ namespace Fujify.Views
     {
         private Grid? _prefPanel;
         private Grid? _aboutPanel;
+        private System.Threading.CancellationTokenSource? _prefPanelCts;
+        private System.Threading.CancellationTokenSource? _aboutPanelCts;
 
         public MainView()
         {
@@ -196,17 +198,55 @@ namespace Fujify.Views
             if (_prefPanel != null)
             {
                 bool isOpen = vm.IsPreferencesModal;
-                _prefPanel.IsVisible = isOpen;
-                _prefPanel.IsHitTestVisible = isOpen;
-                _prefPanel.RenderTransform = TransformOperations.Parse($"translateX({(isOpen ? 0 : width)}px)");
+                UpdatePanelState(_prefPanel, isOpen, width, animated, ref _prefPanelCts);
             }
 
             if (_aboutPanel != null)
             {
                 bool isOpen = vm.IsAboutModal;
-                _aboutPanel.IsVisible = isOpen;
-                _aboutPanel.IsHitTestVisible = isOpen;
-                _aboutPanel.RenderTransform = TransformOperations.Parse($"translateX({(isOpen ? 0 : width)}px)");
+                UpdatePanelState(_aboutPanel, isOpen, width, animated, ref _aboutPanelCts);
+            }
+        }
+
+        private void UpdatePanelState(Grid panel, bool isOpen, double width, bool animated, ref System.Threading.CancellationTokenSource? cts)
+        {
+            cts?.Cancel();
+            cts = null;
+
+            if (isOpen)
+            {
+                panel.IsHitTestVisible = true;
+                panel.IsVisible = true;
+                panel.RenderTransform = TransformOperations.Parse("translateX(0px)");
+            }
+            else
+            {
+                panel.IsHitTestVisible = false;
+
+                if (animated && panel.IsVisible)
+                {
+                    panel.RenderTransform = TransformOperations.Parse($"translateX({width}px)");
+                    var currentCts = new System.Threading.CancellationTokenSource();
+                    cts = currentCts;
+                    _ = System.Threading.Tasks.Task.Delay(270, currentCts.Token).ContinueWith(t =>
+                    {
+                        if (!t.IsCanceled)
+                        {
+                            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                            {
+                                if (!currentCts.IsCancellationRequested)
+                                {
+                                    panel.IsVisible = false;
+                                }
+                            });
+                        }
+                    });
+                }
+                else
+                {
+                    panel.RenderTransform = TransformOperations.Parse($"translateX({width}px)");
+                    panel.IsVisible = false;
+                }
             }
         }
 

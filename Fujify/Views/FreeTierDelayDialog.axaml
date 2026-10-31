@@ -48,9 +48,9 @@
                 <!-- Cooldown Progress -->
                 <StackPanel Spacing="5" Margin="0,6,0,0">
                     <ProgressBar x:Name="CountdownProgressBar" Height="4" CornerRadius="2" 
-                                 Minimum="0" Maximum="15" Value="0" 
+                                 Minimum="0" Maximum="3" Value="0" 
                                  Foreground="{DynamicResource AppAccentBrush}"/>
-                    <TextBlock x:Name="CountdownStatusText" Text="Cooldown active: 15s remaining..." 
+                    <TextBlock x:Name="CountdownStatusText" Text="Cooldown active: 3s remaining..." 
                                FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" 
                                HorizontalAlignment="Center"/>
                 </StackPanel>

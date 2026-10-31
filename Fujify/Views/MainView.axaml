@@ -1671,7 +1671,7 @@
 
         <!-- 3. FULL-SCREEN SLIDING PANEL: PREFERENCES / SETTINGS -->
         <Grid x:Name="PreferencesSlidePanel" ZIndex="10000"
-              IsVisible="{Binding IsPreferencesModal}"
+              IsVisible="False"
               Background="{DynamicResource AppSolidBackgroundBrush}"
               RenderTransform="translateX(800px)"
               IsHitTestVisible="False">
@@ -2218,7 +2218,7 @@
 
         <!-- 4. FULL-SCREEN SLIDING PANEL: ABOUT -->
         <Grid x:Name="AboutSlidePanel" ZIndex="10000"
-              IsVisible="{Binding IsAboutModal}"
+              IsVisible="False"
               Background="{DynamicResource AppSolidBackgroundBrush}"
               RenderTransform="translateX(800px)"
               IsHitTestVisible="False">
@@ -2364,7 +2364,7 @@
                         <!-- Cooldown Progress -->
                         <StackPanel Spacing="5" Margin="0,4,0,0">
                             <ProgressBar Height="4" CornerRadius="2" 
-                                         Minimum="0" Maximum="15" Value="{Binding DelayProgressBarValue}" 
+                                         Minimum="0" Maximum="{Binding DelayTotalSeconds}" Value="{Binding DelayProgressBarValue}" 
                                          Foreground="{DynamicResource AppAccentBrush}"/>
                             <TextBlock Text="{Binding DelayStatusText}" 
                                        FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" 
