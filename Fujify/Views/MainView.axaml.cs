@@ -77,6 +77,70 @@ namespace Fujify.Views
             }
 
             UpdateSlidePanels(animated: false);
+            SetupTouchScroll("MobileSidebarScrollViewer");
+            SetupTouchScroll("PreferencesScrollViewer");
+            SetupTouchScroll("AboutScrollViewer");
+        }
+
+        private void SetupTouchScroll(string controlName)
+        {
+            var sv = this.FindControl<ScrollViewer>(controlName);
+            if (sv == null) return;
+
+            try
+            {
+                sv.GestureRecognizers.Add(new Avalonia.Input.GestureRecognizers.ScrollGestureRecognizer
+                {
+                    CanHorizontallyScroll = false,
+                    CanVerticallyScroll = true,
+                    ScrollStartDistance = 6
+                });
+            }
+            catch
+            {
+                // Ignore if already attached
+            }
+
+            Avalonia.Point dragStartPos = default;
+            double dragStartOffset = 0;
+            bool isDragging = false;
+
+            sv.AddHandler(InputElement.PointerPressedEvent, (s, e) =>
+            {
+                var point = e.GetCurrentPoint(sv);
+                if (point.Properties.IsLeftButtonPressed || e.Pointer.Type == PointerType.Touch || e.Pointer.Type == PointerType.Pen)
+                {
+                    dragStartPos = e.GetPosition(this);
+                    dragStartOffset = sv.Offset.Y;
+                    isDragging = true;
+                }
+            }, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+
+            sv.AddHandler(InputElement.PointerMovedEvent, (s, e) =>
+            {
+                if (!isDragging) return;
+                var currentPos = e.GetPosition(this);
+                var deltaY = dragStartPos.Y - currentPos.Y;
+                if (Math.Abs(deltaY) > 4)
+                {
+                    double maxScroll = Math.Max(0, Math.Max(sv.ScrollBarMaximum.Y, sv.Extent.Height - sv.Viewport.Height));
+                    if (maxScroll > 0)
+                    {
+                        double targetY = Math.Clamp(dragStartOffset + deltaY, 0, maxScroll);
+                        sv.Offset = new Avalonia.Vector(sv.Offset.X, targetY);
+                    }
+                }
+            }, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+
+            sv.AddHandler(InputElement.PointerReleasedEvent, (s, e) =>
+            {
+                isDragging = false;
+            }, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
+
+            sv.AddHandler(InputElement.PointerCaptureLostEvent, (s, e) =>
+            {
+                isDragging = false;
+            }, RoutingStrategies.Tunnel | RoutingStrategies.Bubble, handledEventsToo: true);
         }
 
         private void ApplySafeArea(Avalonia.Thickness insets)
@@ -119,7 +183,8 @@ namespace Fujify.Views
             var mobileSheet = this.FindControl<Border>("MobileSidebarSheet");
             if (mobileSheet != null)
             {
-                mobileSheet.Padding = new Avalonia.Thickness(0, 0, 0, bottomInset);
+                mobileSheet.Margin = new Avalonia.Thickness(0, 40, 0, bottomInset);
+                mobileSheet.Padding = new Avalonia.Thickness(0);
             }
 
             var phoneBottom = this.FindControl<Border>("PhoneBottomBar");
@@ -355,6 +420,22 @@ namespace Fujify.Views
         private void InspectorPanel_PointerWheelChanged(object? sender, PointerWheelEventArgs e)
         {
             var sv = this.FindControl<ScrollViewer>("InspectorScrollViewer");
+            if (sv != null && sv.ScrollBarMaximum.Y > 0)
+            {
+                double delta = e.Delta.Y;
+                if (delta != 0)
+                {
+                    double newOffsetY = sv.Offset.Y - (delta * 44);
+                    newOffsetY = Math.Clamp(newOffsetY, 0, sv.ScrollBarMaximum.Y);
+                    sv.Offset = new Avalonia.Vector(sv.Offset.X, newOffsetY);
+                    e.Handled = true;
+                }
+            }
+        }
+
+        private void MobileSidebar_PointerWheelChanged(object? sender, PointerWheelEventArgs e)
+        {
+            var sv = this.FindControl<ScrollViewer>("MobileSidebarScrollViewer");
             if (sv != null && sv.ScrollBarMaximum.Y > 0)
             {
                 double delta = e.Delta.Y;

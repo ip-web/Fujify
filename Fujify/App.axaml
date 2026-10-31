@@ -561,7 +561,7 @@
         </Style>
 
         <Style Selector="Border.bottom-sheet">
-            <Setter Property="RenderTransform" Value="translateY(560px)"/>
+            <Setter Property="RenderTransform" Value="translateY(720px)"/>
             <Setter Property="Transitions">
                 <Transitions>
                     <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut"/>
