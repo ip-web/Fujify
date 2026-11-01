@@ -136,6 +136,23 @@ namespace Fujify.Services
                 Path.Combine(baseDir, "runtimes", RuntimeInformation.RuntimeIdentifier, "native", fileName)
             };
 
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                string arch = RuntimeInformation.ProcessArchitecture switch
+                {
+                    Architecture.Arm64 => "win-arm64",
+                    Architecture.X64 => "win-x64",
+                    Architecture.X86 => "win-x86",
+                    _ => ""
+                };
+                if (!string.IsNullOrEmpty(arch))
+                {
+                    searchPaths.Add(Path.Combine(baseDir, "libs", arch, fileName));
+                    searchPaths.Add(Path.Combine(baseDir, "runtimes", arch, "native", fileName));
+                    searchPaths.Add(Path.Combine(baseDir, "..", "..", "..", "Fujify", "libs", arch, fileName));
+                }
+            }
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || OperatingSystem.IsIOS() || OperatingSystem.IsMacCatalyst())
             {
                 // macOS app bundle: Contents/Frameworks, Contents/Resources
@@ -173,9 +190,20 @@ namespace Fujify.Services
 
             foreach (var path in searchPaths)
             {
-                if (File.Exists(path) && NativeLibrary.TryLoad(path, out IntPtr handle))
+                if (File.Exists(path))
                 {
-                    return handle;
+                    // Pre-load companion libraries (e.g. libunwind.dll on Windows ARM64) in the same directory
+                    string companionDir = Path.GetDirectoryName(path) ?? "";
+                    string unwindPath = Path.Combine(companionDir, "libunwind.dll");
+                    if (File.Exists(unwindPath))
+                    {
+                        NativeLibrary.TryLoad(unwindPath, assembly, searchPath, out _);
+                    }
+
+                    if (NativeLibrary.TryLoad(path, out IntPtr handle))
+                    {
+                        return handle;
+                    }
                 }
             }
 

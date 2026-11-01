@@ -5,7 +5,18 @@
 #define MyAppPublisher "Isidore Paulin"
 #define MyAppURL "https://ipweb.dev"
 #define MyAppExeName "Fujifier.exe"
+
+#ifndef MyAppSourceDir
 #define MyAppSourceDir "publish\win-x64"
+#endif
+
+#ifndef MyOutputBaseFilename
+#define MyOutputBaseFilename "Fujifier-v2.1.0-Setup"
+#endif
+
+#ifndef MyArchAllowed
+#define MyArchAllowed "x64compatible"
+#endif
 
 [Setup]
 AppId={{D37F8E42-68B1-4A2E-9C81-79A44BD8E431}
@@ -21,13 +32,13 @@ DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 LicenseFile=LICENSE
 OutputDir=release
-OutputBaseFilename=Fujifier-v2.1.0-Setup
+OutputBaseFilename={#MyOutputBaseFilename}
 SetupIconFile=Fujify\Assets\images\logo.ico
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
-ArchitecturesAllowed=x64compatible
-ArchitecturesInstallIn64BitMode=x64compatible
+ArchitecturesAllowed={#MyArchAllowed}
+ArchitecturesInstallIn64BitMode={#MyArchAllowed}
 CloseApplications=yes
 RestartApplications=no
 UninstallDisplayIcon={app}\{#MyAppExeName}
