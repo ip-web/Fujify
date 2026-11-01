@@ -1340,17 +1340,17 @@ namespace Fujify.ViewModels
 
         private TaskCompletionSource<bool>? _freeTierDelayTcs;
         private DispatcherTimer? _delayTimer;
-        private int _delayRemainingSeconds = 3;
+        private int _delayRemainingSeconds = 15;
         private bool _canDismissModal = true;
         private bool _isDelayUnlocked = false;
-        private string _delayStatusText = "Cooldown active: 3s remaining...";
-        private string _delayDismissButtonText = "Continue with Free Version (3s)";
+        private string _delayStatusText = "Cooldown active: 15s remaining...";
+        private string _delayDismissButtonText = "Continue with Free Version (15s)";
         private double _delayProgressBarValue = 0;
         private bool _isDelayKeyInputVisible = false;
         private string _delayLicenseKey = string.Empty;
         private string _delayLicenseError = string.Empty;
 
-        public int DelayTotalSeconds => _licenseService?.DelaySeconds ?? 3;
+        public int DelayTotalSeconds => _licenseService?.DelaySeconds ?? 15;
 
         public bool CanDismissModal
         {
@@ -1511,7 +1511,7 @@ namespace Fujify.ViewModels
                 ModalMessage = "Welcome to Fujifier Pro! All tier limits, countdown delays, and advertisements have been removed permanently.";
                 DelayStatusText = "Pro license active.";
                 DelayDismissButtonText = "Start Using Fujifier Pro";
-                DelayProgressBarValue = _licenseService?.DelaySeconds ?? 3;
+                DelayProgressBarValue = _licenseService?.DelaySeconds ?? 15;
                 IsDelayKeyInputVisible = false;
                 RefreshSettings();
             }
@@ -1545,7 +1545,7 @@ namespace Fujify.ViewModels
                 ModalMessage = "Thank you for upgrading to Fujifier Pro! All tier limits, countdown delays, and advertisements have been removed permanently.";
                 DelayStatusText = "License active.";
                 DelayDismissButtonText = "Start Using Fujifier Pro";
-                DelayProgressBarValue = _licenseService?.DelaySeconds ?? 3;
+                DelayProgressBarValue = _licenseService?.DelaySeconds ?? 15;
                 IsDelayKeyInputVisible = false;
                 RefreshSettings();
             }
@@ -1635,6 +1635,13 @@ namespace Fujify.ViewModels
 
         private bool _isConfirmingDisableBackup;
 
+        public void SetCreateBackupDirect(bool value)
+        {
+            _createBackup = value;
+            OnPropertyChanged(nameof(CreateBackup));
+            OnPropertyChanged(nameof(QuickSettingsSummary));
+        }
+
         public bool CreateBackup
         {
             get => _createBackup;
@@ -1665,15 +1672,33 @@ namespace Fujify.ViewModels
                                 _settingsService.Save();
                                 if (_preferences != null)
                                 {
-                                    _preferences.BackupOriginalFile = false;
+                                    _preferences.SetBackupOriginalFileDirect(false);
                                 }
+                                OnPropertyChanged(nameof(CreateBackup));
+                                OnPropertyChanged(nameof(QuickSettingsSummary));
+                            }
+                            else
+                            {
+                                // User clicked "Keep Backup" -> restore / keep enabled
+                                _createBackup = false;
+                                OnPropertyChanged(nameof(CreateBackup));
+                                Dispatcher.UIThread.Post(() =>
+                                {
+                                    _createBackup = true;
+                                    _settingsService.Settings.BackupOriginalFile = true;
+                                    _settingsService.Save();
+                                    if (_preferences != null)
+                                    {
+                                        _preferences.SetBackupOriginalFileDirect(true);
+                                    }
+                                    OnPropertyChanged(nameof(CreateBackup));
+                                    OnPropertyChanged(nameof(QuickSettingsSummary));
+                                }, DispatcherPriority.Input);
                             }
                         }
                         finally
                         {
                             _isConfirmingDisableBackup = false;
-                            OnPropertyChanged(nameof(CreateBackup));
-                            OnPropertyChanged(nameof(QuickSettingsSummary));
                         }
                     });
                     return;
@@ -1684,7 +1709,7 @@ namespace Fujify.ViewModels
                 _settingsService.Save();
                 if (_preferences != null)
                 {
-                    _preferences.BackupOriginalFile = value;
+                    _preferences.SetBackupOriginalFileDirect(value);
                 }
                 OnPropertyChanged(nameof(CreateBackup));
                 OnPropertyChanged(nameof(QuickSettingsSummary));

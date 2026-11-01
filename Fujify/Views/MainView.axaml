@@ -2339,7 +2339,7 @@
                 Classes="modal-backdrop" Classes.open="{Binding IsBottomSheetOpen}"
                 PointerPressed="OnBackdropPointerPressed">
             <Border x:Name="ModalDialogContainer" Classes="panel modal-card" Classes.open="{Binding IsBottomSheetOpen}"
-                    Width="400" MaxWidth="500" Padding="22"
+                    MaxWidth="420" Margin="16,0" Padding="22"
                     HorizontalAlignment="Center" VerticalAlignment="Center">
                 <Panel>
                     <!-- Free Tier Delay Modal -->
@@ -2441,11 +2441,11 @@
                         <!-- Two Action Buttons: Cancel and Confirm -->
                         <Grid ColumnDefinitions="*,*" Margin="0,6,0,0">
                             <Button Grid.Column="0" Content="{Binding ConfirmationCancelText}" Command="{Binding CancelModalActionCommand}"
-                                    Classes="secondary" Height="38" CornerRadius="19" Margin="0,0,6,0"
+                                    Classes="secondary" Height="38" MinHeight="38" CornerRadius="19" Margin="0,0,6,0" Padding="8,0" FontSize="12.5"
                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                             <Button Grid.Column="1" Content="{Binding ConfirmationConfirmText}" Command="{Binding ConfirmModalActionCommand}"
                                     Classes="primary" Background="#E74C3C" Foreground="White"
-                                    Height="38" CornerRadius="19" Margin="6,0,0,0"
+                                    Height="38" MinHeight="38" CornerRadius="19" Margin="6,0,0,0" Padding="8,0" FontSize="12.5"
                                     HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                         </Grid>
                     </StackPanel>

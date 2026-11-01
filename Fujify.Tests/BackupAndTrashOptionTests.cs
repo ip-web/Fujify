@@ -95,6 +95,26 @@ namespace Fujify.Tests
         }
 
         [Fact]
+        public void PreferencesAndMainViewModel_DirectSync_KeepsSettingsInSyncWithoutDialog()
+        {
+            var settingsService = new FakeSettingsService();
+            settingsService.Settings.BackupOriginalFile = true;
+            var licenseService = new LicenseService(settingsService);
+            var vm = new MainViewModel(settingsService: settingsService, licenseService: licenseService);
+            var prefs = vm.Preferences;
+
+            Assert.True(vm.CreateBackup);
+            Assert.True(prefs.BackupOriginalFile);
+
+            // Directly setting backup via SetCreateBackupDirect or SetBackupOriginalFileDirect
+            vm.SetCreateBackupDirect(false);
+            Assert.False(vm.CreateBackup);
+
+            prefs.SetBackupOriginalFileDirect(true);
+            Assert.True(prefs.BackupOriginalFile);
+        }
+
+        [Fact]
         public void FileTrashHelper_SendToTrash_NonExistentFile_ReturnsFalseSafely()
         {
             string nonExistent = Path.Combine(_testDir, "non_existent.dng");

@@ -445,6 +445,12 @@ namespace Fujify.ViewModels
 
         private bool _isConfirmingDisableBackup;
 
+        public void SetBackupOriginalFileDirect(bool value)
+        {
+            _backupOriginalFile = value;
+            OnPropertyChanged(nameof(BackupOriginalFile));
+        }
+
         public bool BackupOriginalFile
         {
             get => _backupOriginalFile;
@@ -472,18 +478,47 @@ namespace Fujify.ViewModels
                             if (confirmed)
                             {
                                 _backupOriginalFile = false;
+                                _settingsService.Settings.BackupOriginalFile = false;
+                                _settingsService.Save();
+                                if (MainViewModel.Instance != null)
+                                {
+                                    MainViewModel.Instance.SetCreateBackupDirect(false);
+                                }
+                                OnPropertyChanged(nameof(BackupOriginalFile));
+                            }
+                            else
+                            {
+                                // User clicked "Keep Backup" -> restore / keep enabled
+                                _backupOriginalFile = false;
+                                OnPropertyChanged(nameof(BackupOriginalFile));
+                                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                                {
+                                    _backupOriginalFile = true;
+                                    _settingsService.Settings.BackupOriginalFile = true;
+                                    _settingsService.Save();
+                                    if (MainViewModel.Instance != null)
+                                    {
+                                        MainViewModel.Instance.SetCreateBackupDirect(true);
+                                    }
+                                    OnPropertyChanged(nameof(BackupOriginalFile));
+                                }, Avalonia.Threading.DispatcherPriority.Input);
                             }
                         }
                         finally
                         {
                             _isConfirmingDisableBackup = false;
-                            OnPropertyChanged(nameof(BackupOriginalFile));
                         }
                     });
                     return;
                 }
 
                 _backupOriginalFile = value;
+                _settingsService.Settings.BackupOriginalFile = value;
+                _settingsService.Save();
+                if (MainViewModel.Instance != null)
+                {
+                    MainViewModel.Instance.SetCreateBackupDirect(value);
+                }
                 OnPropertyChanged(nameof(BackupOriginalFile));
             }
         }
