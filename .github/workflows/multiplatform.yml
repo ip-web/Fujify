@@ -28,7 +28,8 @@ jobs:
         run: dotnet restore FujifyNET.sln
 
       - name: Run Test Suite
-        run: dotnet test Fujify.Tests/Fujify.Tests.csproj -c Release --no-restore --logger "trx;LogFileName=test_results.trx"
+        timeout-minutes: 10
+        run: dotnet test Fujify.Tests/Fujify.Tests.csproj -c Release --no-restore --logger "trx;LogFileName=test_results.trx" --blame-hang --blame-hang-timeout 2m
 
       - name: Publish Windows Desktop x64
         run: |

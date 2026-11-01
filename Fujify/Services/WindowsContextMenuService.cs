@@ -364,11 +364,30 @@ namespace Fujify.Services
 
         private static void NotifyShell()
         {
+            // Avoid hanging headless CI environments (GitHub Actions, etc.) where explorer.exe is not running and SHChangeNotify hangs
+            if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI")) ||
+                !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GITHUB_ACTIONS")))
+            {
+                return;
+            }
+
             try
             {
                 if (OperatingSystem.IsWindows())
                 {
-                    SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, IntPtr.Zero, IntPtr.Zero);
+                    var thread = new System.Threading.Thread(() =>
+                    {
+                        try
+                        {
+                            SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, IntPtr.Zero, IntPtr.Zero);
+                        }
+                        catch { }
+                    })
+                    {
+                        IsBackground = true
+                    };
+                    thread.Start();
+                    thread.Join(1000);
                 }
             }
             catch { }
