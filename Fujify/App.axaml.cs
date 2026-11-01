@@ -253,6 +253,7 @@ public partial class App : Application
 
                 if (System.OperatingSystem.IsWindows())
                 {
+                    Services.WindowsContextMenuService.RegisterOpenWith();
                     if (settingsService.Settings.EnableWindowsContextMenu && licenseService.IsPro)
                     {
                         Services.WindowsContextMenuService.RegisterContextMenu();
@@ -283,6 +284,7 @@ public partial class App : Application
             // Ensure Windows Explorer context menu is kept up-to-date only if Pro
             if (System.OperatingSystem.IsWindows())
             {
+                Services.WindowsContextMenuService.RegisterOpenWith();
                 if (settingsService.Settings.EnableWindowsContextMenu && licenseService.IsPro)
                 {
                     Services.WindowsContextMenuService.RegisterContextMenu();

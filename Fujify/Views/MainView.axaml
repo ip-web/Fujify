@@ -51,9 +51,29 @@
                     MinHeight="34"
                     Padding="16,0,0,0"
                     ZIndex="100">
-                <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Stretch">
+                <Grid ColumnDefinitions="Auto,Auto,*,Auto" VerticalAlignment="Stretch">
+                    <!-- Far Left: macOS Traffic Lights (Close [Red], Minimize [Yellow], Maximize [Green]) -->
+                    <StackPanel x:Name="MacTrafficLightsPanel" Grid.Column="0" Orientation="Horizontal" Spacing="8"
+                                VerticalAlignment="Center" Margin="0,0,16,0"
+                                Classes="mac-traffic-lights"
+                                Classes.inactive="{Binding !IsWindowActive}"
+                                IsVisible="{Binding ShowMacCaptionButtons}">
+                        <!-- Close Button -->
+                        <Button x:Name="MacCloseButton" Classes="mac-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="{loc:Loc Close}">
+                            <TextBlock Classes="mac-glyph" Text="✕" FontSize="7" Foreground="#4D0000"/>
+                        </Button>
+                        <!-- Minimize Button -->
+                        <Button x:Name="MacMinimizeButton" Classes="mac-caption minimize" Click="TitleBar_Minimize_Click" ToolTip.Tip="{loc:Loc Minimize}">
+                            <TextBlock Classes="mac-glyph" Text="—" FontSize="8" Margin="0,-1,0,0" Foreground="#5C3B00"/>
+                        </Button>
+                        <!-- Maximize / Zoom Button -->
+                        <Button x:Name="MacMaximizeButton" Classes="mac-caption maximize" Click="TitleBar_Maximize_Click" ToolTip.Tip="{loc:Loc Maximize}">
+                            <TextBlock Classes="mac-glyph" Text="+" FontSize="9" Margin="0,-1,0,0" Foreground="#0A4D14"/>
+                        </Button>
+                    </StackPanel>
+
                     <!-- Left: Studio Logo & Title (Draggable) -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center"
                                 Background="Transparent"
                                 PointerPressed="TitleBar_PointerPressed"
                                 DoubleTapped="TitleBar_DoubleTapped">
@@ -62,13 +82,13 @@
                     </StackPanel>
 
                     <!-- Center: Draggable Spacer -->
-                    <Panel Grid.Column="1" Background="Transparent"
+                    <Panel Grid.Column="2" Background="Transparent"
                            PointerPressed="TitleBar_PointerPressed"
                            DoubleTapped="TitleBar_DoubleTapped"/>
 
                     <!-- Right: Custom Functional Minimize, Maximize, Close Buttons matching standard Windows controls -->
-                    <StackPanel x:Name="CaptionButtonsPanel" Grid.Column="2" Orientation="Horizontal" Spacing="0" VerticalAlignment="Stretch" HorizontalAlignment="Right"
-                                IsVisible="{Binding ShowCaptionButtons}">
+                    <StackPanel x:Name="CaptionButtonsPanel" Grid.Column="3" Orientation="Horizontal" Spacing="0" VerticalAlignment="Stretch" HorizontalAlignment="Right"
+                                IsVisible="{Binding ShowWindowsCaptionButtons}">
                         <!-- Minimize Button -->
                         <Button x:Name="TitleBarMinimizeButton" Classes="win-caption" Click="TitleBar_Minimize_Click" ToolTip.Tip="{loc:Loc Minimize}">
                             <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
@@ -94,9 +114,26 @@
                     <Grid RowDefinitions="Auto,*,Auto">
                         <!-- Row 0: Mobile App Bar (Native mobile header with logo, title, and settings) -->
                         <Border x:Name="PhoneTopBar" Grid.Row="0" Background="Transparent" BorderThickness="0" Padding="16,8,16,4">
-                            <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
+                            <Grid ColumnDefinitions="Auto,Auto,*,Auto" VerticalAlignment="Center">
+                                <!-- Far Left: macOS Traffic Lights (if narrow desktop on macOS) -->
+                                <StackPanel x:Name="PhoneMacCaptionButtonsPanel" Grid.Column="0" Orientation="Horizontal" Spacing="8"
+                                            VerticalAlignment="Center" Margin="0,0,12,0"
+                                            Classes="mac-traffic-lights"
+                                            Classes.inactive="{Binding !IsWindowActive}"
+                                            IsVisible="{Binding ShowMacCaptionButtons}">
+                                    <Button Classes="mac-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="{loc:Loc Close}">
+                                        <TextBlock Classes="mac-glyph" Text="✕" FontSize="7" Foreground="#4D0000"/>
+                                    </Button>
+                                    <Button Classes="mac-caption minimize" Click="TitleBar_Minimize_Click" ToolTip.Tip="{loc:Loc Minimize}">
+                                        <TextBlock Classes="mac-glyph" Text="—" FontSize="8" Margin="0,-1,0,0" Foreground="#5C3B00"/>
+                                    </Button>
+                                    <Button Classes="mac-caption maximize" Click="TitleBar_Maximize_Click" ToolTip.Tip="{loc:Loc Maximize}">
+                                        <TextBlock Classes="mac-glyph" Text="+" FontSize="9" Margin="0,-1,0,0" Foreground="#0A4D14"/>
+                                    </Button>
+                                </StackPanel>
+
                                 <!-- Left: Logo & App Branding -->
-                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                                     <Border Width="32" Height="32" CornerRadius="8"
                                             Background="{DynamicResource AppSurfaceBrush}"
                                             BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
@@ -113,12 +150,12 @@
                                 </StackPanel>
 
                                 <!-- Center: Draggable Spacer (for narrow desktop window) -->
-                                <Panel Grid.Column="1" Background="Transparent"
+                                <Panel Grid.Column="2" Background="Transparent"
                                        PointerPressed="TitleBar_PointerPressed"
                                        DoubleTapped="TitleBar_DoubleTapped"/>
 
                                 <!-- Right: Queue Clear + Settings Shortcut + Desktop Caption Controls (if narrow desktop) -->
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                                     <Button Command="{Binding ClearCommand}"
                                             IsVisible="{Binding HasFiles}"
                                             Classes="secondary" Height="36" Padding="14,0" CornerRadius="18"
@@ -143,7 +180,7 @@
                                     </Button>
 
                                     <!-- Optional Desktop Caption Buttons when running on desktop window -->
-                                    <StackPanel Orientation="Horizontal" Spacing="0" IsVisible="{Binding ShowCaptionButtons}">
+                                    <StackPanel Orientation="Horizontal" Spacing="0" IsVisible="{Binding ShowWindowsCaptionButtons}">
                                         <Button Classes="win-caption" Click="TitleBar_Minimize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Minimize}">
                                             <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                                         </Button>

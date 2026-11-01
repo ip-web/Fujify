@@ -277,5 +277,102 @@ namespace Fujify.Tests
             Assert.True(vm.IsPreferencesModal);
             Assert.True(vm.IsModalOpen);
         }
+
+        [Fact]
+        public void WindowsContextMenu_OpenWith_Registration_Lifecycle()
+        {
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                return; // Windows-only test
+            }
+
+            try
+            {
+                bool regResult = WindowsContextMenuService.RegisterOpenWith();
+                Assert.True(regResult, "RegisterOpenWith should return true on Windows");
+                Assert.True(WindowsContextMenuService.IsOpenWithRegistered(), "IsOpenWithRegistered should be true after registration");
+
+                string exePath = WindowsContextMenuService.GetExecutablePath();
+                string exeName = Path.GetFileName(exePath);
+
+                // Verify Applications\<exeName>
+                using var appCmdKey = Registry.CurrentUser.OpenSubKey($@"Software\Classes\Applications\{exeName}\shell\open\command");
+                Assert.NotNull(appCmdKey);
+                string? cmdVal = appCmdKey.GetValue(null)?.ToString();
+                Assert.NotNull(cmdVal);
+                Assert.Contains(exeName, cmdVal);
+
+                // Verify SupportedTypes
+                using var suppKey = Registry.CurrentUser.OpenSubKey($@"Software\Classes\Applications\{exeName}\SupportedTypes");
+                Assert.NotNull(suppKey);
+                Assert.NotNull(suppKey.GetValue(".arw"));
+                Assert.NotNull(suppKey.GetValue(".dng"));
+
+                // Verify ProgID
+                using var progIdKey = Registry.CurrentUser.OpenSubKey(@"Software\Classes\Fujifier.RAW\shell\open\command");
+                Assert.NotNull(progIdKey);
+
+                // Verify OpenWithProgids link for .arw
+                using var owpKey = Registry.CurrentUser.OpenSubKey(@"Software\Classes\.arw\OpenWithProgids");
+                Assert.NotNull(owpKey);
+                Assert.NotNull(owpKey.GetValue("Fujifier.RAW"));
+
+                // Unregister
+                bool unregResult = WindowsContextMenuService.UnregisterOpenWith();
+                Assert.True(unregResult, "UnregisterOpenWith should succeed");
+                Assert.False(WindowsContextMenuService.IsOpenWithRegistered(), "IsOpenWithRegistered should be false after unregistration");
+            }
+            finally
+            {
+                WindowsContextMenuService.UnregisterOpenWith();
+            }
+        }
+
+        [Fact]
+        public void MainViewModel_MacAndWindowsCaptionButtons_Behavior()
+        {
+            var settings = new MockSettingsService();
+            var vm = new ViewModels.MainViewModel(settingsService: settings);
+
+            // Default IsWindowActive is true
+            Assert.True(vm.IsWindowActive);
+
+            bool propChanged = false;
+            vm.PropertyChanged += (s, e) =>
+            {
+                if (e.PropertyName == nameof(ViewModels.MainViewModel.IsWindowActive))
+                {
+                    propChanged = true;
+                }
+            };
+
+            vm.IsWindowActive = false;
+            Assert.False(vm.IsWindowActive);
+            Assert.True(propChanged);
+
+            // macOS simulation vs Windows
+            var prevSim = Environment.GetEnvironmentVariable("FUJIFIER_SIMULATE_MACOS");
+            try
+            {
+                Environment.SetEnvironmentVariable("FUJIFIER_SIMULATE_MACOS", "1");
+                Assert.True(vm.IsMacOS);
+                Assert.True(vm.ShowMacCaptionButtons);
+                Assert.False(vm.ShowWindowsCaptionButtons);
+                Assert.Equal(new Avalonia.Thickness(0, 0, 0, 0), vm.TitleBarLogoMargin);
+
+                Environment.SetEnvironmentVariable("FUJIFIER_SIMULATE_MACOS", null);
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    Assert.False(vm.IsMacOS);
+                    Assert.False(vm.ShowMacCaptionButtons);
+                    Assert.True(vm.ShowWindowsCaptionButtons);
+                    Assert.Equal(new Avalonia.Thickness(16, 0, 0, 0), vm.TitleBarLogoMargin);
+                }
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("FUJIFIER_SIMULATE_MACOS", prevSim);
+            }
+        }
     }
 }

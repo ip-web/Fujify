@@ -80,6 +80,22 @@ namespace Fujify.Views
             SetupTouchScroll("MobileSidebarScrollViewer");
             SetupTouchScroll("PreferencesScrollViewer");
             SetupTouchScroll("AboutScrollViewer");
+
+            if (VisualRoot is Window window)
+            {
+                window.Activated += (ws, wargs) =>
+                {
+                    if (DataContext is MainViewModel vm) vm.IsWindowActive = true;
+                };
+                window.Deactivated += (ws, wargs) =>
+                {
+                    if (DataContext is MainViewModel vm) vm.IsWindowActive = false;
+                };
+                if (DataContext is MainViewModel vmAttached)
+                {
+                    vmAttached.IsWindowActive = window.IsActive;
+                }
+            }
         }
 
         private void SetupTouchScroll(string controlName)

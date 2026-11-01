@@ -94,6 +94,150 @@ namespace Fujify.Services
             return false;
         }
 
+        public static bool IsOpenWithRegistered()
+        {
+            if (!OperatingSystem.IsWindows()) return false;
+
+            try
+            {
+                string exePath = GetExecutablePath();
+                string exeName = Path.GetFileName(exePath);
+                using var key = Registry.CurrentUser.OpenSubKey($@"Software\Classes\Applications\{exeName}\shell\open\command");
+                if (key != null)
+                {
+                    var val = key.GetValue(null)?.ToString();
+                    if (!string.IsNullOrWhiteSpace(val) && val.Contains(exeName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[WindowsContextMenuService] Error checking Open With: {ex.Message}");
+            }
+
+            return false;
+        }
+
+        public static bool RegisterOpenWith()
+        {
+            if (!OperatingSystem.IsWindows()) return false;
+
+            try
+            {
+                string exePath = GetExecutablePath();
+                string exeName = Path.GetFileName(exePath);
+                string iconValue = $"\"{exePath}\",0";
+                string openCommand = $"\"{exePath}\" \"%1\"";
+
+                // 1. HKCU\Software\Classes\Applications\<exeName>
+                using (var appKey = Registry.CurrentUser.CreateSubKey($@"Software\Classes\Applications\{exeName}", true))
+                {
+                    if (appKey != null)
+                    {
+                        appKey.SetValue(null, "Fujifier");
+                        appKey.SetValue("FriendlyAppName", "Fujifier");
+
+                        using var iconKey = appKey.CreateSubKey("DefaultIcon", true);
+                        iconKey?.SetValue(null, iconValue);
+
+                        using var cmdKey = appKey.CreateSubKey(@"shell\open\command", true);
+                        cmdKey?.SetValue(null, openCommand);
+
+                        using var suppTypes = appKey.CreateSubKey("SupportedTypes", true);
+                        if (suppTypes != null)
+                        {
+                            foreach (var ext in RawExtensions)
+                            {
+                                suppTypes.SetValue(ext, string.Empty);
+                            }
+                        }
+                    }
+                }
+
+                // 2. ProgID: HKCU\Software\Classes\Fujifier.RAW
+                using (var progIdKey = Registry.CurrentUser.CreateSubKey(@"Software\Classes\Fujifier.RAW", true))
+                {
+                    if (progIdKey != null)
+                    {
+                        progIdKey.SetValue(null, "Camera RAW & DNG Image");
+                        progIdKey.SetValue("FriendlyTypeName", "Camera RAW & DNG Image");
+
+                        using var iconKey = progIdKey.CreateSubKey("DefaultIcon", true);
+                        iconKey?.SetValue(null, iconValue);
+
+                        using var cmdKey = progIdKey.CreateSubKey(@"shell\open\command", true);
+                        cmdKey?.SetValue(null, openCommand);
+                    }
+                }
+
+                // 3. Register OpenWithList and OpenWithProgids for all supported formats
+                foreach (var ext in RawExtensions)
+                {
+                    try
+                    {
+                        using var owlKey = Registry.CurrentUser.CreateSubKey($@"Software\Classes\{ext}\OpenWithList\{exeName}", true);
+                        using var owpKey = Registry.CurrentUser.CreateSubKey($@"Software\Classes\{ext}\OpenWithProgids", true);
+                        owpKey?.SetValue("Fujifier.RAW", string.Empty);
+
+                        using var sfaOwlKey = Registry.CurrentUser.CreateSubKey($@"Software\Classes\SystemFileAssociations\{ext}\OpenWithList\{exeName}", true);
+                        using var sfaOwpKey = Registry.CurrentUser.CreateSubKey($@"Software\Classes\SystemFileAssociations\{ext}\OpenWithProgids", true);
+                        sfaOwpKey?.SetValue("Fujifier.RAW", string.Empty);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"[WindowsContextMenuService] Failed associating ext {ext}: {ex.Message}");
+                    }
+                }
+
+                NotifyShell();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[WindowsContextMenuService] Error registering Open With: {ex.Message}");
+                return false;
+            }
+        }
+
+        public static bool UnregisterOpenWith()
+        {
+            if (!OperatingSystem.IsWindows()) return false;
+
+            try
+            {
+                string exePath = GetExecutablePath();
+                string exeName = Path.GetFileName(exePath);
+
+                Registry.CurrentUser.DeleteSubKeyTree($@"Software\Classes\Applications\{exeName}", throwOnMissingSubKey: false);
+                Registry.CurrentUser.DeleteSubKeyTree(@"Software\Classes\Fujifier.RAW", throwOnMissingSubKey: false);
+
+                foreach (var ext in RawExtensions)
+                {
+                    try
+                    {
+                        Registry.CurrentUser.DeleteSubKeyTree($@"Software\Classes\{ext}\OpenWithList\{exeName}", throwOnMissingSubKey: false);
+                        using var owp = Registry.CurrentUser.OpenSubKey($@"Software\Classes\{ext}\OpenWithProgids", true);
+                        owp?.DeleteValue("Fujifier.RAW", throwOnMissingValue: false);
+
+                        Registry.CurrentUser.DeleteSubKeyTree($@"Software\Classes\SystemFileAssociations\{ext}\OpenWithList\{exeName}", throwOnMissingSubKey: false);
+                        using var sfaOwp = Registry.CurrentUser.OpenSubKey($@"Software\Classes\SystemFileAssociations\{ext}\OpenWithProgids", true);
+                        sfaOwp?.DeleteValue("Fujifier.RAW", throwOnMissingValue: false);
+                    }
+                    catch { }
+                }
+
+                NotifyShell();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[WindowsContextMenuService] Error unregistering Open With: {ex.Message}");
+                return false;
+            }
+        }
+
         public static bool RegisterContextMenu()
         {
             if (!OperatingSystem.IsWindows()) return false;

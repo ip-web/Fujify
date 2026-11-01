@@ -585,10 +585,25 @@ namespace Fujify.ViewModels
 
         public bool IsTabletOrDesktopLayout => !_isPhoneLayout;
 
+        private bool _isWindowActive = true;
+        public bool IsWindowActive
+        {
+            get => _isWindowActive;
+            set => SetProperty(ref _isWindowActive, value);
+        }
+
+        public bool IsMacOS => OperatingSystem.IsMacOS() || System.Environment.GetEnvironmentVariable("FUJIFIER_SIMULATE_MACOS") == "1";
+        public bool IsWindows => OperatingSystem.IsWindows();
+
         public bool ShowCaptionButtons =>
             !OperatingSystem.IsAndroid() &&
             !OperatingSystem.IsIOS() &&
             !(Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ISingleViewApplicationLifetime);
+
+        public bool ShowMacCaptionButtons => ShowCaptionButtons && IsMacOS;
+        public bool ShowWindowsCaptionButtons => ShowCaptionButtons && !IsMacOS;
+
+        public Avalonia.Thickness TitleBarLogoMargin => ShowMacCaptionButtons ? new Avalonia.Thickness(0, 0, 0, 0) : new Avalonia.Thickness(16, 0, 0, 0);
 
         private bool _isTabletLayout;
         public bool IsTabletLayout

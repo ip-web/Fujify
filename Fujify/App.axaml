@@ -635,6 +635,103 @@
             <Setter Property="Foreground" Value="#FFFFFFFF"/>
         </Style>
 
+        <!-- macOS Window Control Buttons (Traffic Lights: Close, Minimize, Maximize) -->
+        <Style Selector="Button.mac-caption">
+            <Setter Property="Width" Value="12"/>
+            <Setter Property="Height" Value="12"/>
+            <Setter Property="MinWidth" Value="12"/>
+            <Setter Property="MinHeight" Value="12"/>
+            <Setter Property="MaxWidth" Value="12"/>
+            <Setter Property="MaxHeight" Value="12"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.mac-caption /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+
+        <!-- Red Close Button -->
+        <Style Selector="Button.mac-caption.close">
+            <Setter Property="Background" Value="#FF5F56"/>
+            <Setter Property="BorderBrush" Value="#E0443E"/>
+        </Style>
+        <Style Selector="Button.mac-caption.close /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#FF5F56"/>
+            <Setter Property="BorderBrush" Value="#E0443E"/>
+        </Style>
+        <Style Selector="Button.mac-caption.close:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#BF4942"/>
+            <Setter Property="BorderBrush" Value="#99322D"/>
+        </Style>
+
+        <!-- Yellow Minimize Button -->
+        <Style Selector="Button.mac-caption.minimize">
+            <Setter Property="Background" Value="#FFBD2E"/>
+            <Setter Property="BorderBrush" Value="#DEA123"/>
+        </Style>
+        <Style Selector="Button.mac-caption.minimize /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#FFBD2E"/>
+            <Setter Property="BorderBrush" Value="#DEA123"/>
+        </Style>
+        <Style Selector="Button.mac-caption.minimize:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#BF8E22"/>
+            <Setter Property="BorderBrush" Value="#997017"/>
+        </Style>
+
+        <!-- Green Maximize Button -->
+        <Style Selector="Button.mac-caption.maximize">
+            <Setter Property="Background" Value="#27C93F"/>
+            <Setter Property="BorderBrush" Value="#1AAB29"/>
+        </Style>
+        <Style Selector="Button.mac-caption.maximize /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#27C93F"/>
+            <Setter Property="BorderBrush" Value="#1AAB29"/>
+        </Style>
+        <Style Selector="Button.mac-caption.maximize:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#1D9730"/>
+            <Setter Property="BorderBrush" Value="#147623"/>
+        </Style>
+
+        <!-- Inactive State: Muted Uniform Grey -->
+        <Style Selector="StackPanel.mac-traffic-lights.inactive Button.mac-caption">
+            <Setter Property="Background" Value="#4B4954"/>
+            <Setter Property="BorderBrush" Value="#3D3B45"/>
+        </Style>
+        <Style Selector="StackPanel.mac-traffic-lights.inactive Button.mac-caption /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#4B4954"/>
+            <Setter Property="BorderBrush" Value="#3D3B45"/>
+        </Style>
+
+        <!-- Glyphs in Buttons: hidden by default, visible on hover -->
+        <Style Selector="TextBlock.mac-glyph">
+            <Setter Property="Opacity" Value="0.0"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.12" Easing="LinearEasing"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <!-- When traffic lights panel is hovered, display all glyphs -->
+        <Style Selector="StackPanel.mac-traffic-lights:pointerover TextBlock.mac-glyph">
+            <Setter Property="Opacity" Value="0.85"/>
+        </Style>
+        <Style Selector="Button.mac-caption:pointerover TextBlock.mac-glyph">
+            <Setter Property="Opacity" Value="1.0"/>
+        </Style>
+
         <!-- Navigation Rail Buttons -->
         <Style Selector="Button.nav">
             <Setter Property="Width" Value="48"/>
