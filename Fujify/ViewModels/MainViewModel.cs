@@ -1224,13 +1224,19 @@ namespace Fujify.ViewModels
         {
             void Action()
             {
-                Preferences = new PreferencesViewModel(_settingsService, _licenseService, updateService: null, dialogService: _dialogService)
+                if (Preferences == null)
                 {
-                    CloseAction = ok =>
-                    {
-                        RefreshSettings();
-                        CloseModal();
-                    }
+                    Preferences = new PreferencesViewModel(_settingsService, _licenseService, updateService: null, dialogService: _dialogService);
+                }
+                else
+                {
+                    Preferences.RefreshFromSettings();
+                }
+
+                Preferences.CloseAction = ok =>
+                {
+                    RefreshSettings();
+                    CloseModal();
                 };
                 ModalTitle = "Settings";
                 ModalType = "Preferences";

@@ -792,7 +792,6 @@ namespace Fujify.ViewModels
                         LicenseMessageText = msg;
                         LicenseMessageColor = "#E74C3C";
                         HasLicenseMessage = true;
-                        await ShowResultDialogAsync("Google Sign-In Failed", msg, isSuccess: false);
                     }
                 }
                 finally
@@ -831,7 +830,6 @@ namespace Fujify.ViewModels
                         LicenseMessageText = msg;
                         LicenseMessageColor = "#F39C12";
                         HasLicenseMessage = true;
-                        await ShowResultDialogAsync("No Active License", msg, isSuccess: false);
                     }
                     else
                     {
@@ -839,7 +837,6 @@ namespace Fujify.ViewModels
                         LicenseMessageText = msg;
                         LicenseMessageColor = "#E74C3C";
                         HasLicenseMessage = true;
-                        await ShowResultDialogAsync("License Retrieval Failed", msg, isSuccess: false);
                     }
                 }
                 finally
@@ -855,7 +852,6 @@ namespace Fujify.ViewModels
                     LicenseMessageText = "Please enter both your account email and password.";
                     LicenseMessageColor = "#E74C3C";
                     HasLicenseMessage = true;
-                    await ShowResultDialogAsync("Sign-In Incomplete", "Please enter both your account email and password.", isSuccess: false);
                     return;
                 }
 
@@ -887,7 +883,6 @@ namespace Fujify.ViewModels
                     LicenseMessageText = msg;
                     LicenseMessageColor = "#E74C3C";
                     HasLicenseMessage = true;
-                    await ShowResultDialogAsync("Sign-In Failed", msg, isSuccess: false);
                 }
             });
 
@@ -906,7 +901,6 @@ namespace Fujify.ViewModels
                     LicenseMessageText = "Please enter your license key (e.g. FUJI-XXXX-XXXX-XXXX).";
                     LicenseMessageColor = "#E74C3C";
                     HasLicenseMessage = true;
-                    await ShowResultDialogAsync("License Key Required", "Please enter your license key (e.g. FUJI-XXXX-XXXX-XXXX).", isSuccess: false);
                     return;
                 }
 
@@ -934,7 +928,6 @@ namespace Fujify.ViewModels
                     LicenseMessageText = msg;
                     LicenseMessageColor = "#E74C3C";
                     HasLicenseMessage = true;
-                    await ShowResultDialogAsync("Activation Failed", msg, isSuccess: false);
                 }
             });
 
@@ -1041,6 +1034,37 @@ namespace Fujify.ViewModels
             App.ApplyTheme(_themeMode);
 
             CloseAction?.Invoke(true);
+        }
+
+        public void RefreshFromSettings()
+        {
+            var settings = _settingsService.Settings;
+            _checkForUpdatesOnStartup = settings.CheckForUpdatesOnStartup;
+            _language = LocalizationManager.NormalizeLanguageCode(settings.Language);
+            _themeMode = string.IsNullOrEmpty(settings.ThemeMode)
+                ? (settings.IsDarkTheme ? "Dark" : "Light")
+                : settings.ThemeMode;
+            _isDarkTheme = _themeMode != "Light";
+            _backupOriginalFile = settings.BackupOriginalFile;
+            _embedOriginalRaw = settings.EmbedOriginalRaw;
+            _skipThumbnailGeneration = settings.SkipThumbnailGeneration;
+            _autoOpenInLightroom = settings.AutoOpenInLightroom;
+            _losslessCompression = settings.LosslessCompression;
+            _appendSuffix = settings.AppendSuffix;
+            _suffix = string.IsNullOrWhiteSpace(settings.Suffix) ? "-fujified" : settings.Suffix;
+            _createSubfolder = settings.CreateSubfolder;
+            _subfolderUseOriginalName = settings.SubfolderUseOriginalName;
+            _subfolderSuffix = settings.SubfolderSuffix ?? "-fujified";
+            _subfolderCustomName = string.IsNullOrWhiteSpace(settings.SubfolderCustomName) ? "Fujified" : settings.SubfolderCustomName;
+            _autoOpenOutputFolder = settings.AutoOpenOutputFolder;
+            _isWindowsContextMenuEnabled = OperatingSystem.IsWindows() && _licenseService.IsPro &&
+                (WindowsContextMenuService.IsContextMenuRegistered() || settings.EnableWindowsContextMenu);
+
+            int saved = settings.MaxConcurrentConversions;
+            if (saved <= 0 || saved > TotalThreads) saved = DefaultConcurrency;
+            _maxConcurrentConversions = saved;
+
+            OnPropertyChanged(string.Empty);
         }
 
         private async Task InstallLightroomPresetsAsync()

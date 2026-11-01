@@ -279,7 +279,7 @@ namespace Fujify.Views
             var prefStack = this.FindControl<StackPanel>("PreferencesContentStack");
             if (prefStack != null)
             {
-                prefStack.Margin = new Avalonia.Thickness(16 + leftInset, 12, 16 + rightInset, _keyboardHeight > 0 ? 80 : 24);
+                prefStack.Margin = new Avalonia.Thickness(16 + leftInset, 12, 16 + rightInset, _keyboardHeight > 0 ? 120 : 24);
             }
 
             var prefScroll = this.FindControl<ScrollViewer>("PreferencesScrollViewer");
