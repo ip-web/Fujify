@@ -25,6 +25,7 @@ mono_crash.*
 [Rr]elease/
 [Rr]eleases/
 [Pp]ublish/
+publish-*/
 dist/
 build_assets/
 x64/
