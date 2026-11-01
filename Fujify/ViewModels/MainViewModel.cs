@@ -2736,8 +2736,9 @@ namespace Fujify.ViewModels
 
         private void ExecuteOpenWith(FileItem? item)
         {
-            if (item == null || string.IsNullOrWhiteSpace(item.FilePath)) return;
-            CrossPlatformLauncher.OpenWith(item.FilePath);
+            var targetItem = item ?? SelectedFile;
+            if (targetItem == null || string.IsNullOrWhiteSpace(targetItem.FilePath)) return;
+            CrossPlatformLauncher.OpenWith(targetItem.FilePath);
         }
 
         private void ExecuteResetStatus(object? param)

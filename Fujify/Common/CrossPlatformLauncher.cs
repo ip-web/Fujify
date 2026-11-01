@@ -21,6 +21,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Fujify.Common
 {
@@ -57,6 +58,34 @@ namespace Fujify.Common
         private const int SW_SHOW = 5;
         private const uint SEE_MASK_INVOKEIDLIST = 0x0000000C;
 
+        [DllImport("shell32.dll", EntryPoint = "SHOpenWithDialog", CharSet = CharSet.Unicode, PreserveSig = true)]
+        private static extern int SHOpenWithDialog(IntPtr hWndParent, ref OPENASINFO oOAI);
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        private struct OPENASINFO
+        {
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string cszFile;
+
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string? cszClass;
+
+            public OPENASINFOFLAGS oaifFlags;
+        }
+
+        [Flags]
+        private enum OPENASINFOFLAGS : uint
+        {
+            OAIF_ALLOW_REGISTRATION = 0x00000001,
+            OAIF_REGISTER_EXT       = 0x00000002,
+            OAIF_EXEC               = 0x00000004,
+            OAIF_FORCE_REGISTRATION = 0x00000008,
+            OAIF_HIDE_REGISTRATION  = 0x00000020,
+            OAIF_URLPROTOCOL        = 0x00000040,
+            OAIF_FILE_MOVED         = 0x00000080,
+            OAIF_IS_URI             = 0x00000100
+        }
+
         public static void OpenPath(string path)
         {
             try
@@ -87,12 +116,9 @@ namespace Fujify.Common
             {
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = "rundll32.exe",
-                        Arguments = $"shell32.dll,OpenAs_RunDLL \"{filePath}\"",
-                        UseShellExecute = true
-                    });
+                    if (!File.Exists(filePath)) return;
+                    string fullPath = Path.GetFullPath(filePath);
+                    OpenWithWindows(fullPath);
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
@@ -115,6 +141,55 @@ namespace Fujify.Common
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error launching Open With for {filePath}: {ex.Message}");
+            }
+        }
+
+        [System.Runtime.Versioning.SupportedOSPlatform("windows")]
+        private static void OpenWithWindows(string fullPath)
+        {
+            var thread = new Thread(() =>
+            {
+                try
+                {
+                    var oai = new OPENASINFO
+                    {
+                        cszFile = fullPath,
+                        cszClass = null,
+                        oaifFlags = OPENASINFOFLAGS.OAIF_EXEC | OPENASINFOFLAGS.OAIF_ALLOW_REGISTRATION
+                    };
+
+                    int hr = SHOpenWithDialog(IntPtr.Zero, ref oai);
+                    if (hr < 0)
+                    {
+                        Debug.WriteLine($"SHOpenWithDialog failed with HRESULT 0x{hr:X8}, trying fallback");
+                        TryRundll32Fallback(fullPath);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"SHOpenWithDialog error: {ex.Message}");
+                    TryRundll32Fallback(fullPath);
+                }
+            });
+            thread.SetApartmentState(ApartmentState.STA);
+            thread.IsBackground = true;
+            thread.Start();
+        }
+
+        private static void TryRundll32Fallback(string fullPath)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = "rundll32.exe",
+                    Arguments = $"shell32.dll,OpenAs_RunDLL \"{fullPath}\"",
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Fallback OpenAs_RunDLL failed: {ex.Message}");
             }
         }
 

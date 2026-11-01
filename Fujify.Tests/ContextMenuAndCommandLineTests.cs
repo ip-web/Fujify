@@ -100,6 +100,25 @@ namespace Fujify.Tests
 
             var ex2 = Record.Exception(() => CrossPlatformLauncher.OpenWith(""));
             Assert.Null(ex2);
+
+            var ex3 = Record.Exception(() => CrossPlatformLauncher.OpenWith(@"C:\nonexistent\photo.arw"));
+            Assert.Null(ex3);
+        }
+
+        [Fact]
+        public void MainViewModel_OpenWithCommand_ShouldExecuteWithoutException()
+        {
+            var settings = new MockSettingsService();
+            var vm = new ViewModels.MainViewModel(settingsService: settings);
+            var file = new Models.FileItem { FilePath = @"C:\nonexistent\test.arw" };
+            vm.Files.Add(file);
+            vm.SelectedFile = file;
+
+            var ex1 = Record.Exception(() => vm.OpenWithCommand.Execute(file));
+            Assert.Null(ex1);
+
+            var ex2 = Record.Exception(() => vm.OpenWithCommand.Execute(null));
+            Assert.Null(ex2);
         }
 
         private class MockSettingsService : ISettingsService
