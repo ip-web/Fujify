@@ -14,6 +14,19 @@ sealed class Program
     public static void Main(string[] args)
     {
         var parsed = CommandLineArgs.Parse(args);
+
+        // Headless Linux detection: running on Linux with no DISPLAY or WAYLAND_DISPLAY
+        bool isHeadlessLinux = OperatingSystem.IsLinux() &&
+            string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DISPLAY")) &&
+            string.IsNullOrEmpty(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY"));
+
+        if (parsed.IsCliMode || parsed.ShowHelp || parsed.ShowVersion || parsed.ListModels || parsed.ListSimulations || (isHeadlessLinux && parsed.Files.Count > 0))
+        {
+            int exitCode = CliRunner.Run(parsed);
+            Environment.Exit(exitCode);
+            return;
+        }
+
         string channel = parsed.IsQuickProcess ? SingleInstanceService.ChannelQuick : SingleInstanceService.ChannelMain;
 
         if (OperatingSystem.IsWindows())

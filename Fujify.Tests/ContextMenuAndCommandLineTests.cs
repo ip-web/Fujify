@@ -42,6 +42,69 @@ namespace Fujify.Tests
         }
 
         [Fact]
+        public void CommandLineArgs_CliOptions_ShouldParseProperly()
+        {
+            var parsed = CommandLineArgs.Parse(new[]
+            {
+                "-c",
+                "-o", "/path/to/output",
+                "-m", "Fujifilm X-T4",
+                "-s", "Classic Chrome",
+                "--no-backup",
+                "--embed-raw",
+                "--uncompressed",
+                "--quiet",
+                "sample1.arw",
+                "sample2.cr3"
+            });
+
+            Assert.True(parsed.IsCliMode);
+            Assert.Equal("/path/to/output", parsed.OutputDirectory);
+            Assert.Equal("Fujifilm X-T4", parsed.CameraModel);
+            Assert.Equal("Classic Chrome", parsed.FilmSimulation);
+            Assert.False(parsed.BackupOriginalFile);
+            Assert.True(parsed.EmbedOriginalRaw);
+            Assert.False(parsed.LosslessCompression);
+            Assert.True(parsed.Quiet);
+            Assert.Equal(2, parsed.Files.Count);
+
+            var helpParsed = CommandLineArgs.Parse(new[] { "--help" });
+            Assert.True(helpParsed.ShowHelp);
+            Assert.True(helpParsed.IsCliMode);
+
+            var verParsed = CommandLineArgs.Parse(new[] { "-v" });
+            Assert.True(verParsed.ShowVersion);
+
+            var listModelsParsed = CommandLineArgs.Parse(new[] { "--list-models" });
+            Assert.True(listModelsParsed.ListModels);
+
+            var listSimsParsed = CommandLineArgs.Parse(new[] { "--list-simulations" });
+            Assert.True(listSimsParsed.ListSimulations);
+        }
+
+        [Fact]
+        public void CliRunner_InformationalCommands_ShouldReturnZero()
+        {
+            Assert.Equal(0, CliRunner.Run(new CommandLineArgs { ShowHelp = true }));
+            Assert.Equal(0, CliRunner.Run(new CommandLineArgs { ShowVersion = true }));
+            Assert.Equal(0, CliRunner.Run(new CommandLineArgs { ListModels = true }));
+            Assert.Equal(0, CliRunner.Run(new CommandLineArgs { ListSimulations = true }));
+        }
+
+        [Fact]
+        public void CliRunner_EmptyFiles_ShouldReturnOne()
+        {
+            Assert.Equal(1, CliRunner.Run(new CommandLineArgs { IsCliMode = true }));
+        }
+
+        [Fact]
+        public void CliRunner_CollectFiles_ShouldFilterAndExpandCorrectly()
+        {
+            var files = CliRunner.CollectFiles(new[] { "test.txt", "nonexistent.arw", "" });
+            Assert.Empty(files);
+        }
+
+        [Fact]
         public void WindowsContextMenu_Registration_Lifecycle()
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
