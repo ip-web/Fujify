@@ -428,7 +428,7 @@
                             VerticalAlignment="Bottom"
                             HorizontalAlignment="Stretch"
                             Margin="0,40,0,0"
-                            MinHeight="480"
+                            MinHeight="320"
                             MaxHeight="680"
                             CornerRadius="22,22,0,0"
                             Background="{DynamicResource AppSolidBackgroundBrush}"

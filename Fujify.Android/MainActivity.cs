@@ -22,6 +22,7 @@ namespace Fujify.Android;
     MainLauncher = true,
     LaunchMode = LaunchMode.SingleTop,
     HardwareAccelerated = true,
+    WindowSoftInputMode = SoftInput.AdjustResize | SoftInput.StateHidden,
     ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize)]
 [IntentFilter(
     new[] { Intent.ActionSend },
@@ -58,6 +59,7 @@ public class MainActivity : AvaloniaMainActivity<App>
     {
         AdManager.Instance.PreInitialize(this);
         base.OnCreate(savedInstanceState);
+        Window?.SetSoftInputMode(SoftInput.AdjustResize | SoftInput.StateHidden);
         EnableHighRefreshRate();
 
         // Crash interceptor

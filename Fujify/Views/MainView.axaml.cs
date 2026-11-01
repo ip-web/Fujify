@@ -36,6 +36,8 @@ namespace Fujify.Views
         private Grid? _aboutPanel;
         private System.Threading.CancellationTokenSource? _prefPanelCts;
         private System.Threading.CancellationTokenSource? _aboutPanelCts;
+        private double _keyboardHeight = 0;
+        private Avalonia.Thickness _lastInsets = new Avalonia.Thickness(0, 47, 0, 24);
 
         public MainView()
         {
@@ -67,13 +69,51 @@ namespace Fujify.Views
                 {
                     var mgr = topLevel.InsetsManager;
                     mgr.DisplayEdgeToEdge = true;
-                    ApplySafeArea(mgr.SafeAreaPadding);
-                    mgr.SafeAreaChanged += (s, args) => ApplySafeArea(args.SafeAreaPadding);
+                    _lastInsets = mgr.SafeAreaPadding;
+                    ApplySafeArea(_lastInsets);
+                    mgr.SafeAreaChanged += (s, args) =>
+                    {
+                        _lastInsets = args.SafeAreaPadding;
+                        ApplySafeArea(_lastInsets);
+                    };
                 }
                 else
                 {
-                    ApplySafeArea(new Avalonia.Thickness(0, 47, 0, 24));
+                    _lastInsets = new Avalonia.Thickness(0, 47, 0, 24);
+                    ApplySafeArea(_lastInsets);
                 }
+
+                if (topLevel.InputPane != null)
+                {
+                    topLevel.InputPane.StateChanged += (s, args) =>
+                    {
+                        _keyboardHeight = args.EndRect.Height;
+                        ApplySafeArea(_lastInsets);
+
+                        if (args.NewState == Avalonia.Controls.Platform.InputPaneState.Open)
+                        {
+                            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                            {
+                                if (topLevel.FocusManager?.GetFocusedElement() is Control focusedControl)
+                                {
+                                    BringControlIntoView(focusedControl);
+                                }
+                            }, Avalonia.Threading.DispatcherPriority.Background);
+                        }
+                    };
+                }
+
+                AddHandler(InputElement.GotFocusEvent, (s, e) =>
+                {
+                    if (e.Source is Avalonia.Visual visual)
+                    {
+                        var target = visual.FindAncestorOfType<TextBox>() ?? (visual as Control);
+                        if (target != null)
+                        {
+                            BringControlIntoView(target);
+                        }
+                    }
+                }, RoutingStrategies.Bubble);
             }
 
             UpdateSlidePanels(animated: false);
@@ -184,6 +224,8 @@ namespace Fujify.Views
                 bottomInset += 50;
             }
 
+            double effectiveBottomInset = bottomInset + _keyboardHeight;
+
             var header = this.FindControl<Border>("HeaderBar");
             if (header != null)
             {
@@ -199,8 +241,15 @@ namespace Fujify.Views
             var mobileSheet = this.FindControl<Border>("MobileSidebarSheet");
             if (mobileSheet != null)
             {
-                mobileSheet.Margin = new Avalonia.Thickness(0, 40, 0, bottomInset);
+                mobileSheet.Margin = new Avalonia.Thickness(0, 40, 0, effectiveBottomInset);
                 mobileSheet.Padding = new Avalonia.Thickness(0);
+                mobileSheet.MinHeight = _keyboardHeight > 0 ? 160 : 320;
+            }
+
+            var mobileScroll = this.FindControl<ScrollViewer>("MobileSidebarScrollViewer");
+            if (mobileScroll != null)
+            {
+                mobileScroll.Padding = new Avalonia.Thickness(18, 14, 18, _keyboardHeight > 0 ? 60 : 16);
             }
 
             var phoneBottom = this.FindControl<Border>("PhoneBottomBar");
@@ -224,13 +273,13 @@ namespace Fujify.Views
             var prefRoot = this.FindControl<Grid>("PreferencesRootGrid");
             if (prefRoot != null)
             {
-                prefRoot.Margin = new Avalonia.Thickness(0, 0, 0, bottomInset);
+                prefRoot.Margin = new Avalonia.Thickness(0, 0, 0, effectiveBottomInset);
             }
 
             var prefStack = this.FindControl<StackPanel>("PreferencesContentStack");
             if (prefStack != null)
             {
-                prefStack.Margin = new Avalonia.Thickness(16 + leftInset, 12, 16 + rightInset, 24);
+                prefStack.Margin = new Avalonia.Thickness(16 + leftInset, 12, 16 + rightInset, _keyboardHeight > 0 ? 80 : 24);
             }
 
             var prefScroll = this.FindControl<ScrollViewer>("PreferencesScrollViewer");
@@ -248,7 +297,7 @@ namespace Fujify.Views
             var aboutRoot = this.FindControl<Grid>("AboutRootGrid");
             if (aboutRoot != null)
             {
-                aboutRoot.Margin = new Avalonia.Thickness(0, 0, 0, bottomInset);
+                aboutRoot.Margin = new Avalonia.Thickness(0, 0, 0, effectiveBottomInset);
             }
 
             var aboutStack = this.FindControl<StackPanel>("AboutContentStack");
@@ -268,6 +317,18 @@ namespace Fujify.Views
             {
                 modal.Margin = new Avalonia.Thickness(16 + leftInset, 16 + topInset, 16 + rightInset, 16 + bottomInset);
             }
+        }
+
+        private void BringControlIntoView(Control control)
+        {
+            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+            {
+                try
+                {
+                    control.BringIntoView();
+                }
+                catch { }
+            }, Avalonia.Threading.DispatcherPriority.Background);
         }
 
         private void UpdateSlidePanels(bool animated = true)
