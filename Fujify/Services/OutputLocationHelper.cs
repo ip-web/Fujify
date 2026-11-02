@@ -35,7 +35,7 @@ namespace Fujify.Services
             string sourceDir = Path.GetDirectoryName(sourceFilePath) ?? string.Empty;
             string baseDir = !string.IsNullOrEmpty(customOutputFolder) ? customOutputFolder : sourceDir;
 
-            if (!createSubfolder)
+            if (!createSubfolder || OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
             {
                 return baseDir;
             }

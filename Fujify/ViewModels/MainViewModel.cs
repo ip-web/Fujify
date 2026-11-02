@@ -313,6 +313,7 @@ namespace Fujify.ViewModels
         public bool CanOpenOutputFolder => !OperatingSystem.IsIOS() && !OperatingSystem.IsAndroid() && HasRecentlyConvertedFiles && (ModalTitle == "Processing completed" || IsBatchSummaryModal);
         public bool IsAndroid => OperatingSystem.IsAndroid();
         public bool IsMobileSubtitleVisible => !OperatingSystem.IsAndroid();
+        public bool IsSubfolderOptionSupported => !OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS();
         public LocalizationManager Loc => LocalizationManager.Instance;
 
         #region Properties
@@ -440,7 +441,7 @@ namespace Fujify.ViewModels
         {
             get
             {
-                if (CreateSubfolder)
+                if (IsSubfolderOptionSupported && CreateSubfolder)
                 {
                     string folderName = SubfolderUseOriginalName ? $"(original){SubfolderSuffix}" : SubfolderCustomName;
                     return LocalizationManager.TrFormat("SubfolderPrefix", folderName);
@@ -654,9 +655,10 @@ namespace Fujify.ViewModels
 
         public bool CreateSubfolder
         {
-            get => _settingsService.Settings.CreateSubfolder;
+            get => IsSubfolderOptionSupported && _settingsService.Settings.CreateSubfolder;
             set
             {
+                if (!IsSubfolderOptionSupported) return;
                 if (_settingsService.Settings.CreateSubfolder != value)
                 {
                     _settingsService.Settings.CreateSubfolder = value;
@@ -814,7 +816,7 @@ namespace Fujify.ViewModels
                 var parts = new List<string>();
                 if (CreateBackup) parts.Add("Backup");
                 if (AppendSuffix) parts.Add("Suffix");
-                if (CreateSubfolder) parts.Add("Subfolder");
+                if (IsSubfolderOptionSupported && CreateSubfolder) parts.Add("Subfolder");
                 if (AutoOpenOutputFolder) parts.Add("Open Folder");
                 if (IsOpenInLightroomSupported && AutoOpenInLightroom) parts.Add("Lightroom");
                 return parts.Count > 0 ? string.Join(" • ", parts) : "Default";
@@ -918,6 +920,7 @@ namespace Fujify.ViewModels
             OnPropertyChanged(nameof(Suffix));
             OnPropertyChanged(nameof(SuffixPreview));
             OnPropertyChanged(nameof(SuffixLabelContent));
+            OnPropertyChanged(nameof(IsSubfolderOptionSupported));
             OnPropertyChanged(nameof(CreateSubfolder));
             OnPropertyChanged(nameof(SubfolderUseOriginalName));
             OnPropertyChanged(nameof(SubfolderSuffix));

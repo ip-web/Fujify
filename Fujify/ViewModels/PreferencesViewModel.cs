@@ -192,9 +192,10 @@ namespace Fujify.ViewModels
 
         public bool CreateSubfolder
         {
-            get => _createSubfolder;
+            get => IsSubfolderOptionSupported && _createSubfolder;
             set
             {
+                if (!IsSubfolderOptionSupported) return;
                 if (SetProperty(ref _createSubfolder, value))
                 {
                     OnPropertyChanged(nameof(SubfolderPreview));
@@ -251,6 +252,8 @@ namespace Fujify.ViewModels
         }
 
         public bool IsOpenInLightroomSupported => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
+
+        public bool IsSubfolderOptionSupported => !OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS();
 
         public bool IsWindows => OperatingSystem.IsWindows();
 
@@ -1030,7 +1033,7 @@ namespace Fujify.ViewModels
             s.AutoOpenInLightroom = _autoOpenInLightroom;
             s.AppendSuffix = _appendSuffix;
             s.Suffix = string.IsNullOrWhiteSpace(_suffix) ? "-fujified" : _suffix.Trim();
-            s.CreateSubfolder = _createSubfolder;
+            s.CreateSubfolder = IsSubfolderOptionSupported && _createSubfolder;
             s.SubfolderUseOriginalName = _subfolderUseOriginalName;
             s.SubfolderSuffix = _subfolderSuffix;
             s.SubfolderCustomName = string.IsNullOrWhiteSpace(_subfolderCustomName) ? "Fujified" : _subfolderCustomName.Trim();

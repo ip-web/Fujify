@@ -591,50 +591,53 @@
                                                          CornerRadius="8" VerticalContentAlignment="Center"/>
                                             </Grid>
 
-                                            <!-- Subfolder Switch -->
-                                            <Grid ColumnDefinitions="*,Auto">
-                                                <TextBlock Grid.Column="0" Text="{loc:Loc SaveInSubfolder}" FontSize="11"
-                                                           Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
-                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateSubfolder}" OnContent="" OffContent=""/>
-                                            </Grid>
-
-                                            <!-- Expandable Subfolder Settings -->
-                                            <StackPanel Spacing="8" Margin="8,0,0,4" IsVisible="{Binding CreateSubfolder}">
-                                                <!-- Keep original folder name switch -->
+                                            <!-- Subfolder Option (Desktop Only) -->
+                                            <StackPanel Spacing="4" IsVisible="{Binding IsSubfolderOptionSupported}">
+                                                <!-- Subfolder Switch -->
                                                 <Grid ColumnDefinitions="*,Auto">
-                                                    <TextBlock Grid.Column="0" Text="{loc:Loc KeepOriginalFolderName}" FontSize="10"
-                                                               Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
-                                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding SubfolderUseOriginalName}" OnContent="" OffContent=""/>
+                                                    <TextBlock Grid.Column="0" Text="{loc:Loc SaveInSubfolder}" FontSize="11"
+                                                               Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateSubfolder}" OnContent="" OffContent=""/>
                                                 </Grid>
 
-                                                <!-- Dir suffix (when using original name) -->
-                                                <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding SubfolderUseOriginalName}">
-                                                    <TextBlock Grid.Column="0" Text="{loc:Loc DirSuffix}" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
-                                                               Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                                                    <TextBox Grid.Column="1" Text="{Binding SubfolderSuffix}"
-                                                             Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                             Foreground="{DynamicResource AppTextPrimaryBrush}"
-                                                             BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                             Watermark="_fujified" FontSize="10" Height="26"
-                                                             CornerRadius="7" VerticalContentAlignment="Center"/>
-                                                </Grid>
+                                                <!-- Expandable Subfolder Settings -->
+                                                <StackPanel Spacing="8" Margin="8,0,0,4" IsVisible="{Binding CreateSubfolder}">
+                                                    <!-- Keep original folder name switch -->
+                                                    <Grid ColumnDefinitions="*,Auto">
+                                                        <TextBlock Grid.Column="0" Text="{loc:Loc KeepOriginalFolderName}" FontSize="10"
+                                                                   Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
+                                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding SubfolderUseOriginalName}" OnContent="" OffContent=""/>
+                                                    </Grid>
 
-                                                <!-- Custom folder name (when NOT using original name) -->
-                                                <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
-                                                    <TextBlock Grid.Column="0" Text="{loc:Loc FolderName}" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
-                                                               Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                                                    <TextBox Grid.Column="1" Text="{Binding SubfolderCustomName}"
-                                                             Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                             Foreground="{DynamicResource AppTextPrimaryBrush}"
-                                                             BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                             Watermark="fujified" FontSize="10" Height="26"
-                                                             CornerRadius="7" VerticalContentAlignment="Center"/>
-                                                </Grid>
+                                                    <!-- Dir suffix (when using original name) -->
+                                                    <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding SubfolderUseOriginalName}">
+                                                        <TextBlock Grid.Column="0" Text="{loc:Loc DirSuffix}" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
+                                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                                        <TextBox Grid.Column="1" Text="{Binding SubfolderSuffix}"
+                                                                 Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                                 Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                                 BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
+                                                                 Watermark="_fujified" FontSize="10" Height="26"
+                                                                 CornerRadius="7" VerticalContentAlignment="Center"/>
+                                                    </Grid>
 
-                                                <!-- Subfolder Preview -->
-                                                <TextBlock Text="{Binding SubfolderPreview, StringFormat='Preview: {0}'}"
-                                                           FontSize="9" Foreground="{DynamicResource AppAccentLightBrush}"
-                                                           TextTrimming="CharacterEllipsis"/>
+                                                    <!-- Custom folder name (when NOT using original name) -->
+                                                    <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
+                                                        <TextBlock Grid.Column="0" Text="{loc:Loc FolderName}" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
+                                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                                        <TextBox Grid.Column="1" Text="{Binding SubfolderCustomName}"
+                                                                 Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                                 Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                                 BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
+                                                                 Watermark="fujified" FontSize="10" Height="26"
+                                                                 CornerRadius="7" VerticalContentAlignment="Center"/>
+                                                    </Grid>
+
+                                                    <!-- Subfolder Preview -->
+                                                    <TextBlock Text="{Binding SubfolderPreview, StringFormat='Preview: {0}'}"
+                                                               FontSize="9" Foreground="{DynamicResource AppAccentLightBrush}"
+                                                               TextTrimming="CharacterEllipsis"/>
+                                                </StackPanel>
                                             </StackPanel>
 
                                             <!-- Open Folder When Done Switch -->
@@ -1499,50 +1502,53 @@
                                                                  CornerRadius="7" VerticalContentAlignment="Center"/>
                                                     </Grid>
 
-                                                    <!-- Subfolder Switch -->
-                                                    <Grid ColumnDefinitions="*,Auto">
-                                                        <TextBlock Grid.Column="0" Text="{loc:Loc SaveInSubfolder}" FontSize="11"
-                                                                   Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
-                                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateSubfolder}" OnContent="" OffContent=""/>
-                                                    </Grid>
-
-                                                    <!-- Expandable Subfolder Settings -->
-                                                    <StackPanel Spacing="6" Margin="8,0,0,2" IsVisible="{Binding CreateSubfolder}">
-                                                        <!-- Keep original folder name switch -->
+                                                    <!-- Subfolder Option (Desktop Only) -->
+                                                    <StackPanel Spacing="4" IsVisible="{Binding IsSubfolderOptionSupported}">
+                                                        <!-- Subfolder Switch -->
                                                         <Grid ColumnDefinitions="*,Auto">
-                                                            <TextBlock Grid.Column="0" Text="{loc:Loc KeepOriginalFolderName}" FontSize="10"
-                                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
-                                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding SubfolderUseOriginalName}" OnContent="" OffContent=""/>
+                                                            <TextBlock Grid.Column="0" Text="{loc:Loc SaveInSubfolder}" FontSize="11"
+                                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateSubfolder}" OnContent="" OffContent=""/>
                                                         </Grid>
 
-                                                        <!-- Dir suffix (when using original name) -->
-                                                        <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding SubfolderUseOriginalName}">
-                                                            <TextBlock Grid.Column="0" Text="{loc:Loc DirSuffix}" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
-                                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                                                            <TextBox Grid.Column="1" Text="{Binding SubfolderSuffix}"
-                                                                     Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                                     Foreground="{DynamicResource AppTextPrimaryBrush}"
-                                                                     BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                                     Watermark="_fujified" FontSize="10" Height="24"
-                                                                     CornerRadius="6" VerticalContentAlignment="Center"/>
-                                                        </Grid>
+                                                        <!-- Expandable Subfolder Settings -->
+                                                        <StackPanel Spacing="6" Margin="8,0,0,2" IsVisible="{Binding CreateSubfolder}">
+                                                            <!-- Keep original folder name switch -->
+                                                            <Grid ColumnDefinitions="*,Auto">
+                                                                <TextBlock Grid.Column="0" Text="{loc:Loc KeepOriginalFolderName}" FontSize="10"
+                                                                           Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
+                                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding SubfolderUseOriginalName}" OnContent="" OffContent=""/>
+                                                            </Grid>
 
-                                                        <!-- Custom folder name (when NOT using original name) -->
-                                                        <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
-                                                            <TextBlock Grid.Column="0" Text="{loc:Loc FolderName}" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
-                                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                                                            <TextBox Grid.Column="1" Text="{Binding SubfolderCustomName}"
-                                                                     Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                                     Foreground="{DynamicResource AppTextPrimaryBrush}"
-                                                                     BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                                     Watermark="fujified" FontSize="10" Height="24"
-                                                                     CornerRadius="6" VerticalContentAlignment="Center"/>
-                                                        </Grid>
+                                                            <!-- Dir suffix (when using original name) -->
+                                                            <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding SubfolderUseOriginalName}">
+                                                                <TextBlock Grid.Column="0" Text="{loc:Loc DirSuffix}" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
+                                                                           Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                                                <TextBox Grid.Column="1" Text="{Binding SubfolderSuffix}"
+                                                                         Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                                         Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                                         BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
+                                                                         Watermark="_fujified" FontSize="10" Height="24"
+                                                                         CornerRadius="6" VerticalContentAlignment="Center"/>
+                                                            </Grid>
 
-                                                        <!-- Subfolder Preview -->
-                                                        <TextBlock Text="{Binding SubfolderPreview, StringFormat='Preview: {0}'}"
-                                                                   FontSize="9" Foreground="{DynamicResource AppAccentLightBrush}"
-                                                                   TextTrimming="CharacterEllipsis"/>
+                                                            <!-- Custom folder name (when NOT using original name) -->
+                                                            <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
+                                                                <TextBlock Grid.Column="0" Text="{loc:Loc FolderName}" VerticalAlignment="Center" FontSize="10" Margin="0,0,6,0"
+                                                                           Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                                                <TextBox Grid.Column="1" Text="{Binding SubfolderCustomName}"
+                                                                         Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                                         Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                                         BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
+                                                                         Watermark="fujified" FontSize="10" Height="24"
+                                                                         CornerRadius="6" VerticalContentAlignment="Center"/>
+                                                            </Grid>
+
+                                                            <!-- Subfolder Preview -->
+                                                            <TextBlock Text="{Binding SubfolderPreview, StringFormat='Preview: {0}'}"
+                                                                       FontSize="9" Foreground="{DynamicResource AppAccentLightBrush}"
+                                                                       TextTrimming="CharacterEllipsis"/>
+                                                        </StackPanel>
                                                     </StackPanel>
 
                                                     <!-- Open Folder When Done Switch -->
@@ -1909,52 +1915,54 @@
                                                Foreground="{DynamicResource AppAccentLightBrush}"
                                                IsVisible="{Binding AppendSuffix}" Margin="0,-4,0,2" TextWrapping="Wrap"/>
 
-                                    <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
+                                    <!-- Subfolder Option (Desktop Only) -->
+                                    <StackPanel Spacing="12" IsVisible="{Binding IsSubfolderOptionSupported}">
+                                        <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
 
-                                    <!-- Subfolder Option -->
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
-                                            <TextBlock Text="{loc:Loc SaveConvertedPhotosInSubfolder}" FontWeight="SemiBold" FontSize="12"
-                                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                            <TextBlock Text="{loc:Loc SaveSubfolderDesc}" FontSize="11"
-                                                       Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
-                                        </StackPanel>
-                                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateSubfolder}" OnContent="" OffContent=""/>
-                                    </Grid>
-
-                                    <StackPanel Spacing="8" Margin="0,4,0,2" IsVisible="{Binding CreateSubfolder}">
                                         <Grid ColumnDefinitions="*,Auto">
                                             <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
-                                                <TextBlock Text="{loc:Loc KeepOriginalDirectoryName}" FontSize="11" FontWeight="SemiBold"
+                                                <TextBlock Text="{loc:Loc SaveConvertedPhotosInSubfolder}" FontWeight="SemiBold" FontSize="12"
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                                <TextBlock Text="{loc:Loc KeepOriginalDirectoryNameDesc}" FontSize="10.5"
+                                                <TextBlock Text="{loc:Loc SaveSubfolderDesc}" FontSize="11"
                                                            Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                             </StackPanel>
-                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding SubfolderUseOriginalName}" OnContent="" OffContent=""/>
+                                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateSubfolder}" OnContent="" OffContent=""/>
                                         </Grid>
 
-                                        <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding SubfolderUseOriginalName}">
-                                            <TextBlock Grid.Column="0" Text="{loc:Loc DirectorySuffixLabel}" VerticalAlignment="Center" FontSize="11" Margin="0,0,10,0"
-                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                                            <TextBox Grid.Column="1" Text="{Binding SubfolderSuffix}"
-                                                     Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                     Foreground="{DynamicResource AppTextPrimaryBrush}"
-                                                     BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                     Watermark="-fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
-                                        </Grid>
+                                        <StackPanel Spacing="8" Margin="0,4,0,2" IsVisible="{Binding CreateSubfolder}">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                                    <TextBlock Text="{loc:Loc KeepOriginalDirectoryName}" FontSize="11" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                                    <TextBlock Text="{loc:Loc KeepOriginalDirectoryNameDesc}" FontSize="10.5"
+                                                               Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                                <ToggleSwitch Grid.Column="1" IsChecked="{Binding SubfolderUseOriginalName}" OnContent="" OffContent=""/>
+                                            </Grid>
 
-                                        <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
-                                            <TextBlock Grid.Column="0" Text="{loc:Loc SubfolderNameLabel}" VerticalAlignment="Center" FontSize="11" Margin="0,0,10,0"
-                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                                            <TextBox Grid.Column="1" Text="{Binding SubfolderCustomName}"
-                                                     Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                     Foreground="{DynamicResource AppTextPrimaryBrush}"
-                                                     BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                     Watermark="Fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
-                                        </Grid>
+                                            <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding SubfolderUseOriginalName}">
+                                                <TextBlock Grid.Column="0" Text="{loc:Loc DirectorySuffixLabel}" VerticalAlignment="Center" FontSize="11" Margin="0,0,10,0"
+                                                           Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                                <TextBox Grid.Column="1" Text="{Binding SubfolderSuffix}"
+                                                         Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                         Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                         BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
+                                                         Watermark="-fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                            </Grid>
 
-                                        <TextBlock Text="{Binding SubfolderPreview, StringFormat='Example: {0}'}" FontSize="11"
-                                                   Foreground="{DynamicResource AppAccentLightBrush}" Margin="0,0,0,2" TextWrapping="Wrap"/>
+                                            <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
+                                                <TextBlock Grid.Column="0" Text="{loc:Loc SubfolderNameLabel}" VerticalAlignment="Center" FontSize="11" Margin="0,0,10,0"
+                                                           Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                                <TextBox Grid.Column="1" Text="{Binding SubfolderCustomName}"
+                                                         Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                         Foreground="{DynamicResource AppTextPrimaryBrush}"
+                                                         BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
+                                                         Watermark="Fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                            </Grid>
+
+                                            <TextBlock Text="{Binding SubfolderPreview, StringFormat='Example: {0}'}" FontSize="11"
+                                                       Foreground="{DynamicResource AppAccentLightBrush}" Margin="0,0,0,2" TextWrapping="Wrap"/>
+                                        </StackPanel>
                                     </StackPanel>
 
                                     <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
