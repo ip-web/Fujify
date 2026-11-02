@@ -2181,6 +2181,10 @@
                                             <!-- Email and Password -->
                                             <TextBox Text="{Binding AccountEmailInput, Mode=TwoWay}" Watermark="{loc:Loc AccountEmailWatermark}" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center"/>
                                             <TextBox Text="{Binding AccountPasswordInput, Mode=TwoWay}" PasswordChar="●" Watermark="{loc:Loc AccountPasswordWatermark}" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center"/>
+                                            <Button Content="{loc:Loc ForgotPassword}" Command="{Binding ForgotPasswordCommand}"
+                                                    Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand"
+                                                    Foreground="{DynamicResource AppAccentBrush}" FontSize="11" HorizontalAlignment="Right"
+                                                    Margin="0,0,0,2"/>
                                             <Button Content="{loc:Loc SignInAndSyncLicense}" Command="{Binding AccountLoginCommand}" Classes="primary" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Height="38" MinHeight="38" CornerRadius="19" Padding="14,0" FontSize="12" FontWeight="SemiBold" VerticalContentAlignment="Center" Margin="0,4,0,2"/>
                                         </StackPanel>
 

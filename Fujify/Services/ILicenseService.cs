@@ -86,6 +86,7 @@ namespace Fujify.Services
         void SyncFromSettings();
         Task<LicenseActivationResult> ActivateLicenseKeyAsync(string licenseKey);
         Task<LicenseActivationResult> LoginWithAccountAsync(string email, string password);
+        Task<(bool Success, string Message)> RequestPasswordResetAsync(string email);
         Task<LicenseActivationResult> LoginWithGoogleOAuthAsync(Action<string>? statusCallback = null, CancellationToken cancellationToken = default);
         Task<LicenseActivationResult> LoginWithGoogleIdTokenAsync(string googleIdToken);
         Task<LicenseActivationResult> RetrieveLicenseFromAccountAsync();

@@ -634,6 +634,7 @@ namespace Fujify.ViewModels
         public ICommand DeactivateLicenseCommand { get; }
         public ICommand CheckForUpdatesCommand { get; }
         public ICommand AccountLoginCommand { get; }
+        public ICommand ForgotPasswordCommand { get; }
         public ICommand LogoutAccountCommand { get; }
         public ICommand LoginWithGoogleCommand { get; }
         public ICommand RetrieveLicenseCommand { get; }
@@ -884,6 +885,26 @@ namespace Fujify.ViewModels
                     LicenseMessageColor = "#E74C3C";
                     HasLicenseMessage = true;
                 }
+            });
+
+            ForgotPasswordCommand = new AsyncRelayCommand(async () =>
+            {
+                if (string.IsNullOrWhiteSpace(AccountEmailInput))
+                {
+                    LicenseMessageText = "Please enter your account email above first.";
+                    LicenseMessageColor = "#F39C12";
+                    HasLicenseMessage = true;
+                    return;
+                }
+
+                LicenseMessageText = "Sending password reset link...";
+                LicenseMessageColor = "#A0A0AC";
+                HasLicenseMessage = true;
+
+                var (success, msg) = await _licenseService.RequestPasswordResetAsync(AccountEmailInput.Trim());
+                LicenseMessageText = success ? $"✔ {msg}" : msg;
+                LicenseMessageColor = success ? "#01D701" : "#E74C3C";
+                HasLicenseMessage = true;
             });
 
             LogoutAccountCommand = new AsyncRelayCommand(async () =>

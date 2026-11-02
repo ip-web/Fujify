@@ -32,6 +32,7 @@ namespace Fujify.Tests
             public void SyncFromSettings() { }
             public Task<LicenseActivationResult> ActivateLicenseKeyAsync(string licenseKey) => Task.FromResult(new LicenseActivationResult(true));
             public Task<LicenseActivationResult> LoginWithAccountAsync(string email, string password) => Task.FromResult(new LicenseActivationResult(true));
+            public Task<(bool Success, string Message)> RequestPasswordResetAsync(string email) => Task.FromResult((true, "Reset link sent"));
             public Task<LicenseActivationResult> LoginWithGoogleOAuthAsync(Action<string>? statusCallback = null, CancellationToken cancellationToken = default) => Task.FromResult(new LicenseActivationResult(true));
             public Task<LicenseActivationResult> LoginWithGoogleIdTokenAsync(string googleIdToken) => Task.FromResult(new LicenseActivationResult(true));
             public Task<LicenseActivationResult> RetrieveLicenseFromAccountAsync() => Task.FromResult(new LicenseActivationResult(true));

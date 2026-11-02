@@ -338,6 +338,56 @@ namespace Fujify.Services
             }
         }
 
+        public async Task<(bool Success, string Message)> RequestPasswordResetAsync(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return (false, "Please provide your account email.");
+            }
+
+            try
+            {
+                string url = $"{GetApiBaseUrl()}/auth/forgot-password";
+                using var request = new HttpRequestMessage(HttpMethod.Post, url);
+                var payload = new { email = email.Trim() };
+                request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+                using var response = await _httpClient.SendAsync(request);
+                string responseJson = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorMsg = ParseApiErrorMessage(responseJson) ?? "Could not send password reset email. Please verify the email address.";
+                    return (false, errorMsg);
+                }
+
+                string message = "Password reset link sent! Please check your email inbox.";
+                try
+                {
+                    using var doc = JsonDocument.Parse(responseJson);
+                    if (doc.RootElement.TryGetProperty("message", out var msgEl))
+                    {
+                        string? parsed = msgEl.GetString();
+                        if (!string.IsNullOrWhiteSpace(parsed))
+                        {
+                            message = parsed;
+                        }
+                    }
+                }
+                catch
+                {
+                    // Fall back to default success message
+                }
+
+                return (true, message);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[LicenseService] Forgot password error: {ex.Message}");
+                return (false, $"Connection error: {ex.Message}");
+            }
+        }
+
         public async Task<LicenseActivationResult> LoginWithGoogleOAuthAsync(Action<string>? statusCallback = null, CancellationToken cancellationToken = default)
         {
             byte[] verifierBytes = new byte[32];

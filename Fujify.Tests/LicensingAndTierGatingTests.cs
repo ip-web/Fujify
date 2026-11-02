@@ -915,5 +915,82 @@ namespace Fujify.Tests
             Assert.NotNull(mainVm.OpenGitHubCommand);
             Assert.NotNull(mainVm.OpenReleasesCommand);
         }
+
+        [Fact]
+        public async Task PreferencesViewModel_ForgotPasswordCommand_EmptyEmail_ShowsWarning()
+        {
+            var settings = new MockSettingsService();
+            var service = new LicenseService(settings);
+            var updateService = new UpdateService(settings);
+            var presetService = new LightroomPresetService(service);
+            var vm = new PreferencesViewModel(settings, service, updateService, lightroomPresetService: presetService);
+
+            vm.AccountEmailInput = "";
+            vm.ForgotPasswordCommand.Execute(null);
+
+            await Task.Delay(50);
+
+            Assert.True(vm.HasLicenseMessage);
+            Assert.Contains("Please enter your account email", vm.LicenseMessageText);
+            Assert.Equal("#F39C12", vm.LicenseMessageColor);
+        }
+
+        [Fact]
+        public async Task PreferencesViewModel_ForgotPasswordCommand_CallsServiceAndShowsFeedback()
+        {
+            var settings = new MockSettingsService();
+            var handler = new MockHttpMessageHandler(req =>
+            {
+                if (req.RequestUri!.ToString().Contains("/auth/forgot-password"))
+                {
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent("{\"success\":true,\"message\":\"Password reset link sent!\"}")
+                    };
+                }
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            });
+            var httpClient = new HttpClient(handler);
+            var service = new LicenseService(settings, httpClient);
+            var updateService = new UpdateService(settings);
+            var presetService = new LightroomPresetService(service);
+            var vm = new PreferencesViewModel(settings, service, updateService, lightroomPresetService: presetService);
+
+            vm.AccountEmailInput = "user@test.com";
+            vm.ForgotPasswordCommand.Execute(null);
+
+            await Task.Delay(50);
+
+            Assert.True(vm.HasLicenseMessage);
+            Assert.Contains("Password reset link sent", vm.LicenseMessageText);
+            Assert.Equal("#01D701", vm.LicenseMessageColor);
+        }
+
+        [Fact]
+        public async Task PreferencesViewModel_ForgotPasswordCommand_Failure_ShowsErrorMessage()
+        {
+            var settings = new MockSettingsService();
+            var handler = new MockHttpMessageHandler(req =>
+            {
+                return new HttpResponseMessage(HttpStatusCode.NotFound)
+                {
+                    Content = new StringContent("{\"code\":\"user_not_found\",\"message\":\"No account found with this email address.\"}")
+                };
+            });
+            var httpClient = new HttpClient(handler);
+            var service = new LicenseService(settings, httpClient);
+            var updateService = new UpdateService(settings);
+            var presetService = new LightroomPresetService(service);
+            var vm = new PreferencesViewModel(settings, service, updateService, lightroomPresetService: presetService);
+
+            vm.AccountEmailInput = "unknown@test.com";
+            vm.ForgotPasswordCommand.Execute(null);
+
+            await Task.Delay(50);
+
+            Assert.True(vm.HasLicenseMessage);
+            Assert.Contains("No account found", vm.LicenseMessageText);
+            Assert.Equal("#E74C3C", vm.LicenseMessageColor);
+        }
     }
 }

@@ -483,7 +483,13 @@
                                             <TextBox Grid.Column="0" Text="{Binding AccountEmailInput, Mode=TwoWay}" Watermark="{loc:Loc AccountEmailWatermark}" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center" Margin="0,0,6,0"/>
                                             <TextBox Grid.Column="1" Text="{Binding AccountPasswordInput, Mode=TwoWay}" PasswordChar="●" Watermark="{loc:Loc AccountPasswordWatermark}" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center" Margin="6,0,0,0"/>
                                         </Grid>
-                                        <Button Content="{loc:Loc SignInAndSyncLicense}" Command="{Binding AccountLoginCommand}" Classes="primary" HorizontalAlignment="Right" Height="32" Padding="16,0" CornerRadius="16" VerticalContentAlignment="Center"/>
+                                        <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
+                                            <Button Grid.Column="0" Content="{loc:Loc ForgotPassword}" Command="{Binding ForgotPasswordCommand}"
+                                                    Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand"
+                                                    Foreground="{DynamicResource AppAccentBrush}" FontSize="11" HorizontalAlignment="Left"
+                                                    VerticalAlignment="Center"/>
+                                            <Button Grid.Column="1" Content="{loc:Loc SignInAndSyncLicense}" Command="{Binding AccountLoginCommand}" Classes="primary" HorizontalAlignment="Right" Height="32" Padding="16,0" CornerRadius="16" VerticalContentAlignment="Center"/>
+                                        </Grid>
                                     </StackPanel>
 
                                     <!-- Option B: Direct License Key Input -->
