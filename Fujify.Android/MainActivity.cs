@@ -690,6 +690,13 @@ public class MainActivity : AvaloniaMainActivity<App>
             return;
         }
 
+        // 0. If multi-selection mode is active, exit multi-selection mode without closing the app!
+        if (vm.IsMultiSelectMode)
+        {
+            vm.ExitMultiSelectMode();
+            return;
+        }
+
         // 1. If Preferences modal (Settings) or About modal is open, close it without closing the app!
         if (vm.IsPreferencesModal || vm.IsAboutModal)
         {

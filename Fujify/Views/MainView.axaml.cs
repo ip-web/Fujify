@@ -19,11 +19,13 @@
 
 using System;
 using System.Linq;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Transformation;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Fujify.Models;
 using Fujify.ViewModels;
@@ -552,11 +554,56 @@ namespace Fujify.Views
             }
         }
 
+        private DispatcherTimer? _longPressTimer;
+        private Point _longPressStartPoint;
+        private FileItem? _longPressTargetItem;
+        private bool _isLongPressHandled;
+
+        private void StartLongPressTracking(FileItem item, PointerPressedEventArgs e)
+        {
+            _longPressTargetItem = item;
+            _longPressStartPoint = e.GetPosition(this);
+            _isLongPressHandled = false;
+
+            if (_longPressTimer == null)
+            {
+                _longPressTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(450) };
+                _longPressTimer.Tick += (s, ev) =>
+                {
+                    _longPressTimer.Stop();
+                    if (_longPressTargetItem != null && DataContext is MainViewModel vm)
+                    {
+                        _isLongPressHandled = true;
+                        vm.EnterMultiSelectMode(_longPressTargetItem);
+                    }
+                };
+            }
+            else
+            {
+                _longPressTimer.Stop();
+            }
+            _longPressTimer.Start();
+        }
+
+        private void StopLongPressTracking()
+        {
+            _longPressTimer?.Stop();
+            _longPressTargetItem = null;
+        }
+
         private void GridItem_PointerPressed(object? sender, PointerPressedEventArgs e)
         {
             if (sender is Control control && control.DataContext is FileItem item && DataContext is MainViewModel vm)
             {
+                if (vm.IsMultiSelectMode)
+                {
+                    vm.ToggleFileSelection(item);
+                    e.Handled = true;
+                    return;
+                }
+
                 vm.SelectedFile = item;
+                StartLongPressTracking(item, e);
 
                 if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
                 {
@@ -577,14 +624,20 @@ namespace Fujify.Views
 
         private void GridItem_DoubleTapped(object? sender, TappedEventArgs e)
         {
-            if (sender is Control control && control.DataContext is FileItem item && DataContext is MainViewModel vm)
+            if (DataContext is MainViewModel vm && vm.IsMultiSelectMode)
             {
-                vm.SelectedFile = item;
-                vm.OpenFileCommand.Execute(item);
+                e.Handled = true;
+                return;
             }
-            else if (DataContext is MainViewModel vm2 && vm2.SelectedFile != null)
+
+            if (sender is Control control && control.DataContext is FileItem item && DataContext is MainViewModel vm2)
             {
-                vm2.OpenFileCommand.Execute(vm2.SelectedFile);
+                vm2.SelectedFile = item;
+                vm2.OpenFileCommand.Execute(item);
+            }
+            else if (DataContext is MainViewModel vm3 && vm3.SelectedFile != null)
+            {
+                vm3.OpenFileCommand.Execute(vm3.SelectedFile);
             }
         }
 
@@ -592,20 +645,62 @@ namespace Fujify.Views
         {
             if (sender is Control control && control.DataContext is FileItem item && DataContext is MainViewModel vm)
             {
+                if (vm.IsMultiSelectMode)
+                {
+                    vm.ToggleFileSelection(item);
+                    e.Handled = true;
+                    return;
+                }
+
                 vm.SelectedFile = item;
+                StartLongPressTracking(item, e);
             }
+        }
+
+        private void MobileCard_PointerMoved(object? sender, PointerEventArgs e)
+        {
+            if (_longPressTimer?.IsEnabled == true)
+            {
+                var pos = e.GetPosition(this);
+                var diff = pos - _longPressStartPoint;
+                if (Math.Abs(diff.X) > 12 || Math.Abs(diff.Y) > 12)
+                {
+                    StopLongPressTracking();
+                }
+            }
+        }
+
+        private void MobileCard_PointerReleased(object? sender, PointerReleasedEventArgs e)
+        {
+            StopLongPressTracking();
+            if (_isLongPressHandled)
+            {
+                _isLongPressHandled = false;
+                e.Handled = true;
+            }
+        }
+
+        private void MobileCard_PointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
+        {
+            StopLongPressTracking();
         }
 
         private void MobileCard_DoubleTapped(object? sender, TappedEventArgs e)
         {
-            if (sender is Control control && control.DataContext is FileItem item && DataContext is MainViewModel vm)
+            if (DataContext is MainViewModel vm && vm.IsMultiSelectMode)
             {
-                vm.SelectedFile = item;
-                vm.OpenFileCommand.Execute(item);
+                e.Handled = true;
+                return;
             }
-            else if (DataContext is MainViewModel vm2 && vm2.SelectedFile != null)
+
+            if (sender is Control control && control.DataContext is FileItem item && DataContext is MainViewModel vm2)
             {
-                vm2.OpenFileCommand.Execute(vm2.SelectedFile);
+                vm2.SelectedFile = item;
+                vm2.OpenFileCommand.Execute(item);
+            }
+            else if (DataContext is MainViewModel vm3 && vm3.SelectedFile != null)
+            {
+                vm3.OpenFileCommand.Execute(vm3.SelectedFile);
             }
         }
 

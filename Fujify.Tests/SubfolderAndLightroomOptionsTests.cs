@@ -254,25 +254,15 @@ namespace Fujify.Tests
         }
 
         [Fact]
-        public void SubfolderOption_IsHiddenOnMobilePlatforms()
+        public void SubfolderOption_IsSupportedAcrossPlatforms()
         {
-            bool isDesktop = !OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS();
-
             var settingsService = new FakeSettingsService();
             var licenseService = new LicenseService(settingsService);
             var prefs = new PreferencesViewModel(settingsService, licenseService);
             var mainVm = new MainViewModel(settingsService: settingsService, licenseService: licenseService);
 
-            Assert.Equal(isDesktop, prefs.IsSubfolderOptionSupported);
-            Assert.Equal(isDesktop, mainVm.IsSubfolderOptionSupported);
-
-            if (!isDesktop)
-            {
-                Assert.False(prefs.IsSubfolderOptionSupported);
-                Assert.False(mainVm.IsSubfolderOptionSupported);
-                Assert.False(prefs.CreateSubfolder);
-                Assert.False(mainVm.CreateSubfolder);
-            }
+            Assert.True(prefs.IsSubfolderOptionSupported);
+            Assert.True(mainVm.IsSubfolderOptionSupported);
         }
 
         [Fact]

@@ -201,6 +201,12 @@ namespace Fujify.ViewModels
             ToggleQueueFabMenuCommand = new RelayCommand(() => IsQueueFabMenuOpen = !IsQueueFabMenuOpen);
             CloseQueueFabMenuCommand = new RelayCommand(() => IsQueueFabMenuOpen = false);
 
+            EnterMultiSelectModeCommand = new RelayCommand<FileItem>(item => EnterMultiSelectMode(item));
+            ExitMultiSelectModeCommand = new RelayCommand(ExitMultiSelectMode);
+            ToggleSelectAllCommand = new RelayCommand(ToggleSelectAll);
+            DeleteSelectedMultiSelectCommand = new RelayCommand(DeleteSelectedMultiSelect);
+            ToggleFileSelectionCommand = new RelayCommand<FileItem>(item => ToggleFileSelection(item));
+
             RemoveFileCommand = new RelayCommand<object>(param =>
             {
                 if (param is System.Collections.IList list && list.Count > 0)
@@ -313,7 +319,7 @@ namespace Fujify.ViewModels
         public bool CanOpenOutputFolder => !OperatingSystem.IsIOS() && !OperatingSystem.IsAndroid() && HasRecentlyConvertedFiles && (ModalTitle == "Processing completed" || IsBatchSummaryModal);
         public bool IsAndroid => OperatingSystem.IsAndroid();
         public bool IsMobileSubtitleVisible => !OperatingSystem.IsAndroid();
-        public bool IsSubfolderOptionSupported => !OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS();
+        public bool IsSubfolderOptionSupported => true;
         public LocalizationManager Loc => LocalizationManager.Instance;
 
         #region Properties
@@ -353,6 +359,125 @@ namespace Fujify.ViewModels
         public ICommand MobileAddFolderCommand { get; }
         public IRelayCommand ToggleQueueFabMenuCommand { get; }
         public IRelayCommand CloseQueueFabMenuCommand { get; }
+        public IRelayCommand EnterMultiSelectModeCommand { get; }
+        public IRelayCommand ExitMultiSelectModeCommand { get; }
+        public IRelayCommand ToggleSelectAllCommand { get; }
+        public IRelayCommand DeleteSelectedMultiSelectCommand { get; }
+        public IRelayCommand ToggleFileSelectionCommand { get; }
+
+        private bool _isMultiSelectMode;
+        public bool IsMultiSelectMode
+        {
+            get => _isMultiSelectMode;
+            set
+            {
+                if (SetProperty(ref _isMultiSelectMode, value))
+                {
+                    OnPropertyChanged(nameof(MultiSelectCountText));
+                    OnPropertyChanged(nameof(HasSelectedFiles));
+                    OnPropertyChanged(nameof(SelectAllButtonText));
+                    OnPropertyChanged(nameof(SelectedFilesList));
+                }
+            }
+        }
+
+        public int SelectedFilesCount => Files.Count(f => f.IsSelected);
+        public bool HasSelectedFiles => SelectedFilesCount > 0;
+        public List<FileItem> SelectedFilesList => Files.Where(f => f.IsSelected).ToList();
+
+        public string MultiSelectCountText => LocalizationManager.Instance.Format("SelectedCountFormat", SelectedFilesCount);
+
+        public string SelectAllButtonText => Files.Count > 0 && Files.All(f => f.IsSelected)
+            ? LocalizationManager.Tr("DeselectAll")
+            : LocalizationManager.Tr("SelectAll");
+
+        public void EnterMultiSelectMode(FileItem? initialItem = null)
+        {
+            IsMultiSelectMode = true;
+            foreach (var file in Files)
+            {
+                file.IsSelected = false;
+            }
+            if (initialItem != null)
+            {
+                initialItem.IsSelected = true;
+                _selectedFile = initialItem;
+                OnPropertyChanged(nameof(SelectedFile));
+                if (!initialItem.HasExifLoaded)
+                {
+                    LoadExifForFile(initialItem);
+                }
+            }
+            UpdateSelectionState();
+        }
+
+        public void ExitMultiSelectMode()
+        {
+            IsMultiSelectMode = false;
+            foreach (var file in Files)
+            {
+                file.IsSelected = false;
+            }
+            if (Files.Count > 0)
+            {
+                _selectedFile = Files[0];
+                _selectedFile.IsSelected = true;
+                OnPropertyChanged(nameof(SelectedFile));
+            }
+            UpdateSelectionState();
+        }
+
+        public void ToggleFileSelection(FileItem? item)
+        {
+            if (item == null) return;
+            item.IsSelected = !item.IsSelected;
+            if (item.IsSelected)
+            {
+                _selectedFile = item;
+                OnPropertyChanged(nameof(SelectedFile));
+                if (!item.HasExifLoaded)
+                {
+                    LoadExifForFile(item);
+                }
+            }
+            UpdateSelectionState();
+        }
+
+        public void ToggleSelectAll()
+        {
+            bool allSelected = Files.Count > 0 && Files.All(f => f.IsSelected);
+            foreach (var f in Files)
+            {
+                f.IsSelected = !allSelected;
+            }
+            UpdateSelectionState();
+        }
+
+        public void UpdateSelectionState()
+        {
+            OnPropertyChanged(nameof(SelectedFilesCount));
+            OnPropertyChanged(nameof(HasSelectedFiles));
+            OnPropertyChanged(nameof(MultiSelectCountText));
+            OnPropertyChanged(nameof(SelectAllButtonText));
+            OnPropertyChanged(nameof(SelectedFilesList));
+        }
+
+        public void DeleteSelectedMultiSelect()
+        {
+            var toRemove = Files.Where(f => f.IsSelected).ToList();
+            if (toRemove.Count > 0)
+            {
+                RemoveFiles(toRemove);
+            }
+            if (Files.Count == 0 || !Files.Any(f => f.IsSelected))
+            {
+                ExitMultiSelectMode();
+            }
+            else
+            {
+                UpdateSelectionState();
+            }
+        }
 
         private bool _isQueueFabMode;
         public bool IsQueueFabMode
@@ -511,13 +636,16 @@ namespace Fujify.ViewModels
                 var previous = _selectedFile;
                 if (SetProperty(ref _selectedFile, value))
                 {
-                    if (previous != null)
+                    if (!IsMultiSelectMode)
                     {
-                        previous.IsSelected = false;
-                    }
-                    if (value != null)
-                    {
-                        value.IsSelected = true;
+                        if (previous != null)
+                        {
+                            previous.IsSelected = false;
+                        }
+                        if (value != null)
+                        {
+                            value.IsSelected = true;
+                        }
                     }
                     OnPropertyChanged(nameof(HasSelectedFile));
                     if (value != null && !value.HasExifLoaded)

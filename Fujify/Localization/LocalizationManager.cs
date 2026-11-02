@@ -390,6 +390,10 @@ namespace Fujify.Localization
                 ["StoragePermissionMessage"] = "To export photos to custom folders on your device, Fujifier needs file access permissions. Please enable 'Allow access to manage all files' in system settings.",
                 ["StoragePermissionConfirm"] = "Open Settings",
                 ["StoragePermissionCancel"] = "Cancel",
+                ["SelectedCountFormat"] = "{0} selected",
+                ["SelectAll"] = "Select All",
+                ["DeselectAll"] = "Deselect All",
+                ["Delete"] = "Delete",
             };
             _translations["en"] = en;
 
@@ -628,6 +632,10 @@ namespace Fujify.Localization
                 ["StoragePermissionMessage"] = "Pour exporter des photos vers des dossiers personnalisés, Fujifier a besoin de l'accès aux fichiers. Veuillez activer « Autoriser l'accès pour gérer tous les fichiers » dans les paramètres.",
                 ["StoragePermissionConfirm"] = "Ouvrir les paramètres",
                 ["StoragePermissionCancel"] = "Annuler",
+                ["SelectedCountFormat"] = "{0} sélectionné(s)",
+                ["SelectAll"] = "Tout sélectionner",
+                ["DeselectAll"] = "Tout désélectionner",
+                ["Delete"] = "Supprimer",
             };
             _translations["fr"] = fr;
 
@@ -866,6 +874,10 @@ namespace Fujify.Localization
                 ["StoragePermissionMessage"] = "Para exportar fotos a carpetas personalizadas, Fujifier necesita acceso a los archivos. Por favor, activa «Permitir administrar todos los archivos» en los ajustes del sistema.",
                 ["StoragePermissionConfirm"] = "Abrir ajustes",
                 ["StoragePermissionCancel"] = "Cancelar",
+                ["SelectedCountFormat"] = "{0} seleccionado(s)",
+                ["SelectAll"] = "Seleccionar todo",
+                ["DeselectAll"] = "Deseleccionar todo",
+                ["Delete"] = "Eliminar",
             };
             _translations["es"] = es;
 
@@ -1104,6 +1116,10 @@ namespace Fujify.Localization
                 ["StoragePermissionMessage"] = "Um Fotos in benutzerdefinierte Ordner zu exportieren, benötigt Fujifier Dateizugriff. Bitte aktivieren Sie «Alle Dateien verwalten» in den Systemeinstellungen.",
                 ["StoragePermissionConfirm"] = "Einstellungen öffnen",
                 ["StoragePermissionCancel"] = "Abbrechen",
+                ["SelectedCountFormat"] = "{0} ausgewählt",
+                ["SelectAll"] = "Alle auswählen",
+                ["DeselectAll"] = "Alle abwählen",
+                ["Delete"] = "Löschen",
             };
             _translations["de"] = de;
         }

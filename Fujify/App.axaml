@@ -503,6 +503,10 @@
         <!-- Speed Dial Items (Add Files, Add Folder) Slide-Up Transitions -->
         <Style Selector="Border.speed-dial-item">
             <Setter Property="Opacity" Value="0.0"/>
+            <Setter Property="Background" Value="{DynamicResource AppSurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AppEdgeBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BoxShadow" Value="0 4 14 0 #40000000"/>
             <Setter Property="RenderTransform" Value="translateY(24px) scale(0.82)"/>
             <Setter Property="RenderTransformOrigin" Value="20%,100%"/>
             <Setter Property="Transitions">
@@ -532,6 +536,24 @@
         </Style>
         <Style Selector="Border.speed-dial-right">
             <Setter Property="RenderTransformOrigin" Value="85%,100%"/>
+        </Style>
+
+        <!-- Speed Dial Inner Button Transparent Overrides -->
+        <Style Selector="Border.speed-dial-item Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Border.speed-dial-item Button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Border.speed-dial-item Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AppGlassPillBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Border.speed-dial-item Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AppGlassPillBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
         </Style>
 
         <!-- Mobile FAB Backdrop -->

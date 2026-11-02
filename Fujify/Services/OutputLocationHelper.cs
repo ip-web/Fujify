@@ -37,7 +37,7 @@ namespace Fujify.Services
                 ? DialogService.ResolveAndroidStoragePathString(customOutputFolder)
                 : sourceDir;
 
-            if (!createSubfolder || OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
+            if (!createSubfolder)
             {
                 return baseDir;
             }

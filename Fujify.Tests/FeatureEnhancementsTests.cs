@@ -232,5 +232,76 @@ namespace Fujify.Tests
         }
 
         #endregion
+
+        #region 5. Mobile Multi-Selection Mode Tests
+
+        [Fact]
+        public void MultiSelectionMode_FullWorkflowTests()
+        {
+            var vm = new MainViewModel();
+            var item1 = new FileItem { FilePath = "C:\\test\\photo1.dng" };
+            var item2 = new FileItem { FilePath = "C:\\test\\photo2.dng" };
+            var item3 = new FileItem { FilePath = "C:\\test\\photo3.dng" };
+            vm.Files.Add(item1);
+            vm.Files.Add(item2);
+            vm.Files.Add(item3);
+
+            Assert.False(vm.IsMultiSelectMode);
+            // In single-selection mode, the first file is automatically the active SelectedFile
+            Assert.Equal(1, vm.SelectedFilesCount);
+            Assert.True(vm.HasSelectedFiles);
+            Assert.True(item1.IsSelected);
+            Assert.False(item2.IsSelected);
+
+            // 1. Enter multi-selection mode on item2
+            vm.EnterMultiSelectMode(item2);
+            Assert.True(vm.IsMultiSelectMode);
+            Assert.False(item1.IsSelected);
+            Assert.True(item2.IsSelected);
+            Assert.Equal(1, vm.SelectedFilesCount);
+            Assert.True(vm.HasSelectedFiles);
+            Assert.Equal("1 selected", vm.MultiSelectCountText);
+            Assert.Equal("Select All", vm.SelectAllButtonText);
+
+            // 2. Toggle item1
+            vm.ToggleFileSelection(item1);
+            Assert.True(item1.IsSelected);
+            Assert.True(item2.IsSelected);
+            Assert.Equal(2, vm.SelectedFilesCount);
+            Assert.Equal("2 selected", vm.MultiSelectCountText);
+
+            // 3. Toggle select all -> all 3 selected
+            vm.ToggleSelectAll();
+            Assert.Equal(3, vm.SelectedFilesCount);
+            Assert.Equal("Deselect All", vm.SelectAllButtonText);
+
+            // 4. Delete selected files -> removes all 3, exits multi-select
+            vm.DeleteSelectedMultiSelect();
+            Assert.Empty(vm.Files);
+            Assert.False(vm.IsMultiSelectMode);
+        }
+
+        [Fact]
+        public void MultiSelectionMode_Exit_RestoresSingleSelection()
+        {
+            var vm = new MainViewModel();
+            var item1 = new FileItem { FilePath = "C:\\test\\photo1.dng" };
+            var item2 = new FileItem { FilePath = "C:\\test\\photo2.dng" };
+            vm.Files.Add(item1);
+            vm.Files.Add(item2);
+
+            vm.EnterMultiSelectMode(item1);
+            vm.ToggleFileSelection(item2);
+            Assert.True(vm.IsMultiSelectMode);
+            Assert.Equal(2, vm.SelectedFilesCount);
+
+            vm.ExitMultiSelectMode();
+            Assert.False(vm.IsMultiSelectMode);
+            Assert.True(item1.IsSelected);
+            Assert.False(item2.IsSelected);
+            Assert.Equal(1, vm.SelectedFilesCount);
+        }
+
+        #endregion
     }
 }

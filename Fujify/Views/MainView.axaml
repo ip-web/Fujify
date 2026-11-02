@@ -114,85 +114,116 @@
                     <Grid RowDefinitions="Auto,*,Auto">
                         <!-- Row 0: Mobile App Bar (Native mobile header with logo, title, and settings) -->
                         <Border x:Name="PhoneTopBar" Grid.Row="0" Background="Transparent" BorderThickness="0" Padding="16,8,16,4">
-                            <Grid ColumnDefinitions="Auto,Auto,*,Auto" VerticalAlignment="Center">
-                                <!-- Far Left: macOS Traffic Lights (if narrow desktop on macOS) -->
-                                <StackPanel x:Name="PhoneMacCaptionButtonsPanel" Grid.Column="0" Orientation="Horizontal" Spacing="8"
-                                            VerticalAlignment="Center" Margin="0,0,12,0"
-                                            Classes="mac-traffic-lights"
-                                            Classes.inactive="{Binding !IsWindowActive}"
-                                            IsVisible="{Binding ShowMacCaptionButtons}">
-                                    <Button Classes="mac-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="{loc:Loc Close}">
-                                        <TextBlock Classes="mac-glyph" Text="✕" FontSize="7" Foreground="#4D0000"/>
-                                    </Button>
-                                    <Button Classes="mac-caption minimize" Click="TitleBar_Minimize_Click" ToolTip.Tip="{loc:Loc Minimize}">
-                                        <TextBlock Classes="mac-glyph" Text="—" FontSize="8" Margin="0,-1,0,0" Foreground="#5C3B00"/>
-                                    </Button>
-                                    <Button Classes="mac-caption maximize" Click="TitleBar_Maximize_Click" ToolTip.Tip="{loc:Loc Maximize}">
-                                        <TextBlock Classes="mac-glyph" Text="+" FontSize="9" Margin="0,-1,0,0" Foreground="#0A4D14"/>
-                                    </Button>
-                                </StackPanel>
-
-                                <!-- Left: Logo & App Branding -->
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                    <Border Width="32" Height="32" CornerRadius="8"
-                                            Background="{DynamicResource AppSurfaceBrush}"
-                                            BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
-                                            ClipToBounds="True">
-                                        <Image Source="/Assets/images/logoXL.png" Width="20" Height="20"
-                                               Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Border>
-                                    <StackPanel VerticalAlignment="Center" Spacing="1">
-                                        <TextBlock Text="Fujifier" FontSize="16" FontWeight="Bold"
-                                                   Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                        <TextBlock Text="{loc:Loc AppSubtitle}" FontSize="10" FontWeight="Medium" IsVisible="{Binding IsMobileSubtitleVisible}"
-                                                   Foreground="{DynamicResource AppTextSecondaryBrush}"/>
-                                    </StackPanel>
-                                </StackPanel>
-
-                                <!-- Center: Draggable Spacer (for narrow desktop window) -->
-                                <Panel Grid.Column="2" Background="Transparent"
-                                       PointerPressed="TitleBar_PointerPressed"
-                                       DoubleTapped="TitleBar_DoubleTapped"/>
-
-                                <!-- Right: Queue Clear + Settings Shortcut + Desktop Caption Controls (if narrow desktop) -->
-                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                    <Button Command="{Binding ClearCommand}"
-                                            IsVisible="{Binding HasFiles}"
-                                            Classes="secondary" Height="36" Padding="14,0" CornerRadius="18"
-                                            Content="{loc:Loc Clear}" FontSize="11" FontWeight="SemiBold"
-                                            VerticalContentAlignment="Center"
-                                            ToolTip.Tip="{loc:Loc TooltipClearQueue}"/>
-
-                                    <Button Command="{Binding OpenAboutCommand}"
-                                            Classes="secondary" Width="36" Height="36" Padding="0" CornerRadius="18"
-                                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                            ToolTip.Tip="{loc:Loc About}">
-                                        <PathIcon Data="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
-                                                  Width="16" Height="16" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                    </Button>
-
-                                    <Button Command="{Binding OpenPreferencesCommand}"
-                                            Classes="secondary" Width="36" Height="36" Padding="0" CornerRadius="18"
-                                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                                            ToolTip.Tip="{loc:Loc Settings}">
-                                        <PathIcon Data="M 12 15 A 3 3 0 1 0 12 9 A 3 3 0 1 0 12 15 M 19.4 15 a 1.65 1.65 0 0 0 .33 1.82 l .06 .06 a 2 2 0 1 1 -2.83 2.83 l -.06 -.06 a 1.65 1.65 0 0 0 -1.82 -.33 1.65 1.65 0 0 0 -1 1.51 V 21 a 2 2 0 1 1 -4 0 v -.09 A 1.65 1.65 0 0 0 9 19.4 a 1.65 1.65 0 0 0 -1.82 .33 l -.06 .06 a 2 2 0 1 1 -2.83 -2.83 l .06 -.06 a 1.65 1.65 0 0 0 .33 -1.82 1.65 1.65 0 0 0 -1.51 -1 H 3 a 2 2 0 1 1 0 -4 h .09 A 1.65 1.65 0 0 0 4.6 9 a 1.65 1.65 0 0 0 -.33 -1.82 l -.06 -.06 a 2 2 0 1 1 2.83 -2.83 l .06 .06 a 1.65 1.65 0 0 0 1.82 .33 H 9 a 1.65 1.65 0 0 0 1 -1.51 V 3 a 2 2 0 1 1 4 0 v .09 a 1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82 -.33 l .06 -.06 a 2 2 0 1 1 2.83 2.83 l -.06 .06 a 1.65 1.65 0 0 0 -.33 1.82 V 9 a 1.65 1.65 0 0 0 1.51 1 H 21 a 2 2 0 1 1 0 4 h -.09 a 1.65 1.65 0 0 0 -1.51 1 Z"
-                                                  Width="16" Height="16" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                    </Button>
-
-                                    <!-- Optional Desktop Caption Buttons when running on desktop window -->
-                                    <StackPanel Orientation="Horizontal" Spacing="0" IsVisible="{Binding ShowWindowsCaptionButtons}">
-                                        <Button Classes="win-caption" Click="TitleBar_Minimize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Minimize}">
-                                            <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
+                            <Panel>
+                                <!-- Normal Header (Visible when NOT in multi-select mode) -->
+                                <Grid IsVisible="{Binding !IsMultiSelectMode}" ColumnDefinitions="Auto,Auto,*,Auto" VerticalAlignment="Center">
+                                    <!-- Far Left: macOS Traffic Lights (if narrow desktop on macOS) -->
+                                    <StackPanel x:Name="PhoneMacCaptionButtonsPanel" Grid.Column="0" Orientation="Horizontal" Spacing="8"
+                                                VerticalAlignment="Center" Margin="0,0,12,0"
+                                                Classes="mac-traffic-lights"
+                                                Classes.inactive="{Binding !IsWindowActive}"
+                                                IsVisible="{Binding ShowMacCaptionButtons}">
+                                        <Button Classes="mac-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="{loc:Loc Close}">
+                                            <TextBlock Classes="mac-glyph" Text="✕" FontSize="7" Foreground="#4D0000"/>
                                         </Button>
-                                        <Button Classes="win-caption" Click="TitleBar_Maximize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Maximize}">
-                                            <TextBlock Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
+                                        <Button Classes="mac-caption minimize" Click="TitleBar_Minimize_Click" ToolTip.Tip="{loc:Loc Minimize}">
+                                            <TextBlock Classes="mac-glyph" Text="—" FontSize="8" Margin="0,-1,0,0" Foreground="#5C3B00"/>
                                         </Button>
-                                        <Button Classes="win-caption close" Click="TitleBar_Close_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Close}">
-                                            <TextBlock Text="&#x2715;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
+                                        <Button Classes="mac-caption maximize" Click="TitleBar_Maximize_Click" ToolTip.Tip="{loc:Loc Maximize}">
+                                            <TextBlock Classes="mac-glyph" Text="+" FontSize="9" Margin="0,-1,0,0" Foreground="#0A4D14"/>
                                         </Button>
                                     </StackPanel>
-                                </StackPanel>
-                            </Grid>
+
+                                    <!-- Left: Logo & App Branding -->
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                        <Border Width="32" Height="32" CornerRadius="8"
+                                                Background="{DynamicResource AppSurfaceBrush}"
+                                                BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
+                                                ClipToBounds="True">
+                                            <Image Source="/Assets/images/logoXL.png" Width="20" Height="20"
+                                                   Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <StackPanel VerticalAlignment="Center" Spacing="1">
+                                            <TextBlock Text="Fujifier" FontSize="16" FontWeight="Bold"
+                                                       Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                            <TextBlock Text="{loc:Loc AppSubtitle}" FontSize="10" FontWeight="Medium" IsVisible="{Binding IsMobileSubtitleVisible}"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Center: Draggable Spacer (for narrow desktop window) -->
+                                    <Panel Grid.Column="2" Background="Transparent"
+                                           PointerPressed="TitleBar_PointerPressed"
+                                           DoubleTapped="TitleBar_DoubleTapped"/>
+
+                                    <!-- Right: Queue Clear + Settings Shortcut + Desktop Caption Controls (if narrow desktop) -->
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                        <Button Command="{Binding ClearCommand}"
+                                                IsVisible="{Binding HasFiles}"
+                                                Classes="secondary" Height="36" Padding="14,0" CornerRadius="18"
+                                                Content="{loc:Loc Clear}" FontSize="11" FontWeight="SemiBold"
+                                                VerticalContentAlignment="Center"
+                                                ToolTip.Tip="{loc:Loc TooltipClearQueue}"/>
+
+                                        <Button Command="{Binding OpenAboutCommand}"
+                                                Classes="secondary" Width="36" Height="36" Padding="0" CornerRadius="18"
+                                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                ToolTip.Tip="{loc:Loc About}">
+                                            <PathIcon Data="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+                                                      Width="16" Height="16" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        </Button>
+
+                                        <Button Command="{Binding OpenPreferencesCommand}"
+                                                Classes="secondary" Width="36" Height="36" Padding="0" CornerRadius="18"
+                                                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                                ToolTip.Tip="{loc:Loc Settings}">
+                                            <PathIcon Data="M 12 15 A 3 3 0 1 0 12 9 A 3 3 0 1 0 12 15 M 19.4 15 a 1.65 1.65 0 0 0 .33 1.82 l .06 .06 a 2 2 0 1 1 -2.83 2.83 l -.06 -.06 a 1.65 1.65 0 0 0 -1.82 -.33 1.65 1.65 0 0 0 -1 1.51 V 21 a 2 2 0 1 1 -4 0 v -.09 A 1.65 1.65 0 0 0 9 19.4 a 1.65 1.65 0 0 0 -1.82 .33 l -.06 .06 a 2 2 0 1 1 -2.83 -2.83 l .06 -.06 a 1.65 1.65 0 0 0 .33 -1.82 1.65 1.65 0 0 0 -1.51 -1 H 3 a 2 2 0 1 1 0 -4 h .09 A 1.65 1.65 0 0 0 4.6 9 a 1.65 1.65 0 0 0 -.33 -1.82 l -.06 -.06 a 2 2 0 1 1 2.83 -2.83 l .06 .06 a 1.65 1.65 0 0 0 1.82 .33 H 9 a 1.65 1.65 0 0 0 1 -1.51 V 3 a 2 2 0 1 1 4 0 v .09 a 1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82 -.33 l .06 -.06 a 2 2 0 1 1 2.83 2.83 l -.06 .06 a 1.65 1.65 0 0 0 -.33 1.82 V 9 a 1.65 1.65 0 0 0 1.51 1 H 21 a 2 2 0 1 1 0 4 h -.09 a 1.65 1.65 0 0 0 -1.51 1 Z"
+                                                      Width="16" Height="16" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                        </Button>
+
+                                        <!-- Optional Desktop Caption Buttons when running on desktop window -->
+                                        <StackPanel Orientation="Horizontal" Spacing="0" IsVisible="{Binding ShowWindowsCaptionButtons}">
+                                            <Button Classes="win-caption" Click="TitleBar_Minimize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Minimize}">
+                                                <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
+                                            </Button>
+                                            <Button Classes="win-caption" Click="TitleBar_Maximize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Maximize}">
+                                                <TextBlock Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
+                                            </Button>
+                                            <Button Classes="win-caption close" Click="TitleBar_Close_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Close}">
+                                                <TextBlock Text="&#x2715;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+
+                                <!-- Multi-Selection Mode Header (Visible when IsMultiSelectMode is active) -->
+                                <Grid IsVisible="{Binding IsMultiSelectMode}" ColumnDefinitions="Auto,*,Auto,Auto" VerticalAlignment="Center">
+                                    <Button Grid.Column="0" Command="{Binding ExitMultiSelectModeCommand}"
+                                            Classes="secondary" Width="36" Height="36" Padding="0" CornerRadius="18"
+                                            HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+                                        <TextBlock Text="✕" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                    </Button>
+
+                                    <TextBlock Grid.Column="1" Text="{Binding MultiSelectCountText}"
+                                               FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" Margin="14,0,0,0"
+                                               Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+
+                                    <Button Grid.Column="2" Command="{Binding ToggleSelectAllCommand}"
+                                            Classes="secondary" Height="36" Padding="12,0" CornerRadius="18" Margin="0,0,8,0"
+                                            Content="{Binding SelectAllButtonText}" FontSize="12" FontWeight="SemiBold"
+                                            VerticalContentAlignment="Center"/>
+
+                                    <Button Grid.Column="3" Command="{Binding DeleteSelectedMultiSelectCommand}"
+                                            Classes="secondary" Height="36" Padding="12,0" CornerRadius="18"
+                                            Background="#22FF453A" BorderBrush="#55FF453A"
+                                            IsEnabled="{Binding HasSelectedFiles}">
+                                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                            <PathIcon Data="M 18 6 L 6 18 M 6 6 l 12 12" Width="10" Height="10" Foreground="#FFFF453A"/>
+                                            <TextBlock Text="{loc:Loc Delete}" FontSize="12" FontWeight="SemiBold" Foreground="#FFFF453A" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </Panel>
                         </Border>
 
                         <!-- Row 1: Phone File List / Empty State -->
@@ -232,17 +263,38 @@
                                                     BorderBrush="{DynamicResource AppEdgeBrush}"
                                                     BorderThickness="1"
                                                     PointerPressed="MobileCard_PointerPressed"
+                                                    PointerMoved="MobileCard_PointerMoved"
+                                                    PointerReleased="MobileCard_PointerReleased"
+                                                    PointerCaptureLost="MobileCard_PointerCaptureLost"
                                                     DoubleTapped="MobileCard_DoubleTapped"
                                                     Cursor="Hand">
-                                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                                <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                                    <!-- Multi-Selection Checkbox (Visible in Multi-Select Mode) -->
+                                                    <Panel Grid.Column="0" Width="26" Height="26" Margin="0,0,12,0"
+                                                           VerticalAlignment="Center"
+                                                           IsVisible="{Binding $parent[UserControl].((vm:MainViewModel)DataContext).IsMultiSelectMode}">
+                                                        <!-- Checked: Filled circle with white checkmark -->
+                                                        <Border Width="24" Height="24" CornerRadius="12"
+                                                                Background="{DynamicResource AppAccentBrush}"
+                                                                IsVisible="{Binding IsSelected}">
+                                                            <TextBlock Text="✓" FontSize="13" FontWeight="Bold" Foreground="#FFFFFFFF"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0"/>
+                                                        </Border>
+                                                        <!-- Unchecked: Subtle ring -->
+                                                        <Border Width="24" Height="24" CornerRadius="12"
+                                                                BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="2"
+                                                                Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                                IsVisible="{Binding !IsSelected}"/>
+                                                    </Panel>
+
                                                     <!-- Thumbnail -->
-                                                    <Border Grid.Column="0" Width="64" Height="64" CornerRadius="10"
+                                                    <Border Grid.Column="1" Width="64" Height="64" CornerRadius="10"
                                                             ClipToBounds="True" Background="{DynamicResource AppSurfaceSecondaryBrush}" VerticalAlignment="Center">
                                                         <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
                                                     </Border>
 
                                                     <!-- File Info -->
-                                                    <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center" Spacing="4">
+                                                    <StackPanel Grid.Column="2" Margin="12,0" VerticalAlignment="Center" Spacing="4">
                                                         <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" FontSize="14"
                                                                    Foreground="{DynamicResource AppTextPrimaryBrush}"
                                                                    TextTrimming="CharacterEllipsis"/>
@@ -257,10 +309,11 @@
                                                         </Border>
                                                     </StackPanel>
 
-                                                    <!-- Remove Action -->
-                                                    <Button Grid.Column="2" Content="✕"
+                                                    <!-- Remove Action (Hidden during multi-select mode) -->
+                                                    <Button Grid.Column="3" Content="✕"
                                                             Command="{Binding RemoveCommand}"
                                                             CommandParameter="{Binding}"
+                                                            IsVisible="{Binding !$parent[UserControl].((vm:MainViewModel)DataContext).IsMultiSelectMode}"
                                                             Width="32" Height="32" CornerRadius="16"
                                                             Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                                                             VerticalAlignment="Center"
@@ -293,7 +346,7 @@
                                             IsHitTestVisible="{Binding IsMobileAddMenuOpen}">
                                     <!-- Option: Add Folder -->
                                     <Border Classes="speed-dial-item speed-dial-folder" Classes.open="{Binding IsMobileAddMenuOpen}"
-                                            CornerRadius="21" BoxShadow="0 3 10 0 #35000000">
+                                            CornerRadius="21">
                                         <Button Command="{Binding MobileAddFolderCommand}"
                                                 Classes="secondary" Height="42" CornerRadius="21"
                                                 Padding="14,0,18,0">
@@ -314,7 +367,7 @@
 
                                     <!-- Option: Add Files -->
                                     <Border Classes="speed-dial-item speed-dial-files" Classes.open="{Binding IsMobileAddMenuOpen}"
-                                            CornerRadius="21" BoxShadow="0 3 10 0 #35000000">
+                                            CornerRadius="21">
                                         <Button Command="{Binding MobileAddFilesCommand}"
                                                 Classes="secondary" Height="42" CornerRadius="21"
                                                 Padding="14,0,18,0">
@@ -322,7 +375,7 @@
                                                 <Border Width="28" Height="28" CornerRadius="14"
                                                         Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                         VerticalAlignment="Center">
-                                                    <PathIcon Data="M 3 3 h 18 v 18 H 3 Z M 8 8 A 1.5 1.5 0 1 0 8 11 A 1.5 1.5 0 1 0 8 8 M 3 17 l 6 -6 l 4 4 l 3 -3 l 5 5"
+                                                    <PathIcon Data="M 11 4 A 1 1 0 0 1 13 4 V 11 H 20 A 1 1 0 0 1 20 13 H 13 V 20 A 1 1 0 0 1 11 20 V 13 H 4 A 1 1 0 0 1 4 11 H 11 Z"
                                                               Width="13" Height="13"
                                                               Foreground="{DynamicResource AppAccentBrush}"
                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -1164,6 +1217,9 @@
                                                                     CornerRadius="14" Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                                     BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
                                                                     PointerPressed="GridItem_PointerPressed"
+                                                                    PointerMoved="MobileCard_PointerMoved"
+                                                                    PointerReleased="MobileCard_PointerReleased"
+                                                                    PointerCaptureLost="MobileCard_PointerCaptureLost"
                                                                     DoubleTapped="GridItem_DoubleTapped"
                                                                     Cursor="Hand">
                                                                 <Border.ContextMenu>
@@ -1288,7 +1344,7 @@
                                                             IsHitTestVisible="{Binding IsQueueFabMenuOpen}">
                                                     <!-- Option: Clear Queue (Only if HasFiles) -->
                                                     <Border Classes="speed-dial-item speed-dial-right" Classes.open="{Binding IsQueueFabMenuOpen}"
-                                                            CornerRadius="20" BoxShadow="0 4 14 0 #40000000"
+                                                            CornerRadius="20"
                                                             IsVisible="{Binding HasFiles}"
                                                             HorizontalAlignment="Right">
                                                         <Button Command="{Binding ClearCommand}"
@@ -1309,7 +1365,7 @@
 
                                                     <!-- Option: Add Folder -->
                                                     <Border Classes="speed-dial-item speed-dial-right speed-dial-folder" Classes.open="{Binding IsQueueFabMenuOpen}"
-                                                            CornerRadius="20" BoxShadow="0 4 14 0 #40000000"
+                                                            CornerRadius="20"
                                                             HorizontalAlignment="Right">
                                                         <Button Command="{Binding AddFolderCommand}"
                                                                 Classes="secondary" Height="38" CornerRadius="19"
@@ -1331,7 +1387,7 @@
 
                                                     <!-- Option: Add Files -->
                                                     <Border Classes="speed-dial-item speed-dial-right speed-dial-files" Classes.open="{Binding IsQueueFabMenuOpen}"
-                                                            CornerRadius="20" BoxShadow="0 4 14 0 #40000000"
+                                                            CornerRadius="20"
                                                             HorizontalAlignment="Right">
                                                         <Button Command="{Binding AddFilesCommand}"
                                                                 Classes="secondary" Height="38" CornerRadius="19"

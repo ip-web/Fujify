@@ -253,7 +253,7 @@ namespace Fujify.ViewModels
 
         public bool IsOpenInLightroomSupported => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
 
-        public bool IsSubfolderOptionSupported => !OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS();
+        public bool IsSubfolderOptionSupported => true;
 
         public bool IsWindows => OperatingSystem.IsWindows();
 
