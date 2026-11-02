@@ -19,7 +19,7 @@ namespace Fujify.Views
 
         private void Website_Click(object? sender, RoutedEventArgs e)
         {
-            Common.CrossPlatformLauncher.OpenUrl("https://ipweb.dev");
+            Common.CrossPlatformLauncher.OpenUrl("https://fujifier.cc");
         }
 
         private void GitHub_Click(object? sender, RoutedEventArgs e)

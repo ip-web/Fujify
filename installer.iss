@@ -3,7 +3,7 @@
 #define MyAppName "Fujifier"
 #define MyAppVersion "2.1.0"
 #define MyAppPublisher "Isidore Paulin"
-#define MyAppURL "https://ipweb.dev"
+#define MyAppURL "https://fujifier.cc"
 #define MyAppExeName "Fujifier.exe"
 
 #ifndef MyAppSourceDir
