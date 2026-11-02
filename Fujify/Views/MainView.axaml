@@ -259,9 +259,6 @@
                                         <DataTemplate x:DataType="models:FileItem">
                                             <Border Classes="mobile-card" Classes.selected="{Binding IsSelected}"
                                                     Margin="0,5" Padding="12" CornerRadius="16"
-                                                    Background="{DynamicResource AppSurfaceBrush}"
-                                                    BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                    BorderThickness="1"
                                                     PointerPressed="MobileCard_PointerPressed"
                                                     PointerMoved="MobileCard_PointerMoved"
                                                     PointerReleased="MobileCard_PointerReleased"
@@ -1214,8 +1211,7 @@
                                                         <DataTemplate x:DataType="models:FileItem">
                                                             <Border Classes="grid-card" Classes.selected="{Binding IsSelected}"
                                                                     Width="150" Height="190" Margin="6" Padding="8"
-                                                                    CornerRadius="14" Background="{DynamicResource AppSurfaceSecondaryBrush}"
-                                                                    BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
+                                                                    CornerRadius="14"
                                                                     PointerPressed="GridItem_PointerPressed"
                                                                     PointerMoved="MobileCard_PointerMoved"
                                                                     PointerReleased="MobileCard_PointerReleased"

@@ -135,6 +135,16 @@ public partial class App : Application
         SetOrUpdateBrush("AppPrimaryBtnBgBrush", primaryBtnBg);
         SetOrUpdateBrush("AppPrimaryBtnFgBrush", primaryBtnFg);
         SetOrUpdateBrush("AppAccentLightBrush", Avalonia.Media.Color.Parse("#E3D6FF"));
+
+        var selectedRowColor = isLight
+            ? Avalonia.Media.Color.Parse("#209679BC")
+            : (isAmoled ? Avalonia.Media.Color.Parse("#28CCB6FF") : Avalonia.Media.Color.Parse("#1ECCB6FF"));
+        var selectedBorderColor = isLight
+            ? Avalonia.Media.Color.Parse("#607351B5")
+            : (isAmoled ? Avalonia.Media.Color.Parse("#6ECCB6FF") : Avalonia.Media.Color.Parse("#4ECCB6FF"));
+        SetOrUpdateBrush("AppSelectedRowBrush", selectedRowColor);
+        SetOrUpdateBrush("AppSelectedBorderBrush", selectedBorderColor);
+
         UpdateAccentBrush();
     }
 
