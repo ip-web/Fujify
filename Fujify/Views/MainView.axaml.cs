@@ -114,6 +114,15 @@ namespace Fujify.Views
                         }
                     }
                 }, RoutingStrategies.Bubble);
+
+                Fujify.Services.AdService.BannerVisibilityChanged += (visible) =>
+                {
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() => ApplySafeArea(_lastInsets));
+                };
+                Fujify.Services.LicenseService.AnyLicenseChanged += (s, status) =>
+                {
+                    Avalonia.Threading.Dispatcher.UIThread.Post(() => ApplySafeArea(_lastInsets));
+                };
             }
 
             UpdateSlidePanels(animated: false);
@@ -213,15 +222,24 @@ namespace Fujify.Views
                 bottomInset = 24;
             }
 
+            // On mobile platforms, reserve space for ad banner when ads should be shown
+            bool showBanner = Fujify.Services.AdService.Instance?.ShouldShowAds ?? true;
+
             // On Android version, add extra padding on top (camera punch hole / status bar) and bottom (navigation / ad banner)
             if (System.OperatingSystem.IsAndroid())
             {
                 topInset += 12;
-                bottomInset += 54;
+                if (showBanner)
+                {
+                    bottomInset += 54;
+                }
             }
-            else if (System.OperatingSystem.IsIOS() && (Fujify.Services.AdService.Instance?.ShouldShowAds ?? false))
+            else if (System.OperatingSystem.IsIOS())
             {
-                bottomInset += 50;
+                if (showBanner)
+                {
+                    bottomInset += 50;
+                }
             }
 
             double effectiveBottomInset = bottomInset + _keyboardHeight;
@@ -249,7 +267,7 @@ namespace Fujify.Views
             var mobileScroll = this.FindControl<ScrollViewer>("MobileSidebarScrollViewer");
             if (mobileScroll != null)
             {
-                mobileScroll.Padding = new Avalonia.Thickness(18, 14, 18, _keyboardHeight > 0 ? 60 : 16);
+                mobileScroll.Padding = new Avalonia.Thickness(18, 14, 18, _keyboardHeight > 0 ? 80 : 48);
             }
 
             var phoneBottom = this.FindControl<Border>("PhoneBottomBar");

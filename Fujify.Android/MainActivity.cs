@@ -62,6 +62,18 @@ public class MainActivity : AvaloniaMainActivity<App>
         Window?.SetSoftInputMode(SoftInput.AdjustResize | SoftInput.StateHidden);
         EnableHighRefreshRate();
 
+        if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
+        {
+            try
+            {
+                OnBackInvokedDispatcher.RegisterOnBackInvokedCallback(0, new BackInvokedCallback(HandleBackNavigation));
+            }
+            catch (Exception ex)
+            {
+                global::Android.Util.Log.Warn("Fujifier", $"Could not register OnBackInvokedCallback: {ex.Message}");
+            }
+        }
+
         // Crash interceptor
         global::Android.Runtime.AndroidEnvironment.UnhandledExceptionRaiser += (sender, args) =>
         {
@@ -614,22 +626,98 @@ public class MainActivity : AvaloniaMainActivity<App>
         }
     }
 
+    public override void OnBackPressed()
+    {
+        HandleBackNavigation();
+    }
+
     public override bool OnKeyDown(Keycode keyCode, KeyEvent? e)
     {
         if (keyCode == Keycode.Back && e?.Action == KeyEventActions.Down)
         {
-            if (MainViewModel.Instance != null && MainViewModel.Instance.IsModalOpen)
-            {
-                MainViewModel.Instance.CloseModal();
-                return true;
-            }
-            if (MainViewModel.Instance != null && MainViewModel.Instance.IsMobileSidebarOpen)
-            {
-                MainViewModel.Instance.IsMobileSidebarOpen = false;
-                return true;
-            }
+            HandleBackNavigation();
+            return true;
         }
         return base.OnKeyDown(keyCode, e);
+    }
+
+    private void HandleBackNavigation()
+    {
+        var vm = MainViewModel.Instance;
+        if (vm == null)
+        {
+            FinishAffinity();
+            return;
+        }
+
+        // 1. If Preferences modal (Settings) or About modal is open, close it without closing the app!
+        if (vm.IsPreferencesModal || vm.IsAboutModal)
+        {
+            vm.CloseModal();
+            return;
+        }
+
+        // 2. If a confirmation modal is already open (e.g. exit dialog itself or another confirmation), dismiss it
+        if (vm.IsConfirmationModal)
+        {
+            vm.ResolveConfirmation(false);
+            return;
+        }
+
+        // 3. If any other modal is open (Message, CameraPicker, Conflict, FreeTierDelay, BatchSummary), close it
+        if (vm.IsModalOpen)
+        {
+            vm.CloseModal();
+            return;
+        }
+
+        // 4. If mobile sidebar / options drawer is open, close it
+        if (vm.IsMobileSidebarOpen)
+        {
+            vm.IsMobileSidebarOpen = false;
+            return;
+        }
+
+        // 5. If mobile add menu (FAB) is open, close it
+        if (vm.IsMobileAddMenuOpen)
+        {
+            vm.IsMobileAddMenuOpen = false;
+            return;
+        }
+
+        // 6. On the main view, trigger a confirmation modal asking the user to confirm exiting the app
+        PromptExitConfirmation();
+    }
+
+    private void PromptExitConfirmation()
+    {
+        var vm = MainViewModel.Instance;
+        if (vm == null)
+        {
+            FinishAffinity();
+            return;
+        }
+
+        Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+        {
+            bool confirmExit = await vm.ShowConfirmationModalAsync(
+                Fujify.Localization.LocalizationManager.Tr("ExitAppTitle"),
+                Fujify.Localization.LocalizationManager.Tr("ExitAppMessage"),
+                confirmText: Fujify.Localization.LocalizationManager.Tr("ExitAppConfirm"),
+                cancelText: Fujify.Localization.LocalizationManager.Tr("Cancel"));
+
+            if (confirmExit)
+            {
+                FinishAffinity();
+            }
+        });
+    }
+
+    private class BackInvokedCallback : Java.Lang.Object, global::Android.Window.IOnBackInvokedCallback
+    {
+        private readonly Action _action;
+        public BackInvokedCallback(Action action) => _action = action;
+        public void OnBackInvoked() => _action();
     }
 
     protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)

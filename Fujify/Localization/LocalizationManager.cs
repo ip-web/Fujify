@@ -382,6 +382,9 @@ namespace Fujify.Localization
                 ["DisableBackupWarning"] = "Disabling backup will permanently delete original pictures after successful conversion. Are you sure you want to disable backups?",
                 ["DisableBackupConfirm"] = "Disable Backup",
                 ["DisableBackupCancel"] = "Keep Backup",
+                ["ExitAppTitle"] = "Exit Fujifier",
+                ["ExitAppMessage"] = "Are you sure you want to exit the application?",
+                ["ExitAppConfirm"] = "Exit",
             };
             _translations["en"] = en;
 
@@ -612,6 +615,9 @@ namespace Fujify.Localization
                 ["DisableBackupWarning"] = "La désactivation de la sauvegarde supprimera définitivement les photos originales après leur conversion réussie. Voulez-vous vraiment désactiver la sauvegarde ?",
                 ["DisableBackupConfirm"] = "Désactiver la sauvegarde",
                 ["DisableBackupCancel"] = "Garder la sauvegarde",
+                ["ExitAppTitle"] = "Quitter Fujifier",
+                ["ExitAppMessage"] = "Voulez-vous vraiment quitter l'application ?",
+                ["ExitAppConfirm"] = "Quitter",
             };
             _translations["fr"] = fr;
 
@@ -842,6 +848,9 @@ namespace Fujify.Localization
                 ["DisableBackupWarning"] = "Desactivar la copia de seguridad eliminará de forma permanente las fotos originales después de la conversión exitosa. ¿Seguro que deseas desactivar las copias?",
                 ["DisableBackupConfirm"] = "Desactivar copia",
                 ["DisableBackupCancel"] = "Mantener copia",
+                ["ExitAppTitle"] = "¿Salir de Fujifier?",
+                ["ExitAppMessage"] = "¿Seguro que deseas salir de la aplicación?",
+                ["ExitAppConfirm"] = "Salir",
             };
             _translations["es"] = es;
 
@@ -1072,6 +1081,9 @@ namespace Fujify.Localization
                 ["DisableBackupWarning"] = "Das Deaktivieren der Sicherung löscht die Originalfotos nach erfolgreicher Konvertierung unwiderruflich. Möchten Sie die Sicherung wirklich deaktivieren?",
                 ["DisableBackupConfirm"] = "Sicherung deaktivieren",
                 ["DisableBackupCancel"] = "Sicherung behalten",
+                ["ExitAppTitle"] = "Fujifier beenden",
+                ["ExitAppMessage"] = "Möchten Sie die Anwendung wirklich beenden?",
+                ["ExitAppConfirm"] = "Beenden",
             };
             _translations["de"] = de;
         }

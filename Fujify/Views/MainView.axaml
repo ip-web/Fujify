@@ -507,7 +507,7 @@
 
                             <!-- 3. Scrollable Sidebar Content (Settings / Photo info) -->
                             <ScrollViewer x:Name="MobileSidebarScrollViewer" Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" IsScrollInertiaEnabled="True" Background="Transparent"
-                                          Padding="18,14,18,16">
+                                          Padding="18,14,18,36">
                                 <Panel>
                                     <!-- TAB 1: SETTINGS VIEW -->
                                     <StackPanel IsVisible="{Binding IsInspectorSettingsTab}" Spacing="14">
@@ -650,6 +650,9 @@
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                 <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenInLightroom}" OnContent="" OffContent=""/>
                                             </Grid>
+
+                                            <!-- Bottom Clearance to ensure last entry never clips -->
+                                            <Border Height="40"/>
                                         </StackPanel>
                                     </StackPanel>
 
@@ -733,6 +736,9 @@
                                                                Foreground="{DynamicResource AppAccentLightBrush}"/>
                                                 </StackPanel>
                                             </Grid>
+
+                                            <!-- Bottom Clearance -->
+                                            <Border Height="40"/>
                                         </StackPanel>
                                     </StackPanel>
                                 </Panel>
@@ -793,8 +799,6 @@
                                 <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Center">
                                     <!-- Studio Heading -->
                                     <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
-                                        <TextBlock Text="{loc:Loc TaglineMain}" FontSize="9.5" FontWeight="SemiBold"
-                                                   Foreground="#9D96B6" LetterSpacing="1.8"/>
                                         <TextBlock Text="Fujifier" FontSize="26" FontWeight="SemiBold"
                                                    Foreground="{DynamicResource AppTextPrimaryBrush}" LetterSpacing="-0.8"/>
                                         <TextBlock Text="{loc:Loc TaglineSub}" FontSize="11"
