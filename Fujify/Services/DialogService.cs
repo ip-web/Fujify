@@ -39,6 +39,65 @@ namespace Fujify.Services
         private readonly ILicenseService? _licenseService;
 
         public static Func<string>? PlatformStagingDirectoryResolver { get; set; }
+        public static Func<string>? PlatformDefaultOutputDirectoryResolver { get; set; }
+        public static Func<Uri, string?>? PlatformFolderResolver { get; set; }
+        public static Action? PlatformEnsurePermissionsCallback { get; set; }
+
+        public static string ResolveAndroidStoragePath(Uri uri)
+        {
+            if (uri == null) return string.Empty;
+            return ResolveAndroidStoragePathString(uri.ToString());
+        }
+
+        public static string ResolveAndroidStoragePathString(string pathOrUri)
+        {
+            if (string.IsNullOrWhiteSpace(pathOrUri)) return string.Empty;
+
+            string unescaped = Uri.UnescapeDataString(pathOrUri).Trim();
+
+            // 1. Primary external storage check (e.g. primary:Folder or /tree/primary:Folder)
+            int primaryIdx = unescaped.IndexOf("primary:", StringComparison.OrdinalIgnoreCase);
+            if (primaryIdx >= 0)
+            {
+                string relativePath = unescaped.Substring(primaryIdx + "primary:".Length).TrimStart('/', '\\').Replace('\\', '/');
+                string baseDir = "/storage/emulated/0";
+                return string.IsNullOrEmpty(relativePath) ? baseDir : $"{baseDir}/{relativePath}";
+            }
+
+            // 2. Secondary volume / SD card (e.g. /tree/1234-5678:Folder)
+            int treeIdx = unescaped.IndexOf("/tree/", StringComparison.OrdinalIgnoreCase);
+            if (treeIdx < 0) treeIdx = unescaped.IndexOf("/document/", StringComparison.OrdinalIgnoreCase);
+            if (treeIdx >= 0)
+            {
+                int prefixLen = unescaped.IndexOf("/tree/", StringComparison.OrdinalIgnoreCase) >= 0 ? "/tree/".Length : "/document/".Length;
+                string sub = unescaped.Substring(treeIdx + prefixLen);
+                int colonIdx = sub.IndexOf(':');
+                if (colonIdx > 0)
+                {
+                    string volume = sub.Substring(0, colonIdx);
+                    string rel = sub.Substring(colonIdx + 1).TrimStart('/', '\\').Replace('\\', '/');
+                    if (volume.Equals("primary", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return string.IsNullOrEmpty(rel) ? "/storage/emulated/0" : $"/storage/emulated/0/{rel}";
+                    }
+                    string baseVol = $"/storage/{volume}";
+                    return string.IsNullOrEmpty(rel) ? baseVol : $"{baseVol}/{rel}";
+                }
+            }
+
+            // 3. Raw /tree/ path without colon
+            if (unescaped.StartsWith("/tree/", StringComparison.OrdinalIgnoreCase))
+            {
+                string stripped = unescaped.Substring("/tree/".Length);
+                if (stripped.StartsWith("primary:", StringComparison.OrdinalIgnoreCase))
+                {
+                    string rel = stripped.Substring("primary:".Length).TrimStart('/', '\\').Replace('\\', '/');
+                    return string.IsNullOrEmpty(rel) ? "/storage/emulated/0" : $"/storage/emulated/0/{rel}";
+                }
+            }
+
+            return pathOrUri;
+        }
 
         public static string GetStagingDirectory()
         {
@@ -424,6 +483,8 @@ namespace Fujify.Services
                 return await Dispatcher.UIThread.InvokeAsync(() => ShowFolderBrowserDialogAsync(owner, title));
             }
 
+            PlatformEnsurePermissionsCallback?.Invoke();
+
             var storage = GetStorageProvider(owner);
             if (storage == null) return null;
 
@@ -439,6 +500,25 @@ namespace Fujify.Services
             if (!string.IsNullOrEmpty(localPath) && Directory.Exists(localPath))
             {
                 return localPath;
+            }
+
+            if (PlatformFolderResolver != null)
+            {
+                try
+                {
+                    string? resolved = PlatformFolderResolver(folder.Path);
+                    if (!string.IsNullOrEmpty(resolved))
+                    {
+                        return resolved;
+                    }
+                }
+                catch { }
+            }
+
+            string resolvedAndroid = ResolveAndroidStoragePath(folder.Path);
+            if (!string.IsNullOrEmpty(resolvedAndroid) && (Directory.Exists(resolvedAndroid) || OperatingSystem.IsAndroid()))
+            {
+                return resolvedAndroid;
             }
 
             return folder.Path.LocalPath;

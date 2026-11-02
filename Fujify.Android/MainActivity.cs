@@ -55,12 +55,17 @@ namespace Fujify.Android;
     DataHost = "oauth-callback")]
 public class MainActivity : AvaloniaMainActivity<App>
 {
+    public static MainActivity? Instance { get; private set; }
+    private const int StoragePermissionRequestCode = 2001;
+
     protected override void OnCreate(Bundle? savedInstanceState)
     {
+        Instance = this;
         AdManager.Instance.PreInitialize(this);
         base.OnCreate(savedInstanceState);
         Window?.SetSoftInputMode(SoftInput.AdjustResize | SoftInput.StateHidden);
         EnableHighRefreshRate();
+        RequestRuntimeStoragePermissions();
 
         if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
         {
@@ -98,36 +103,70 @@ public class MainActivity : AvaloniaMainActivity<App>
         DialogService.PlatformStagingDirectoryResolver = () =>
             CacheDir?.AbsolutePath ?? FilesDir?.AbsolutePath ?? "";
 
-        // Wire media scanner and photo album export for newly converted DNG files
-        MainViewModel.PlatformFileCreatedCallback = (filePath) =>
+        // Wire folder resolver to translate Android SAF tree URIs into real POSIX storage paths
+        DialogService.PlatformFolderResolver = (uri) =>
         {
             try
             {
-                string picturesDir = global::Android.OS.Environment.GetExternalStoragePublicDirectory(
-                    global::Android.OS.Environment.DirectoryPictures)?.AbsolutePath ?? "";
-
-                if (!string.IsNullOrEmpty(picturesDir))
+                if (uri == null) return null;
+                var androidUri = global::Android.Net.Uri.Parse(uri.ToString());
+                if (androidUri != null)
                 {
-                    string fujifyPicturesDir = Path.Combine(picturesDir, "Fujifier");
-                    Directory.CreateDirectory(fujifyPicturesDir);
-                    string targetPath = Path.Combine(fujifyPicturesDir, Path.GetFileName(filePath));
-                    if (!string.Equals(filePath, targetPath, StringComparison.OrdinalIgnoreCase))
+                    try
                     {
-                        File.Copy(filePath, targetPath, true);
-                        filePath = targetPath;
+                        if (androidUri.Scheme == "content")
+                        {
+                            ApplicationContext?.ContentResolver?.TakePersistableUriPermission(
+                                androidUri,
+                                ActivityFlags.GrantReadUriPermission | ActivityFlags.GrantWriteUriPermission);
+                        }
+                    }
+                    catch { }
+
+                    if (Build.VERSION.SdkInt >= BuildVersionCodes.Kitkat &&
+                        global::Android.Provider.DocumentsContract.IsTreeUri(androidUri))
+                    {
+                        string? docId = global::Android.Provider.DocumentsContract.GetTreeDocumentId(androidUri);
+                        if (!string.IsNullOrEmpty(docId))
+                        {
+                            return DialogService.ResolveAndroidStoragePathString(docId);
+                        }
                     }
                 }
-
-                global::Android.Media.MediaScannerConnection.ScanFile(
-                    ApplicationContext,
-                    new[] { filePath },
-                    new[] { "image/x-adobe-dng", "image/dng" },
-                    null);
+                return DialogService.ResolveAndroidStoragePathString(uri.ToString());
             }
-            catch (Exception ex)
+            catch
             {
-                global::Android.Util.Log.Warn("Fujifier", $"Error in PlatformFileCreatedCallback: {ex.Message}");
+                return null;
             }
+        };
+
+        // Wire default public Pictures directory for Android
+        DialogService.PlatformDefaultOutputDirectoryResolver = () =>
+        {
+            try
+            {
+                var pictures = global::Android.OS.Environment.GetExternalStoragePublicDirectory(
+                    global::Android.OS.Environment.DirectoryPictures);
+                if (pictures != null)
+                {
+                    return Path.Combine(pictures.AbsolutePath, "Fujifier");
+                }
+            }
+            catch { }
+            return "/storage/emulated/0/Pictures/Fujifier";
+        };
+
+        // Wire permission prompt hook
+        DialogService.PlatformEnsurePermissionsCallback = () =>
+        {
+            PromptAllFilesAccessPermission();
+        };
+
+        // Wire media scanner and photo album export for newly converted DNG files
+        MainViewModel.PlatformFileCreatedCallback = (filePath) =>
+        {
+            SaveConvertedPhotoToGallery(this, filePath);
         };
 
         // Wire Open in Lightroom handler
@@ -177,6 +216,7 @@ public class MainActivity : AvaloniaMainActivity<App>
 
     protected override void OnDestroy()
     {
+        if (Instance == this) Instance = null;
         AdManager.Instance.Destroy();
         base.OnDestroy();
     }
@@ -711,6 +751,244 @@ public class MainActivity : AvaloniaMainActivity<App>
                 FinishAffinity();
             }
         });
+    }
+
+    public void RequestRuntimeStoragePermissions()
+    {
+        try
+        {
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
+            {
+                if (CheckSelfPermission(global::Android.Manifest.Permission.ReadMediaImages) != Permission.Granted)
+                {
+                    RequestPermissions(new[] { global::Android.Manifest.Permission.ReadMediaImages }, StoragePermissionRequestCode);
+                }
+            }
+            else if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
+            {
+                var missing = new List<string>();
+                if (CheckSelfPermission(global::Android.Manifest.Permission.ReadExternalStorage) != Permission.Granted)
+                {
+                    missing.Add(global::Android.Manifest.Permission.ReadExternalStorage);
+                }
+                if (Build.VERSION.SdkInt <= BuildVersionCodes.Q &&
+                    CheckSelfPermission(global::Android.Manifest.Permission.WriteExternalStorage) != Permission.Granted)
+                {
+                    missing.Add(global::Android.Manifest.Permission.WriteExternalStorage);
+                }
+
+                if (missing.Count > 0)
+                {
+                    RequestPermissions(missing.ToArray(), StoragePermissionRequestCode);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            global::Android.Util.Log.Warn("Fujifier", $"RequestRuntimeStoragePermissions error: {ex.Message}");
+        }
+    }
+
+    public void PromptAllFilesAccessPermission()
+    {
+        try
+        {
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.R)
+            {
+                if (!global::Android.OS.Environment.IsExternalStorageManager)
+                {
+                    var vm = MainViewModel.Instance;
+                    if (vm != null)
+                    {
+                        Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
+                        {
+                            bool openSettings = await vm.ShowConfirmationModalAsync(
+                                Fujify.Localization.LocalizationManager.Tr("StoragePermissionTitle"),
+                                Fujify.Localization.LocalizationManager.Tr("StoragePermissionMessage"),
+                                confirmText: Fujify.Localization.LocalizationManager.Tr("StoragePermissionConfirm"),
+                                cancelText: Fujify.Localization.LocalizationManager.Tr("StoragePermissionCancel"));
+
+                            if (openSettings)
+                            {
+                                LaunchAllFilesAccessSettings();
+                            }
+                        });
+                    }
+                    else
+                    {
+                        LaunchAllFilesAccessSettings();
+                    }
+                }
+            }
+            else
+            {
+                RequestRuntimeStoragePermissions();
+            }
+        }
+        catch (Exception ex)
+        {
+            global::Android.Util.Log.Warn("Fujifier", $"PromptAllFilesAccessPermission error: {ex.Message}");
+        }
+    }
+
+    private void LaunchAllFilesAccessSettings()
+    {
+        try
+        {
+            var uri = global::Android.Net.Uri.Parse($"package:{PackageName}");
+            var intent = new Intent(global::Android.Provider.Settings.ActionManageAppAllFilesAccessPermission, uri);
+            intent.AddFlags(ActivityFlags.NewTask);
+            StartActivity(intent);
+        }
+        catch
+        {
+            try
+            {
+                var fallbackIntent = new Intent(global::Android.Provider.Settings.ActionManageAllFilesAccessPermission);
+                fallbackIntent.AddFlags(ActivityFlags.NewTask);
+                StartActivity(fallbackIntent);
+            }
+            catch (Exception ex)
+            {
+                global::Android.Util.Log.Error("Fujifier", $"Could not launch All Files Access settings: {ex}");
+            }
+        }
+    }
+
+    public static void SaveConvertedPhotoToGallery(Context context, string filePath)
+    {
+        try
+        {
+            string fileName = Path.GetFileName(filePath);
+            var vm = MainViewModel.Instance;
+            bool isCustomOutput = vm != null && vm.HasCustomOutputFolder;
+
+            // If user explicitly configured a custom output folder, the file is already written there.
+            // Just scan it so Android MediaStore indexes it.
+            if (isCustomOutput && File.Exists(filePath))
+            {
+                global::Android.Media.MediaScannerConnection.ScanFile(
+                    context,
+                    new[] { filePath },
+                    new[] { "image/x-adobe-dng", "image/dng" },
+                    null);
+                global::Android.Util.Log.Info("Fujifier", $"Scanned custom output file: {filePath}");
+                return;
+            }
+
+            bool mediaStoreSaved = false;
+
+            // 1. On Android 10+ (API >= 29), insert into MediaStore under Pictures/Fujifier
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
+            {
+                mediaStoreSaved = SaveToMediaStore(context, filePath, fileName);
+            }
+
+            // 2. Direct POSIX copy fallback / sync to /storage/emulated/0/Pictures/Fujifier
+            string picturesDir = global::Android.OS.Environment.GetExternalStoragePublicDirectory(
+                global::Android.OS.Environment.DirectoryPictures)?.AbsolutePath ?? "";
+
+            string targetPosixPath = string.Empty;
+            if (!string.IsNullOrEmpty(picturesDir))
+            {
+                try
+                {
+                    string fujifierDir = Path.Combine(picturesDir, "Fujifier");
+                    if (!Directory.Exists(fujifierDir))
+                    {
+                        Directory.CreateDirectory(fujifierDir);
+                    }
+                    targetPosixPath = Path.Combine(fujifierDir, fileName);
+                    if (!string.Equals(filePath, targetPosixPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        File.Copy(filePath, targetPosixPath, overwrite: true);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    global::Android.Util.Log.Warn("Fujifier", $"Direct POSIX copy to Pictures/Fujifier not permitted: {ex.Message}");
+                }
+            }
+
+            // 3. Scan with MediaScannerConnection so device gallery, file managers, and Lightroom detect it
+            string scanPath = !string.IsNullOrEmpty(targetPosixPath) && File.Exists(targetPosixPath)
+                ? targetPosixPath
+                : Path.Combine(picturesDir, "Fujifier", fileName);
+
+            global::Android.Media.MediaScannerConnection.ScanFile(
+                context,
+                new[] { scanPath, filePath },
+                new[] { "image/x-adobe-dng", "image/dng" },
+                null);
+
+            global::Android.Util.Log.Info("Fujifier", $"SaveConvertedPhotoToGallery completed: fileName={fileName}, mediaStoreSaved={mediaStoreSaved}, posixExists={File.Exists(targetPosixPath)}");
+        }
+        catch (Exception ex)
+        {
+            global::Android.Util.Log.Error("Fujifier", $"Error in SaveConvertedPhotoToGallery: {ex}");
+        }
+    }
+
+    private static bool SaveToMediaStore(Context context, string sourceFilePath, string fileName)
+    {
+        try
+        {
+            var resolver = context.ContentResolver;
+            if (resolver == null) return false;
+
+            var values = new ContentValues();
+            values.Put(global::Android.Provider.MediaStore.IMediaColumns.DisplayName, fileName);
+            values.Put(global::Android.Provider.MediaStore.IMediaColumns.MimeType, "image/x-adobe-dng");
+            values.Put(global::Android.Provider.MediaStore.IMediaColumns.DateAdded, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+            values.Put(global::Android.Provider.MediaStore.IMediaColumns.DateModified, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
+            {
+                values.Put(global::Android.Provider.MediaStore.IMediaColumns.RelativePath, "Pictures/Fujifier");
+                values.Put(global::Android.Provider.MediaStore.IMediaColumns.IsPending, 1);
+            }
+
+            var externalUri = global::Android.Provider.MediaStore.Images.Media.ExternalContentUri;
+            if (externalUri == null)
+            {
+                global::Android.Util.Log.Error("Fujifier", "MediaStore.Images.Media.ExternalContentUri is null");
+                return false;
+            }
+
+            var uri = resolver.Insert(externalUri, values);
+            if (uri == null)
+            {
+                global::Android.Util.Log.Error("Fujifier", $"ContentResolver.Insert returned null for {fileName}");
+                return false;
+            }
+
+            using (var inStream = File.OpenRead(sourceFilePath))
+            using (var outStream = resolver.OpenOutputStream(uri))
+            {
+                if (outStream == null)
+                {
+                    global::Android.Util.Log.Error("Fujifier", $"OpenOutputStream returned null for {uri}");
+                    return false;
+                }
+                inStream.CopyTo(outStream);
+                outStream.Flush();
+            }
+
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
+            {
+                values.Clear();
+                values.Put(global::Android.Provider.MediaStore.IMediaColumns.IsPending, 0);
+                resolver.Update(uri, values, null, null);
+            }
+
+            global::Android.Util.Log.Info("Fujifier", $"SaveToMediaStore successfully saved {fileName} to URI: {uri}");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            global::Android.Util.Log.Error("Fujifier", $"SaveToMediaStore failed for {fileName}: {ex}");
+            return false;
+        }
     }
 
     private class BackInvokedCallback : Java.Lang.Object, global::Android.Window.IOnBackInvokedCallback

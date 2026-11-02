@@ -1630,7 +1630,12 @@ namespace Fujify.ViewModels
             get => _outputFolderPath;
             set
             {
-                if (SetProperty(ref _outputFolderPath, value))
+                string? resolved = value;
+                if (!string.IsNullOrWhiteSpace(resolved) && (OperatingSystem.IsAndroid() || resolved.Contains("primary:") || resolved.StartsWith("/tree/")))
+                {
+                    resolved = DialogService.ResolveAndroidStoragePathString(resolved);
+                }
+                if (SetProperty(ref _outputFolderPath, resolved))
                 {
                     OnPropertyChanged(nameof(FormattedOutputFolderPath));
                     OnPropertyChanged(nameof(HasCustomOutputFolder));
@@ -2119,6 +2124,11 @@ namespace Fujify.ViewModels
                 return;
             }
 
+            if (OperatingSystem.IsAndroid())
+            {
+                DialogService.PlatformEnsurePermissionsCallback?.Invoke();
+            }
+
             var pendingFiles = Files.Where(f => f.Status == "Pending").Select(f => f.FilePath).ToList();
 
             if (pendingFiles.Count == 0)
@@ -2570,7 +2580,18 @@ namespace Fujify.ViewModels
                     string? destDir = Path.GetDirectoryName(customOutputPath);
                     if (!string.IsNullOrEmpty(destDir) && !Directory.Exists(destDir))
                     {
-                        Directory.CreateDirectory(destDir);
+                        try
+                        {
+                            Directory.CreateDirectory(destDir);
+                        }
+                        catch (Exception ex)
+                        {
+                            if (OperatingSystem.IsAndroid())
+                            {
+                                DialogService.PlatformEnsurePermissionsCallback?.Invoke();
+                            }
+                            throw new UnauthorizedAccessException($"Cannot create output directory '{destDir}': {ex.Message}. Please grant All Files Access permissions.", ex);
+                        }
                     }
                 }
 
@@ -2675,6 +2696,10 @@ namespace Fujify.ViewModels
 
         private async Task ExecuteBrowseFolderAsync()
         {
+            if (OperatingSystem.IsAndroid())
+            {
+                DialogService.PlatformEnsurePermissionsCallback?.Invoke();
+            }
             string? selectedFolder = await _dialogService.ShowFolderBrowserDialogAsync(OwnerWindow, "Select output folder");
             if (!string.IsNullOrEmpty(selectedFolder))
             {

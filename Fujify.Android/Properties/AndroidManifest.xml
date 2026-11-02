@@ -28,6 +28,7 @@
         android:icon="@drawable/icon"
         android:label="Fujifier"
         android:supportsRtl="true"
+        android:requestLegacyExternalStorage="true"
         android:theme="@style/MyTheme.NoActionBar">
         <!-- Google AdMob Application ID -->
         <meta-data

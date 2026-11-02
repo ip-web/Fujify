@@ -386,6 +386,10 @@ namespace Fujify.Localization
                 ["ExitAppTitle"] = "Exit Fujifier",
                 ["ExitAppMessage"] = "Are you sure you want to exit the application?",
                 ["ExitAppConfirm"] = "Exit",
+                ["StoragePermissionTitle"] = "Storage Access Required",
+                ["StoragePermissionMessage"] = "To export photos to custom folders on your device, Fujifier needs file access permissions. Please enable 'Allow access to manage all files' in system settings.",
+                ["StoragePermissionConfirm"] = "Open Settings",
+                ["StoragePermissionCancel"] = "Cancel",
             };
             _translations["en"] = en;
 
@@ -620,6 +624,10 @@ namespace Fujify.Localization
                 ["ExitAppTitle"] = "Quitter Fujifier",
                 ["ExitAppMessage"] = "Voulez-vous vraiment quitter l'application ?",
                 ["ExitAppConfirm"] = "Quitter",
+                ["StoragePermissionTitle"] = "Accès au stockage requis",
+                ["StoragePermissionMessage"] = "Pour exporter des photos vers des dossiers personnalisés, Fujifier a besoin de l'accès aux fichiers. Veuillez activer « Autoriser l'accès pour gérer tous les fichiers » dans les paramètres.",
+                ["StoragePermissionConfirm"] = "Ouvrir les paramètres",
+                ["StoragePermissionCancel"] = "Annuler",
             };
             _translations["fr"] = fr;
 
@@ -854,6 +862,10 @@ namespace Fujify.Localization
                 ["ExitAppTitle"] = "¿Salir de Fujifier?",
                 ["ExitAppMessage"] = "¿Seguro que deseas salir de la aplicación?",
                 ["ExitAppConfirm"] = "Salir",
+                ["StoragePermissionTitle"] = "Acceso al almacenamiento requerido",
+                ["StoragePermissionMessage"] = "Para exportar fotos a carpetas personalizadas, Fujifier necesita acceso a los archivos. Por favor, activa «Permitir administrar todos los archivos» en los ajustes del sistema.",
+                ["StoragePermissionConfirm"] = "Abrir ajustes",
+                ["StoragePermissionCancel"] = "Cancelar",
             };
             _translations["es"] = es;
 
@@ -1088,6 +1100,10 @@ namespace Fujify.Localization
                 ["ExitAppTitle"] = "Fujifier beenden",
                 ["ExitAppMessage"] = "Möchten Sie die Anwendung wirklich beenden?",
                 ["ExitAppConfirm"] = "Beenden",
+                ["StoragePermissionTitle"] = "Speicherzugriff erforderlich",
+                ["StoragePermissionMessage"] = "Um Fotos in benutzerdefinierte Ordner zu exportieren, benötigt Fujifier Dateizugriff. Bitte aktivieren Sie «Alle Dateien verwalten» in den Systemeinstellungen.",
+                ["StoragePermissionConfirm"] = "Einstellungen öffnen",
+                ["StoragePermissionCancel"] = "Abbrechen",
             };
             _translations["de"] = de;
         }

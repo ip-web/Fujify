@@ -275,6 +275,20 @@ namespace Fujify.Tests
             }
         }
 
+        [Fact]
+        public void ResolveAndroidStoragePath_ResolvesSafUrisCorrectly()
+        {
+            Assert.Equal("/storage/emulated/0/MyFolder", DialogService.ResolveAndroidStoragePathString("primary:MyFolder"));
+            Assert.Equal("/storage/emulated/0/MyFolder", DialogService.ResolveAndroidStoragePathString("/tree/primary:MyFolder"));
+            Assert.Equal("/storage/emulated/0/MyFolder", DialogService.ResolveAndroidStoragePathString("content://com.android.externalstorage.documents/tree/primary%3AMyFolder"));
+            Assert.Equal("/storage/1234-5678/MyFolder", DialogService.ResolveAndroidStoragePathString("content://com.android.externalstorage.documents/tree/1234-5678%3AMyFolder"));
+            Assert.Equal("/storage/emulated/0", DialogService.ResolveAndroidStoragePathString("primary:"));
+            Assert.Equal("/storage/emulated/0", DialogService.ResolveAndroidStoragePathString("/tree/primary:"));
+
+            // Normal desktop path should remain untouched
+            Assert.Equal("C:\\Photos", DialogService.ResolveAndroidStoragePathString("C:\\Photos"));
+        }
+
         private class FakeSettingsService : ISettingsService
         {
             public AppSettings Settings { get; } = new AppSettings();

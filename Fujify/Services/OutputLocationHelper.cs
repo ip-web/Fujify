@@ -33,7 +33,9 @@ namespace Fujify.Services
             string? subfolderCustomName)
         {
             string sourceDir = Path.GetDirectoryName(sourceFilePath) ?? string.Empty;
-            string baseDir = !string.IsNullOrEmpty(customOutputFolder) ? customOutputFolder : sourceDir;
+            string baseDir = !string.IsNullOrEmpty(customOutputFolder)
+                ? DialogService.ResolveAndroidStoragePathString(customOutputFolder)
+                : sourceDir;
 
             if (!createSubfolder || OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
             {
