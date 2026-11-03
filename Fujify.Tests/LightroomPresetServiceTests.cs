@@ -20,6 +20,9 @@ namespace Fujify.Tests
             public int DelaySeconds => 15;
             public string? AccountEmail => null;
             public bool IsAccountLoggedIn => false;
+            public string? AccountLicenseKey => null;
+            public bool HasAccountLicense => false;
+            public string AccountDashboardUrl => "https://fujifier.cc/account";
             public int UsedActivations => 0;
             public int MaxActivations => 3;
             public string SlotInfoText => "0 of 3 devices";
@@ -34,6 +37,7 @@ namespace Fujify.Tests
             public void Initialize() { }
             public void SyncFromSettings() { }
             public Task<LicenseActivationResult> ActivateLicenseKeyAsync(string licenseKey) => Task.FromResult(new LicenseActivationResult(true));
+            public Task<LicenseActivationResult> ActivateCurrentDeviceAsync() => Task.FromResult(new LicenseActivationResult(true));
             public Task<LicenseActivationResult> LoginWithAccountAsync(string email, string password) => Task.FromResult(new LicenseActivationResult(true));
             public Task<(bool Success, string Message)> RequestPasswordResetAsync(string email) => Task.FromResult((true, "Reset link sent"));
             public Task<LicenseActivationResult> LoginWithGoogleOAuthAsync(Action<string>? statusCallback = null, CancellationToken cancellationToken = default) => Task.FromResult(new LicenseActivationResult(true));

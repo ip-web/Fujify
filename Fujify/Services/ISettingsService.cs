@@ -69,6 +69,7 @@ namespace Fujify.Services
         public string? RefreshToken { get; set; }
         public string? AccountEmail { get; set; }
         public string? AccountDisplayName { get; set; }
+        public string? AccountLicenseKey { get; set; }
         public int MaxActivations { get; set; } = 3;
         public int UsedActivations { get; set; } = 0;
         public string LicenseApiBaseUrl { get; set; } = "https://fujifier.cc/wp-json/fujifier/v1";

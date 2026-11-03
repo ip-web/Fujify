@@ -65,6 +65,9 @@ namespace Fujify.Services
 
         public string? AccountEmail => _settingsService.Settings.AccountEmail;
         public bool IsAccountLoggedIn => !string.IsNullOrWhiteSpace(_settingsService.Settings.AccessToken);
+        public string? AccountLicenseKey => _settingsService.Settings.AccountLicenseKey ?? _currentStatus.LicenseKey;
+        public bool HasAccountLicense => !string.IsNullOrWhiteSpace(AccountLicenseKey);
+        public string AccountDashboardUrl => $"{GetWebsiteBaseUrl()}/account";
         public int UsedActivations => _currentStatus.UsedActivations;
         public int MaxActivations => _currentStatus.MaxActivations;
         public string SlotInfoText => $"{UsedActivations} of {MaxActivations} device slots active";
@@ -287,6 +290,21 @@ namespace Fujify.Services
             }
         }
 
+        public async Task<LicenseActivationResult> ActivateCurrentDeviceAsync()
+        {
+            string? key = _settingsService.Settings.AccountLicenseKey ?? _currentStatus.LicenseKey ?? _settingsService.Settings.LicenseKey;
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                if (IsAccountLoggedIn)
+                {
+                    return await RetrieveLicenseFromAccountAsync();
+                }
+                return new LicenseActivationResult(false, "No active license key found for this account.");
+            }
+
+            return await ActivateLicenseKeyAsync(key);
+        }
+
         public async Task<LicenseActivationResult> LoginWithAccountAsync(string email, string password)
         {
             if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
@@ -339,8 +357,16 @@ namespace Fujify.Services
 
                 if (activeLicense != null && !string.IsNullOrWhiteSpace(activeLicense.LicenseKey))
                 {
+                    _settingsService.Settings.AccountLicenseKey = activeLicense.LicenseKey;
+                    _settingsService.Settings.MaxActivations = activeLicense.MaxActivations > 0 ? activeLicense.MaxActivations : 3;
+                    _settingsService.Save();
+
                     // Activate this device using the account's license
-                    return await ActivateLicenseKeyAsync(activeLicense.LicenseKey);
+                    var actRes = await ActivateLicenseKeyAsync(activeLicense.LicenseKey);
+                    if (actRes.Success) return actRes;
+
+                    await FetchRegisteredDevicesAsync();
+                    return new LicenseActivationResult(true, $"Signed in as {loginRes.User?.Email}. {actRes.ErrorMessage}", _currentStatus);
                 }
 
                 NotifyLicenseChanged();
@@ -594,7 +620,15 @@ namespace Fujify.Services
 
                 if (activeLicense != null && !string.IsNullOrWhiteSpace(activeLicense.LicenseKey))
                 {
-                    return await ActivateLicenseKeyAsync(activeLicense.LicenseKey);
+                    _settingsService.Settings.AccountLicenseKey = activeLicense.LicenseKey;
+                    _settingsService.Settings.MaxActivations = activeLicense.MaxActivations > 0 ? activeLicense.MaxActivations : 3;
+                    _settingsService.Save();
+
+                    var actRes = await ActivateLicenseKeyAsync(activeLicense.LicenseKey);
+                    if (actRes.Success) return actRes;
+
+                    await FetchRegisteredDevicesAsync();
+                    return new LicenseActivationResult(true, $"Signed in as {authRes.User?.Email ?? _settingsService.Settings.AccountEmail}. {actRes.ErrorMessage}", _currentStatus);
                 }
 
                 SetFreeState();
@@ -657,7 +691,15 @@ namespace Fujify.Services
 
                 if (activeLicense != null && !string.IsNullOrWhiteSpace(activeLicense.LicenseKey))
                 {
-                    return await ActivateLicenseKeyAsync(activeLicense.LicenseKey);
+                    _settingsService.Settings.AccountLicenseKey = activeLicense.LicenseKey;
+                    _settingsService.Settings.MaxActivations = activeLicense.MaxActivations > 0 ? activeLicense.MaxActivations : 3;
+                    _settingsService.Save();
+
+                    var actRes = await ActivateLicenseKeyAsync(activeLicense.LicenseKey);
+                    if (actRes.Success) return actRes;
+
+                    await FetchRegisteredDevicesAsync();
+                    return new LicenseActivationResult(true, $"Signed in as {loginRes.User?.Email}. {actRes.ErrorMessage}", _currentStatus);
                 }
 
                 SetFreeState();
@@ -731,7 +773,15 @@ namespace Fujify.Services
 
                 if (activeLicense != null && !string.IsNullOrWhiteSpace(activeLicense.LicenseKey))
                 {
-                    return await ActivateLicenseKeyAsync(activeLicense.LicenseKey);
+                    _settingsService.Settings.AccountLicenseKey = activeLicense.LicenseKey;
+                    _settingsService.Settings.MaxActivations = activeLicense.MaxActivations > 0 ? activeLicense.MaxActivations : 3;
+                    _settingsService.Save();
+
+                    var actRes = await ActivateLicenseKeyAsync(activeLicense.LicenseKey);
+                    if (actRes.Success) return actRes;
+
+                    await FetchRegisteredDevicesAsync();
+                    return new LicenseActivationResult(true, $"Signed in as {meRes.User?.Email ?? _settingsService.Settings.AccountEmail}. {actRes.ErrorMessage}", _currentStatus);
                 }
 
                 SetFreeState();
@@ -846,11 +896,11 @@ namespace Fujify.Services
                 return await DeactivateLicenseAsync();
             }
 
-            string? key = _currentStatus.LicenseKey ?? _settingsService.Settings.LicenseKey;
-            if (string.IsNullOrWhiteSpace(key)) return false;
+            string? key = _currentStatus.LicenseKey ?? _settingsService.Settings.LicenseKey ?? _settingsService.Settings.AccountLicenseKey;
+            if (string.IsNullOrWhiteSpace(key) && !IsAccountLoggedIn) return false;
 
             // If dev override key or legacy RSA, simply remove from local collection
-            if (IsDevOverrideKey(key) || VerifyLegacyRsaKey(key, out _))
+            if (!string.IsNullOrWhiteSpace(key) && (IsDevOverrideKey(key) || VerifyLegacyRsaKey(key, out _)))
             {
                 _registeredDevices.RemoveAll(d => string.Equals(d.DeviceId, deviceId, StringComparison.OrdinalIgnoreCase));
                 _currentStatus.UsedActivations = Math.Max(1, _registeredDevices.Count);
@@ -865,7 +915,7 @@ namespace Fujify.Services
             {
                 var deactReq = new LicenseDeactivationRequest
                 {
-                    LicenseKey = key,
+                    LicenseKey = key ?? string.Empty,
                     DeviceId = deviceId
                 };
 
@@ -916,15 +966,15 @@ namespace Fujify.Services
 
         public async Task<IReadOnlyList<LicenseDeviceDto>> FetchRegisteredDevicesAsync()
         {
-            string? key = _currentStatus.LicenseKey ?? _settingsService.Settings.LicenseKey;
+            string? key = _currentStatus.LicenseKey ?? _settingsService.Settings.LicenseKey ?? _settingsService.Settings.AccountLicenseKey;
 
-            if (string.IsNullOrWhiteSpace(key))
+            if (string.IsNullOrWhiteSpace(key) && !IsAccountLoggedIn)
             {
                 UpdateRegisteredDevices(null);
                 return _registeredDevices;
             }
 
-            if (IsDevOverrideKey(key) || VerifyLegacyRsaKey(key, out _))
+            if (!string.IsNullOrWhiteSpace(key) && (IsDevOverrideKey(key) || VerifyLegacyRsaKey(key, out _)))
             {
                 PopulateLocalDevDevice();
                 return _registeredDevices;
@@ -934,8 +984,15 @@ namespace Fujify.Services
             {
                 string url = $"{GetApiBaseUrl()}/license/devices";
                 using var request = new HttpRequestMessage(HttpMethod.Post, url);
-                var payload = new LicenseDevicesRequest { LicenseKey = key };
-                request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                if (!string.IsNullOrWhiteSpace(key))
+                {
+                    var payload = new LicenseDevicesRequest { LicenseKey = key };
+                    request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+                }
+                else
+                {
+                    request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
+                }
 
                 if (!string.IsNullOrWhiteSpace(_settingsService.Settings.AccessToken))
                 {
@@ -949,6 +1006,10 @@ namespace Fujify.Services
                     var res = JsonSerializer.Deserialize<LicenseDevicesResponse>(responseJson, JsonOptions);
                     if (res != null && res.Success)
                     {
+                        if (!string.IsNullOrWhiteSpace(res.LicenseKey))
+                        {
+                            _settingsService.Settings.AccountLicenseKey = res.LicenseKey;
+                        }
                         if (res.UsedActivations > 0)
                         {
                             _currentStatus.UsedActivations = res.UsedActivations;
@@ -981,10 +1042,15 @@ namespace Fujify.Services
             _settingsService.Settings.RefreshToken = null;
             _settingsService.Settings.AccountEmail = null;
             _settingsService.Settings.AccountDisplayName = null;
+            _settingsService.Settings.AccountLicenseKey = null;
             _settingsService.Save();
 
             _currentStatus.IsAccountBound = false;
             _currentStatus.AccountEmail = null;
+            if (!_currentStatus.IsPro)
+            {
+                UpdateRegisteredDevices(null);
+            }
             NotifyLicenseChanged();
             return Task.FromResult(true);
         }

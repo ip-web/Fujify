@@ -152,6 +152,9 @@ namespace Fujify.ViewModels
         }
 
         public string SlotInfoText => _licenseService.SlotInfoText;
+        public bool ShowDeviceManagement => IsPro || IsAccountLoggedIn || HasRegisteredDevices;
+        public bool CanActivateThisDevice => !IsPro && (IsAccountLoggedIn || HasAccountLicense || !string.IsNullOrWhiteSpace(LicenseKeyInput));
+        public bool HasAccountLicense => _licenseService.HasAccountLicense;
 
         public string LicenseMessageText
         {
@@ -659,6 +662,8 @@ namespace Fujify.ViewModels
         public ICommand RetrieveLicenseCommand { get; }
         public ICommand SetKeyTabCommand { get; }
         public ICommand SetAccountTabCommand { get; }
+        public ICommand OpenAccountDashboardCommand { get; }
+        public ICommand ActivateThisDeviceCommand { get; }
 
         public Action<bool>? CloseAction { get; set; }
 
@@ -712,10 +717,13 @@ namespace Fujify.ViewModels
 
             _licenseService.LicenseChanged += (s, status) =>
             {
-                if (status.IsPro)
+                if (status.IsPro || _licenseService.IsAccountLoggedIn)
                 {
-                    _losslessCompression = true;
-                    _maxConcurrentConversions = DefaultConcurrency;
+                    if (status.IsPro)
+                    {
+                        _losslessCompression = true;
+                        _maxConcurrentConversions = DefaultConcurrency;
+                    }
                     _ = RefreshDevicesAsync();
                 }
                 else
@@ -733,6 +741,9 @@ namespace Fujify.ViewModels
                 OnPropertyChanged(nameof(AccountDisplayText));
                 OnPropertyChanged(nameof(AccountDisplayName));
                 OnPropertyChanged(nameof(SlotInfoText));
+                OnPropertyChanged(nameof(ShowDeviceManagement));
+                OnPropertyChanged(nameof(CanActivateThisDevice));
+                OnPropertyChanged(nameof(HasAccountLicense));
             };
 
             _licenseService.DevicesChanged += (s, e) => UpdateRegisteredDevicesCollection();
@@ -1009,6 +1020,43 @@ namespace Fujify.ViewModels
             RefreshDevicesCommand = new AsyncRelayCommand(RefreshDevicesAsync);
             DeactivateDeviceCommand = new AsyncRelayCommand<LicenseDeviceItemViewModel>(DeactivateDeviceAsync);
 
+            OpenAccountDashboardCommand = new RelayCommand(() =>
+            {
+                CrossPlatformLauncher.OpenUrl(_licenseService.AccountDashboardUrl);
+            });
+
+            ActivateThisDeviceCommand = new AsyncRelayCommand(async () =>
+            {
+                LicenseMessageText = "Activating Pro license on this device...";
+                LicenseMessageColor = "#A0A0AC";
+                HasLicenseMessage = true;
+
+                var res = await _licenseService.ActivateCurrentDeviceAsync();
+                if (res.Success && _licenseService.IsPro)
+                {
+                    _losslessCompression = true;
+                    _maxConcurrentConversions = DefaultConcurrency;
+                    _settingsService.Settings.LosslessCompression = true;
+                    _settingsService.Settings.MaxConcurrentConversions = DefaultConcurrency;
+                    _settingsService.Save();
+
+                    string msg = res.ErrorMessage ?? "Pro license successfully activated on this device!";
+                    LicenseMessageText = $"✔ {msg}";
+                    LicenseMessageColor = "#01D701";
+                    HasLicenseMessage = true;
+                    UpdateRegisteredDevicesCollection();
+                    await ShowResultDialogAsync("Device Activated", msg, isSuccess: true);
+                }
+                else
+                {
+                    string msg = res.ErrorMessage ?? "Could not activate this device. Please check your available device slots.";
+                    LicenseMessageText = msg;
+                    LicenseMessageColor = "#E74C3C";
+                    HasLicenseMessage = true;
+                    await ShowResultDialogAsync("Activation Failed", msg, isSuccess: false);
+                }
+            });
+
             CheckForUpdatesCommand = new AsyncRelayCommand(async () =>
             {
                 IsCheckingForUpdate = true;
@@ -1056,7 +1104,7 @@ namespace Fujify.ViewModels
             });
 
             UpdateRegisteredDevicesCollection();
-            if (_licenseService.IsPro)
+            if (_licenseService.IsPro || _licenseService.IsAccountLoggedIn)
             {
                 _ = RefreshDevicesAsync();
             }
@@ -1132,7 +1180,7 @@ namespace Fujify.ViewModels
             _maxConcurrentConversions = saved;
 
             UpdateRegisteredDevicesCollection();
-            if (_licenseService.IsPro)
+            if (_licenseService.IsPro || _licenseService.IsAccountLoggedIn)
             {
                 _ = RefreshDevicesAsync();
             }
@@ -1160,6 +1208,9 @@ namespace Fujify.ViewModels
                     RegisteredDevices.Add(new LicenseDeviceItemViewModel(d, string.Equals(d.DeviceId, curId, StringComparison.OrdinalIgnoreCase)));
                 }
                 OnPropertyChanged(nameof(HasRegisteredDevices));
+                OnPropertyChanged(nameof(ShowDeviceManagement));
+                OnPropertyChanged(nameof(CanActivateThisDevice));
+                OnPropertyChanged(nameof(HasAccountLicense));
                 OnPropertyChanged(nameof(SlotInfoText));
                 OnPropertyChanged(nameof(LicenseDescriptionText));
             }
@@ -1168,7 +1219,7 @@ namespace Fujify.ViewModels
         public async Task RefreshDevicesAsync()
         {
             if (IsLoadingDevices) return;
-            if (!_licenseService.IsPro)
+            if (!_licenseService.IsPro && !_licenseService.IsAccountLoggedIn)
             {
                 UpdateRegisteredDevicesCollection();
                 return;

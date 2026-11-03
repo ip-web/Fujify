@@ -2205,18 +2205,23 @@
 
                                     <!-- Connected Account Section (Visible when user is signed in) -->
                                     <Border Background="{DynamicResource AppSurfaceSecondaryBrush}" BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,2,0,0" IsVisible="{Binding IsAccountLoggedIn}">
-                                        <Grid ColumnDefinitions="*,Auto,Auto">
-                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center" Margin="0,0,8,0">
-                                                <TextBlock Text="{loc:Loc FujifierAccount}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource AppAccentLightBrush}"/>
-                                                <TextBlock Text="{Binding AccountDisplayText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
-                                            </StackPanel>
-                                            <Button Grid.Column="1" Content="{loc:Loc RetrieveLicense}" Command="{Binding RetrieveLicenseCommand}" IsEnabled="{Binding !IsRetrievingLicense}" Classes="secondary" Height="30" Padding="10,0" CornerRadius="15" VerticalContentAlignment="Center" Margin="0,0,6,0" FontSize="11"/>
-                                            <Button Grid.Column="2" Content="{loc:Loc SignOut}" Command="{Binding LogoutAccountCommand}" Classes="secondary" Height="30" Padding="10,0" CornerRadius="15" VerticalContentAlignment="Center" FontSize="11"/>
-                                        </Grid>
+                                        <StackPanel Spacing="10">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                    <TextBlock Text="{loc:Loc FujifierAccount}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource AppAccentLightBrush}"/>
+                                                    <TextBlock Text="{Binding AccountDisplayText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                                <Button Grid.Column="1" Content="{loc:Loc SignOut}" Command="{Binding LogoutAccountCommand}" Classes="secondary" Height="28" Padding="10,0" CornerRadius="14" VerticalContentAlignment="Center" FontSize="11"/>
+                                            </Grid>
+                                            <Grid ColumnDefinitions="*,*">
+                                                <Button Grid.Column="0" Content="{loc:Loc ViewAccountOnWeb}" Command="{Binding OpenAccountDashboardCommand}" Classes="secondary" Height="30" Padding="10,0" CornerRadius="15" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="0,0,4,0" FontSize="11"/>
+                                                <Button Grid.Column="1" Content="{loc:Loc RetrieveLicense}" Command="{Binding RetrieveLicenseCommand}" IsEnabled="{Binding !IsRetrievingLicense}" Classes="secondary" Height="30" Padding="10,0" CornerRadius="15" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="4,0,0,0" FontSize="11"/>
+                                            </Grid>
+                                        </StackPanel>
                                     </Border>
 
-                                    <!-- Active Devices Section (Visible when Pro) -->
-                                    <Border Background="{DynamicResource AppSurfaceSecondaryBrush}" BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,2,0,0" IsVisible="{Binding IsPro}">
+                                    <!-- Active Devices Section (Visible when Pro or Connected to Account) -->
+                                    <Border Background="{DynamicResource AppSurfaceSecondaryBrush}" BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,2,0,0" IsVisible="{Binding ShowDeviceManagement}">
                                         <StackPanel Spacing="10">
                                             <Grid ColumnDefinitions="*,Auto">
                                                 <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
@@ -2231,6 +2236,17 @@
                                                     </StackPanel>
                                                 </Button>
                                             </Grid>
+
+                                            <!-- Callout to activate this device when slot is free -->
+                                            <Border Background="{DynamicResource AppBackgroundBrush}" BorderBrush="{DynamicResource AppAccentBrush}" BorderThickness="1" CornerRadius="8" Padding="12,10" IsVisible="{Binding CanActivateThisDevice}">
+                                                <Grid ColumnDefinitions="*,Auto">
+                                                    <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center" Margin="0,0,8,0">
+                                                        <TextBlock Text="{loc:Loc ActivateThisDevicePrompt}" FontWeight="SemiBold" FontSize="11.5" Foreground="{DynamicResource AppAccentLightBrush}"/>
+                                                        <TextBlock Text="{loc:Loc ActivateThisDeviceDesc}" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
+                                                    </StackPanel>
+                                                    <Button Grid.Column="1" Content="{loc:Loc ActivateThisDevice}" Command="{Binding ActivateThisDeviceCommand}" Classes="primary" Height="30" Padding="14,0" CornerRadius="15" VerticalContentAlignment="Center"/>
+                                                </Grid>
+                                            </Border>
 
                                             <!-- Registered Device Items -->
                                             <ItemsControl ItemsSource="{Binding RegisteredDevices}">
@@ -2264,6 +2280,11 @@
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
+
+                                            <!-- Footer Link to Account Website -->
+                                            <Button Content="{loc:Loc ManageAccountOnWeb}" Command="{Binding OpenAccountDashboardCommand}"
+                                                    Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand"
+                                                    Foreground="{DynamicResource AppAccentBrush}" FontSize="11" HorizontalAlignment="Right" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </Border>
 

@@ -77,6 +77,9 @@ namespace Fujify.Services
         int DelaySeconds { get; }
         string? AccountEmail { get; }
         bool IsAccountLoggedIn { get; }
+        string? AccountLicenseKey { get; }
+        bool HasAccountLicense { get; }
+        string AccountDashboardUrl { get; }
         int UsedActivations { get; }
         int MaxActivations { get; }
         string SlotInfoText { get; }
@@ -89,6 +92,7 @@ namespace Fujify.Services
         void Initialize();
         void SyncFromSettings();
         Task<LicenseActivationResult> ActivateLicenseKeyAsync(string licenseKey);
+        Task<LicenseActivationResult> ActivateCurrentDeviceAsync();
         Task<LicenseActivationResult> LoginWithAccountAsync(string email, string password);
         Task<(bool Success, string Message)> RequestPasswordResetAsync(string email);
         Task<LicenseActivationResult> LoginWithGoogleOAuthAsync(Action<string>? statusCallback = null, CancellationToken cancellationToken = default);

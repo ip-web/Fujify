@@ -1149,5 +1149,109 @@ namespace Fujify.Tests
             Assert.Equal("device-1", service.RegisteredDevices[0].DeviceId);
             Assert.Equal(1, service.UsedActivations);
         }
+
+        [Fact]
+        public void PreferencesViewModel_WhenAccountLoggedIn_ShowsDeviceManagementAndCanActivateDevice()
+        {
+            var settings = new MockSettingsService();
+            settings.Settings.AccessToken = "valid-bearer-token";
+            settings.Settings.AccountEmail = "user@example.com";
+            settings.Settings.AccountLicenseKey = "FUJI-TEST-KEY";
+
+            var service = new LicenseService(settings);
+            var vm = new PreferencesViewModel(settings, service);
+
+            Assert.False(vm.IsPro);
+            Assert.True(vm.IsAccountLoggedIn);
+            Assert.True(vm.ShowDeviceManagement);
+            Assert.True(vm.CanActivateThisDevice);
+            Assert.True(vm.HasAccountLicense);
+            Assert.Equal("user@example.com", vm.AccountDisplayText);
+        }
+
+        [Fact]
+        public async Task PreferencesViewModel_WhenProActive_CanActivateDeviceIsFalse()
+        {
+            var settings = new MockSettingsService();
+            var service = new LicenseService(settings);
+            await service.ActivateLicenseKeyAsync("FUJIFIER-PRO-DEV-OVERRIDE");
+
+            var vm = new PreferencesViewModel(settings, service);
+
+            Assert.True(vm.IsPro);
+            Assert.True(vm.ShowDeviceManagement);
+            Assert.False(vm.CanActivateThisDevice);
+        }
+
+        [Fact]
+        public async Task LicenseService_ActivateCurrentDeviceAsync_UsesAccountLicenseKey()
+        {
+            var settings = new MockSettingsService();
+            settings.Settings.AccountLicenseKey = "FUJIFIER-PRO-DEV-OVERRIDE";
+
+            var service = new LicenseService(settings);
+            Assert.False(service.IsPro);
+
+            var result = await service.ActivateCurrentDeviceAsync();
+
+            Assert.True(result.Success);
+            Assert.True(service.IsPro);
+            Assert.Equal(LicenseTier.Pro, service.CurrentStatus.Tier);
+        }
+
+        [Fact]
+        public async Task LicenseService_FetchRegisteredDevicesAsync_WithBearerToken_WhenLocalDeviceFreeTier()
+        {
+            var settings = new MockSettingsService();
+            settings.Settings.AccessToken = "test-bearer-token";
+
+            string capturedAuthHeader = null!;
+            var handler = new MockHttpMessageHandler(req =>
+            {
+                if (req.RequestUri!.PathAndQuery.Contains("/license/devices"))
+                {
+                    capturedAuthHeader = req.Headers.Authorization?.ToString() ?? "";
+                    var responseObj = new
+                    {
+                        success = true,
+                        license_key = "FUJI-REMOTE-KEY-1234",
+                        max_activations = 3,
+                        used_activations = 3,
+                        devices = new[]
+                        {
+                            new { id = 1, license_id = 5, device_id = "dev-1", device_name = "MacBook Pro", platform = "macos", app_version = "2.0.0", last_check_in = "2026-11-03 01:00:00" },
+                            new { id = 2, license_id = 5, device_id = "dev-2", device_name = "Windows PC", platform = "windows", app_version = "2.0.0", last_check_in = "2026-11-03 01:00:00" },
+                            new { id = 3, license_id = 5, device_id = "dev-3", device_name = "iPhone 15", platform = "ios", app_version = "2.0.0", last_check_in = "2026-11-03 01:00:00" }
+                        }
+                    };
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(responseObj))
+                    };
+                }
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            });
+
+            var httpClient = new HttpClient(handler);
+            var service = new LicenseService(settings, httpClient);
+
+            var devices = await service.FetchRegisteredDevicesAsync();
+
+            Assert.Equal("Bearer test-bearer-token", capturedAuthHeader);
+            Assert.Equal(3, devices.Count);
+            Assert.Equal(3, service.UsedActivations);
+            Assert.Equal("FUJI-REMOTE-KEY-1234", service.AccountLicenseKey);
+            Assert.Equal("FUJI-REMOTE-KEY-1234", settings.Settings.AccountLicenseKey);
+        }
+
+        [Fact]
+        public void LicenseService_AccountDashboardUrl_ContainsValidPath()
+        {
+            var settings = new MockSettingsService();
+            var service = new LicenseService(settings);
+
+            Assert.Contains("/account", service.AccountDashboardUrl);
+            Assert.Contains("fujifier.cc", service.AccountDashboardUrl);
+        }
     }
 }
