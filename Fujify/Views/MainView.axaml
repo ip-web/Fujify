@@ -103,7 +103,7 @@
                         <!-- Maximize / Restore Button -->
                         <Button x:Name="TitleBarMaximizeButton" Classes="win-caption" Click="TitleBar_Maximize_Click" ToolTip.Tip="{loc:Loc Maximize}"
                                 WindowDecorationProperties.ElementRole="MaximizeButton">
-                            <TextBlock Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
+                            <TextBlock x:Name="TitleBarMaximizeGlyph" Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                         <!-- Close Button -->
                         <Button x:Name="TitleBarCloseButton" Classes="win-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="{loc:Loc Close}"
@@ -197,9 +197,9 @@
                                                     WindowDecorationProperties.ElementRole="MinimizeButton">
                                                 <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                                             </Button>
-                                            <Button Classes="win-caption" Click="TitleBar_Maximize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Maximize}"
+                                            <Button x:Name="NarrowTitleBarMaximizeButton" Classes="win-caption" Click="TitleBar_Maximize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Maximize}"
                                                     WindowDecorationProperties.ElementRole="MaximizeButton">
-                                                <TextBlock Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
+                                                <TextBlock x:Name="NarrowTitleBarMaximizeGlyph" Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                                             </Button>
                                             <Button Classes="win-caption close" Click="TitleBar_Close_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Close}"
                                                     WindowDecorationProperties.ElementRole="CloseButton">

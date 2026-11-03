@@ -28,6 +28,22 @@ namespace Fujify.Views
         private const uint WM_NCHITTEST = 0x0084;
         private const int HTCLIENT = 1;
 
+        private const uint WM_SYSCOMMAND = 0x0112;
+        private const int SC_MINIMIZE = 0xF020;
+        private const int SC_MAXIMIZE = 0xF030;
+        private const int SC_RESTORE = 0xF120;
+
+        private const int GWL_STYLE = -16;
+        private const int WS_MAXIMIZEBOX = 0x00010000;
+        private const int WS_MINIMIZEBOX = 0x00020000;
+        private const int WS_THICKFRAME = 0x00040000;
+        private const int WS_CAPTION = 0x00C00000;
+        private const int WS_SYSMENU = 0x00080000;
+
+        private const int DWMWA_TRANSITIONS_FORCEDISABLED = 3;
+        private const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
+        private const int DWMWCP_ROUND = 2;
+
         [StructLayout(LayoutKind.Sequential)]
         private struct POINT
         {
@@ -52,6 +68,37 @@ namespace Fujify.Views
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
 
+        [DllImport("user32.dll", EntryPoint = "SendMessage")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLong")]
+        private static extern int GetWindowLong32(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
+        private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLong")]
+        private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
+        private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+        [DllImport("dwmapi.dll")]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+
+        private static int GetWindowStyle(IntPtr hWnd)
+        {
+            return IntPtr.Size == 8 ? (int)GetWindowLongPtr64(hWnd, GWL_STYLE) : GetWindowLong32(hWnd, GWL_STYLE);
+        }
+
+        private static void SetWindowStyle(IntPtr hWnd, int style)
+        {
+            if (IntPtr.Size == 8)
+                SetWindowLongPtr64(hWnd, GWL_STYLE, (IntPtr)style);
+            else
+                SetWindowLong32(hWnd, GWL_STYLE, style);
+        }
+
         private Control? _captionButtonsPanel;
 
         public MainWindow()
@@ -67,6 +114,84 @@ namespace Fujify.Views
             {
                 Win32Properties.AddWndProcHookCallback(this, WndProcHook);
             }
+        }
+
+        protected override void OnOpened(EventArgs e)
+        {
+            base.OnOpened(e);
+            if (OperatingSystem.IsWindows())
+            {
+                var handle = TryGetPlatformHandle()?.Handle;
+                if (handle.HasValue && handle.Value != IntPtr.Zero)
+                {
+                    EnsureDwmTransitionsEnabled(handle.Value);
+                }
+            }
+        }
+
+        public void EnsureDwmTransitionsEnabled(IntPtr hWnd)
+        {
+            if (!OperatingSystem.IsWindows() || hWnd == IntPtr.Zero) return;
+
+            try
+            {
+                int disabled = 0;
+                DwmSetWindowAttribute(hWnd, DWMWA_TRANSITIONS_FORCEDISABLED, ref disabled, sizeof(int));
+
+                int cornerPreference = DWMWCP_ROUND;
+                DwmSetWindowAttribute(hWnd, DWMWA_WINDOW_CORNER_PREFERENCE, ref cornerPreference, sizeof(int));
+
+                int currentStyle = GetWindowStyle(hWnd);
+                int desired = WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU;
+                if ((currentStyle & desired) != desired)
+                {
+                    SetWindowStyle(hWnd, currentStyle | desired);
+                }
+            }
+            catch
+            {
+                // Ignored on non-supporting configurations
+            }
+        }
+
+        public void ToggleMaximizeAnimated()
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                var handle = TryGetPlatformHandle()?.Handle;
+                if (handle.HasValue && handle.Value != IntPtr.Zero)
+                {
+                    EnsureDwmTransitionsEnabled(handle.Value);
+                    if (WindowState == WindowState.Maximized)
+                    {
+                        SendMessage(handle.Value, WM_SYSCOMMAND, (IntPtr)SC_RESTORE, IntPtr.Zero);
+                        return;
+                    }
+                    else
+                    {
+                        SendMessage(handle.Value, WM_SYSCOMMAND, (IntPtr)SC_MAXIMIZE, IntPtr.Zero);
+                        return;
+                    }
+                }
+            }
+
+            WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        }
+
+        public void MinimizeAnimated()
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                var handle = TryGetPlatformHandle()?.Handle;
+                if (handle.HasValue && handle.Value != IntPtr.Zero)
+                {
+                    EnsureDwmTransitionsEnabled(handle.Value);
+                    SendMessage(handle.Value, WM_SYSCOMMAND, (IntPtr)SC_MINIMIZE, IntPtr.Zero);
+                    return;
+                }
+            }
+
+            WindowState = WindowState.Minimized;
         }
 
         public static bool IsPointerOverCaptionButtons(int clientX, int clientY, int clientWidth, double scaling, double buttonsWidthDip = 138.0, double buttonsHeightDip = 34.0)

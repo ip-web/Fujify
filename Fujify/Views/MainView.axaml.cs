@@ -146,7 +146,34 @@ namespace Fujify.Views
                 {
                     vmAttached.IsWindowActive = window.IsActive;
                 }
+
+                window.PropertyChanged += (ws, wargs) =>
+                {
+                    if (wargs.Property == Window.WindowStateProperty)
+                    {
+                        UpdateMaximizeButtonGlyph(window.WindowState == WindowState.Maximized);
+                    }
+                };
+                UpdateMaximizeButtonGlyph(window.WindowState == WindowState.Maximized);
             }
+        }
+
+        private void UpdateMaximizeButtonGlyph(bool isMaximized)
+        {
+            string glyph = isMaximized ? "\u29C9" : "\u25A2";
+            string tooltip = isMaximized ? "Restore" : "Maximize";
+
+            var maxGlyph = this.FindControl<TextBlock>("TitleBarMaximizeGlyph");
+            if (maxGlyph != null) maxGlyph.Text = glyph;
+
+            var maxBtn = this.FindControl<Button>("TitleBarMaximizeButton");
+            if (maxBtn != null) ToolTip.SetTip(maxBtn, tooltip);
+
+            var narrowGlyph = this.FindControl<TextBlock>("NarrowTitleBarMaximizeGlyph");
+            if (narrowGlyph != null) narrowGlyph.Text = glyph;
+
+            var narrowBtn = this.FindControl<Button>("NarrowTitleBarMaximizeButton");
+            if (narrowBtn != null) ToolTip.SetTip(narrowBtn, tooltip);
         }
 
         private void SetupTouchScroll(string controlName)
@@ -749,7 +776,11 @@ namespace Fujify.Views
             }
 
             var window = GetParentWindow();
-            if (window != null)
+            if (window is MainWindow mainWindow)
+            {
+                mainWindow.ToggleMaximizeAnimated();
+            }
+            else if (window != null)
             {
                 window.WindowState = window.WindowState == WindowState.Maximized
                     ? WindowState.Normal
@@ -765,7 +796,11 @@ namespace Fujify.Views
         private void TitleBar_Minimize_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
             var window = GetParentWindow();
-            if (window != null)
+            if (window is MainWindow mainWindow)
+            {
+                mainWindow.MinimizeAnimated();
+            }
+            else if (window != null)
             {
                 window.WindowState = WindowState.Minimized;
             }
@@ -774,7 +809,11 @@ namespace Fujify.Views
         private void TitleBar_Maximize_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
             var window = GetParentWindow();
-            if (window != null)
+            if (window is MainWindow mainWindow)
+            {
+                mainWindow.ToggleMaximizeAnimated();
+            }
+            else if (window != null)
             {
                 window.WindowState = window.WindowState == WindowState.Maximized
                     ? WindowState.Normal
