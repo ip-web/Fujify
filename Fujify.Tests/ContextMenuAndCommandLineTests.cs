@@ -438,9 +438,11 @@ namespace Fujify.Tests
             {
                 Environment.SetEnvironmentVariable("FUJIFIER_SIMULATE_MACOS", "1");
                 Assert.True(vm.IsMacOS);
-                Assert.True(vm.ShowMacCaptionButtons);
+                // On macOS, native traffic lights are rendered by AppKit (WindowDecorations="Full"),
+                // so custom XAML caption buttons are disabled to avoid duplicate superposed buttons.
+                Assert.False(vm.ShowMacCaptionButtons);
                 Assert.False(vm.ShowWindowsCaptionButtons);
-                Assert.Equal(new Avalonia.Thickness(0, 0, 0, 0), vm.TitleBarLogoMargin);
+                Assert.Equal(new Avalonia.Thickness(16, 0, 0, 0), vm.TitleBarLogoMargin);
 
                 Environment.SetEnvironmentVariable("FUJIFIER_SIMULATE_MACOS", null);
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))

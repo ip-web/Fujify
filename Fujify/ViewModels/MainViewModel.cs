@@ -729,10 +729,13 @@ namespace Fujify.ViewModels
             !OperatingSystem.IsIOS() &&
             !(Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ISingleViewApplicationLifetime);
 
-        public bool ShowMacCaptionButtons => ShowCaptionButtons && IsMacOS;
+        // On macOS and Windows, native window caption buttons / traffic lights are rendered natively by the OS
+        // (AppKit on macOS, DWM on Windows) via WindowDecorations="Full" and ExtendClientAreaToDecorationsHint="True".
+        // Custom XAML caption buttons are disabled to prevent duplicate superposed controls.
+        public bool ShowMacCaptionButtons => false;
         public bool ShowWindowsCaptionButtons => false;
 
-        public Avalonia.Thickness TitleBarLogoMargin => ShowMacCaptionButtons ? new Avalonia.Thickness(0, 0, 0, 0) : new Avalonia.Thickness(16, 0, 0, 0);
+        public Avalonia.Thickness TitleBarLogoMargin => new Avalonia.Thickness(16, 0, 0, 0);
 
         private bool _isTabletLayout;
         public bool IsTabletLayout
