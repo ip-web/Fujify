@@ -6,9 +6,8 @@
     <SupportedOSPlatformVersion>26</SupportedOSPlatformVersion>
     <ApplicationId>com.ipweb.fujifier</ApplicationId>
     <ApplicationTitle>Fujifier</ApplicationTitle>
-    <ApplicationVersion Condition="'$(ApplicationVersion)' == ''">4</ApplicationVersion>
+    <ApplicationVersion Condition="'$(ApplicationVersion)' == ''">5</ApplicationVersion>
     <ApplicationDisplayVersion Condition="'$(ApplicationDisplayVersion)' == ''">2.0.0</ApplicationDisplayVersion>
-    <TargetSdkVersion>34</TargetSdkVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
     <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
@@ -18,7 +17,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia.Android" Version="11.2.8" />
+    <PackageReference Include="Avalonia.Android" Version="11.3.13" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Android" Version="3.119.0" />
+    <PackageReference Include="HarfBuzzSharp.NativeAssets.Android" Version="8.3.1.5" />
     <PackageReference Include="Xamarin.GooglePlayServices.Ads.Lite" Version="124.0.0.9" />
   </ItemGroup>
 

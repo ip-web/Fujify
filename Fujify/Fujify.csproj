@@ -29,14 +29,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.2.8" />
-    <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.2.8" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.2.8" Condition="'$(TargetPlatformIdentifier)' == ''" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.8" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.8" />
-    <PackageReference Include="Avalonia.Diagnostics" Version="11.2.8" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="Avalonia" Version="11.3.13" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.13" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.13" Condition="'$(TargetPlatformIdentifier)' == ''" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.13" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.13" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.13" Condition="'$(Configuration)' == 'Debug'" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="SkiaSharp" Version="2.88.9" />
+    <PackageReference Include="SkiaSharp" Version="3.119.0" />
+    <PackageReference Include="HarfBuzzSharp" Version="8.3.1.5" />
     <PackageReference Include="Tmds.DBus.Protocol" Version="0.21.3" Condition="'$(TargetPlatformIdentifier)' == ''" />
   </ItemGroup>
 </Project>
