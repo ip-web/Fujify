@@ -45,7 +45,7 @@
 
             <!-- 1. TOP TITLEBAR (Custom Seamless Studio Titlebar for Desktop/Tablet) -->
             <Border x:Name="HeaderBar" Grid.Row="0"
-                    IsVisible="{Binding IsTabletOrDesktopLayout}"
+                    IsVisible="{Binding ShowCaptionButtons}"
                     Background="Transparent"
                     BorderThickness="0"
                     MinHeight="34"
@@ -113,29 +113,13 @@
                     <!-- Base Phone Screen -->
                     <Grid RowDefinitions="Auto,*,Auto">
                         <!-- Row 0: Mobile App Bar (Native mobile header with logo, title, and settings) -->
-                        <Border x:Name="PhoneTopBar" Grid.Row="0" Background="Transparent" BorderThickness="0" Padding="16,8,16,4">
-                            <Panel>
+                        <Border x:Name="PhoneTopBar" Grid.Row="0" Background="Transparent" BorderThickness="0" Padding="16,8,16,4"
+                                PointerPressed="TitleBar_PointerPressed" DoubleTapped="TitleBar_DoubleTapped">
+                            <Grid>
                                 <!-- Normal Header (Visible when NOT in multi-select mode) -->
-                                <Grid IsVisible="{Binding !IsMultiSelectMode}" ColumnDefinitions="Auto,Auto,*,Auto" VerticalAlignment="Center">
-                                    <!-- Far Left: macOS Traffic Lights (if narrow desktop on macOS) -->
-                                    <StackPanel x:Name="PhoneMacCaptionButtonsPanel" Grid.Column="0" Orientation="Horizontal" Spacing="8"
-                                                VerticalAlignment="Center" Margin="0,0,12,0"
-                                                Classes="mac-traffic-lights"
-                                                Classes.inactive="{Binding !IsWindowActive}"
-                                                IsVisible="{Binding ShowMacCaptionButtons}">
-                                        <Button Classes="mac-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="{loc:Loc Close}">
-                                            <TextBlock Classes="mac-glyph" Text="✕" FontSize="7" Foreground="#4D0000"/>
-                                        </Button>
-                                        <Button Classes="mac-caption minimize" Click="TitleBar_Minimize_Click" ToolTip.Tip="{loc:Loc Minimize}">
-                                            <TextBlock Classes="mac-glyph" Text="—" FontSize="8" Margin="0,-1,0,0" Foreground="#5C3B00"/>
-                                        </Button>
-                                        <Button Classes="mac-caption maximize" Click="TitleBar_Maximize_Click" ToolTip.Tip="{loc:Loc Maximize}">
-                                            <TextBlock Classes="mac-glyph" Text="+" FontSize="9" Margin="0,-1,0,0" Foreground="#0A4D14"/>
-                                        </Button>
-                                    </StackPanel>
-
+                                <Grid IsVisible="{Binding !IsMultiSelectMode}" ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center" HorizontalAlignment="Stretch">
                                     <!-- Left: Logo & App Branding -->
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" Margin="0,0,8,0">
                                         <Border Width="32" Height="32" CornerRadius="8"
                                                 Background="{DynamicResource AppSurfaceBrush}"
                                                 BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1"
@@ -146,18 +130,20 @@
                                         <StackPanel VerticalAlignment="Center" Spacing="1">
                                             <TextBlock Text="Fujifier" FontSize="16" FontWeight="Bold"
                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                            <TextBlock Text="{loc:Loc AppSubtitle}" FontSize="10" FontWeight="Medium" IsVisible="{Binding IsMobileSubtitleVisible}"
+                                            <TextBlock Text="{loc:Loc AppSubtitle}" FontSize="10" FontWeight="Medium"
+                                                       TextTrimming="CharacterEllipsis" MaxWidth="160"
+                                                       IsVisible="{Binding IsMobileSubtitleVisible}"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                         </StackPanel>
                                     </StackPanel>
 
                                     <!-- Center: Draggable Spacer (for narrow desktop window) -->
-                                    <Panel Grid.Column="2" Background="Transparent"
+                                    <Panel Grid.Column="1" Background="Transparent"
                                            PointerPressed="TitleBar_PointerPressed"
                                            DoubleTapped="TitleBar_DoubleTapped"/>
 
-                                    <!-- Right: Queue Clear + Settings Shortcut + Desktop Caption Controls (if narrow desktop) -->
-                                    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                    <!-- Right: Queue Clear + About + Settings Shortcut -->
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" HorizontalAlignment="Right">
                                         <Button Command="{Binding ClearCommand}"
                                                 IsVisible="{Binding HasFiles}"
                                                 Classes="secondary" Height="36" Padding="14,0" CornerRadius="18"
@@ -180,23 +166,6 @@
                                             <PathIcon Data="M 12 15 A 3 3 0 1 0 12 9 A 3 3 0 1 0 12 15 M 19.4 15 a 1.65 1.65 0 0 0 .33 1.82 l .06 .06 a 2 2 0 1 1 -2.83 2.83 l -.06 -.06 a 1.65 1.65 0 0 0 -1.82 -.33 1.65 1.65 0 0 0 -1 1.51 V 21 a 2 2 0 1 1 -4 0 v -.09 A 1.65 1.65 0 0 0 9 19.4 a 1.65 1.65 0 0 0 -1.82 .33 l -.06 .06 a 2 2 0 1 1 -2.83 -2.83 l .06 -.06 a 1.65 1.65 0 0 0 .33 -1.82 1.65 1.65 0 0 0 -1.51 -1 H 3 a 2 2 0 1 1 0 -4 h .09 A 1.65 1.65 0 0 0 4.6 9 a 1.65 1.65 0 0 0 -.33 -1.82 l -.06 -.06 a 2 2 0 1 1 2.83 -2.83 l .06 .06 a 1.65 1.65 0 0 0 1.82 .33 H 9 a 1.65 1.65 0 0 0 1 -1.51 V 3 a 2 2 0 1 1 4 0 v .09 a 1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82 -.33 l .06 -.06 a 2 2 0 1 1 2.83 2.83 l -.06 .06 a 1.65 1.65 0 0 0 -.33 1.82 V 9 a 1.65 1.65 0 0 0 1.51 1 H 21 a 2 2 0 1 1 0 4 h -.09 a 1.65 1.65 0 0 0 -1.51 1 Z"
                                                       Width="16" Height="16" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
                                         </Button>
-
-                                        <!-- Optional Desktop Caption Buttons when running on desktop window -->
-                                        <StackPanel Orientation="Horizontal" Spacing="0" IsVisible="{Binding ShowWindowsCaptionButtons}"
-                                                    WindowDecorationProperties.ElementRole="User">
-                                            <Button Classes="win-caption" Click="TitleBar_Minimize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Minimize}"
-                                                    WindowDecorationProperties.ElementRole="MinimizeButton">
-                                                <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
-                                            </Button>
-                                            <Button x:Name="NarrowTitleBarMaximizeButton" Classes="win-caption" Click="TitleBar_Maximize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Maximize}"
-                                                    WindowDecorationProperties.ElementRole="MaximizeButton">
-                                                <TextBlock x:Name="NarrowTitleBarMaximizeGlyph" Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
-                                            </Button>
-                                            <Button Classes="win-caption close" Click="TitleBar_Close_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Close}"
-                                                    WindowDecorationProperties.ElementRole="CloseButton">
-                                                <TextBlock Text="&#x2715;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
-                                            </Button>
-                                        </StackPanel>
                                     </StackPanel>
                                 </Grid>
 
@@ -227,7 +196,7 @@
                                         </StackPanel>
                                     </Button>
                                 </Grid>
-                            </Panel>
+                            </Grid>
                         </Border>
 
                         <!-- Row 1: Phone File List / Empty State -->
