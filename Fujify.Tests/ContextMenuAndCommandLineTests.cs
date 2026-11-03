@@ -124,6 +124,16 @@ namespace Fujify.Tests
                 Assert.NotNull(parentKey);
                 Assert.Equal("Fujifier", parentKey.GetValue("MUIVerb")?.ToString());
                 Assert.Equal(string.Empty, parentKey.GetValue("SubCommands")?.ToString());
+                Assert.Equal("Fujifier.Menu", parentKey.GetValue("ExtendedSubCommandsKey")?.ToString());
+                Assert.Null(parentKey.GetValue(null)); // Parent key (Default) must be unset for cascading menu to open
+
+                // Verify centralized menu key exists
+                using var centralizedKey = Registry.CurrentUser.OpenSubKey(@"Software\Classes\Fujifier.Menu\shell\01_queue");
+                Assert.NotNull(centralizedKey);
+
+                // Verify direct extension key was removed to prevent collisions
+                using var directExtKey = Registry.CurrentUser.OpenSubKey(@"Software\Classes\.arw\shell\Fujifier");
+                Assert.Null(directExtKey);
 
                 // Verify 01_queue
                 using var qCmd = Registry.CurrentUser.OpenSubKey(@"Software\Classes\SystemFileAssociations\.arw\shell\Fujifier\shell\01_queue\command");

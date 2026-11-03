@@ -93,6 +93,7 @@ Root: HKA; Subkey: "Software\Classes\Fujifier.RAW"; ValueType: string; ValueData
 Root: HKA; Subkey: "Software\Classes\Fujifier.RAW"; ValueType: string; ValueName: "FriendlyTypeName"; ValueData: "Camera RAW & DNG Image"; Flags: uninsdeletekey
 Root: HKA; Subkey: "Software\Classes\Fujifier.RAW\DefaultIcon"; ValueType: string; ValueData: "{app}\{#MyAppExeName},0"; Flags: uninsdeletekey
 Root: HKA; Subkey: "Software\Classes\Fujifier.RAW\shell\open\command"; ValueType: string; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\Fujifier.Menu"; Flags: uninsdeletekey
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent

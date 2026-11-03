@@ -245,12 +245,25 @@ namespace Fujify.Services
             try
             {
                 string exePath = GetExecutablePath();
-                string iconValue = $"\"{exePath}\",0";
+                string iconValue = $"{exePath},0";
 
+                // 1. Create centralized cascading menu structure under HKCU\Software\Classes\Fujifier.Menu\shell
+                using (var menuShellKey = Registry.CurrentUser.CreateSubKey(@"Software\Classes\Fujifier.Menu\shell", true))
+                {
+                    if (menuShellKey != null)
+                    {
+                        PopulateSubCommands(menuShellKey, exePath, iconValue);
+                    }
+                }
+
+                // 2. Register under SystemFileAssociations for all supported RAW extensions
                 foreach (var ext in RawExtensions)
                 {
-                    RegisterExtensionVerb(@"Software\Classes\SystemFileAssociations\" + ext, exePath, iconValue);
-                    RegisterExtensionVerb(@"Software\Classes\" + ext, exePath, iconValue);
+                    // Clean any broken direct extension keys (e.g. HKCU\Software\Classes\.arw\shell\Fujifier)
+                    UnregisterExtensionVerb(@"Software\Classes\" + ext);
+
+                    // Register proper SystemFileAssociations verb
+                    RegisterSystemFileAssociationVerb(@"Software\Classes\SystemFileAssociations\" + ext, exePath, iconValue);
                 }
 
                 NotifyShell();
@@ -269,6 +282,9 @@ namespace Fujify.Services
 
             try
             {
+                // Remove centralized menu key
+                Registry.CurrentUser.DeleteSubKeyTree(@"Software\Classes\Fujifier.Menu", throwOnMissingSubKey: false);
+
                 foreach (var ext in RawExtensions)
                 {
                     UnregisterExtensionVerb(@"Software\Classes\SystemFileAssociations\" + ext);
@@ -286,63 +302,75 @@ namespace Fujify.Services
         }
 
         [SupportedOSPlatform("windows")]
-        private static void RegisterExtensionVerb(string basePath, string exePath, string iconValue)
+        private static void RegisterSystemFileAssociationVerb(string basePath, string exePath, string iconValue)
         {
             try
             {
-                // Clean any existing key to prevent collisions between legacy flat and new cascading structures
                 UnregisterExtensionVerb(basePath);
 
                 string verbKeyPath = $@"{basePath}\shell\{VerbName}";
                 using var verbKey = Registry.CurrentUser.CreateSubKey(verbKeyPath, true);
                 if (verbKey != null)
                 {
-                    verbKey.SetValue(null, MenuText);
+                    // Important for Windows Shell cascading menus:
+                    // DO NOT set the default value on the parent verb key!
+                    // Setting (Default) causes Explorer to treat the key as a direct command instead of a cascading submenu container.
                     verbKey.SetValue("MUIVerb", MenuText);
                     verbKey.SetValue("Icon", iconValue);
+                    verbKey.SetValue("ExtendedSubCommandsKey", "Fujifier.Menu");
                     verbKey.SetValue("SubCommands", string.Empty);
 
+                    // Also populate local shell subkey for dual-compatibility with shell handlers
                     using var shellKey = verbKey.CreateSubKey("shell", true);
                     if (shellKey != null)
                     {
-                        // 1. Add to queue
-                        using var qKey = shellKey.CreateSubKey("01_queue", true);
-                        if (qKey != null)
-                        {
-                            qKey.SetValue(null, "Add to queue");
-                            qKey.SetValue("MUIVerb", "Add to queue");
-                            qKey.SetValue("Icon", iconValue);
-                            using var cmd = qKey.CreateSubKey("command", true);
-                            cmd?.SetValue(null, $"\"{exePath}\" --queue \"%1\"");
-                        }
-
-                        // 2. Process with Fujifier (default config)
-                        using var pKey = shellKey.CreateSubKey("02_process", true);
-                        if (pKey != null)
-                        {
-                            pKey.SetValue(null, "Process with Fujifier");
-                            pKey.SetValue("MUIVerb", "Process with Fujifier");
-                            pKey.SetValue("Icon", iconValue);
-                            using var cmd = pKey.CreateSubKey("command", true);
-                            cmd?.SetValue(null, $"\"{exePath}\" --process \"%1\"");
-                        }
-
-                        // 3. Process with Fujifier to... (specific destination folder)
-                        using var ptKey = shellKey.CreateSubKey("03_processto", true);
-                        if (ptKey != null)
-                        {
-                            ptKey.SetValue(null, "Process with Fujifier to...");
-                            ptKey.SetValue("MUIVerb", "Process with Fujifier to...");
-                            ptKey.SetValue("Icon", iconValue);
-                            using var cmd = ptKey.CreateSubKey("command", true);
-                            cmd?.SetValue(null, $"\"{exePath}\" --process-to \"%1\"");
-                        }
+                        PopulateSubCommands(shellKey, exePath, iconValue);
                     }
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"[WindowsContextMenuService] Failed on {basePath}: {ex.Message}");
+            }
+        }
+
+        [SupportedOSPlatform("windows")]
+        private static void PopulateSubCommands(RegistryKey shellKey, string exePath, string iconValue)
+        {
+            // 1. Add to queue
+            using (var qKey = shellKey.CreateSubKey("01_queue", true))
+            {
+                if (qKey != null)
+                {
+                    qKey.SetValue("MUIVerb", "Add to queue");
+                    qKey.SetValue("Icon", iconValue);
+                    using var cmd = qKey.CreateSubKey("command", true);
+                    cmd?.SetValue(null, $"\"{exePath}\" --queue \"%1\"");
+                }
+            }
+
+            // 2. Process with Fujifier (default config - quick conversion)
+            using (var pKey = shellKey.CreateSubKey("02_process", true))
+            {
+                if (pKey != null)
+                {
+                    pKey.SetValue("MUIVerb", "Process with Fujifier");
+                    pKey.SetValue("Icon", iconValue);
+                    using var cmd = pKey.CreateSubKey("command", true);
+                    cmd?.SetValue(null, $"\"{exePath}\" --process \"%1\"");
+                }
+            }
+
+            // 3. Process with Fujifier to... (specific destination folder)
+            using (var ptKey = shellKey.CreateSubKey("03_processto", true))
+            {
+                if (ptKey != null)
+                {
+                    ptKey.SetValue("MUIVerb", "Process with Fujifier to...");
+                    ptKey.SetValue("Icon", iconValue);
+                    using var cmd = ptKey.CreateSubKey("command", true);
+                    cmd?.SetValue(null, $"\"{exePath}\" --process-to \"%1\"");
+                }
             }
         }
 
