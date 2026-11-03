@@ -103,7 +103,7 @@ if (-not $SkipAndroid) {
         }
     }
 
-    $globalVersionCode = 3
+    $globalVersionCode = 4
     $architectures = @(
         @{ Rid = "android-arm64"; Arch = "arm64" },
         @{ Rid = "android-x64"; Arch = "x64" }

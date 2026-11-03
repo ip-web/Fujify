@@ -762,38 +762,8 @@ public class MainActivity : AvaloniaMainActivity<App>
 
     public void RequestRuntimeStoragePermissions()
     {
-        try
-        {
-            if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
-            {
-                if (CheckSelfPermission(global::Android.Manifest.Permission.ReadMediaImages) != Permission.Granted)
-                {
-                    RequestPermissions(new[] { global::Android.Manifest.Permission.ReadMediaImages }, StoragePermissionRequestCode);
-                }
-            }
-            else if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
-            {
-                var missing = new List<string>();
-                if (CheckSelfPermission(global::Android.Manifest.Permission.ReadExternalStorage) != Permission.Granted)
-                {
-                    missing.Add(global::Android.Manifest.Permission.ReadExternalStorage);
-                }
-                if (Build.VERSION.SdkInt <= BuildVersionCodes.Q &&
-                    CheckSelfPermission(global::Android.Manifest.Permission.WriteExternalStorage) != Permission.Granted)
-                {
-                    missing.Add(global::Android.Manifest.Permission.WriteExternalStorage);
-                }
-
-                if (missing.Count > 0)
-                {
-                    RequestPermissions(missing.ToArray(), StoragePermissionRequestCode);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            global::Android.Util.Log.Warn("Fujifier", $"RequestRuntimeStoragePermissions error: {ex.Message}");
-        }
+        // No runtime storage permissions needed; Scoped Storage and SAF (ActionOpenDocument / ActionOpenDocumentTree)
+        // grant transient read URI permissions without broad media library access.
     }
 
     public void PromptAllFilesAccessPermission()

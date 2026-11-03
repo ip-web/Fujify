@@ -6,8 +6,9 @@
     <SupportedOSPlatformVersion>26</SupportedOSPlatformVersion>
     <ApplicationId>com.ipweb.fujifier</ApplicationId>
     <ApplicationTitle>Fujifier</ApplicationTitle>
-    <ApplicationVersion Condition="'$(ApplicationVersion)' == ''">3</ApplicationVersion>
+    <ApplicationVersion Condition="'$(ApplicationVersion)' == ''">4</ApplicationVersion>
     <ApplicationDisplayVersion Condition="'$(ApplicationDisplayVersion)' == ''">2.0.0</ApplicationDisplayVersion>
+    <TargetSdkVersion>34</TargetSdkVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
     <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
