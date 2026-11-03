@@ -12,6 +12,8 @@
 client_secret*.json
 Fujifier-*.html
 *.json.secret
+*.keystore
+*.jks
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

@@ -3,7 +3,10 @@
 param(
     [string]$Configuration = "Release",
     [switch]$SkipAndroid = $false,
-    [switch]$SkipiOS = $false
+    [switch]$SkipiOS = $false,
+    [string]$KeystorePath = "",
+    [string]$KeystorePass = "",
+    [string]$KeyAlias = "fujifier"
 )
 
 $ErrorActionPreference = "Stop"
@@ -85,13 +88,35 @@ if (-not $SkipAndroid) {
         & cargo ndk -t arm64-v8a -t x86_64 -P 26 -o $outputLibs --manifest-path (Join-Path $nativeDir "Cargo.toml") build --release
     }
     
-    $architectures = @("android-arm64", "android-x64")
-    foreach ($rid in $architectures) {
-        Write-Host "`nBuilding APK for $rid..." -ForegroundColor Cyan
+    # Detect release upload keystore if not explicitly provided
+    if (-not $KeystorePath) {
+        $candidateKeystores = @(
+            (Join-Path $repoRoot "fujifier-upload.keystore"),
+            "$env:USERPROFILE\.android\fujifier-upload.keystore"
+        )
+        foreach ($k in $candidateKeystores) {
+            if (Test-Path $k) {
+                $KeystorePath = $k
+                Write-Host "Using release upload keystore: $k" -ForegroundColor Green
+                break
+            }
+        }
+    }
+
+    $architectures = @(
+        @{ Rid = "android-arm64"; Arch = "arm64"; VersionCode = 1 },
+        @{ Rid = "android-x64"; Arch = "x64"; VersionCode = 2 }
+    )
+    foreach ($target in $architectures) {
+        $rid = $target.Rid
+        $archSuffix = $target.Arch
+        $versionCode = $target.VersionCode
+
+        # 2a. Build APK (for local device testing & direct download)
+        Write-Host "`nBuilding APK for $rid (versionCode $versionCode)..." -ForegroundColor Cyan
         try {
-            & $dotnet build $androidProj -c $Configuration -r $rid -p:AndroidPackageFormat=apk
+            & $dotnet build $androidProj -c $Configuration -r $rid -p:AndroidPackageFormat=apk -p:ApplicationVersion=$versionCode
             
-            $archSuffix = if ($rid -eq "android-arm64") { "arm64" } else { "x64" }
             $signedApk = Get-ChildItem -Path (Join-Path $repoRoot "Fujify.Android\bin\$Configuration") -Filter "*Signed.apk" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.FullName -like "*\$rid\*" } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
             if (-not $signedApk) {
                 $signedApk = Get-ChildItem -Path (Join-Path $repoRoot "Fujify.Android\bin\$Configuration") -Filter "*.apk" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.FullName -like "*\$rid\*" } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
@@ -108,6 +133,40 @@ if (-not $SkipAndroid) {
         } catch {
             $err = $_.Exception.Message
             Write-Host "Error building APK for ${rid}: $err" -ForegroundColor Red
+        }
+
+        # 2b. Build Android App Bundle (.aab) for Google Play Store Release
+        Write-Host "`nBuilding Android App Bundle (AAB) for $rid (versionCode $versionCode)..." -ForegroundColor Cyan
+        try {
+            & $dotnet build $androidProj -c $Configuration -r $rid -p:AndroidPackageFormat=aab -p:ApplicationVersion=$versionCode
+
+            # Locate the unsigned or signed AAB
+            $rawAab = Get-ChildItem -Path (Join-Path $repoRoot "Fujify.Android\bin\$Configuration") -Filter "*.aab" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.FullName -like "*\$rid\*" -and $_.Name -notlike "*Signed*" } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+            if (-not $rawAab) {
+                $rawAab = Get-ChildItem -Path (Join-Path $repoRoot "Fujify.Android\bin\$Configuration") -Filter "*.aab" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.FullName -like "*\$rid\*" } | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+            }
+
+            if ($rawAab) {
+                $targetReleaseAab = Join-Path $releaseDir "Fujifier-v2.0.0-Android-$archSuffix.aab"
+                $targetDistAab = Join-Path $distDir "Fujifier-v2.0.0-Android-$archSuffix.aab"
+                Copy-Item -Path $rawAab.FullName -Destination $targetReleaseAab -Force
+
+                # Sign AAB with release upload key if available
+                if ($KeystorePath -and (Test-Path $KeystorePath)) {
+                    Write-Host "Signing AAB with release upload key ($KeystorePath)..." -ForegroundColor Yellow
+                    & jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore $KeystorePath -storepass $KeystorePass $targetReleaseAab $KeyAlias | Out-Null
+                    Write-Host "[OK] AAB signed with release key '$KeyAlias'." -ForegroundColor Green
+                } else {
+                    Write-Warning "No release keystore found. AAB left with default/debug signature."
+                }
+
+                Copy-Item -Path $targetReleaseAab -Destination $targetDistAab -Force
+                $sizeMb = [math]::Round((Get-Item $targetReleaseAab).Length / 1MB, 2)
+                Write-Host "AAB bundle generated ($archSuffix): $targetReleaseAab ($sizeMb MB)" -ForegroundColor Green
+            }
+        } catch {
+            $err = $_.Exception.Message
+            Write-Host "Error building AAB for ${rid}: $err" -ForegroundColor Red
         }
     }
 } else {
