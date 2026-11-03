@@ -70,11 +70,6 @@
                                 WindowDecorationProperties.ElementRole="MinimizeButton">
                             <TextBlock Classes="mac-glyph" Text="—" FontSize="8" Margin="0,-1,0,0" Foreground="#5C3B00"/>
                         </Button>
-                        <!-- Maximize / Zoom Button -->
-                        <Button x:Name="MacMaximizeButton" Classes="mac-caption maximize" Click="TitleBar_Maximize_Click" ToolTip.Tip="{loc:Loc Maximize}"
-                                WindowDecorationProperties.ElementRole="MaximizeButton">
-                            <TextBlock Classes="mac-glyph" Text="+" FontSize="9" Margin="0,-1,0,0" Foreground="#0A4D14"/>
-                        </Button>
                     </StackPanel>
 
                     <!-- Center: Draggable Spacer -->
@@ -82,7 +77,7 @@
                            PointerPressed="TitleBar_PointerPressed"
                            DoubleTapped="TitleBar_DoubleTapped"/>
 
-                    <!-- Right: Custom Functional Minimize, Maximize, Close Buttons matching standard Windows controls -->
+                    <!-- Right: Custom Functional Minimize and Close Buttons matching standard Windows controls -->
                     <StackPanel x:Name="CaptionButtonsPanel" Grid.Column="2" Orientation="Horizontal" Spacing="0" VerticalAlignment="Stretch" HorizontalAlignment="Right"
                                 IsVisible="{Binding ShowWindowsCaptionButtons}"
                                 WindowDecorationProperties.ElementRole="User">
@@ -90,11 +85,6 @@
                         <Button x:Name="TitleBarMinimizeButton" Classes="win-caption" Click="TitleBar_Minimize_Click" ToolTip.Tip="{loc:Loc Minimize}"
                                 WindowDecorationProperties.ElementRole="MinimizeButton">
                             <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
-                        </Button>
-                        <!-- Maximize / Restore Button -->
-                        <Button x:Name="TitleBarMaximizeButton" Classes="win-caption" Click="TitleBar_Maximize_Click" ToolTip.Tip="{loc:Loc Maximize}"
-                                WindowDecorationProperties.ElementRole="MaximizeButton">
-                            <TextBlock x:Name="TitleBarMaximizeGlyph" Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                         <!-- Close Button -->
                         <Button x:Name="TitleBarCloseButton" Classes="win-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="{loc:Loc Close}"
@@ -128,9 +118,6 @@
                                         </Button>
                                         <Button Classes="mac-caption minimize" Click="TitleBar_Minimize_Click" ToolTip.Tip="{loc:Loc Minimize}">
                                             <TextBlock Classes="mac-glyph" Text="—" FontSize="8" Margin="0,-1,0,0" Foreground="#5C3B00"/>
-                                        </Button>
-                                        <Button Classes="mac-caption maximize" Click="TitleBar_Maximize_Click" ToolTip.Tip="{loc:Loc Maximize}">
-                                            <TextBlock Classes="mac-glyph" Text="+" FontSize="9" Margin="0,-1,0,0" Foreground="#0A4D14"/>
                                         </Button>
                                     </StackPanel>
 
@@ -187,10 +174,6 @@
                                             <Button Classes="win-caption" Click="TitleBar_Minimize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Minimize}"
                                                     WindowDecorationProperties.ElementRole="MinimizeButton">
                                                 <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
-                                            </Button>
-                                            <Button x:Name="NarrowTitleBarMaximizeButton" Classes="win-caption" Click="TitleBar_Maximize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Maximize}"
-                                                    WindowDecorationProperties.ElementRole="MaximizeButton">
-                                                <TextBlock x:Name="NarrowTitleBarMaximizeGlyph" Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                                             </Button>
                                             <Button Classes="win-caption close" Click="TitleBar_Close_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Close}"
                                                     WindowDecorationProperties.ElementRole="CloseButton">
