@@ -1737,6 +1737,66 @@ namespace Fujify.ViewModels
             OnPropertyChanged(nameof(CanOpenOutputFolder));
         }
 
+        /// <summary>
+        /// Handles back button or back gesture navigation (Android/mobile).
+        /// Returns true if an open view/modal/drawer was handled (closed);
+        /// returns false if already on the root main screen and ready for exit confirmation.
+        /// </summary>
+        public bool HandleBackAction()
+        {
+            // 0. If multi-selection mode is active, exit multi-selection mode
+            if (IsMultiSelectMode)
+            {
+                ExitMultiSelectMode();
+                return true;
+            }
+
+            // 1. If Preferences modal (Settings) or About modal is open, close it and return to main screen
+            if (IsPreferencesModal || IsAboutModal)
+            {
+                if (IsPreferencesModal && Preferences?.CancelCommand.CanExecute(null) == true)
+                {
+                    Preferences.CancelCommand.Execute(null);
+                }
+                else
+                {
+                    CloseModal();
+                }
+                return true;
+            }
+
+            // 2. If an exit or other confirmation modal is already open, dismiss/cancel it
+            if (IsConfirmationModal)
+            {
+                ResolveConfirmation(false);
+                return true;
+            }
+
+            // 3. If any other modal is open (Message, CameraPicker, Conflict, FreeTierDelay, BatchSummary), close it
+            if (IsModalOpen)
+            {
+                CloseModal();
+                return true;
+            }
+
+            // 4. If mobile sidebar / options drawer is open, close it
+            if (IsMobileSidebarOpen)
+            {
+                IsMobileSidebarOpen = false;
+                return true;
+            }
+
+            // 5. If mobile add menu (FAB) is open, close it
+            if (IsMobileAddMenuOpen)
+            {
+                IsMobileAddMenuOpen = false;
+                return true;
+            }
+
+            // At root main view
+            return false;
+        }
+
         public void ImportSharedFiles(IEnumerable<string> filePaths)
         {
             Dispatcher.UIThread.Post(async () => await AddFilesAsync(filePaths));

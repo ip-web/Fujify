@@ -98,6 +98,15 @@ public class MainActivity : AvaloniaMainActivity
             return "Android Device";
         };
 
+        try
+        {
+            OnBackPressedDispatcher.AddCallback(this, new AndroidXBackCallback(HandleBackNavigation));
+        }
+        catch (Exception ex)
+        {
+            global::Android.Util.Log.Warn("Fujifier", $"Could not register OnBackPressedDispatcher callback: {ex.Message}");
+        }
+
         if (OperatingSystem.IsAndroidVersionAtLeast(33))
         {
             try
@@ -697,6 +706,16 @@ public class MainActivity : AvaloniaMainActivity
         }
     }
 
+    public override bool DispatchKeyEvent(KeyEvent? e)
+    {
+        if (e?.KeyCode == Keycode.Back && e.Action == KeyEventActions.Down)
+        {
+            HandleBackNavigation();
+            return true;
+        }
+        return base.DispatchKeyEvent(e);
+    }
+
     public override void OnBackPressed()
     {
         HandleBackNavigation();
@@ -714,79 +733,29 @@ public class MainActivity : AvaloniaMainActivity
 
     private void HandleBackNavigation()
     {
-        var vm = MainViewModel.Instance;
-        if (vm == null)
-        {
-            FinishAffinity();
-            return;
-        }
-
-        // 0. If multi-selection mode is active, exit multi-selection mode without closing the app!
-        if (vm.IsMultiSelectMode)
-        {
-            vm.ExitMultiSelectMode();
-            return;
-        }
-
-        // 1. If Preferences modal (Settings) or About modal is open, close it without closing the app!
-        if (vm.IsPreferencesModal || vm.IsAboutModal)
-        {
-            vm.CloseModal();
-            return;
-        }
-
-        // 2. If a confirmation modal is already open (e.g. exit dialog itself or another confirmation), dismiss it
-        if (vm.IsConfirmationModal)
-        {
-            vm.ResolveConfirmation(false);
-            return;
-        }
-
-        // 3. If any other modal is open (Message, CameraPicker, Conflict, FreeTierDelay, BatchSummary), close it
-        if (vm.IsModalOpen)
-        {
-            vm.CloseModal();
-            return;
-        }
-
-        // 4. If mobile sidebar / options drawer is open, close it
-        if (vm.IsMobileSidebarOpen)
-        {
-            vm.IsMobileSidebarOpen = false;
-            return;
-        }
-
-        // 5. If mobile add menu (FAB) is open, close it
-        if (vm.IsMobileAddMenuOpen)
-        {
-            vm.IsMobileAddMenuOpen = false;
-            return;
-        }
-
-        // 6. On the main view, trigger a confirmation modal asking the user to confirm exiting the app
-        PromptExitConfirmation();
-    }
-
-    private void PromptExitConfirmation()
-    {
-        var vm = MainViewModel.Instance;
-        if (vm == null)
-        {
-            FinishAffinity();
-            return;
-        }
-
         Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
         {
-            bool confirmExit = await vm.ShowConfirmationModalAsync(
-                Fujify.Localization.LocalizationManager.Tr("ExitAppTitle"),
-                Fujify.Localization.LocalizationManager.Tr("ExitAppMessage"),
-                confirmText: Fujify.Localization.LocalizationManager.Tr("ExitAppConfirm"),
-                cancelText: Fujify.Localization.LocalizationManager.Tr("Cancel"));
-
-            if (confirmExit)
+            var vm = MainViewModel.Instance;
+            if (vm == null)
             {
                 FinishAffinity();
+                return;
+            }
+
+            bool handled = vm.HandleBackAction();
+            if (!handled)
+            {
+                // Main view: ask the user if they want to close the app as a pop up
+                bool confirmExit = await vm.ShowConfirmationModalAsync(
+                    Fujify.Localization.LocalizationManager.Tr("ExitAppTitle"),
+                    Fujify.Localization.LocalizationManager.Tr("ExitAppMessage"),
+                    confirmText: Fujify.Localization.LocalizationManager.Tr("ExitAppConfirm"),
+                    cancelText: Fujify.Localization.LocalizationManager.Tr("Cancel"));
+
+                if (confirmExit)
+                {
+                    FinishAffinity();
+                }
             }
         });
     }
@@ -954,6 +923,13 @@ public class MainActivity : AvaloniaMainActivity
             global::Android.Util.Log.Error("Fujifier", $"SaveToMediaStore failed for {fileName}: {ex}");
             return false;
         }
+    }
+
+    private class AndroidXBackCallback : AndroidX.Activity.OnBackPressedCallback
+    {
+        private readonly Action _action;
+        public AndroidXBackCallback(Action action) : base(true) => _action = action;
+        public override void HandleOnBackPressed() => _action();
     }
 
     private class BackInvokedCallback : Java.Lang.Object, global::Android.Window.IOnBackInvokedCallback
