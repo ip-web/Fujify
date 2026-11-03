@@ -1237,7 +1237,7 @@ namespace Fujify.ViewModels
                 IsModalOpen = true;
             }
 
-            if (Dispatcher.UIThread.CheckAccess())
+            if (Avalonia.Application.Current == null || Dispatcher.UIThread.CheckAccess())
             {
                 Action();
             }
@@ -1342,7 +1342,7 @@ namespace Fujify.ViewModels
                 IsModalOpen = true;
             }
 
-            if (Dispatcher.UIThread.CheckAccess())
+            if (Avalonia.Application.Current == null || Dispatcher.UIThread.CheckAccess())
             {
                 Action();
             }
@@ -1376,7 +1376,7 @@ namespace Fujify.ViewModels
                 IsModalOpen = true;
             }
 
-            if (Dispatcher.UIThread.CheckAccess())
+            if (Avalonia.Application.Current == null || Dispatcher.UIThread.CheckAccess())
             {
                 Action();
             }
@@ -1396,7 +1396,7 @@ namespace Fujify.ViewModels
                 IsModalOpen = true;
             }
 
-            if (Dispatcher.UIThread.CheckAccess())
+            if (Avalonia.Application.Current == null || Dispatcher.UIThread.CheckAccess())
             {
                 Action();
             }
@@ -1439,7 +1439,7 @@ namespace Fujify.ViewModels
                 IsModalOpen = true;
             }
 
-            if (Dispatcher.UIThread.CheckAccess())
+            if (Avalonia.Application.Current == null || Dispatcher.UIThread.CheckAccess())
             {
                 Action();
             }
@@ -1635,7 +1635,7 @@ namespace Fujify.ViewModels
                 IsModalOpen = true;
             }
 
-            if (Dispatcher.UIThread.CheckAccess())
+            if (Avalonia.Application.Current == null || Dispatcher.UIThread.CheckAccess())
             {
                 Action();
             }
@@ -2507,7 +2507,7 @@ namespace Fujify.ViewModels
                 }
             }
 
-            if (Dispatcher.UIThread.CheckAccess())
+            if (Avalonia.Application.Current == null || Dispatcher.UIThread.CheckAccess())
             {
                 PerformSort();
             }

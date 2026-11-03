@@ -338,7 +338,7 @@ public partial class App : Application
                     int mh = System.Math.Max(800, (int)mainWindow.Bounds.Height);
                     var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(mw, mh), new Avalonia.Vector(96, 96));
                     rtb.Render(mainWindow);
-                    rtb.Save(mainPath);
+                    rtb.Save(mainPath, Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
                     System.Environment.Exit(0);
                 };
             }
@@ -353,7 +353,7 @@ public partial class App : Application
                     int mh = System.Math.Max(800, (int)mainWindow.Bounds.Height);
                     var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(mw, mh), new Avalonia.Vector(96, 96));
                     rtb.Render(mainWindow);
-                    rtb.Save(gridPath);
+                    rtb.Save(gridPath, Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
                     System.Environment.Exit(0);
                 };
             }
@@ -378,7 +378,7 @@ public partial class App : Application
                     int mh = System.Math.Max(800, (int)mainWindow.Bounds.Height);
                     var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(mw, mh), new Avalonia.Vector(96, 96));
                     rtb.Render(mainWindow);
-                    rtb.Save(gridCtxPath);
+                    rtb.Save(gridCtxPath, Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
                     System.Environment.Exit(0);
                 };
             }
@@ -397,7 +397,7 @@ public partial class App : Application
                     int mh = System.Math.Max(800, (int)mainWindow.Bounds.Height);
                     var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(mw, mh), new Avalonia.Vector(96, 96));
                     rtb.Render(mainWindow);
-                    rtb.Save(piPath);
+                    rtb.Save(piPath, Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
                     System.Environment.Exit(0);
                 };
             }
@@ -417,7 +417,7 @@ public partial class App : Application
                         int ph = System.Math.Max(700, (int)prefsWin.Bounds.Height);
                         var prtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(pw, ph), new Avalonia.Vector(96, 96));
                         prtb.Render(prefsWin);
-                        prtb.Save(prefsPath);
+                        prtb.Save(prefsPath, Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
                         System.Environment.Exit(0);
                     };
                     prefsWin.Show(mainWindow);
@@ -436,7 +436,7 @@ public partial class App : Application
                         int ah = System.Math.Max(470, (int)aboutWin.Bounds.Height);
                         var artb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(aw, ah), new Avalonia.Vector(96, 96));
                         artb.Render(aboutWin);
-                        artb.Save(aboutPath);
+                        artb.Save(aboutPath, Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
                         System.Environment.Exit(0);
                     };
                     aboutWin.Show(mainWindow);
@@ -455,7 +455,7 @@ public partial class App : Application
                     if (mh <= 0) mh = 720;
                     var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(mw, mh), new Avalonia.Vector(96, 96));
                     rtb.Render(mainWindow);
-                    rtb.Save(mobPath);
+                    rtb.Save(mobPath, Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
                     System.Environment.Exit(0);
                 };
             }
@@ -474,7 +474,7 @@ public partial class App : Application
                     if (mh <= 0) mh = 720;
                     var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(mw, mh), new Avalonia.Vector(96, 96));
                     rtb.Render(mainWindow);
-                    rtb.Save(mobOpenPath);
+                    rtb.Save(mobOpenPath, Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
                     System.Environment.Exit(0);
                 };
             }
@@ -494,7 +494,7 @@ public partial class App : Application
                     if (mh <= 0) mh = 720;
                     var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(mw, mh), new Avalonia.Vector(96, 96));
                     rtb.Render(mainWindow);
-                    rtb.Save(mobInfoPath);
+                    rtb.Save(mobInfoPath, Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
                     System.Environment.Exit(0);
                 };
             }
@@ -520,7 +520,7 @@ public partial class App : Application
                     if (mh <= 0) mh = 720;
                     var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(new Avalonia.PixelSize(mw, mh), new Avalonia.Vector(96, 96));
                     rtb.Render(mainWindow);
-                    rtb.Save(mobSettingsPath);
+                    rtb.Save(mobSettingsPath, Avalonia.Media.Imaging.PngBitmapEncoderOptions.Default);
                     System.Environment.Exit(0);
                 };
             }

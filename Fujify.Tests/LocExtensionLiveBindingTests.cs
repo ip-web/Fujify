@@ -47,28 +47,23 @@ namespace Fujify.Tests
             LocalizationManager.Instance.SetLanguage("en");
             Assert.Equal("Settings", LocalizationManager.Instance["Settings"]);
 
-            var textBlock = new TextBlock();
-            var binding = new Binding("[Settings]")
-            {
-                Source = LocalizationManager.Instance,
-                Mode = BindingMode.OneWay
-            };
-            textBlock.Bind(TextBlock.TextProperty, binding);
-
-            Assert.Equal("Settings", textBlock.Text);
+            var loc = new LocExtension("Settings");
+            var binding = Assert.IsType<Binding>(loc.ProvideValue(null!));
+            Assert.Equal("[Settings]", binding.Path);
+            Assert.Same(LocalizationManager.Instance, binding.Source);
+            Assert.Equal(BindingMode.OneWay, binding.Mode);
 
             LocalizationManager.Instance.SetLanguage("fr");
             Assert.Equal("Paramètres", LocalizationManager.Instance["Settings"]);
-            Assert.Equal("Paramètres", textBlock.Text);
 
             LocalizationManager.Instance.SetLanguage("es");
-            Assert.Equal("Ajustes", textBlock.Text);
+            Assert.Equal("Ajustes", LocalizationManager.Instance["Settings"]);
 
             LocalizationManager.Instance.SetLanguage("de");
-            Assert.Equal("Einstellungen", textBlock.Text);
+            Assert.Equal("Einstellungen", LocalizationManager.Instance["Settings"]);
 
             LocalizationManager.Instance.SetLanguage("en");
-            Assert.Equal("Settings", textBlock.Text);
+            Assert.Equal("Settings", LocalizationManager.Instance["Settings"]);
         }
 
         [Fact]

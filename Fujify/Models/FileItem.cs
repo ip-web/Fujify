@@ -327,7 +327,7 @@ namespace Fujify.Models
 
         protected virtual void OnPropertyChanged(string propertyName)
         {
-            if (Dispatcher.UIThread.CheckAccess())
+            if (Avalonia.Application.Current == null || Dispatcher.UIThread.CheckAccess())
             {
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }
