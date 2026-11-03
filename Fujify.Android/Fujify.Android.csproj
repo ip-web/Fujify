@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework Condition="'$(TargetFramework)' == '' and '$(OS)' == 'Windows_NT'">net9.0-android36.0</TargetFramework>
-    <TargetFramework Condition="'$(TargetFramework)' == ''">net10.0-android</TargetFramework>
+    <TargetFramework Condition="'$(TargetFramework)' == ''">net10.0-android36.0</TargetFramework>
     <SupportedOSPlatformVersion>26</SupportedOSPlatformVersion>
     <ApplicationId>com.ipweb.fujifier</ApplicationId>
     <ApplicationTitle>Fujifier</ApplicationTitle>
@@ -17,14 +16,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia.Android" Version="11.3.13" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Android" Version="3.119.0" />
+    <PackageReference Include="Avalonia.Android" Version="12.1.2" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Android" Version="3.119.4" />
     <PackageReference Include="HarfBuzzSharp.NativeAssets.Android" Version="8.3.1.5" />
     <PackageReference Include="Xamarin.GooglePlayServices.Ads.Lite" Version="124.0.0.9" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Fujify\Fujify.csproj" Properties="OutputType=Library;TargetFramework=net9.0" Condition="'$(TargetFramework)' == 'net9.0-android36.0' or '$(TargetFramework)' == 'net9.0-android'" />
-    <ProjectReference Include="..\Fujify\Fujify.csproj" Properties="OutputType=Library;TargetFramework=net10.0" Condition="'$(TargetFramework)' != 'net9.0-android36.0' and '$(TargetFramework)' != 'net9.0-android'" />
+    <ProjectReference Include="..\Fujify\Fujify.csproj" Properties="OutputType=Library;TargetFramework=net10.0" />
   </ItemGroup>
 </Project>

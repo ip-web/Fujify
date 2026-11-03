@@ -70,7 +70,7 @@ namespace Fujify.Views
                 if (topLevel.InsetsManager != null)
                 {
                     var mgr = topLevel.InsetsManager;
-                    mgr.DisplayEdgeToEdge = true;
+                    mgr.DisplayEdgeToEdgePreference = true;
                     _lastInsets = mgr.SafeAreaPadding;
                     ApplySafeArea(_lastInsets);
                     mgr.SafeAreaChanged += (s, args) =>
@@ -463,7 +463,7 @@ namespace Fujify.Views
 
         private void View_DragEnter(object? sender, DragEventArgs e)
         {
-            if (DataContext is MainViewModel vm && e.Data.Contains(DataFormats.Files))
+            if (DataContext is MainViewModel vm && e.DataTransfer.Contains(DataFormat.File))
             {
                 vm.IsDragOver = true;
             }
@@ -479,7 +479,7 @@ namespace Fujify.Views
 
         private void View_DragOver(object? sender, DragEventArgs e)
         {
-            if (e.Data.Contains(DataFormats.Files))
+            if (e.DataTransfer.Contains(DataFormat.File))
             {
                 e.DragEffects = DragDropEffects.Copy;
             }
@@ -496,9 +496,9 @@ namespace Fujify.Views
                 vm.IsDragOver = false;
             }
 
-            if (e.Data.Contains(DataFormats.Files))
+            if (e.DataTransfer.Contains(DataFormat.File))
             {
-                var files = e.Data.GetFiles()?.Select(f => f.Path.LocalPath).ToList();
+                var files = e.DataTransfer.TryGetFiles()?.Select(f => f.Path.LocalPath).ToList();
                 if (files != null && files.Count > 0 && DataContext is MainViewModel vm2)
                 {
                     await vm2.AddFilesAsync(files);

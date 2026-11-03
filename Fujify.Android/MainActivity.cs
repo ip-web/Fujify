@@ -53,7 +53,7 @@ namespace Fujify.Android;
     Categories = new[] { Intent.CategoryDefault, Intent.CategoryBrowsable },
     DataScheme = "fujifier",
     DataHost = "oauth-callback")]
-public class MainActivity : AvaloniaMainActivity<App>
+public class MainActivity : AvaloniaMainActivity
 {
     public static MainActivity? Instance { get; private set; }
     private const int StoragePermissionRequestCode = 2001;
@@ -930,15 +930,5 @@ public class MainActivity : AvaloniaMainActivity<App>
         private readonly Action _action;
         public BackInvokedCallback(Action action) => _action = action;
         public void OnBackInvoked() => _action();
-    }
-
-    protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
-    {
-        return base.CustomizeAppBuilder(builder)
-            .WithInterFont()
-            .With(new SkiaOptions
-            {
-                MaxGpuResourceSizeBytes = 256 * 1024 * 1024
-            });
     }
 }
