@@ -326,10 +326,10 @@
                                     <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenInLightroom}" OnContent="" OffContent=""/>
                                 </Grid>
 
-                                <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" IsVisible="{Binding IsWindows}"/>
+                                <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" IsVisible="False"/>
 
                                 <!-- Windows Explorer Context Menu -->
-                                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsWindows}">
+                                <Grid ColumnDefinitions="*,Auto" IsVisible="False">
                                     <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <TextBlock Text="{loc:Loc WindowsContextMenuTitle}" FontWeight="SemiBold" FontSize="12"

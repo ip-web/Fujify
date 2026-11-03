@@ -61,17 +61,17 @@
                                 IsVisible="{Binding ShowMacCaptionButtons}"
                                 WindowDecorationProperties.ElementRole="User">
                         <!-- Close Button -->
-                        <Button x:Name="MacCloseButton" Classes="mac-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="{loc:Loc Close}"
+                        <Button x:Name="MacCloseButton" Classes="mac-caption close" Click="TitleBar_Close_Click"
                                 WindowDecorationProperties.ElementRole="CloseButton">
                             <TextBlock Classes="mac-glyph" Text="✕" FontSize="7" Foreground="#4D0000"/>
                         </Button>
                         <!-- Minimize Button -->
-                        <Button x:Name="MacMinimizeButton" Classes="mac-caption minimize" Click="TitleBar_Minimize_Click" ToolTip.Tip="{loc:Loc Minimize}"
+                        <Button x:Name="MacMinimizeButton" Classes="mac-caption minimize" Click="TitleBar_Minimize_Click"
                                 WindowDecorationProperties.ElementRole="MinimizeButton">
                             <TextBlock Classes="mac-glyph" Text="—" FontSize="8" Margin="0,-1,0,0" Foreground="#5C3B00"/>
                         </Button>
                         <!-- Maximize / Zoom Button -->
-                        <Button x:Name="MacMaximizeButton" Classes="mac-caption maximize" Click="TitleBar_Maximize_Click" ToolTip.Tip="{loc:Loc Maximize}"
+                        <Button x:Name="MacMaximizeButton" Classes="mac-caption maximize" Click="TitleBar_Maximize_Click"
                                 WindowDecorationProperties.ElementRole="MaximizeButton">
                             <TextBlock Classes="mac-glyph" Text="+" FontSize="9" Margin="0,-1,0,0" Foreground="#0A4D14"/>
                         </Button>
@@ -87,17 +87,17 @@
                                 IsVisible="{Binding ShowWindowsCaptionButtons}"
                                 WindowDecorationProperties.ElementRole="User">
                         <!-- Minimize Button -->
-                        <Button x:Name="TitleBarMinimizeButton" Classes="win-caption" Click="TitleBar_Minimize_Click" ToolTip.Tip="{loc:Loc Minimize}"
+                        <Button x:Name="TitleBarMinimizeButton" Classes="win-caption" Click="TitleBar_Minimize_Click"
                                 WindowDecorationProperties.ElementRole="MinimizeButton">
                             <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                         <!-- Maximize / Restore Button -->
-                        <Button x:Name="TitleBarMaximizeButton" Classes="win-caption" Click="TitleBar_Maximize_Click" ToolTip.Tip="{loc:Loc Maximize}"
+                        <Button x:Name="TitleBarMaximizeButton" Classes="win-caption" Click="TitleBar_Maximize_Click"
                                 WindowDecorationProperties.ElementRole="MaximizeButton">
                             <TextBlock x:Name="TitleBarMaximizeGlyph" Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                         <!-- Close Button -->
-                        <Button x:Name="TitleBarCloseButton" Classes="win-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="{loc:Loc Close}"
+                        <Button x:Name="TitleBarCloseButton" Classes="win-caption close" Click="TitleBar_Close_Click"
                                 WindowDecorationProperties.ElementRole="CloseButton">
                             <TextBlock Text="&#x2715;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
@@ -2060,10 +2060,10 @@
                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenInLightroom}" OnContent="" OffContent=""/>
                                     </Grid>
 
-                                    <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" IsVisible="{Binding IsWindows}"/>
+                                    <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" IsVisible="False"/>
 
                                     <!-- Windows Explorer Context Menu -->
-                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsWindows}">
+                                    <Grid ColumnDefinitions="*,Auto" IsVisible="False">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock Text="{loc:Loc WindowsContextMenuTitle}" FontWeight="SemiBold" FontSize="12"

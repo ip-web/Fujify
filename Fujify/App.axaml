@@ -641,27 +641,52 @@
             <Setter Property="HorizontalContentAlignment" Value="Center"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="ToolTip.Tip" Value="{x:Null}"/>
+            <Setter Property="(WindowDecorationProperties.ElementRole)" Value="User"/>
         </Style>
         <Style Selector="Button.win-caption /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="CornerRadius" Value="0"/>
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Button.win-caption:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="#22FFFFFF"/>
             <Setter Property="Foreground" Value="#FFFFFFFF"/>
+            <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Button.win-caption:pressed /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="#33FFFFFF"/>
+            <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Button.win-caption.close:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="#E81123"/>
             <Setter Property="Foreground" Value="#FFFFFFFF"/>
+            <Setter Property="Cursor" Value="Hand"/>
         </Style>
         <Style Selector="Button.win-caption.close:pressed /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="#C4101E"/>
             <Setter Property="Foreground" Value="#FFFFFFFF"/>
+            <Setter Property="Cursor" Value="Hand"/>
         </Style>
+
+        <!-- Avalonia WindowDrawnDecorations caption buttons on Windows -->
+        <Style Selector="WindowDrawnDecorations Button">
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="ToolTip.Tip" Value="{x:Null}"/>
+            <Setter Property="(WindowDecorationProperties.ElementRole)" Value="User"/>
+        </Style>
+        <Style Selector="WindowDrawnDecorations Button /template/ ContentPresenter">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="WindowDrawnDecorations Button /template/ Viewbox">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="WindowDrawnDecorations Button /template/ Path">
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+
 
         <!-- macOS Window Control Buttons (Traffic Lights: Close, Minimize, Maximize) -->
         <Style Selector="Button.mac-caption">

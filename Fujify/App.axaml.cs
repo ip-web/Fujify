@@ -268,7 +268,7 @@ public partial class App : Application
                     {
                         Services.WindowsContextMenuService.RegisterContextMenu();
                     }
-                    else if (!licenseService.IsPro && Services.WindowsContextMenuService.IsContextMenuRegistered())
+                    else if (Services.WindowsContextMenuService.IsContextMenuRegistered())
                     {
                         Services.WindowsContextMenuService.UnregisterContextMenu();
                     }
@@ -299,7 +299,7 @@ public partial class App : Application
                 {
                     Services.WindowsContextMenuService.RegisterContextMenu();
                 }
-                else if (!licenseService.IsPro && Services.WindowsContextMenuService.IsContextMenuRegistered())
+                else if (Services.WindowsContextMenuService.IsContextMenuRegistered())
                 {
                     Services.WindowsContextMenuService.UnregisterContextMenu();
                 }

@@ -117,7 +117,7 @@ namespace Fujify.ViewModels
                         {
                             WindowsContextMenuService.RegisterContextMenu();
                         }
-                        else if (!status.IsPro && WindowsContextMenuService.IsContextMenuRegistered())
+                        else if (WindowsContextMenuService.IsContextMenuRegistered())
                         {
                             WindowsContextMenuService.UnregisterContextMenu();
                         }

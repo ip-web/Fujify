@@ -112,7 +112,7 @@ namespace Fujify.Views
                 SetWindowLong32(hWnd, GWL_STYLE, style);
         }
 
-        private Control? _captionButtonsPanel;
+
 
         public MainWindow()
         {
@@ -306,8 +306,7 @@ namespace Fujify.Views
             }
             else if (msg == WM_NCHITTEST)
             {
-                _captionButtonsPanel ??= this.FindControl<Control>("CaptionButtonsPanel");
-                if (_captionButtonsPanel != null && _captionButtonsPanel.IsVisible)
+                if (WindowState != WindowState.FullScreen)
                 {
                     int screenX = unchecked((short)(long)lParam);
                     int screenY = unchecked((short)((long)lParam >> 16));
@@ -316,15 +315,13 @@ namespace Fujify.Views
                     if (ScreenToClient(hWnd, ref pt) && GetClientRect(hWnd, out RECT clientRect))
                     {
                         double scaling = RenderScaling > 0 ? RenderScaling : 1.0;
-                        double buttonsWidthDip = _captionButtonsPanel.Bounds.Width > 0
-                            ? _captionButtonsPanel.Bounds.Width
-                            : 138.0;
-                        double buttonsHeightDip = _captionButtonsPanel.Bounds.Height > 0
-                            ? _captionButtonsPanel.Bounds.Height
-                            : 34.0;
+                        double buttonsWidthDip = 138.0;
+                        double buttonsHeightDip = 34.0;
 
                         // If pointer is within the caption buttons region in the top-right corner,
                         // force HTCLIENT so standard XAML buttons receive 100% of pointer hover, press, and click events.
+                        // This ensures the cursor remains consistently a Hand across the entire button bounds
+                        // and eliminates delayed OS/non-client tooltips.
                         if (IsPointerOverCaptionButtons(pt.X, pt.Y, clientRect.Right, scaling, buttonsWidthDip, buttonsHeightDip))
                         {
                             handled = true;
