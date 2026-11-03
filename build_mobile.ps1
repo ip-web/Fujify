@@ -103,14 +103,15 @@ if (-not $SkipAndroid) {
         }
     }
 
+    $globalVersionCode = 3
     $architectures = @(
-        @{ Rid = "android-arm64"; Arch = "arm64"; VersionCode = 1 },
-        @{ Rid = "android-x64"; Arch = "x64"; VersionCode = 2 }
+        @{ Rid = "android-arm64"; Arch = "arm64" },
+        @{ Rid = "android-x64"; Arch = "x64" }
     )
     foreach ($target in $architectures) {
         $rid = $target.Rid
         $archSuffix = $target.Arch
-        $versionCode = $target.VersionCode
+        $versionCode = $globalVersionCode
 
         # 2a. Build APK (for local device testing & direct download)
         Write-Host "`nBuilding APK for $rid (versionCode $versionCode)..." -ForegroundColor Cyan
@@ -168,6 +169,74 @@ if (-not $SkipAndroid) {
             $err = $_.Exception.Message
             Write-Host "Error building AAB for ${rid}: $err" -ForegroundColor Red
         }
+    }
+
+    # 2c. Assemble Universal Multi-Architecture AAB (both ARM64 & x86_64 in one bundle, versionCode 3)
+    Write-Host "`nAssembling Universal Multi-Architecture Android App Bundle (AAB) with both ARM64 and x64 (versionCode $globalVersionCode)..." -ForegroundColor Cyan
+    $arm64AabPath = Join-Path $releaseDir "Fujifier-v2.0.0-Android-arm64.aab"
+    $x64AabPath = Join-Path $releaseDir "Fujifier-v2.0.0-Android-x64.aab"
+    $universalAabPath = Join-Path $releaseDir "Fujifier-v2.0.0-Android.aab"
+    $bundletoolJar = "C:\Program Files\dotnet\packs\Microsoft.Android.Sdk.Windows\36.1.2\tools\bundletool.jar"
+    if (-not (Test-Path $bundletoolJar)) {
+        $bundletoolJar = (Get-ChildItem -Path "C:\Program Files\dotnet\packs" -Filter "bundletool*.jar" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
+    }
+
+    if ((Test-Path $arm64AabPath) -and (Test-Path $x64AabPath) -and ($bundletoolJar -and (Test-Path $bundletoolJar))) {
+        $tempCombine = Join-Path $repoRoot "obj\temp_bundle_combine"
+        if (Test-Path $tempCombine) { Remove-Item -Path $tempCombine -Recurse -Force }
+        New-Item -ItemType Directory -Path $tempCombine -Force | Out-Null
+
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+        # 1. Extract base from arm64 AAB
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($arm64AabPath, $tempCombine)
+        $baseDir = Join-Path $tempCombine "base"
+
+        # 2. Extract x86_64 native libraries from x64 AAB
+        $x64Zip = [System.IO.Compression.ZipFile]::OpenRead($x64AabPath)
+        $x86TargetDir = Join-Path $baseDir "lib\x86_64"
+        New-Item -ItemType Directory -Path $x86TargetDir -Force | Out-Null
+        foreach ($entry in $x64Zip.Entries) {
+            if ($entry.FullName.StartsWith("base/lib/x86_64/")) {
+                $subFile = $entry.FullName.Substring("base/lib/x86_64/".Length)
+                if ($subFile) {
+                    $destPath = Join-Path $x86TargetDir $subFile
+                    [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $destPath, $true)
+                }
+            }
+        }
+        $x64Zip.Dispose()
+
+        # 3. Create module zip for bundletool (ensure forward slashes for Linux/Java zip format)
+        $baseZip = Join-Path $tempCombine "base.zip"
+        if (Test-Path $baseZip) { Remove-Item -Force $baseZip }
+        $zipStream = [System.IO.File]::Open($baseZip, [System.IO.FileMode]::Create)
+        $zipArchive = New-Object System.IO.Compression.ZipArchive($zipStream, [System.IO.Compression.ZipArchiveMode]::Create)
+        $allFiles = Get-ChildItem -Path $baseDir -Recurse -File
+        foreach ($file in $allFiles) {
+            $relPath = $file.FullName.Substring($baseDir.Length).TrimStart('\', '/').Replace('\', '/')
+            [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zipArchive, $file.FullName, $relPath) | Out-Null
+        }
+        $zipArchive.Dispose()
+        $zipStream.Dispose()
+
+        # 4. Run bundletool build-bundle
+        & java -jar $bundletoolJar build-bundle --modules=$baseZip --output=$universalAabPath --overwrite | Out-Null
+
+        # 5. Sign the universal AAB with release upload keystore
+        if ($KeystorePath -and (Test-Path $KeystorePath)) {
+            Write-Host "Signing Universal AAB with release upload key ($KeystorePath)..." -ForegroundColor Yellow
+            & jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore $KeystorePath -storepass $KeystorePass $universalAabPath $KeyAlias | Out-Null
+            Write-Host "[OK] Universal AAB signed with release key '$KeyAlias'." -ForegroundColor Green
+        }
+
+        # 6. Copy to dist
+        Copy-Item -Path $universalAabPath -Destination (Join-Path $distDir "Fujifier-v2.0.0-Android.aab") -Force
+        $uniSizeMb = [math]::Round((Get-Item $universalAabPath).Length / 1MB, 2)
+        Write-Host "Universal Multi-Architecture AAB generated: $universalAabPath ($uniSizeMb MB)" -ForegroundColor Green
+
+        # Cleanup
+        Remove-Item -Path $tempCombine -Recurse -Force -ErrorAction SilentlyContinue
     }
 } else {
     Write-Host "`n[2/4] Skipping Android build (-SkipAndroid specified)." -ForegroundColor DarkGray
