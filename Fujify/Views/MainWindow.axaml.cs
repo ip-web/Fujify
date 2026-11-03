@@ -20,6 +20,8 @@
 using System;
 using System.Runtime.InteropServices;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.VisualTree;
 
 namespace Fujify.Views
 {
@@ -115,6 +117,8 @@ namespace Fujify.Views
         public MainWindow()
         {
             InitializeComponent();
+            SuppressFullScreenButton();
+            Loaded += (s, e) => SuppressFullScreenButton();
             if (!App.SupportsMica)
             {
                 TransparencyLevelHint = new[] { WindowTransparencyLevel.None };
@@ -135,9 +139,16 @@ namespace Fujify.Views
             }
         }
 
+        protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
+        {
+            base.OnApplyTemplate(e);
+            SuppressFullScreenButton();
+        }
+
         protected override void OnOpened(EventArgs e)
         {
             base.OnOpened(e);
+            SuppressFullScreenButton();
             if (OperatingSystem.IsWindows())
             {
                 var handle = TryGetPlatformHandle()?.Handle;
@@ -145,6 +156,59 @@ namespace Fujify.Views
                 {
                     EnsureDwmTransitionsEnabled(handle.Value);
                 }
+            }
+        }
+
+        public void SuppressFullScreenButton()
+        {
+            try
+            {
+                var winType = typeof(Window);
+                var actionsField = winType.GetField("_allowedWindowActions", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (actionsField != null)
+                {
+                    var current = actionsField.GetValue(this);
+                    if (current != null)
+                    {
+                        int currentVal = (int)current;
+                        const int fullscreenMask = 2; // PlatformAllowedWindowActions.Fullscreen
+                        if ((currentVal & fullscreenMask) != 0)
+                        {
+                            int updatedVal = currentVal & ~fullscreenMask;
+                            var updatedEnum = Enum.ToObject(actionsField.FieldType, updatedVal);
+                            actionsField.SetValue(this, updatedEnum);
+
+                            var onActionsChanged = winType.GetMethod("OnAllowedWindowActionsChanged", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                            onActionsChanged?.Invoke(this, null);
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Safe fallback
+            }
+
+            try
+            {
+                foreach (var visual in this.GetVisualDescendants())
+                {
+                    if (visual is Button btn)
+                    {
+                        if (btn.Name == "PART_FullScreenButton" ||
+                            Avalonia.Controls.Chrome.WindowDecorationProperties.GetElementRole(btn) == Avalonia.Input.WindowDecorationsElementRole.FullScreenButton)
+                        {
+                            btn.IsVisible = false;
+                            btn.Width = 0;
+                            btn.MaxWidth = 0;
+                            btn.Opacity = 0;
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Safe fallback
             }
         }
 

@@ -1026,5 +1026,19 @@
         <Style Selector="TextBlock.fold-chevron.collapsed">
             <Setter Property="RenderTransform" Value="rotate(-90deg)"/>
         </Style>
+
+        <!-- Hide 4th FullScreen caption button rendered by WindowDrawnDecorations -->
+        <Style Selector="Button#PART_FullScreenButton">
+            <Setter Property="IsVisible" Value="False"/>
+            <Setter Property="Width" Value="0"/>
+            <Setter Property="MaxWidth" Value="0"/>
+            <Setter Property="Opacity" Value="0"/>
+        </Style>
+        <Style Selector="WindowDrawnDecorations /template/ Button#PART_FullScreenButton">
+            <Setter Property="IsVisible" Value="False"/>
+            <Setter Property="Width" Value="0"/>
+            <Setter Property="MaxWidth" Value="0"/>
+            <Setter Property="Opacity" Value="0"/>
+        </Style>
     </Application.Styles>
 </Application>
