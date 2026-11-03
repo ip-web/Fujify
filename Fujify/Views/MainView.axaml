@@ -50,24 +50,29 @@
                     BorderThickness="0"
                     MinHeight="34"
                     Padding="16,0,0,0"
-                    ZIndex="100">
+                    ZIndex="100"
+                    WindowDecorationProperties.ElementRole="TitleBar">
                 <Grid ColumnDefinitions="Auto,Auto,*,Auto" VerticalAlignment="Stretch">
                     <!-- Far Left: macOS Traffic Lights (Close [Red], Minimize [Yellow], Maximize [Green]) -->
                     <StackPanel x:Name="MacTrafficLightsPanel" Grid.Column="0" Orientation="Horizontal" Spacing="8"
                                 VerticalAlignment="Center" Margin="0,0,16,0"
                                 Classes="mac-traffic-lights"
                                 Classes.inactive="{Binding !IsWindowActive}"
-                                IsVisible="{Binding ShowMacCaptionButtons}">
+                                IsVisible="{Binding ShowMacCaptionButtons}"
+                                WindowDecorationProperties.ElementRole="User">
                         <!-- Close Button -->
-                        <Button x:Name="MacCloseButton" Classes="mac-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="{loc:Loc Close}">
+                        <Button x:Name="MacCloseButton" Classes="mac-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="{loc:Loc Close}"
+                                WindowDecorationProperties.ElementRole="CloseButton">
                             <TextBlock Classes="mac-glyph" Text="✕" FontSize="7" Foreground="#4D0000"/>
                         </Button>
                         <!-- Minimize Button -->
-                        <Button x:Name="MacMinimizeButton" Classes="mac-caption minimize" Click="TitleBar_Minimize_Click" ToolTip.Tip="{loc:Loc Minimize}">
+                        <Button x:Name="MacMinimizeButton" Classes="mac-caption minimize" Click="TitleBar_Minimize_Click" ToolTip.Tip="{loc:Loc Minimize}"
+                                WindowDecorationProperties.ElementRole="MinimizeButton">
                             <TextBlock Classes="mac-glyph" Text="—" FontSize="8" Margin="0,-1,0,0" Foreground="#5C3B00"/>
                         </Button>
                         <!-- Maximize / Zoom Button -->
-                        <Button x:Name="MacMaximizeButton" Classes="mac-caption maximize" Click="TitleBar_Maximize_Click" ToolTip.Tip="{loc:Loc Maximize}">
+                        <Button x:Name="MacMaximizeButton" Classes="mac-caption maximize" Click="TitleBar_Maximize_Click" ToolTip.Tip="{loc:Loc Maximize}"
+                                WindowDecorationProperties.ElementRole="MaximizeButton">
                             <TextBlock Classes="mac-glyph" Text="+" FontSize="9" Margin="0,-1,0,0" Foreground="#0A4D14"/>
                         </Button>
                     </StackPanel>
@@ -88,17 +93,21 @@
 
                     <!-- Right: Custom Functional Minimize, Maximize, Close Buttons matching standard Windows controls -->
                     <StackPanel x:Name="CaptionButtonsPanel" Grid.Column="3" Orientation="Horizontal" Spacing="0" VerticalAlignment="Stretch" HorizontalAlignment="Right"
-                                IsVisible="{Binding ShowWindowsCaptionButtons}">
+                                IsVisible="{Binding ShowWindowsCaptionButtons}"
+                                WindowDecorationProperties.ElementRole="User">
                         <!-- Minimize Button -->
-                        <Button x:Name="TitleBarMinimizeButton" Classes="win-caption" Click="TitleBar_Minimize_Click" ToolTip.Tip="{loc:Loc Minimize}">
+                        <Button x:Name="TitleBarMinimizeButton" Classes="win-caption" Click="TitleBar_Minimize_Click" ToolTip.Tip="{loc:Loc Minimize}"
+                                WindowDecorationProperties.ElementRole="MinimizeButton">
                             <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                         <!-- Maximize / Restore Button -->
-                        <Button x:Name="TitleBarMaximizeButton" Classes="win-caption" Click="TitleBar_Maximize_Click" ToolTip.Tip="{loc:Loc Maximize}">
+                        <Button x:Name="TitleBarMaximizeButton" Classes="win-caption" Click="TitleBar_Maximize_Click" ToolTip.Tip="{loc:Loc Maximize}"
+                                WindowDecorationProperties.ElementRole="MaximizeButton">
                             <TextBlock Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                         <!-- Close Button -->
-                        <Button x:Name="TitleBarCloseButton" Classes="win-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="{loc:Loc Close}">
+                        <Button x:Name="TitleBarCloseButton" Classes="win-caption close" Click="TitleBar_Close_Click" ToolTip.Tip="{loc:Loc Close}"
+                                WindowDecorationProperties.ElementRole="CloseButton">
                             <TextBlock Text="&#x2715;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                     </StackPanel>
@@ -182,14 +191,18 @@
                                         </Button>
 
                                         <!-- Optional Desktop Caption Buttons when running on desktop window -->
-                                        <StackPanel Orientation="Horizontal" Spacing="0" IsVisible="{Binding ShowWindowsCaptionButtons}">
-                                            <Button Classes="win-caption" Click="TitleBar_Minimize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Minimize}">
+                                        <StackPanel Orientation="Horizontal" Spacing="0" IsVisible="{Binding ShowWindowsCaptionButtons}"
+                                                    WindowDecorationProperties.ElementRole="User">
+                                            <Button Classes="win-caption" Click="TitleBar_Minimize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Minimize}"
+                                                    WindowDecorationProperties.ElementRole="MinimizeButton">
                                                 <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                                             </Button>
-                                            <Button Classes="win-caption" Click="TitleBar_Maximize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Maximize}">
+                                            <Button Classes="win-caption" Click="TitleBar_Maximize_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Maximize}"
+                                                    WindowDecorationProperties.ElementRole="MaximizeButton">
                                                 <TextBlock Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                                             </Button>
-                                            <Button Classes="win-caption close" Click="TitleBar_Close_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Close}">
+                                            <Button Classes="win-caption close" Click="TitleBar_Close_Click" Width="32" Height="32" ToolTip.Tip="{loc:Loc Close}"
+                                                    WindowDecorationProperties.ElementRole="CloseButton">
                                                 <TextBlock Text="&#x2715;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                                             </Button>
                                         </StackPanel>
@@ -637,7 +650,7 @@
                                                          Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                          Foreground="{DynamicResource AppTextPrimaryBrush}"
                                                          BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                         Watermark="-fujified" FontSize="11" Height="28"
+                                                         PlaceholderText="-fujified" FontSize="11" Height="28"
                                                          CornerRadius="8" VerticalContentAlignment="Center"/>
                                             </Grid>
 
@@ -667,7 +680,7 @@
                                                                  Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                                  Foreground="{DynamicResource AppTextPrimaryBrush}"
                                                                  BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                                 Watermark="_fujified" FontSize="10" Height="26"
+                                                                 PlaceholderText="_fujified" FontSize="10" Height="26"
                                                                  CornerRadius="7" VerticalContentAlignment="Center"/>
                                                     </Grid>
 
@@ -679,7 +692,7 @@
                                                                  Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                                  Foreground="{DynamicResource AppTextPrimaryBrush}"
                                                                  BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                                 Watermark="fujified" FontSize="10" Height="26"
+                                                                 PlaceholderText="fujified" FontSize="10" Height="26"
                                                                  CornerRadius="7" VerticalContentAlignment="Center"/>
                                                     </Grid>
 
@@ -1550,7 +1563,7 @@
                                                                  Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                                  Foreground="{DynamicResource AppTextPrimaryBrush}"
                                                                  BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                                 Watermark="-fujified" FontSize="11" Height="26"
+                                                                 PlaceholderText="-fujified" FontSize="11" Height="26"
                                                                  CornerRadius="7" VerticalContentAlignment="Center"/>
                                                     </Grid>
 
@@ -1580,7 +1593,7 @@
                                                                          Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                                          Foreground="{DynamicResource AppTextPrimaryBrush}"
                                                                          BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                                         Watermark="_fujified" FontSize="10" Height="24"
+                                                                         PlaceholderText="_fujified" FontSize="10" Height="24"
                                                                          CornerRadius="6" VerticalContentAlignment="Center"/>
                                                             </Grid>
 
@@ -1592,7 +1605,7 @@
                                                                          Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                                          Foreground="{DynamicResource AppTextPrimaryBrush}"
                                                                          BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                                         Watermark="fujified" FontSize="10" Height="24"
+                                                                         PlaceholderText="fujified" FontSize="10" Height="24"
                                                                          CornerRadius="6" VerticalContentAlignment="Center"/>
                                                             </Grid>
 
@@ -1961,7 +1974,7 @@
                                                  Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                  Foreground="{DynamicResource AppTextPrimaryBrush}"
                                                  BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                 Watermark="-fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                                 PlaceholderText="-fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
                                     </Grid>
                                     <TextBlock Text="{loc:Loc ExampleSuffix}" FontSize="11"
                                                Foreground="{DynamicResource AppAccentLightBrush}"
@@ -1999,7 +2012,7 @@
                                                          Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                          Foreground="{DynamicResource AppTextPrimaryBrush}"
                                                          BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                         Watermark="-fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                                         PlaceholderText="-fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
                                             </Grid>
 
                                             <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
@@ -2009,7 +2022,7 @@
                                                          Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                          Foreground="{DynamicResource AppTextPrimaryBrush}"
                                                          BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                         Watermark="Fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                                         PlaceholderText="Fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
                                             </Grid>
 
                                             <TextBlock Text="{Binding SubfolderPreview, StringFormat='Example: {0}'}" FontSize="11"
@@ -2239,8 +2252,8 @@
                                             </Grid>
 
                                             <!-- Email and Password -->
-                                            <TextBox Text="{Binding AccountEmailInput, Mode=TwoWay}" Watermark="{loc:Loc AccountEmailWatermark}" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center"/>
-                                            <TextBox Text="{Binding AccountPasswordInput, Mode=TwoWay}" PasswordChar="●" Watermark="{loc:Loc AccountPasswordWatermark}" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center"/>
+                                            <TextBox Text="{Binding AccountEmailInput, Mode=TwoWay}" PlaceholderText="{loc:Loc AccountEmailWatermark}" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center"/>
+                                            <TextBox Text="{Binding AccountPasswordInput, Mode=TwoWay}" PasswordChar="●" PlaceholderText="{loc:Loc AccountPasswordWatermark}" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center"/>
                                             <Button Content="{loc:Loc ForgotPassword}" Command="{Binding ForgotPasswordCommand}"
                                                     Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand"
                                                     Foreground="{DynamicResource AppAccentBrush}" FontSize="11" HorizontalAlignment="Right"
@@ -2250,7 +2263,7 @@
 
                                         <!-- Option B: Direct License Key Input -->
                                         <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsKeyTabActive}">
-                                            <TextBox Grid.Column="0" Text="{Binding LicenseKeyInput, Mode=TwoWay}" Watermark="{loc:Loc LicenseKeyWatermark}" Height="34" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                                            <TextBox Grid.Column="0" Text="{Binding LicenseKeyInput, Mode=TwoWay}" PlaceholderText="{loc:Loc LicenseKeyWatermark}" Height="34" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
                                             <Button Grid.Column="1" Content="{loc:Loc ActivateKey}" Command="{Binding ActivateLicenseCommand}" Classes="primary" Height="34" Padding="16,0" CornerRadius="17" VerticalContentAlignment="Center"/>
                                         </Grid>
                                     </StackPanel>
@@ -2482,7 +2495,7 @@
                         <StackPanel IsVisible="{Binding IsDelayKeyInputVisible}" Spacing="6" Margin="0,4,0,0">
                             <Grid ColumnDefinitions="*, Auto">
                                 <TextBox Text="{Binding DelayLicenseKey, Mode=TwoWay}" Grid.Column="0" 
-                                         Watermark="{loc:Loc LicenseKeyWatermark}" 
+                                         PlaceholderText="{loc:Loc LicenseKeyWatermark}" 
                                          Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                          Foreground="{DynamicResource AppTextPrimaryBrush}"
                                          BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"

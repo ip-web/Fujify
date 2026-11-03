@@ -202,7 +202,7 @@
                                              Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                              Foreground="{DynamicResource AppTextPrimaryBrush}"
                                              BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                             Watermark="-fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                             PlaceholderText="-fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
                                 </Grid>
                                 <TextBlock Text="{loc:Loc ExampleSuffix}" FontSize="11"
                                            Foreground="{DynamicResource AppAccentLightBrush}"
@@ -239,7 +239,7 @@
                                                  Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                  Foreground="{DynamicResource AppTextPrimaryBrush}"
                                                  BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                 Watermark="-fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                                 PlaceholderText="-fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
                                     </Grid>
 
                                     <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding !SubfolderUseOriginalName}">
@@ -249,7 +249,7 @@
                                                  Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                                  Foreground="{DynamicResource AppTextPrimaryBrush}"
                                                  BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"
-                                                 Watermark="Fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
+                                                 PlaceholderText="Fujified" FontSize="11" Height="32" CornerRadius="8" VerticalContentAlignment="Center"/>
                                     </Grid>
 
                                     <TextBlock Text="{Binding SubfolderPreview, StringFormat='Example: {0}'}" FontSize="11"
@@ -479,8 +479,8 @@
 
                                         <!-- Email and Password -->
                                         <Grid ColumnDefinitions="*,*" Margin="0,2,0,0">
-                                            <TextBox Grid.Column="0" Text="{Binding AccountEmailInput, Mode=TwoWay}" Watermark="{loc:Loc AccountEmailWatermark}" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center" Margin="0,0,6,0"/>
-                                            <TextBox Grid.Column="1" Text="{Binding AccountPasswordInput, Mode=TwoWay}" PasswordChar="●" Watermark="{loc:Loc AccountPasswordWatermark}" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center" Margin="6,0,0,0"/>
+                                            <TextBox Grid.Column="0" Text="{Binding AccountEmailInput, Mode=TwoWay}" PlaceholderText="{loc:Loc AccountEmailWatermark}" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center" Margin="0,0,6,0"/>
+                                            <TextBox Grid.Column="1" Text="{Binding AccountPasswordInput, Mode=TwoWay}" PasswordChar="●" PlaceholderText="{loc:Loc AccountPasswordWatermark}" Height="32" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center" Margin="6,0,0,0"/>
                                         </Grid>
                                         <Grid ColumnDefinitions="*,Auto" Margin="0,4,0,0">
                                             <Button Grid.Column="0" Content="{loc:Loc ForgotPassword}" Command="{Binding ForgotPasswordCommand}"
@@ -493,7 +493,7 @@
 
                                     <!-- Option B: Direct License Key Input -->
                                     <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsKeyTabActive}">
-                                        <TextBox Grid.Column="0" Text="{Binding LicenseKeyInput, Mode=TwoWay}" Watermark="{loc:Loc LicenseKeyWatermark}" Height="34" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
+                                        <TextBox Grid.Column="0" Text="{Binding LicenseKeyInput, Mode=TwoWay}" PlaceholderText="{loc:Loc LicenseKeyWatermark}" Height="34" CornerRadius="8" FontSize="11" BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}" Background="{DynamicResource AppSurfaceSecondaryBrush}" Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalContentAlignment="Center" Margin="0,0,8,0"/>
                                         <Button Grid.Column="1" Content="{loc:Loc ActivateKey}" Command="{Binding ActivateLicenseCommand}" Classes="primary" Height="34" Padding="16,0" CornerRadius="17" VerticalContentAlignment="Center"/>
                                     </Grid>
                                 </StackPanel>

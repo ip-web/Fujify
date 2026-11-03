@@ -139,7 +139,7 @@ namespace Fujify.Services
                             float scale = 320f / currentMax;
                             int targetW = Math.Max(1, (int)(orientedBitmap.Width * scale));
                             int targetH = Math.Max(1, (int)(orientedBitmap.Height * scale));
-                            displayBitmap = orientedBitmap.Resize(new SKImageInfo(targetW, targetH), SKFilterQuality.Medium);
+                            displayBitmap = orientedBitmap.Resize(new SKImageInfo(targetW, targetH), new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear));
                             shouldDisposeDisplay = true;
                         }
                         else

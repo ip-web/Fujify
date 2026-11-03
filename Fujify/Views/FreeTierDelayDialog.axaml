@@ -58,7 +58,7 @@
                 <StackPanel x:Name="LicenseKeySection" IsVisible="False" Spacing="6" Margin="0,6,0,0">
                     <Grid ColumnDefinitions="*, Auto">
                         <TextBox x:Name="LicenseKeyInput" Grid.Column="0" 
-                                 Watermark="{loc:Loc LicenseKeyWatermark}" 
+                                 PlaceholderText="{loc:Loc LicenseKeyWatermark}" 
                                  Background="{DynamicResource AppSurfaceSecondaryBrush}"
                                  Foreground="{DynamicResource AppTextPrimaryBrush}"
                                  BorderThickness="1" BorderBrush="{DynamicResource AppEdgeBrush}"

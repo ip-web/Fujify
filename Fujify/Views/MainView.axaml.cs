@@ -737,7 +737,7 @@ namespace Fujify.Views
 
             if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             {
-                (VisualRoot as Window)?.BeginMoveDrag(e);
+                GetParentWindow()?.BeginMoveDrag(e);
             }
         }
 
@@ -748,7 +748,8 @@ namespace Fujify.Views
                 return;
             }
 
-            if (VisualRoot is Window window)
+            var window = GetParentWindow();
+            if (window != null)
             {
                 window.WindowState = window.WindowState == WindowState.Maximized
                     ? WindowState.Normal
@@ -756,9 +757,15 @@ namespace Fujify.Views
             }
         }
 
+        private Window? GetParentWindow()
+        {
+            return TopLevel.GetTopLevel(this) as Window ?? VisualRoot as Window;
+        }
+
         private void TitleBar_Minimize_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
-            if (VisualRoot is Window window)
+            var window = GetParentWindow();
+            if (window != null)
             {
                 window.WindowState = WindowState.Minimized;
             }
@@ -766,7 +773,8 @@ namespace Fujify.Views
 
         private void TitleBar_Maximize_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
-            if (VisualRoot is Window window)
+            var window = GetParentWindow();
+            if (window != null)
             {
                 window.WindowState = window.WindowState == WindowState.Maximized
                     ? WindowState.Normal
@@ -776,7 +784,8 @@ namespace Fujify.Views
 
         private void TitleBar_Close_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
-            if (VisualRoot is Window window)
+            var window = GetParentWindow();
+            if (window != null)
             {
                 window.Close();
             }

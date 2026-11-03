@@ -67,7 +67,7 @@ public class MainActivity : AvaloniaMainActivity
         EnableHighRefreshRate();
         RequestRuntimeStoragePermissions();
 
-        if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
+        if (OperatingSystem.IsAndroidVersionAtLeast(33))
         {
             try
             {
@@ -239,7 +239,7 @@ public class MainActivity : AvaloniaMainActivity
         if (action == Intent.ActionSend)
         {
             global::Android.Net.Uri? streamUri = null;
-            if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
+            if (OperatingSystem.IsAndroidVersionAtLeast(33))
             {
 #pragma warning disable CA1416
                 streamUri = intent.GetParcelableExtra(Intent.ExtraStream, Java.Lang.Class.FromType(typeof(global::Android.Net.Uri))) as global::Android.Net.Uri;
@@ -272,7 +272,7 @@ public class MainActivity : AvaloniaMainActivity
         else if (action == Intent.ActionSendMultiple)
         {
             System.Collections.IList? list = null;
-            if (Build.VERSION.SdkInt >= BuildVersionCodes.Tiramisu)
+            if (OperatingSystem.IsAndroidVersionAtLeast(33))
             {
 #pragma warning disable CA1416
                 list = intent.GetParcelableArrayListExtra(Intent.ExtraStream, Java.Lang.Class.FromType(typeof(global::Android.Net.Uri)));
@@ -805,7 +805,7 @@ public class MainActivity : AvaloniaMainActivity
             bool mediaStoreSaved = false;
 
             // 1. On Android 10+ (API >= 29), insert into MediaStore under Pictures/Fujifier (or Pictures/Fujifier/<subfolder>)
-            if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
+            if (OperatingSystem.IsAndroidVersionAtLeast(29))
             {
                 mediaStoreSaved = SaveToMediaStore(context, filePath, fileName, subfolder);
             }
@@ -873,7 +873,7 @@ public class MainActivity : AvaloniaMainActivity
             values.Put(global::Android.Provider.MediaStore.IMediaColumns.DateAdded, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
             values.Put(global::Android.Provider.MediaStore.IMediaColumns.DateModified, DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 
-            if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
+            if (OperatingSystem.IsAndroidVersionAtLeast(29))
             {
                 string relPath = !string.IsNullOrWhiteSpace(subfolder)
                     ? $"Pictures/Fujifier/{subfolder}"
@@ -908,7 +908,7 @@ public class MainActivity : AvaloniaMainActivity
                 outStream.Flush();
             }
 
-            if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
+            if (OperatingSystem.IsAndroidVersionAtLeast(29))
             {
                 values.Clear();
                 values.Put(global::Android.Provider.MediaStore.IMediaColumns.IsPending, 0);
