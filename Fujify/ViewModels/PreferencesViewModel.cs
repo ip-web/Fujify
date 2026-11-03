@@ -92,7 +92,7 @@ namespace Fujify.ViewModels
         public bool IsPro => _licenseService.IsPro;
 
         public string LicenseStatusText => _licenseService.IsPro
-            ? "Fujifier Pro (Activated)"
+            ? "Fujifier Pro"
             : "Fujifier Free Tier";
 
         public string LicenseDescriptionText => _licenseService.IsPro
@@ -715,15 +715,20 @@ namespace Fujify.ViewModels
 
             _checkForUpdatesOnStartup = settings.CheckForUpdatesOnStartup;
 
+            bool wasPro = _licenseService.IsPro;
             _licenseService.LicenseChanged += (s, status) =>
             {
-                if (status.IsPro || _licenseService.IsAccountLoggedIn)
+                bool becamePro = status.IsPro && !wasPro;
+                wasPro = status.IsPro;
+
+                if (status.IsPro)
                 {
-                    if (status.IsPro)
-                    {
-                        _losslessCompression = true;
-                        _maxConcurrentConversions = DefaultConcurrency;
-                    }
+                    _losslessCompression = true;
+                    _maxConcurrentConversions = DefaultConcurrency;
+                }
+
+                if (becamePro)
+                {
                     _ = RefreshDevicesAsync();
                 }
                 else

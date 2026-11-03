@@ -426,7 +426,6 @@
                                         <TextBlock Text="{Binding LicenseDescriptionText}" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                     </StackPanel>
                                     <Button Grid.Column="1" Content="{loc:Loc GetFujifierPro}" Command="{Binding UpgradeToProCommand}" Classes="primary" IsVisible="{Binding !IsPro}" Height="34" Padding="14,0" CornerRadius="17" VerticalContentAlignment="Center"/>
-                                    <Button Grid.Column="1" Content="{loc:Loc DeactivateDevice}" Command="{Binding DeactivateLicenseCommand}" Classes="secondary" IsVisible="{Binding IsPro}" Height="34" Padding="14,0" CornerRadius="17" VerticalContentAlignment="Center"/>
                                 </Grid>
 
                                 <!-- Active Devices Section (Visible when Pro or Connected to Account) -->
@@ -438,8 +437,9 @@
                                                 <TextBlock Text="{Binding SlotInfoText}" FontSize="10.5" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                             </StackPanel>
                                             <Button Grid.Column="1" Command="{Binding RefreshDevicesCommand}" IsEnabled="{Binding !IsLoadingDevices}"
-                                                    Classes="secondary" Height="28" Padding="10,0" CornerRadius="14" VerticalContentAlignment="Center" FontSize="11">
-                                                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                                    Classes="secondary" Height="28" Padding="10,0" CornerRadius="14" VerticalContentAlignment="Center" FontSize="11"
+                                                    Cursor="Hand">
+                                                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center" IsHitTestVisible="False">
                                                     <TextBlock Text="🔄" FontSize="10" VerticalAlignment="Center"/>
                                                     <TextBlock Text="{loc:Loc RefreshDevices}" FontSize="11" VerticalAlignment="Center"/>
                                                 </StackPanel>
@@ -489,27 +489,24 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
-
-                                        <!-- Footer Link to Account Website -->
-                                        <Button Content="{loc:Loc ManageAccountOnWeb}" Command="{Binding OpenAccountDashboardCommand}"
-                                                Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand"
-                                                Foreground="{DynamicResource AppAccentBrush}" FontSize="11" HorizontalAlignment="Right" Margin="0,2,0,0"/>
                                     </StackPanel>
                                 </Border>
 
                                 <!-- Connected Account Section (Visible when user is signed in) -->
                                 <Border Background="{DynamicResource AppSurfaceSecondaryBrush}" BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,2,0,0" IsVisible="{Binding IsAccountLoggedIn}">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                                            <TextBlock Text="{loc:Loc FujifierAccount}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource AppAccentLightBrush}"/>
-                                            <TextBlock Text="{Binding AccountDisplayText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                            <Button Content="{loc:Loc ViewAccountOnWeb}" Command="{Binding OpenAccountDashboardCommand}" Classes="secondary" Height="30" Padding="12,0" CornerRadius="15" VerticalContentAlignment="Center" FontSize="11"/>
-                                            <Button Content="{loc:Loc RetrieveLicense}" Command="{Binding RetrieveLicenseCommand}" IsEnabled="{Binding !IsRetrievingLicense}" Classes="secondary" Height="30" Padding="12,0" CornerRadius="15" VerticalContentAlignment="Center" FontSize="11"/>
-                                            <Button Content="{loc:Loc SignOut}" Command="{Binding LogoutAccountCommand}" Classes="secondary" Height="30" Padding="12,0" CornerRadius="15" VerticalContentAlignment="Center" FontSize="11"/>
-                                        </StackPanel>
-                                    </Grid>
+                                    <StackPanel Spacing="10">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center" Margin="0,0,10,0">
+                                                <TextBlock Text="{loc:Loc FujifierAccount}" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource AppAccentLightBrush}"/>
+                                                <TextBlock Text="{Binding AccountDisplayText}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Content="{loc:Loc SignOut}" Command="{Binding LogoutAccountCommand}" Classes="secondary" Height="28" Padding="12,0" CornerRadius="14" VerticalContentAlignment="Center" FontSize="11"/>
+                                        </Grid>
+                                        <Grid ColumnDefinitions="*,*">
+                                            <Button Grid.Column="0" Content="{loc:Loc ViewAccountOnWeb}" Command="{Binding OpenAccountDashboardCommand}" Classes="secondary" Height="30" Padding="10,0" CornerRadius="15" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="0,0,4,0" FontSize="11"/>
+                                            <Button Grid.Column="1" Content="{loc:Loc RetrieveLicense}" Command="{Binding RetrieveLicenseCommand}" IsEnabled="{Binding !IsRetrievingLicense}" Classes="secondary" Height="30" Padding="10,0" CornerRadius="15" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Margin="4,0,0,0" FontSize="11"/>
+                                        </Grid>
+                                    </StackPanel>
                                 </Border>
 
                                 <!-- Activation Options when in Free Tier and not signed in -->

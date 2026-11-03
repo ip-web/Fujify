@@ -2200,7 +2200,6 @@
                                             <TextBlock Text="{Binding LicenseDescriptionText}" FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap"/>
                                         </StackPanel>
                                         <Button Grid.Column="1" Content="{loc:Loc GetPro}" Command="{Binding UpgradeToProCommand}" Classes="primary" IsVisible="{Binding !IsPro}" Height="34" Padding="14,0" CornerRadius="17" VerticalContentAlignment="Center"/>
-                                        <Button Grid.Column="1" Content="{loc:Loc DeactivateDevice}" Command="{Binding DeactivateLicenseCommand}" Classes="secondary" IsVisible="{Binding IsPro}" Height="34" Padding="14,0" CornerRadius="17" VerticalContentAlignment="Center"/>
                                     </Grid>
 
                                     <!-- Connected Account Section (Visible when user is signed in) -->
@@ -2229,8 +2228,9 @@
                                                     <TextBlock Text="{Binding SlotInfoText}" FontSize="10.5" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                                 </StackPanel>
                                                 <Button Grid.Column="1" Command="{Binding RefreshDevicesCommand}" IsEnabled="{Binding !IsLoadingDevices}"
-                                                        Classes="secondary" Height="28" Padding="10,0" CornerRadius="14" VerticalContentAlignment="Center" FontSize="11">
-                                                    <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                                        Classes="secondary" Height="28" Padding="10,0" CornerRadius="14" VerticalContentAlignment="Center" FontSize="11"
+                                                        Cursor="Hand">
+                                                    <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center" IsHitTestVisible="False">
                                                         <TextBlock Text="🔄" FontSize="10" VerticalAlignment="Center"/>
                                                         <TextBlock Text="{loc:Loc RefreshDevices}" FontSize="11" VerticalAlignment="Center"/>
                                                     </StackPanel>
@@ -2280,11 +2280,6 @@
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
                                             </ItemsControl>
-
-                                            <!-- Footer Link to Account Website -->
-                                            <Button Content="{loc:Loc ManageAccountOnWeb}" Command="{Binding OpenAccountDashboardCommand}"
-                                                    Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand"
-                                                    Foreground="{DynamicResource AppAccentBrush}" FontSize="11" HorizontalAlignment="Right" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </Border>
 

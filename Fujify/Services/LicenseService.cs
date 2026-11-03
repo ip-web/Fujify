@@ -1023,7 +1023,6 @@ namespace Fujify.Services
                         _settingsService.Save();
 
                         UpdateRegisteredDevices(res.Devices ?? new List<LicenseDeviceDto>());
-                        NotifyLicenseChanged();
                         return _registeredDevices;
                     }
                 }
