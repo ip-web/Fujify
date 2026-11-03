@@ -323,7 +323,7 @@ namespace Fujify.Models
 
         [JsonPropertyName("code")]
         public string? Code { get; set; }
-        
+
         [JsonPropertyName("message")]
         public string? Message { get; set; }
     }

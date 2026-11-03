@@ -80,7 +80,7 @@ namespace Fujify.Tests
             var converter = new RawConverterService();
             string nonExistent = Path.Combine(Path.GetTempPath(), $"nonexistent_{Guid.NewGuid():N}.cr2");
             var result = await converter.ConvertToDngAsync(nonExistent, embedOriginalRaw: false);
-            
+
             // Should not crash / throw unhandled exception
             Assert.False(result.Success);
             Assert.NotNull(result.ErrorMessage);

@@ -428,89 +428,89 @@ namespace Fujify.ViewModels
                 {
                     bool embedOriginalRaw = _settingsService.Settings.EmbedOriginalRaw;
 
-                string targetDngForConversion;
-                if (string.IsNullOrEmpty(outputFolder) && !_settingsService.Settings.CreateSubfolder)
-                {
-                    targetDngForConversion = finalDestFilePath;
-                }
-                else
-                {
-                    string sourceDir = Path.GetDirectoryName(filePath) ?? string.Empty;
-                    targetDngForConversion = Path.Combine(sourceDir, $"{Path.GetFileNameWithoutExtension(filePath)}_tmp_{Guid.NewGuid():N}.dng");
-                }
-
-                bool useLossless = _licenseService.IsPro && _settingsService.Settings.LosslessCompression;
-                var convResult = await Task.Run(() => _rawConverterService.ConvertToDng(
-                    filePath,
-                    embedOriginalRaw,
-                    targetDngForConversion,
-                    useLossless), ct);
-
-                if (!convResult.Success || string.IsNullOrEmpty(convResult.OutputDngPath))
-                {
-                    throw new InvalidOperationException(convResult.ErrorMessage ?? "Conversion failed");
-                }
-
-                dngFilePath = convResult.OutputDngPath;
-            }
-
-            string? customOutputPath = tempInPlaceOutputFile ?? ((!string.IsNullOrEmpty(outputFolder) || finalDestFilePath != dngFilePath)
-                ? finalDestFilePath
-                : null);
-
-            if (!string.IsNullOrEmpty(customOutputPath))
-            {
-                string? destDir = Path.GetDirectoryName(customOutputPath);
-                if (!string.IsNullOrEmpty(destDir) && !Directory.Exists(destDir))
-                {
-                    Directory.CreateDirectory(destDir);
-                }
-            }
-
-            var metaResult = await Task.Run(() => _metadataService.InjectFujifilmMetadata(
-                dngFilePath,
-                outputFolder,
-                createBackup: false,
-                isOriginallyDng: isOriginallyDng,
-                customOutputFilePath: customOutputPath,
-                targetUniqueCameraModel: "Fujifilm X-T5",
-                sourceRawFilePath: filePath), ct);
-
-            if (!metaResult.Success)
-            {
-                if (!string.IsNullOrEmpty(tempInPlaceOutputFile) && File.Exists(tempInPlaceOutputFile))
-                {
-                    try { File.Delete(tempInPlaceOutputFile); } catch { }
-                }
-                if (isOriginallyDng && createBackup && isSameFolder && !string.IsNullOrEmpty(origBackupPath) && File.Exists(origBackupPath) && !File.Exists(filePath))
-                {
-                    try { File.Move(origBackupPath, filePath); } catch { }
-                }
-                throw new InvalidOperationException(metaResult.ErrorMessage ?? "Error injecting Fujifilm metadata");
-            }
-
-            if (!string.IsNullOrEmpty(tempInPlaceOutputFile))
-            {
-                FileTrashHelper.SendToTrash(filePath);
-                File.Move(tempInPlaceOutputFile, finalDestFilePath, overwrite: true);
-            }
-            else if (!createBackup)
-            {
-                FileTrashHelper.SendToTrash(filePath);
-
-                // Also trash original sidecar if it was copied or embedded and differs from the final output sidecar
-                string? origSidecar = DngMetadataEditor.FindSidecarXmp(filePath);
-                if (!string.IsNullOrEmpty(origSidecar) && File.Exists(origSidecar))
-                {
-                    string targetSidecar = Path.ChangeExtension(finalDestFilePath, ".xmp");
-                    if (!string.Equals(Path.GetFullPath(origSidecar), Path.GetFullPath(targetSidecar), StringComparison.OrdinalIgnoreCase))
+                    string targetDngForConversion;
+                    if (string.IsNullOrEmpty(outputFolder) && !_settingsService.Settings.CreateSubfolder)
                     {
-                        FileTrashHelper.SendToTrash(origSidecar);
+                        targetDngForConversion = finalDestFilePath;
+                    }
+                    else
+                    {
+                        string sourceDir = Path.GetDirectoryName(filePath) ?? string.Empty;
+                        targetDngForConversion = Path.Combine(sourceDir, $"{Path.GetFileNameWithoutExtension(filePath)}_tmp_{Guid.NewGuid():N}.dng");
+                    }
+
+                    bool useLossless = _licenseService.IsPro && _settingsService.Settings.LosslessCompression;
+                    var convResult = await Task.Run(() => _rawConverterService.ConvertToDng(
+                        filePath,
+                        embedOriginalRaw,
+                        targetDngForConversion,
+                        useLossless), ct);
+
+                    if (!convResult.Success || string.IsNullOrEmpty(convResult.OutputDngPath))
+                    {
+                        throw new InvalidOperationException(convResult.ErrorMessage ?? "Conversion failed");
+                    }
+
+                    dngFilePath = convResult.OutputDngPath;
+                }
+
+                string? customOutputPath = tempInPlaceOutputFile ?? ((!string.IsNullOrEmpty(outputFolder) || finalDestFilePath != dngFilePath)
+                    ? finalDestFilePath
+                    : null);
+
+                if (!string.IsNullOrEmpty(customOutputPath))
+                {
+                    string? destDir = Path.GetDirectoryName(customOutputPath);
+                    if (!string.IsNullOrEmpty(destDir) && !Directory.Exists(destDir))
+                    {
+                        Directory.CreateDirectory(destDir);
                     }
                 }
-            }
 
-            return finalDestFilePath;
+                var metaResult = await Task.Run(() => _metadataService.InjectFujifilmMetadata(
+                    dngFilePath,
+                    outputFolder,
+                    createBackup: false,
+                    isOriginallyDng: isOriginallyDng,
+                    customOutputFilePath: customOutputPath,
+                    targetUniqueCameraModel: "Fujifilm X-T5",
+                    sourceRawFilePath: filePath), ct);
+
+                if (!metaResult.Success)
+                {
+                    if (!string.IsNullOrEmpty(tempInPlaceOutputFile) && File.Exists(tempInPlaceOutputFile))
+                    {
+                        try { File.Delete(tempInPlaceOutputFile); } catch { }
+                    }
+                    if (isOriginallyDng && createBackup && isSameFolder && !string.IsNullOrEmpty(origBackupPath) && File.Exists(origBackupPath) && !File.Exists(filePath))
+                    {
+                        try { File.Move(origBackupPath, filePath); } catch { }
+                    }
+                    throw new InvalidOperationException(metaResult.ErrorMessage ?? "Error injecting Fujifilm metadata");
+                }
+
+                if (!string.IsNullOrEmpty(tempInPlaceOutputFile))
+                {
+                    FileTrashHelper.SendToTrash(filePath);
+                    File.Move(tempInPlaceOutputFile, finalDestFilePath, overwrite: true);
+                }
+                else if (!createBackup)
+                {
+                    FileTrashHelper.SendToTrash(filePath);
+
+                    // Also trash original sidecar if it was copied or embedded and differs from the final output sidecar
+                    string? origSidecar = DngMetadataEditor.FindSidecarXmp(filePath);
+                    if (!string.IsNullOrEmpty(origSidecar) && File.Exists(origSidecar))
+                    {
+                        string targetSidecar = Path.ChangeExtension(finalDestFilePath, ".xmp");
+                        if (!string.Equals(Path.GetFullPath(origSidecar), Path.GetFullPath(targetSidecar), StringComparison.OrdinalIgnoreCase))
+                        {
+                            FileTrashHelper.SendToTrash(origSidecar);
+                        }
+                    }
+                }
+
+                return finalDestFilePath;
             }
             catch
             {

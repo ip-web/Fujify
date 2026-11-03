@@ -1,0 +1,38 @@
+# Top-most EditorConfig file
+root = true
+
+# All files
+[*]
+charset = utf-8
+end_of_line = crlf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# C# files
+[*.cs]
+indent_size = 4
+
+# Newline settings
+csharp_new_line_before_open_brace = all
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
+
+# Spacing settings
+csharp_space_after_cast = false
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_between_parentheses = false
+
+# XML / XAML / AXAML / Project files
+[*.{axaml,xaml,xml,props,targets,csproj}]
+indent_size = 2
+
+# JSON files
+[*.json]
+indent_size = 2
+
+# Markdown
+[*.md]
+trim_trailing_whitespace = false

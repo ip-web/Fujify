@@ -77,7 +77,7 @@ namespace Fujify.Services
                 _settingsService.Settings.LastUpdateCheck = DateTime.UtcNow;
                 _settingsService.Save();
 
-                var release = await FetchLatestReleaseAsync(PrimaryRepo, ct) 
+                var release = await FetchLatestReleaseAsync(PrimaryRepo, ct)
                            ?? await FetchLatestReleaseAsync(FallbackRepo, ct);
 
                 if (release == null)

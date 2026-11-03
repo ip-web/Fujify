@@ -33,7 +33,7 @@ namespace Fujify.Tests
         [Fact(Skip = "Visual inspection test intended for manual artifact generation; skipped in automated CI/test suite to prevent headless rendering deadlocks and runner path issues.")]
         public void TestRenderScreenshot()
         {
-            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch {}
+            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch { }
 
             var vm = new MainViewModel();
             vm.CreateSubfolder = true;
@@ -42,7 +42,7 @@ namespace Fujify.Tests
 
             var view = new MainView { DataContext = vm };
             var window = new Window { Content = view, Width = 1000, Height = 620 };
-            
+
             window.Measure(new Size(1000, 620));
             window.Arrange(new Rect(0, 0, 1000, 620));
             try { Avalonia.Threading.Dispatcher.UIThread.RunJobs(); } catch { }
@@ -86,7 +86,7 @@ namespace Fujify.Tests
 
             foreach (var tb in view.GetVisualDescendants())
             {
-                if (tb is TextBlock textBlock && textBlock.Text != null && 
+                if (tb is TextBlock textBlock && textBlock.Text != null &&
                     (textBlock.Text.Contains("Open folder") || textBlock.Text.Contains("Save in subfolder") || textBlock.Text.Contains("Backup original") || textBlock.Text.Contains("Keep original")))
                 {
                     if (inspectorBorder != null)
@@ -129,12 +129,12 @@ namespace Fujify.Tests
         [Fact(Skip = "Visual inspection test intended for manual artifact generation; skipped in automated CI/test suite to prevent headless rendering deadlocks and runner path issues.")]
         public void TestRenderNewPhotoTableLayout()
         {
-            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch {}
+            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch { }
 
             var vm = new MainViewModel();
             var view = new MainView { DataContext = vm };
             var window = new Window { Content = view, Width = 1000, Height = 620 };
-            
+
             window.Measure(new Size(1000, 620));
             window.Arrange(new Rect(0, 0, 1000, 620));
             try { Avalonia.Threading.Dispatcher.UIThread.RunJobs(); } catch { }
@@ -164,7 +164,7 @@ namespace Fujify.Tests
         [Fact(Skip = "Visual inspection test intended for manual artifact generation; skipped in automated CI/test suite to prevent headless rendering deadlocks and runner path issues.")]
         public void TestRenderPopulatedPhotoTableLayout()
         {
-            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch {}
+            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch { }
 
             var vm = new MainViewModel();
             vm.Files.Add(new Models.FileItem
@@ -183,7 +183,7 @@ namespace Fujify.Tests
 
             var view = new MainView { DataContext = vm };
             var window = new Window { Content = view, Width = 1000, Height = 620 };
-            
+
             window.Measure(new Size(1000, 620));
             window.Arrange(new Rect(0, 0, 1000, 620));
             try { Avalonia.Threading.Dispatcher.UIThread.RunJobs(); } catch { }
@@ -199,7 +199,7 @@ namespace Fujify.Tests
         [Fact(Skip = "Visual inspection test intended for manual artifact generation; skipped in automated CI/test suite to prevent headless rendering deadlocks and runner path issues.")]
         public void TestRenderSmallScreenQueueFabClosed()
         {
-            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch {}
+            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch { }
 
             var vm = new MainViewModel();
             vm.Files.Add(new Models.FileItem
@@ -218,7 +218,7 @@ namespace Fujify.Tests
 
             var view = new MainView { DataContext = vm };
             var window = new Window { Content = view, Width = 800, Height = 600 };
-            
+
             vm.UpdateLayoutMode(800, 600);
             window.Measure(new Size(800, 600));
             window.Arrange(new Rect(0, 0, 800, 600));
@@ -235,7 +235,7 @@ namespace Fujify.Tests
         [Fact(Skip = "Visual inspection test intended for manual artifact generation; skipped in automated CI/test suite to prevent headless rendering deadlocks and runner path issues.")]
         public void TestRenderSmallScreenQueueFabOpened()
         {
-            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch {}
+            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch { }
 
             var vm = new MainViewModel();
             vm.Files.Add(new Models.FileItem
@@ -254,7 +254,7 @@ namespace Fujify.Tests
 
             var view = new MainView { DataContext = vm };
             var window = new Window { Content = view, Width = 800, Height = 600 };
-            
+
             vm.UpdateLayoutMode(800, 600);
             vm.IsQueueFabMenuOpen = true;
 
@@ -273,7 +273,7 @@ namespace Fujify.Tests
         [Fact(Skip = "Visual inspection test intended for manual artifact generation; skipped in automated CI/test suite to prevent headless rendering deadlocks and runner path issues.")]
         public void TestRenderPhotoInfo90PercentPreview()
         {
-            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch {}
+            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch { }
 
             var vm = new MainViewModel();
             var fileItem = new Models.FileItem
@@ -308,7 +308,7 @@ namespace Fujify.Tests
 
             var view = new MainView { DataContext = vm };
             var window = new Window { Content = view, Width = 1000, Height = 650 };
-            
+
             vm.UpdateLayoutMode(1000, 650);
             window.Measure(new Size(1000, 650));
             window.Arrange(new Rect(0, 0, 1000, 650));
@@ -339,7 +339,7 @@ namespace Fujify.Tests
         [Fact(Skip = "Visual inspection test intended for manual artifact generation; skipped in automated CI/test suite to prevent headless rendering deadlocks and runner path issues.")]
         public void TestRenderBreakLayoutCr2()
         {
-            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch {}
+            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch { }
 
             var vm = new MainViewModel();
             string rootDir = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\.."));
@@ -368,7 +368,7 @@ namespace Fujify.Tests
 
             var view = new MainView { DataContext = vm };
             var window = new Window { Content = view, Width = 1000, Height = 650 };
-            
+
             vm.UpdateLayoutMode(1000, 650);
             window.Measure(new Size(1000, 650));
             window.Arrange(new Rect(0, 0, 1000, 650));

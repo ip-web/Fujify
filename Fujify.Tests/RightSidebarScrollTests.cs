@@ -17,7 +17,7 @@ namespace Fujify.Tests
         [Fact(Skip = "Visual inspection UI test; requires headless platform runner in Avalonia 12.")]
         public void RightSidebar_ShouldBeScrollableAndScrollBarVisible_OnReducedWindowHeight()
         {
-            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch {}
+            try { Program.BuildAvaloniaApp().SetupWithoutStarting(); } catch { }
 
             var vm = new MainViewModel();
             vm.CreateSubfolder = true;
@@ -25,7 +25,7 @@ namespace Fujify.Tests
 
             var view = new MainView { DataContext = vm };
             var window = new Window { Content = view, Width = 1000, Height = 500 };
-            
+
             window.Measure(new Size(1000, 500));
             window.Arrange(new Rect(0, 0, 1000, 500));
 
@@ -37,7 +37,7 @@ namespace Fujify.Tests
             var enumerator = scrollViewer.GetVisualChildren().GetEnumerator();
             Assert.True(enumerator.MoveNext());
             var outerGrid = Assert.IsType<Grid>(enumerator.Current);
-            
+
             ScrollBar? verticalScrollBar = null;
             foreach (var child in outerGrid.GetVisualChildren())
             {

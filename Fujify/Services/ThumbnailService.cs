@@ -193,32 +193,32 @@ namespace Fujify.Services
             switch (orientation)
             {
                 case 3: // 180 deg
-                {
-                    var rotated = new SKBitmap(bitmap.Width, bitmap.Height, bitmap.ColorType, bitmap.AlphaType);
-                    using var canvas = new SKCanvas(rotated);
-                    canvas.Translate(bitmap.Width, bitmap.Height);
-                    canvas.RotateDegrees(180);
-                    canvas.DrawBitmap(bitmap, 0, 0);
-                    return rotated;
-                }
+                    {
+                        var rotated = new SKBitmap(bitmap.Width, bitmap.Height, bitmap.ColorType, bitmap.AlphaType);
+                        using var canvas = new SKCanvas(rotated);
+                        canvas.Translate(bitmap.Width, bitmap.Height);
+                        canvas.RotateDegrees(180);
+                        canvas.DrawBitmap(bitmap, 0, 0);
+                        return rotated;
+                    }
                 case 6: // 90 deg CW (Portrait)
-                {
-                    var rotated = new SKBitmap(bitmap.Height, bitmap.Width, bitmap.ColorType, bitmap.AlphaType);
-                    using var canvas = new SKCanvas(rotated);
-                    canvas.Translate(bitmap.Height, 0);
-                    canvas.RotateDegrees(90);
-                    canvas.DrawBitmap(bitmap, 0, 0);
-                    return rotated;
-                }
+                    {
+                        var rotated = new SKBitmap(bitmap.Height, bitmap.Width, bitmap.ColorType, bitmap.AlphaType);
+                        using var canvas = new SKCanvas(rotated);
+                        canvas.Translate(bitmap.Height, 0);
+                        canvas.RotateDegrees(90);
+                        canvas.DrawBitmap(bitmap, 0, 0);
+                        return rotated;
+                    }
                 case 8: // 270 deg CW / 90 deg CCW (Portrait)
-                {
-                    var rotated = new SKBitmap(bitmap.Height, bitmap.Width, bitmap.ColorType, bitmap.AlphaType);
-                    using var canvas = new SKCanvas(rotated);
-                    canvas.Translate(0, bitmap.Width);
-                    canvas.RotateDegrees(270);
-                    canvas.DrawBitmap(bitmap, 0, 0);
-                    return rotated;
-                }
+                    {
+                        var rotated = new SKBitmap(bitmap.Height, bitmap.Width, bitmap.ColorType, bitmap.AlphaType);
+                        using var canvas = new SKCanvas(rotated);
+                        canvas.Translate(0, bitmap.Width);
+                        canvas.RotateDegrees(270);
+                        canvas.DrawBitmap(bitmap, 0, 0);
+                        return rotated;
+                    }
                 default:
                     return bitmap;
             }

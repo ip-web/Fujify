@@ -77,13 +77,13 @@ namespace Fujify.Common
         private enum OPENASINFOFLAGS : uint
         {
             OAIF_ALLOW_REGISTRATION = 0x00000001,
-            OAIF_REGISTER_EXT       = 0x00000002,
-            OAIF_EXEC               = 0x00000004,
+            OAIF_REGISTER_EXT = 0x00000002,
+            OAIF_EXEC = 0x00000004,
             OAIF_FORCE_REGISTRATION = 0x00000008,
-            OAIF_HIDE_REGISTRATION  = 0x00000020,
-            OAIF_URLPROTOCOL        = 0x00000040,
-            OAIF_FILE_MOVED         = 0x00000080,
-            OAIF_IS_URI             = 0x00000100
+            OAIF_HIDE_REGISTRATION = 0x00000020,
+            OAIF_URLPROTOCOL = 0x00000040,
+            OAIF_FILE_MOVED = 0x00000080,
+            OAIF_IS_URI = 0x00000100
         }
 
         public static void OpenPath(string path)

@@ -40,7 +40,7 @@ namespace Fujify.Services
         public string GetCameraMakeAndModel(string filePath)
         {
             // Direct in-memory reader (<1ms vs 300ms ExifTool process)
-            string? quickInfo = DngMetadataEditor.ReadCameraMakeAndModel(filePath) 
+            string? quickInfo = DngMetadataEditor.ReadCameraMakeAndModel(filePath)
                 ?? RawMetadataReader.TryGetCameraMakeAndModel(filePath);
 
             if (!string.IsNullOrWhiteSpace(quickInfo))
