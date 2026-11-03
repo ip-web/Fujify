@@ -30,12 +30,14 @@ public class WebAuthPresentationContextProvider : NSObject, IASWebAuthentication
     {
         if (_window != null) return _window;
 
-        var window = UIApplication.SharedApplication.ConnectedScenes
+        var scene = UIApplication.SharedApplication.ConnectedScenes
             .OfType<UIWindowScene>()
-            .SelectMany(s => s.Windows)
-            .FirstOrDefault(w => w.IsKeyWindow);
+            .FirstOrDefault();
 
-        return window ?? UIApplication.SharedApplication.Windows.FirstOrDefault() ?? new UIWindow();
+        var window = scene?.Windows.FirstOrDefault(w => w.IsKeyWindow)
+            ?? scene?.Windows.FirstOrDefault();
+
+        return window ?? (scene != null ? new UIWindow(scene) : null!);
     }
 }
 
@@ -181,6 +183,20 @@ public class AppDelegate : AvaloniaAppDelegate<App>
         return HandleIncomingUrl(url);
     }
 
+    private static ASWebAuthenticationSession CreateWebAuthenticationSession(
+        NSUrl nsUrl,
+        string callbackScheme,
+        ASWebAuthenticationSessionCompletionHandler completionHandler)
+    {
+        if (OperatingSystem.IsIOSVersionAtLeast(17, 4))
+        {
+            var callback = ASWebAuthenticationSessionCallback.Create(callbackScheme);
+            return new ASWebAuthenticationSession(nsUrl, callback, completionHandler);
+        }
+
+        return new ASWebAuthenticationSession(nsUrl, callbackScheme, completionHandler);
+    }
+
     private static Task<(string Code, string? State)?> AuthenticateWithWebSessionAsync(string authUrl, string callbackScheme, CancellationToken cancellationToken)
     {
         var tcs = new TaskCompletionSource<(string Code, string? State)?>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -196,7 +212,7 @@ public class AppDelegate : AvaloniaAppDelegate<App>
                     .SelectMany(s => s.Windows)
                     .FirstOrDefault(w => w.IsKeyWindow);
                 _activePresentationProvider = new WebAuthPresentationContextProvider(window);
-                _activeAuthSession = new ASWebAuthenticationSession(nsUrl, callbackScheme, (callbackUrl, error) =>
+                _activeAuthSession = CreateWebAuthenticationSession(nsUrl, callbackScheme, (callbackUrl, error) =>
                 {
                     try
                     {
@@ -567,6 +583,13 @@ public class AppDelegate : AvaloniaAppDelegate<App>
         }
     }
 
+    private static string GetResourceFileName(PHAssetResource res)
+    {
+#pragma warning disable CA1422 // PHAssetResource.OriginalFilename is marked obsolete starting in iOS 27.0 preview definitions
+        return res.OriginalFilename;
+#pragma warning restore CA1422
+    }
+
     private static async Task<IReadOnlyList<string>> ProcessPickedResultsAsync(PHPickerResult[] results)
     {
         var outputPaths = new List<string>();
@@ -589,20 +612,23 @@ public class AppDelegate : AvaloniaAppDelegate<App>
                             var resources = PHAssetResource.GetAssetResources(asset);
 
                             var targetResource = resources.FirstOrDefault(r =>
-                                r.OriginalFilename.EndsWith(".dng", StringComparison.OrdinalIgnoreCase) ||
-                                r.OriginalFilename.EndsWith(".raf", StringComparison.OrdinalIgnoreCase) ||
-                                r.OriginalFilename.EndsWith(".cr3", StringComparison.OrdinalIgnoreCase) ||
-                                r.OriginalFilename.EndsWith(".cr2", StringComparison.OrdinalIgnoreCase) ||
-                                r.OriginalFilename.EndsWith(".arw", StringComparison.OrdinalIgnoreCase) ||
-                                r.OriginalFilename.EndsWith(".nef", StringComparison.OrdinalIgnoreCase) ||
-                                r.OriginalFilename.EndsWith(".orf", StringComparison.OrdinalIgnoreCase) ||
-                                r.OriginalFilename.EndsWith(".rw2", StringComparison.OrdinalIgnoreCase))
-                                ?? resources.FirstOrDefault(r => r.ResourceType == PHAssetResourceType.Photo || r.ResourceType == PHAssetResourceType.FullSizePhoto)
-                                ?? resources.FirstOrDefault();
+                            {
+                                var fn = GetResourceFileName(r);
+                                return fn.EndsWith(".dng", StringComparison.OrdinalIgnoreCase) ||
+                                       fn.EndsWith(".raf", StringComparison.OrdinalIgnoreCase) ||
+                                       fn.EndsWith(".cr3", StringComparison.OrdinalIgnoreCase) ||
+                                       fn.EndsWith(".cr2", StringComparison.OrdinalIgnoreCase) ||
+                                       fn.EndsWith(".arw", StringComparison.OrdinalIgnoreCase) ||
+                                       fn.EndsWith(".nef", StringComparison.OrdinalIgnoreCase) ||
+                                       fn.EndsWith(".orf", StringComparison.OrdinalIgnoreCase) ||
+                                       fn.EndsWith(".rw2", StringComparison.OrdinalIgnoreCase);
+                            })
+                            ?? resources.FirstOrDefault(r => r.ResourceType == PHAssetResourceType.Photo || r.ResourceType == PHAssetResourceType.FullSizePhoto)
+                            ?? resources.FirstOrDefault();
 
                             if (targetResource != null)
                             {
-                                string fileName = targetResource.OriginalFilename;
+                                string fileName = GetResourceFileName(targetResource);
                                 if (string.IsNullOrWhiteSpace(fileName))
                                 {
                                     fileName = $"photo_{Guid.NewGuid():N}.dng";

@@ -1,5 +1,3 @@
-#pragma warning disable CS0618
-
 using System;
 using System.IO;
 using System.Linq;
@@ -102,7 +100,7 @@ namespace Fujify.Tests
             string outputPath = Path.Combine(GetOutputDir(), "sidebar_scrolled_to_end.png");
             using var rtb = new RenderTargetBitmap(new PixelSize(1000, 620), new Vector(96, 96));
             rtb.Render(view);
-            rtb.Save(outputPath);
+            rtb.Save(outputPath, (BitmapEncoderOptions)null!);
 
             // Crop the Inspector region from sidebar_scrolled_to_end.png using SkiaSharp
             using (var stream = File.OpenRead(outputPath))
@@ -144,7 +142,7 @@ namespace Fujify.Tests
             string outputPath = Path.Combine(GetOutputDir(), "photo_table_layout.png");
             using var rtb = new RenderTargetBitmap(new PixelSize(1000, 620), new Vector(96, 96));
             rtb.Render(view);
-            rtb.Save(outputPath);
+            rtb.Save(outputPath, (BitmapEncoderOptions)null!);
 
             // Crop the photo table area
             using (var stream = File.OpenRead(outputPath))
@@ -193,7 +191,7 @@ namespace Fujify.Tests
             string outputPath = Path.Combine(GetOutputDir(), "photo_table_populated.png");
             using var rtb = new RenderTargetBitmap(new PixelSize(1000, 620), new Vector(96, 96));
             rtb.Render(view);
-            rtb.Save(outputPath);
+            rtb.Save(outputPath, (BitmapEncoderOptions)null!);
 
             Assert.True(File.Exists(outputPath));
         }
@@ -229,7 +227,7 @@ namespace Fujify.Tests
             string outputPath = Path.Combine(GetOutputDir(), "queue_fab_closed.png");
             using var rtb = new RenderTargetBitmap(new PixelSize(800, 600), new Vector(96, 96));
             rtb.Render(view);
-            rtb.Save(outputPath);
+            rtb.Save(outputPath, (BitmapEncoderOptions)null!);
 
             Assert.True(File.Exists(outputPath));
         }
@@ -267,7 +265,7 @@ namespace Fujify.Tests
             string outputPath = Path.Combine(GetOutputDir(), "queue_fab_opened.png");
             using var rtb = new RenderTargetBitmap(new PixelSize(800, 600), new Vector(96, 96));
             rtb.Render(view);
-            rtb.Save(outputPath);
+            rtb.Save(outputPath, (BitmapEncoderOptions)null!);
 
             Assert.True(File.Exists(outputPath));
         }
@@ -295,8 +293,9 @@ namespace Fujify.Tests
                 using (var canvas = new SkiaSharp.SKCanvas(skBmp))
                 {
                     canvas.Clear(new SkiaSharp.SKColor(40, 80, 130));
-                    using var paint = new SkiaSharp.SKPaint { Color = SkiaSharp.SKColors.White, TextSize = 32 };
-                    canvas.DrawText("Fujifilm RAW Preview", 80, 200, paint);
+                    using var font = new SkiaSharp.SKFont(SkiaSharp.SKTypeface.Default, 32);
+                    using var paint = new SkiaSharp.SKPaint { Color = SkiaSharp.SKColors.White };
+                    canvas.DrawText("Fujifilm RAW Preview", 80, 200, SkiaSharp.SKTextAlign.Left, font, paint);
                     skBmp.Encode(ms, SkiaSharp.SKEncodedImageFormat.Png, 100);
                 }
                 ms.Position = 0;
@@ -318,7 +317,7 @@ namespace Fujify.Tests
             string outputPath = Path.Combine(GetOutputDir(), "photo_info_90percent_preview.png");
             using var rtb = new RenderTargetBitmap(new PixelSize(1000, 650), new Vector(96, 96));
             rtb.Render(view);
-            rtb.Save(outputPath);
+            rtb.Save(outputPath, (BitmapEncoderOptions)null!);
 
             // Also crop the right sidebar photo info region
             using (var stream = File.OpenRead(outputPath))
@@ -378,7 +377,7 @@ namespace Fujify.Tests
             string outputPath = Path.Combine(GetOutputDir(), "break_layout_render.png");
             using var rtb = new RenderTargetBitmap(new PixelSize(1000, 650), new Vector(96, 96));
             rtb.Render(view);
-            rtb.Save(outputPath);
+            rtb.Save(outputPath, (BitmapEncoderOptions)null!);
 
             // Crop sidebar
             using (var stream = File.OpenRead(outputPath))
