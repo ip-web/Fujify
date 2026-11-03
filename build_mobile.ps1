@@ -103,6 +103,22 @@ if (-not $SkipAndroid) {
         }
     }
 
+    if (-not $KeystorePass) {
+        $candidateKeyNotes = @(
+            (Join-Path $repoRoot "keyandroid.txt")
+        )
+        foreach ($kn in $candidateKeyNotes) {
+            if (Test-Path $kn) {
+                $keyText = Get-Content $kn -Raw
+                if ($keyText -match "Password:\s*([^\r\n]+)") {
+                    $KeystorePass = $matches[1].Trim()
+                    Write-Host "Loaded keystore password from local configuration." -ForegroundColor Green
+                    break
+                }
+            }
+        }
+    }
+
     $globalVersionCode = 5
     $architectures = @(
         @{ Rid = "android-arm64"; Arch = "arm64" },
@@ -155,7 +171,7 @@ if (-not $SkipAndroid) {
                 # Sign AAB with release upload key if available
                 if ($KeystorePath -and (Test-Path $KeystorePath)) {
                     Write-Host "Signing AAB with release upload key ($KeystorePath)..." -ForegroundColor Yellow
-                    & jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore $KeystorePath -storepass $KeystorePass $targetReleaseAab $KeyAlias | Out-Null
+                    & jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore $KeystorePath -storepass $KeystorePass -tsa "http://timestamp.digicert.com" $targetReleaseAab $KeyAlias | Out-Null
                     Write-Host "[OK] AAB signed with release key '$KeyAlias'." -ForegroundColor Green
                 } else {
                     Write-Warning "No release keystore found. AAB left with default/debug signature."
@@ -226,7 +242,7 @@ if (-not $SkipAndroid) {
         # 5. Sign the universal AAB with release upload keystore
         if ($KeystorePath -and (Test-Path $KeystorePath)) {
             Write-Host "Signing Universal AAB with release upload key ($KeystorePath)..." -ForegroundColor Yellow
-            & jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore $KeystorePath -storepass $KeystorePass $universalAabPath $KeyAlias | Out-Null
+            & jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore $KeystorePath -storepass $KeystorePass -tsa "http://timestamp.digicert.com" $universalAabPath $KeyAlias | Out-Null
             Write-Host "[OK] Universal AAB signed with release key '$KeyAlias'." -ForegroundColor Green
         }
 
