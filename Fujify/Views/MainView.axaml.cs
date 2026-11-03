@@ -518,18 +518,25 @@ namespace Fujify.Views
 
         private async void View_Drop(object? sender, DragEventArgs e)
         {
-            if (DataContext is MainViewModel vm)
+            try
             {
-                vm.IsDragOver = false;
-            }
-
-            if (e.DataTransfer.Contains(DataFormat.File))
-            {
-                var files = e.DataTransfer.TryGetFiles()?.Select(f => f.Path.LocalPath).ToList();
-                if (files != null && files.Count > 0 && DataContext is MainViewModel vm2)
+                if (DataContext is MainViewModel vm)
                 {
-                    await vm2.AddFilesAsync(files);
+                    vm.IsDragOver = false;
                 }
+
+                if (e.DataTransfer.Contains(DataFormat.File))
+                {
+                    var files = e.DataTransfer.TryGetFiles()?.Select(f => f.Path.LocalPath).ToList();
+                    if (files != null && files.Count > 0 && DataContext is MainViewModel vm2)
+                    {
+                        await vm2.AddFilesAsync(files);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[DropError] Failed to handle drop: {ex.Message}");
             }
         }
 

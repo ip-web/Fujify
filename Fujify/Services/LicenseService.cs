@@ -83,6 +83,12 @@ namespace Fujify.Services
         public static Action<string, string?>? OnOAuthCallbackReceived { get; set; }
         public static Func<string, string, CancellationToken, Task<(string Code, string? State)?>>? PlatformOAuthLauncher { get; set; }
 
+#if DEBUG
+        internal static bool AllowDevOverrideKeys { get; set; } = true;
+#else
+        internal static bool AllowDevOverrideKeys { get; set; } = false;
+#endif
+
         private string? _pendingCodeVerifier;
         private string? _pendingExpectedState;
 
@@ -508,7 +514,7 @@ namespace Fujify.Services
                         if (platformAuth.HasValue && !string.IsNullOrWhiteSpace(platformAuth.Value.Code))
                         {
                             var (code, state) = platformAuth.Value;
-                            if (!string.IsNullOrWhiteSpace(state) && !string.Equals(state, expectedState, StringComparison.Ordinal))
+                            if (string.IsNullOrWhiteSpace(state) || !string.Equals(state, expectedState, StringComparison.Ordinal))
                             {
                                 return new LicenseActivationResult(false, "Security state mismatch. Authorization rejected.");
                             }
@@ -541,7 +547,7 @@ namespace Fujify.Services
                         return new LicenseActivationResult(false, "Authorization cancelled or no code received.");
                     }
 
-                    if (!string.IsNullOrWhiteSpace(state) && !string.Equals(state, expectedState, StringComparison.Ordinal))
+                    if (string.IsNullOrWhiteSpace(state) || !string.Equals(state, expectedState, StringComparison.Ordinal))
                     {
                         return new LicenseActivationResult(false, "Security state mismatch. Authorization rejected.");
                     }
@@ -571,6 +577,14 @@ namespace Fujify.Services
             if (string.IsNullOrWhiteSpace(code))
             {
                 return new LicenseActivationResult(false, "Authorization code is required.");
+            }
+
+            if (!string.IsNullOrEmpty(_pendingExpectedState))
+            {
+                if (string.IsNullOrWhiteSpace(state) || !string.Equals(state, _pendingExpectedState, StringComparison.Ordinal))
+                {
+                    return new LicenseActivationResult(false, "Security state mismatch. Authorization rejected.");
+                }
             }
 
             string verifier = codeVerifier ?? _pendingCodeVerifier ?? string.Empty;
@@ -1184,6 +1198,7 @@ namespace Fujify.Services
 
         private static bool IsDevOverrideKey(string key)
         {
+            if (!AllowDevOverrideKeys) return false;
             return key.Equals("FUJIFIER-PRO-DEV-OVERRIDE", StringComparison.OrdinalIgnoreCase) ||
                    key.Equals("FUJIFIER-DEV-PRO-OVERRIDE", StringComparison.OrdinalIgnoreCase) ||
                    key.Equals("FUJIFY-PRO-DEV-OVERRIDE", StringComparison.OrdinalIgnoreCase) ||

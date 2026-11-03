@@ -49,8 +49,8 @@ namespace Fujify.Services
                 var outputTask = process.StandardOutput.ReadToEndAsync();
                 var errorTask = process.StandardError.ReadToEndAsync();
 
-                process.WaitForExit();
                 Task.WaitAll(outputTask, errorTask);
+                process.WaitForExit();
 
                 return (process.ExitCode, outputTask.Result, errorTask.Result);
             }
@@ -98,8 +98,8 @@ namespace Fujify.Services
                 var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
                 var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
 
-                await process.WaitForExitAsync(cancellationToken);
                 await Task.WhenAll(outputTask, errorTask);
+                await process.WaitForExitAsync(cancellationToken);
 
                 return (process.ExitCode, await outputTask, await errorTask);
             }

@@ -40,15 +40,24 @@ namespace Fujify.Tests
         [Fact]
         public async Task LicenseService_ActivateDevOverrideKey_ShouldUnlockPro()
         {
-            var settings = new MockSettingsService();
-            var service = new LicenseService(settings);
+            var prevAllowed = LicenseService.AllowDevOverrideKeys;
+            LicenseService.AllowDevOverrideKeys = true;
+            try
+            {
+                var settings = new MockSettingsService();
+                var service = new LicenseService(settings);
 
-            var result = await service.ActivateLicenseKeyAsync("FUJIFIER-PRO-DEV-OVERRIDE");
+                var result = await service.ActivateLicenseKeyAsync("FUJIFIER-PRO-DEV-OVERRIDE");
 
-            Assert.True(result.Success);
-            Assert.True(service.IsPro);
-            Assert.Equal(LicenseTier.Pro, service.CurrentStatus.Tier);
-            Assert.Equal("pro-developer@fujifier.net", service.CurrentStatus.LicenseeEmail);
+                Assert.True(result.Success);
+                Assert.True(service.IsPro);
+                Assert.Equal(LicenseTier.Pro, service.CurrentStatus.Tier);
+                Assert.Equal("pro-developer@fujifier.net", service.CurrentStatus.LicenseeEmail);
+            }
+            finally
+            {
+                LicenseService.AllowDevOverrideKeys = prevAllowed;
+            }
         }
 
         [Fact]

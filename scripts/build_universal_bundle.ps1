@@ -6,7 +6,7 @@ param(
     [string]$X64AabPath,
     [string]$OutputAabPath,
     [string]$KeystorePath,
-    [string]$KeystorePass = "",
+    [string]$KeystorePass = $(if ($env:KEYSTORE_PASSWORD) { $env:KEYSTORE_PASSWORD } else { "" }),
     [string]$KeyAlias = "fujifier"
 )
 

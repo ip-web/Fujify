@@ -1202,8 +1202,8 @@ namespace Fujify
             if (minFocal <= 0) return null;
 
             string focalStr = Math.Abs(minFocal - maxFocal) < 0.1
-                ? $"{minFocal:0.#}mm"
-                : $"{minFocal:0.#}-{maxFocal:0.#}mm";
+                ? $"{minFocal.ToString("0.#", CultureInfo.InvariantCulture)}mm"
+                : $"{minFocal.ToString("0.#", CultureInfo.InvariantCulture)}-{maxFocal.ToString("0.#", CultureInfo.InvariantCulture)}mm";
 
             string apStr = "";
             if (minFDen > 0 && maxFDen > 0)
@@ -1213,8 +1213,8 @@ namespace Fujify
                 if (minF > 0)
                 {
                     apStr = Math.Abs(minF - maxF) < 0.05
-                        ? $" f/{minF:0.#}"
-                        : $" f/{minF:0.#}-{maxF:0.#}";
+                        ? $" f/{minF.ToString("0.#", CultureInfo.InvariantCulture)}"
+                        : $" f/{minF.ToString("0.#", CultureInfo.InvariantCulture)}-{maxF.ToString("0.#", CultureInfo.InvariantCulture)}";
                 }
             }
 

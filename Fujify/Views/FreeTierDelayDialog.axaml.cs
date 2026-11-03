@@ -103,43 +103,50 @@ namespace Fujify.Views
 
         private async void GoogleSignIn_Click(object? sender, RoutedEventArgs e)
         {
-            CountdownStatusText.Text = "Signing in with Google...";
-            var result = await _licenseService.LoginWithGoogleOAuthAsync(msg =>
+            try
             {
-                CountdownStatusText.Text = msg;
-            });
+                CountdownStatusText.Text = "Signing in with Google...";
+                var result = await _licenseService.LoginWithGoogleOAuthAsync(msg =>
+                {
+                    CountdownStatusText.Text = msg;
+                });
 
-            if (result.Success && _licenseService.IsPro)
-            {
-                _isUnlocked = true;
-                _timer.Stop();
-                TitleText.Text = "✔ Pro Unlocked!";
-                MessageText.Text = "Welcome to Fujifier Pro! All tier limits, countdown delays, and advertisements have been removed permanently.";
-                ContinueButton.IsEnabled = true;
-                ContinueButton.Content = "Start Using Fujifier Pro";
-                ContinueButton.Classes.Add("accent");
-                CountdownProgressBar.Value = _licenseService.DelaySeconds;
-                CountdownStatusText.Text = "Pro license active.";
-                LicenseKeySection.IsVisible = false;
-                ToggleKeyButton.IsVisible = false;
-                GoogleSignInButton.IsVisible = false;
+                if (result.Success && _licenseService.IsPro)
+                {
+                    _isUnlocked = true;
+                    _timer.Stop();
+                    TitleText.Text = "✔ Pro Unlocked!";
+                    MessageText.Text = "Welcome to Fujifier Pro! All tier limits, countdown delays, and advertisements have been removed permanently.";
+                    ContinueButton.IsEnabled = true;
+                    ContinueButton.Content = "Start Using Fujifier Pro";
+                    ContinueButton.Classes.Add("accent");
+                    CountdownProgressBar.Value = _licenseService.DelaySeconds;
+                    CountdownStatusText.Text = "Pro license active.";
+                    LicenseKeySection.IsVisible = false;
+                    ToggleKeyButton.IsVisible = false;
+                    GoogleSignInButton.IsVisible = false;
 
-                var dlg = new MessageDialog("Pro Unlocked!", "Welcome to Fujifier Pro! All tier limits, countdown delays, and advertisements have been removed permanently.", isSuccess: true);
-                await dlg.ShowDialog(this);
+                    var dlg = new MessageDialog("Pro Unlocked!", "Welcome to Fujifier Pro! All tier limits, countdown delays, and advertisements have been removed permanently.", isSuccess: true);
+                    await dlg.ShowDialog(this);
+                }
+                else if (result.Success)
+                {
+                    string msg = result.ErrorMessage ?? "Signed in. No active Pro license found on fujifier.cc.";
+                    CountdownStatusText.Text = msg;
+                    var dlg = new MessageDialog("No Active License", msg, isSuccess: false);
+                    await dlg.ShowDialog(this);
+                }
+                else
+                {
+                    string msg = result.ErrorMessage ?? "Google Sign-In failed.";
+                    CountdownStatusText.Text = msg;
+                    var dlg = new MessageDialog("Google Sign-In Failed", msg, isSuccess: false);
+                    await dlg.ShowDialog(this);
+                }
             }
-            else if (result.Success)
+            catch (Exception ex)
             {
-                string msg = result.ErrorMessage ?? "Signed in. No active Pro license found on fujifier.cc.";
-                CountdownStatusText.Text = msg;
-                var dlg = new MessageDialog("No Active License", msg, isSuccess: false);
-                await dlg.ShowDialog(this);
-            }
-            else
-            {
-                string msg = result.ErrorMessage ?? "Google Sign-In failed.";
-                CountdownStatusText.Text = msg;
-                var dlg = new MessageDialog("Google Sign-In Failed", msg, isSuccess: false);
-                await dlg.ShowDialog(this);
+                CountdownStatusText.Text = "Sign-in error: " + ex.Message;
             }
         }
 
@@ -154,33 +161,41 @@ namespace Fujify.Views
 
         private async void ActivateKey_Click(object? sender, RoutedEventArgs e)
         {
-            string key = LicenseKeyInput.Text?.Trim() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(key))
+            try
             {
-                LicenseActivationError.Text = "Please enter a valid license key.";
-                LicenseActivationError.IsVisible = true;
-                return;
-            }
+                string key = LicenseKeyInput.Text?.Trim() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(key))
+                {
+                    LicenseActivationError.Text = "Please enter a valid license key.";
+                    LicenseActivationError.IsVisible = true;
+                    return;
+                }
 
-            var result = await _licenseService.ActivateLicenseKeyAsync(key);
-            if (result.Success)
-            {
-                _isUnlocked = true;
-                _timer.Stop();
-                LicenseActivationError.IsVisible = false;
-                TitleText.Text = "✔ Pro Unlocked!";
-                MessageText.Text = "Thank you for upgrading to Fujifier Pro! All tier limits, countdown delays, and advertisements have been removed permanently.";
-                ContinueButton.IsEnabled = true;
-                ContinueButton.Content = "Start Using Fujifier Pro";
-                ContinueButton.Classes.Add("accent");
-                CountdownProgressBar.Value = _licenseService.DelaySeconds;
-                CountdownStatusText.Text = "License active.";
-                LicenseKeySection.IsVisible = false;
-                ToggleKeyButton.IsVisible = false;
+                var result = await _licenseService.ActivateLicenseKeyAsync(key);
+                if (result.Success)
+                {
+                    _isUnlocked = true;
+                    _timer.Stop();
+                    LicenseActivationError.IsVisible = false;
+                    TitleText.Text = "✔ Pro Unlocked!";
+                    MessageText.Text = "Thank you for upgrading to Fujifier Pro! All tier limits, countdown delays, and advertisements have been removed permanently.";
+                    ContinueButton.IsEnabled = true;
+                    ContinueButton.Content = "Start Using Fujifier Pro";
+                    ContinueButton.Classes.Add("accent");
+                    CountdownProgressBar.Value = _licenseService.DelaySeconds;
+                    CountdownStatusText.Text = "License active.";
+                    LicenseKeySection.IsVisible = false;
+                    ToggleKeyButton.IsVisible = false;
+                }
+                else
+                {
+                    LicenseActivationError.Text = result.ErrorMessage ?? "Invalid license key.";
+                    LicenseActivationError.IsVisible = true;
+                }
             }
-            else
+            catch (Exception ex)
             {
-                LicenseActivationError.Text = result.ErrorMessage ?? "Invalid license key.";
+                LicenseActivationError.Text = "Activation error: " + ex.Message;
                 LicenseActivationError.IsVisible = true;
             }
         }
