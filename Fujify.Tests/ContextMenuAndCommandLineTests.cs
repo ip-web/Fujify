@@ -447,7 +447,9 @@ namespace Fujify.Tests
                 {
                     Assert.False(vm.IsMacOS);
                     Assert.False(vm.ShowMacCaptionButtons);
-                    Assert.True(vm.ShowWindowsCaptionButtons);
+                    // On Windows, native window caption buttons are rendered by DWM (WindowDecorations="Full"),
+                    // so custom XAML caption buttons are disabled to avoid duplicate superposed buttons.
+                    Assert.False(vm.ShowWindowsCaptionButtons);
                     Assert.Equal(new Avalonia.Thickness(16, 0, 0, 0), vm.TitleBarLogoMargin);
                 }
             }

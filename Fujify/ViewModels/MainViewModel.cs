@@ -731,7 +731,7 @@ namespace Fujify.ViewModels
             !(Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.ISingleViewApplicationLifetime);
 
         public bool ShowMacCaptionButtons => ShowCaptionButtons && IsMacOS;
-        public bool ShowWindowsCaptionButtons => ShowCaptionButtons && !IsMacOS;
+        public bool ShowWindowsCaptionButtons => false;
 
         public Avalonia.Thickness TitleBarLogoMargin => ShowMacCaptionButtons ? new Avalonia.Thickness(0, 0, 0, 0) : new Avalonia.Thickness(16, 0, 0, 0);
 

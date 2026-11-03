@@ -306,28 +306,30 @@ namespace Fujify.Views
             }
             else if (msg == WM_NCHITTEST)
             {
-                int screenX = unchecked((short)(long)lParam);
-                int screenY = unchecked((short)((long)lParam >> 16));
-
-                POINT pt = new POINT { X = screenX, Y = screenY };
-                if (ScreenToClient(hWnd, ref pt) && GetClientRect(hWnd, out RECT clientRect))
+                _captionButtonsPanel ??= this.FindControl<Control>("CaptionButtonsPanel");
+                if (_captionButtonsPanel != null && _captionButtonsPanel.IsVisible)
                 {
-                    _captionButtonsPanel ??= this.FindControl<Control>("CaptionButtonsPanel");
+                    int screenX = unchecked((short)(long)lParam);
+                    int screenY = unchecked((short)((long)lParam >> 16));
 
-                    double scaling = RenderScaling > 0 ? RenderScaling : 1.0;
-                    double buttonsWidthDip = (_captionButtonsPanel != null && _captionButtonsPanel.Bounds.Width > 0)
-                        ? _captionButtonsPanel.Bounds.Width
-                        : 138.0;
-                    double buttonsHeightDip = (_captionButtonsPanel != null && _captionButtonsPanel.Bounds.Height > 0)
-                        ? _captionButtonsPanel.Bounds.Height
-                        : 34.0;
-
-                    // If pointer is within the caption buttons region in the top-right corner,
-                    // force HTCLIENT so standard XAML buttons receive 100% of pointer hover, press, and click events.
-                    if (IsPointerOverCaptionButtons(pt.X, pt.Y, clientRect.Right, scaling, buttonsWidthDip, buttonsHeightDip))
+                    POINT pt = new POINT { X = screenX, Y = screenY };
+                    if (ScreenToClient(hWnd, ref pt) && GetClientRect(hWnd, out RECT clientRect))
                     {
-                        handled = true;
-                        return (IntPtr)HTCLIENT;
+                        double scaling = RenderScaling > 0 ? RenderScaling : 1.0;
+                        double buttonsWidthDip = _captionButtonsPanel.Bounds.Width > 0
+                            ? _captionButtonsPanel.Bounds.Width
+                            : 138.0;
+                        double buttonsHeightDip = _captionButtonsPanel.Bounds.Height > 0
+                            ? _captionButtonsPanel.Bounds.Height
+                            : 34.0;
+
+                        // If pointer is within the caption buttons region in the top-right corner,
+                        // force HTCLIENT so standard XAML buttons receive 100% of pointer hover, press, and click events.
+                        if (IsPointerOverCaptionButtons(pt.X, pt.Y, clientRect.Right, scaling, buttonsWidthDip, buttonsHeightDip))
+                        {
+                            handled = true;
+                            return (IntPtr)HTCLIENT;
+                        }
                     }
                 }
             }
