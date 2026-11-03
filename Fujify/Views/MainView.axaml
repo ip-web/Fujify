@@ -51,6 +51,7 @@
                     MinHeight="34"
                     Padding="16,0,0,0"
                     ZIndex="100"
+                    Cursor="Arrow"
                     WindowDecorationProperties.ElementRole="TitleBar">
                 <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Stretch">
                     <!-- Far Left: macOS Traffic Lights (Close [Red], Minimize [Yellow], Maximize [Green]) -->
@@ -84,20 +85,22 @@
 
                     <!-- Right: Custom Functional Minimize, Maximize, Close Buttons matching standard Windows controls -->
                     <StackPanel x:Name="CaptionButtonsPanel" Grid.Column="2" Orientation="Horizontal" Spacing="0" VerticalAlignment="Stretch" HorizontalAlignment="Right"
-                                IsVisible="{Binding ShowWindowsCaptionButtons}"
-                                WindowDecorationProperties.ElementRole="User">
+                                IsVisible="{Binding ShowWindowsCaptionButtons}">
                         <!-- Minimize Button -->
                         <Button x:Name="TitleBarMinimizeButton" Classes="win-caption" Click="TitleBar_Minimize_Click"
+                                Cursor="Arrow"
                                 WindowDecorationProperties.ElementRole="MinimizeButton">
                             <TextBlock Text="&#x2014;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                         <!-- Maximize / Restore Button -->
                         <Button x:Name="TitleBarMaximizeButton" Classes="win-caption" Click="TitleBar_Maximize_Click"
+                                Cursor="Arrow"
                                 WindowDecorationProperties.ElementRole="MaximizeButton">
                             <TextBlock x:Name="TitleBarMaximizeGlyph" Text="&#x25A2;" FontSize="11" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>
                         <!-- Close Button -->
                         <Button x:Name="TitleBarCloseButton" Classes="win-caption close" Click="TitleBar_Close_Click"
+                                Cursor="Arrow"
                                 WindowDecorationProperties.ElementRole="CloseButton">
                             <TextBlock Text="&#x2715;" FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
                         </Button>

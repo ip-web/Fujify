@@ -22,20 +22,19 @@
             <Setter Property="MaxWidth" Value="0"/>
             <Setter Property="Opacity" Value="0"/>
         </Style>
-        <!-- Window Drawn Decorations: hand cursor on full button square, suppress tooltips -->
+        <!-- Window Drawn Decorations: standard arrow cursor on full button square, suppress tooltips -->
         <Style Selector="WindowDrawnDecorations Button">
-            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Cursor" Value="Arrow"/>
             <Setter Property="ToolTip.Tip" Value="{x:Null}"/>
-            <Setter Property="(WindowDecorationProperties.ElementRole)" Value="User"/>
         </Style>
         <Style Selector="WindowDrawnDecorations Button /template/ ContentPresenter">
-            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Cursor" Value="Arrow"/>
         </Style>
         <Style Selector="WindowDrawnDecorations Button /template/ Viewbox">
-            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Cursor" Value="Arrow"/>
         </Style>
         <Style Selector="WindowDrawnDecorations Button /template/ Path">
-            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Cursor" Value="Arrow"/>
         </Style>
 
 

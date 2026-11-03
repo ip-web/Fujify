@@ -304,32 +304,6 @@ namespace Fujify.Views
             {
                 EnsureDwmTransitionsEnabled(hWnd);
             }
-            else if (msg == WM_NCHITTEST)
-            {
-                if (WindowState != WindowState.FullScreen)
-                {
-                    int screenX = unchecked((short)(long)lParam);
-                    int screenY = unchecked((short)((long)lParam >> 16));
-
-                    POINT pt = new POINT { X = screenX, Y = screenY };
-                    if (ScreenToClient(hWnd, ref pt) && GetClientRect(hWnd, out RECT clientRect))
-                    {
-                        double scaling = RenderScaling > 0 ? RenderScaling : 1.0;
-                        double buttonsWidthDip = 138.0;
-                        double buttonsHeightDip = 34.0;
-
-                        // If pointer is within the caption buttons region in the top-right corner,
-                        // force HTCLIENT so standard XAML buttons receive 100% of pointer hover, press, and click events.
-                        // This ensures the cursor remains consistently a Hand across the entire button bounds
-                        // and eliminates delayed OS/non-client tooltips.
-                        if (IsPointerOverCaptionButtons(pt.X, pt.Y, clientRect.Right, scaling, buttonsWidthDip, buttonsHeightDip))
-                        {
-                            handled = true;
-                            return (IntPtr)HTCLIENT;
-                        }
-                    }
-                }
-            }
 
             return IntPtr.Zero;
         }
