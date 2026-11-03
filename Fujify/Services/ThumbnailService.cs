@@ -31,14 +31,12 @@ namespace Fujify.Services
 {
     public class ThumbnailService : IThumbnailService
     {
-        private readonly IProcessRunner _processRunner;
         private static Bitmap? _cachedPlaceholder;
         public static Bitmap? CachedPlaceholder => _cachedPlaceholder;
         private static readonly object _placeholderLock = new();
 
         public ThumbnailService(IProcessRunner? processRunner = null)
         {
-            _processRunner = processRunner ?? new ProcessRunner();
         }
 
         public Bitmap? GenerateThumbnail(string filePath, int? orientation = null)

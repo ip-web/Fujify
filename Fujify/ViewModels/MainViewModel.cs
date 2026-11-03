@@ -65,7 +65,6 @@ namespace Fujify.ViewModels
         private bool _isLoading;
         private bool _isProgressVisible;
         private double _progressValue;
-        private string _processButtonContent = "Process";
         private bool _isStopping;
         public bool SuppressBackupConfirmation { get; set; }
 
@@ -1888,6 +1887,7 @@ namespace Fujify.ViewModels
                     OnPropertyChanged(nameof(CanProcess));
                     OnPropertyChanged(nameof(CanClear));
                     OnPropertyChanged(nameof(CanProcessOrStop));
+                    OnPropertyChanged(nameof(ProcessButtonContent));
                     OnPropertyChanged(nameof(OverallStatusText));
                     OnPropertyChanged(nameof(ProgressSummaryText));
                     OnPropertyChanged(nameof(ActiveStep));
@@ -1974,7 +1974,6 @@ namespace Fujify.ViewModels
                 if (IsProcessing) return LocalizationManager.Tr("Stop");
                 return LocalizationManager.Tr("Process");
             }
-            set => SetProperty(ref _processButtonContent, value);
         }
 
         public double ProgressValue
@@ -2267,7 +2266,7 @@ namespace Fujify.ViewModels
             if (pendingFiles.Count == 0)
             {
                 await _dialogService.ShowMessageAsync(OwnerWindow, "Warning", "No files to process.");
-                ProcessButtonContent = "Process";
+                OnPropertyChanged(nameof(ProcessButtonContent));
                 return;
             }
 
@@ -2282,7 +2281,6 @@ namespace Fujify.ViewModels
             ProgressValue = 0;
             IsProgressVisible = true;
             IsProcessing = true;
-            ProcessButtonContent = "Stop";
             lock (_recentlyConvertedDngFiles)
             {
                 _recentlyConvertedDngFiles.Clear();
