@@ -770,7 +770,22 @@ namespace Fujify.Views
 
         private void TitleBar_DoubleTapped(object? sender, TappedEventArgs e)
         {
-            // Maximizing is disabled per user request
+            if (e.Source is Button || (e.Source is Avalonia.Visual visual && visual.FindAncestorOfType<Button>() != null))
+            {
+                return;
+            }
+
+            var window = GetParentWindow();
+            if (window is MainWindow mainWindow)
+            {
+                mainWindow.ToggleMaximizeAnimated();
+            }
+            else if (window != null)
+            {
+                window.WindowState = window.WindowState == WindowState.Maximized
+                    ? WindowState.Normal
+                    : WindowState.Maximized;
+            }
         }
 
         private Window? GetParentWindow()
@@ -793,7 +808,17 @@ namespace Fujify.Views
 
         private void TitleBar_Maximize_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
         {
-            // Maximize / full screen button removed
+            var window = GetParentWindow();
+            if (window is MainWindow mainWindow)
+            {
+                mainWindow.ToggleMaximizeAnimated();
+            }
+            else if (window != null)
+            {
+                window.WindowState = window.WindowState == WindowState.Maximized
+                    ? WindowState.Normal
+                    : WindowState.Maximized;
+            }
         }
 
         private void TitleBar_Close_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

@@ -170,12 +170,10 @@ namespace Fujify.Views
                 DwmSetWindowAttributeUint(hWnd, DWMWA_BORDER_COLOR, ref borderColor, sizeof(uint));
 
                 int currentStyle = GetWindowStyle(hWnd);
-                int desired = WS_MINIMIZEBOX | WS_THICKFRAME | WS_SYSMENU;
-                int unwanted = WS_CAPTION | WS_MAXIMIZEBOX;
-                int newStyle = (currentStyle | desired) & ~unwanted;
-                if (currentStyle != newStyle)
+                int desired = WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU;
+                if ((currentStyle & desired) != desired)
                 {
-                    SetWindowStyle(hWnd, newStyle);
+                    SetWindowStyle(hWnd, currentStyle | desired);
                 }
             }
             catch
@@ -224,7 +222,7 @@ namespace Fujify.Views
             WindowState = WindowState.Minimized;
         }
 
-        public static bool IsPointerOverCaptionButtons(int clientX, int clientY, int clientWidth, double scaling, double buttonsWidthDip = 92.0, double buttonsHeightDip = 34.0)
+        public static bool IsPointerOverCaptionButtons(int clientX, int clientY, int clientWidth, double scaling, double buttonsWidthDip = 138.0, double buttonsHeightDip = 34.0)
         {
             double scale = scaling > 0 ? scaling : 1.0;
             double buttonsWidthPx = buttonsWidthDip * scale;
@@ -255,7 +253,7 @@ namespace Fujify.Views
                     double scaling = RenderScaling > 0 ? RenderScaling : 1.0;
                     double buttonsWidthDip = (_captionButtonsPanel != null && _captionButtonsPanel.Bounds.Width > 0)
                         ? _captionButtonsPanel.Bounds.Width
-                        : 92.0;
+                        : 138.0;
                     double buttonsHeightDip = (_captionButtonsPanel != null && _captionButtonsPanel.Bounds.Height > 0)
                         ? _captionButtonsPanel.Bounds.Height
                         : 34.0;
