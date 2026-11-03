@@ -345,7 +345,7 @@
                                     <Border Classes="speed-dial-item speed-dial-folder" Classes.open="{Binding IsMobileAddMenuOpen}"
                                             CornerRadius="21">
                                         <Button Command="{Binding MobileAddFolderCommand}"
-                                                Classes="secondary" Height="42" CornerRadius="21"
+                                                Classes="speed-dial-btn" Height="42" CornerRadius="21"
                                                 Padding="14,0,18,0">
                                             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                                                 <Border Width="28" Height="28" CornerRadius="14"
@@ -366,7 +366,7 @@
                                     <Border Classes="speed-dial-item speed-dial-files" Classes.open="{Binding IsMobileAddMenuOpen}"
                                             CornerRadius="21">
                                         <Button Command="{Binding MobileAddFilesCommand}"
-                                                Classes="secondary" Height="42" CornerRadius="21"
+                                                Classes="speed-dial-btn" Height="42" CornerRadius="21"
                                                 Padding="14,0,18,0">
                                             <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                                                 <Border Width="28" Height="28" CornerRadius="14"
@@ -562,7 +562,7 @@
                                     <!-- TAB 1: SETTINGS VIEW -->
                                     <StackPanel IsVisible="{Binding IsInspectorSettingsTab}" Spacing="14">
                                         <!-- Output Destination Section -->
-                                        <StackPanel Spacing="8">
+                                        <StackPanel Spacing="8" IsVisible="{Binding !IsMobile}">
                                             <TextBlock Text="{loc:Loc OutputDestination}" FontSize="10" FontWeight="SemiBold"
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                             <!-- Browse Output Folder with Nested Reset Cross -->
@@ -608,7 +608,7 @@
                                             </Border>
                                         </StackPanel>
 
-                                        <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" Margin="0,4"/>
+                                        <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" Margin="0,4" IsVisible="{Binding !IsMobile}"/>
 
                                         <!-- File Handling Section -->
                                         <StackPanel Spacing="10">
@@ -616,7 +616,7 @@
                                                        Foreground="{DynamicResource AppTextSecondaryBrush}"/>
 
                                             <!-- Backup Switch -->
-                                            <Grid ColumnDefinitions="*,Auto">
+                                            <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding !IsMobile}">
                                                 <TextBlock Grid.Column="0" Text="{loc:Loc BackupOriginalFile}" FontSize="11"
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                 <ToggleSwitch Grid.Column="1" IsChecked="{Binding CreateBackup}" OnContent="" OffContent=""/>
@@ -691,7 +691,7 @@
                                             </StackPanel>
 
                                             <!-- Open Folder When Done Switch -->
-                                            <Grid ColumnDefinitions="*,Auto">
+                                            <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding !IsMobile}">
                                                 <TextBlock Grid.Column="0" Text="{loc:Loc OpenFolderWhenDone}" FontSize="11"
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}" VerticalAlignment="Center"/>
                                                 <ToggleSwitch Grid.Column="1" IsChecked="{Binding AutoOpenOutputFolder}" OnContent="" OffContent=""/>
@@ -1344,7 +1344,7 @@
                                                             IsVisible="{Binding HasFiles}"
                                                             HorizontalAlignment="Right">
                                                         <Button Command="{Binding ClearCommand}"
-                                                                Classes="secondary" Height="38" CornerRadius="19"
+                                                                Classes="speed-dial-btn" Height="38" CornerRadius="19"
                                                                 Padding="12,0,16,0">
                                                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                                                 <Border Width="24" Height="24" CornerRadius="12"
@@ -1364,7 +1364,7 @@
                                                             CornerRadius="20"
                                                             HorizontalAlignment="Right">
                                                         <Button Command="{Binding AddFolderCommand}"
-                                                                Classes="secondary" Height="38" CornerRadius="19"
+                                                                Classes="speed-dial-btn" Height="38" CornerRadius="19"
                                                                 Padding="12,0,16,0">
                                                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                                                 <Border Width="24" Height="24" CornerRadius="12"
@@ -1386,7 +1386,7 @@
                                                             CornerRadius="20"
                                                             HorizontalAlignment="Right">
                                                         <Button Command="{Binding AddFilesCommand}"
-                                                                Classes="secondary" Height="38" CornerRadius="19"
+                                                                Classes="speed-dial-btn" Height="38" CornerRadius="19"
                                                                 Padding="12,0,16,0">
                                                             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                                                                 <Border Width="24" Height="24" CornerRadius="12"
@@ -2017,10 +2017,10 @@
                                         </StackPanel>
                                     </StackPanel>
 
-                                    <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
+                                    <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" IsVisible="{Binding !IsMobile}"/>
 
                                     <!-- Auto-Open Destination Folder -->
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding !IsMobile}">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
                                             <TextBlock Text="{loc:Loc OpenDestinationFolderAfterConversion}" FontWeight="SemiBold" FontSize="12"
                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>
@@ -2048,10 +2048,10 @@
                                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding LosslessCompression}" IsEnabled="{Binding IsPro}" OnContent="" OffContent=""/>
                                     </Grid>
 
-                                    <Separator Height="1" Background="{DynamicResource AppEdgeBrush}"/>
+                                    <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" IsVisible="{Binding !IsMobile}"/>
 
                                     <!-- Backup Original File -->
-                                    <Grid ColumnDefinitions="*,Auto">
+                                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding !IsMobile}">
                                         <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
                                             <TextBlock Text="{loc:Loc BackupOriginalFile}" FontWeight="SemiBold" FontSize="12"
                                                        Foreground="{DynamicResource AppTextPrimaryBrush}"/>

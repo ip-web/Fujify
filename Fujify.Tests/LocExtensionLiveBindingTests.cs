@@ -35,6 +35,7 @@ namespace Fujify.Tests
             public Task ShowMessageAsync(Window? owner, string title, string message, bool isSuccess = true) => Task.CompletedTask;
             public Task<FileConflictResolution> PromptFileConflictAsync(Window? owner, string destinationFilePath) => Task.FromResult(new FileConflictResolution(ConflictChoice.Skip, false));
             public Task<IReadOnlyList<string>> ShowOpenFileDialogAsync(Window? owner, string title, bool allowMultiple = true) => Task.FromResult<IReadOnlyList<string>>(Array.Empty<string>());
+            public Task<IReadOnlyList<string>> ShowOpenFolderFilesDialogAsync(Window? owner, string title, IReadOnlyCollection<string>? supportedExtensions) => Task.FromResult<IReadOnlyList<string>>(Array.Empty<string>());
             public Task<string?> ShowFolderBrowserDialogAsync(Window? owner, string title) => Task.FromResult<string?>(null);
             public Task ShowPreferencesDialogAsync(Window? owner) => Task.CompletedTask;
             public Task ShowAboutDialogAsync(Window? owner) => Task.CompletedTask;

@@ -247,9 +247,11 @@ namespace Fujify.ViewModels
 
         public bool AutoOpenOutputFolder
         {
-            get => _autoOpenOutputFolder;
-            set => SetProperty(ref _autoOpenOutputFolder, value);
+            get => !IsMobile && _autoOpenOutputFolder;
+            set => SetProperty(ref _autoOpenOutputFolder, IsMobile ? false : value);
         }
+
+        public bool IsMobile => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
 
         public bool IsOpenInLightroomSupported => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
 
@@ -456,9 +458,10 @@ namespace Fujify.ViewModels
 
         public bool BackupOriginalFile
         {
-            get => _backupOriginalFile;
+            get => IsMobile || _backupOriginalFile;
             set
             {
+                if (IsMobile) return;
                 if (_backupOriginalFile == value) return;
 
                 if (!value && HasActiveWindowOrView(OwnerWindow) && !SuppressBackupConfirmation)

@@ -315,6 +315,7 @@ namespace Fujify.ViewModels
         public IReadOnlyList<string> RecentlyConvertedDngFiles => _recentlyConvertedDngFiles;
         public bool HasRecentlyConvertedFiles => _recentlyConvertedDngFiles.Count > 0;
         public bool IsOpenInLightroomSupported => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
+        public bool IsMobile => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
         public bool CanOpenInLightroom => IsOpenInLightroomSupported && HasRecentlyConvertedFiles && (IsBatchSummaryModal || ModalTitle == "Processing completed" || ModalTitle == LocalizationManager.Tr("BatchCompleteTitle"));
         public bool CanOpenOutputFolder => !OperatingSystem.IsIOS() && !OperatingSystem.IsAndroid() && HasRecentlyConvertedFiles && (ModalTitle == "Processing completed" || IsBatchSummaryModal);
         public bool IsAndroid => OperatingSystem.IsAndroid();
@@ -1755,9 +1756,10 @@ namespace Fujify.ViewModels
 
         public string? OutputFolderPath
         {
-            get => _outputFolderPath;
+            get => IsMobile ? null : _outputFolderPath;
             set
             {
+                if (IsMobile) return;
                 string? resolved = value;
                 if (!string.IsNullOrWhiteSpace(resolved) && (OperatingSystem.IsAndroid() || resolved.Contains("primary:") || resolved.StartsWith("/tree/")))
                 {
@@ -1772,12 +1774,14 @@ namespace Fujify.ViewModels
             }
         }
 
-        public bool HasCustomOutputFolder => !string.IsNullOrWhiteSpace(_outputFolderPath);
+        public bool HasCustomOutputFolder => !IsMobile && !string.IsNullOrWhiteSpace(_outputFolderPath);
 
         public string FormattedOutputFolderPath =>
-            string.IsNullOrWhiteSpace(_outputFolderPath)
-                ? LocalizationManager.Tr("Optional")
-                : _outputFolderPath.Replace(Path.DirectorySeparatorChar.ToString(), "  >  ");
+            IsMobile
+                ? "Pictures/Fujifier"
+                : (string.IsNullOrWhiteSpace(_outputFolderPath)
+                    ? LocalizationManager.Tr("Optional")
+                    : _outputFolderPath.Replace(Path.DirectorySeparatorChar.ToString(), "  >  "));
 
         private static bool HasActiveWindowOrView(Window? owner)
         {
@@ -1801,9 +1805,10 @@ namespace Fujify.ViewModels
 
         public bool CreateBackup
         {
-            get => _createBackup;
+            get => IsMobile || _createBackup;
             set
             {
+                if (IsMobile) return;
                 if (_createBackup == value) return;
 
                 if (!value && HasActiveWindowOrView(OwnerWindow) && !SuppressBackupConfirmation)
@@ -2286,8 +2291,8 @@ namespace Fujify.ViewModels
             OnPropertyChanged(nameof(CanOpenInLightroom));
             OnPropertyChanged(nameof(CanOpenOutputFolder));
 
-            bool createBackup = CreateBackup;
-            string? currentOutputFolder = OutputFolderPath;
+            bool createBackup = IsMobile || CreateBackup;
+            string? currentOutputFolder = IsMobile ? null : OutputFolderPath;
             bool hasProcessingErrors = false;
 
             int totalFiles = files.Count;
@@ -2718,7 +2723,7 @@ namespace Fujify.ViewModels
                             {
                                 DialogService.PlatformEnsurePermissionsCallback?.Invoke();
                             }
-                            throw new UnauthorizedAccessException($"Cannot create output directory '{destDir}': {ex.Message}. Please grant All Files Access permissions.", ex);
+                            throw new UnauthorizedAccessException($"Cannot create output directory '{destDir}': {ex.Message}.", ex);
                         }
                     }
                 }
@@ -2824,6 +2829,7 @@ namespace Fujify.ViewModels
 
         private async Task ExecuteBrowseFolderAsync()
         {
+            if (IsMobile) return;
             if (OperatingSystem.IsAndroid())
             {
                 DialogService.PlatformEnsurePermissionsCallback?.Invoke();
@@ -2865,10 +2871,22 @@ namespace Fujify.ViewModels
         private async Task ExecuteAddFolderAsync()
         {
             IsQueueFabMenuOpen = false;
-            string? selectedFolder = await _dialogService.ShowFolderBrowserDialogAsync(OwnerWindow, "Select folder containing RAW pictures");
-            if (!string.IsNullOrEmpty(selectedFolder))
+            try
             {
-                await AddFilesAsync(new[] { selectedFolder });
+                var files = await _dialogService.ShowOpenFolderFilesDialogAsync(
+                    OwnerWindow,
+                    LocalizationManager.Tr("SelectFolderTitle") ?? "Select folder containing RAW pictures",
+                    _supportedFormats);
+
+                if (files != null && files.Count > 0)
+                {
+                    await AddFilesAsync(files);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Fujifier] Error in ExecuteAddFolderAsync: {ex}");
+                await _dialogService.ShowMessageAsync(OwnerWindow, "Import Error", $"Failed to select folder: {ex.Message}");
             }
         }
 

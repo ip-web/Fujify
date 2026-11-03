@@ -475,6 +475,158 @@ namespace Fujify.Services
             }
         }
 
+        public async Task<IReadOnlyList<string>> ShowOpenFolderFilesDialogAsync(
+            Window? owner,
+            string title,
+            IReadOnlyCollection<string>? supportedExtensions)
+        {
+            if (Application.Current == null) return Array.Empty<string>();
+            if (!Dispatcher.UIThread.CheckAccess())
+            {
+                return await Dispatcher.UIThread.InvokeAsync(() => ShowOpenFolderFilesDialogAsync(owner, title, supportedExtensions));
+            }
+
+            PlatformEnsurePermissionsCallback?.Invoke();
+
+            var storage = GetStorageProvider(owner);
+            if (storage == null) return Array.Empty<string>();
+
+            var folders = await storage.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            {
+                Title = title,
+                AllowMultiple = false
+            });
+
+            if (folders == null || folders.Count == 0) return Array.Empty<string>();
+            var folder = folders[0];
+            if (folder == null) return Array.Empty<string>();
+
+            // On desktop platforms (Windows, macOS, Linux): if local path exists and is directly readable, enumerate directly
+            if (!OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS())
+            {
+                string? localPath = folder.TryGetLocalPath();
+                if (!string.IsNullOrEmpty(localPath) && Directory.Exists(localPath))
+                {
+                    try
+                    {
+                        var files = Directory.EnumerateFiles(localPath, "*.*", SearchOption.AllDirectories)
+                            .Where(f => supportedExtensions == null || supportedExtensions.Contains(Path.GetExtension(f), StringComparer.OrdinalIgnoreCase))
+                            .ToList();
+                        return files;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Fujify] Direct directory enumeration failed: {ex.Message}");
+                    }
+                }
+            }
+
+            // On mobile (Android / iOS) or when direct POSIX enumeration is blocked by Scoped Storage:
+            // Use SAF IStorageFolder.GetItemsAsync() to recursively stream files into the app staging directory.
+            var resultPaths = new List<string>();
+            string stagingDir = GetStagingDirectory();
+
+            try
+            {
+                await EnumerateStorageFolderRecursiveAsync(folder, resultPaths, stagingDir, supportedExtensions, maxDepth: 6, maxFiles: 500);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[Fujify] Error during recursive storage folder scan: {ex}");
+            }
+
+            return resultPaths;
+        }
+
+        private async Task EnumerateStorageFolderRecursiveAsync(
+            IStorageFolder folder,
+            List<string> resultPaths,
+            string stagingDir,
+            IReadOnlyCollection<string>? supportedExtensions,
+            int maxDepth,
+            int maxFiles)
+        {
+            if (maxDepth <= 0 || resultPaths.Count >= maxFiles) return;
+
+            await foreach (var item in folder.GetItemsAsync())
+            {
+                if (resultPaths.Count >= maxFiles) break;
+
+                if (item is IStorageFile file)
+                {
+                    string ext = Path.GetExtension(file.Name);
+                    bool isCandidate = string.IsNullOrEmpty(ext) ||
+                                       supportedExtensions == null ||
+                                       supportedExtensions.Contains(ext, StringComparer.OrdinalIgnoreCase);
+
+                    if (!isCandidate) continue;
+
+                    try
+                    {
+                        string fileName = file.Name;
+                        if (string.IsNullOrWhiteSpace(fileName))
+                        {
+                            try { fileName = Path.GetFileName(file.Path.LocalPath); } catch { }
+                        }
+                        if (string.IsNullOrWhiteSpace(fileName))
+                        {
+                            fileName = $"folder_import_{Guid.NewGuid():N}.raw";
+                        }
+
+                        fileName = Path.GetFileName(fileName);
+                        foreach (char c in Path.GetInvalidFileNameChars())
+                        {
+                            fileName = fileName.Replace(c, '_');
+                        }
+
+                        string destFilePath = Path.Combine(stagingDir, fileName);
+                        if (File.Exists(destFilePath))
+                        {
+                            string nameWithoutExt = Path.GetFileNameWithoutExtension(fileName);
+                            string itemExt = Path.GetExtension(fileName);
+                            destFilePath = Path.Combine(stagingDir, $"{nameWithoutExt}_{Guid.NewGuid():N}{itemExt}");
+                        }
+
+                        await using (var sourceStream = await file.OpenReadAsync())
+                        await using (var destStream = File.Create(destFilePath))
+                        {
+                            await sourceStream.CopyToAsync(destStream);
+                        }
+
+                        if (string.IsNullOrEmpty(Path.GetExtension(destFilePath)))
+                        {
+                            string detectedExt = DetectRawExtension(destFilePath);
+                            if (!string.IsNullOrEmpty(detectedExt))
+                            {
+                                string newDestPath = Path.ChangeExtension(destFilePath, detectedExt);
+                                if (File.Exists(newDestPath)) File.Delete(newDestPath);
+                                File.Move(destFilePath, newDestPath);
+                                destFilePath = newDestPath;
+                            }
+                        }
+
+                        string finalExt = Path.GetExtension(destFilePath);
+                        if (supportedExtensions == null || supportedExtensions.Contains(finalExt, StringComparer.OrdinalIgnoreCase))
+                        {
+                            resultPaths.Add(destFilePath);
+                        }
+                        else
+                        {
+                            try { File.Delete(destFilePath); } catch { }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[Fujify] Failed to stream file from folder: {ex.Message}");
+                    }
+                }
+                else if (item is IStorageFolder subFolder)
+                {
+                    await EnumerateStorageFolderRecursiveAsync(subFolder, resultPaths, stagingDir, supportedExtensions, maxDepth - 1, maxFiles);
+                }
+            }
+        }
+
         public async Task<string?> ShowFolderBrowserDialogAsync(Window? owner, string title)
         {
             if (Application.Current == null) return null;

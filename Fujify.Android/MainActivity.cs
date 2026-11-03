@@ -160,7 +160,7 @@ public class MainActivity : AvaloniaMainActivity<App>
         // Wire permission prompt hook
         DialogService.PlatformEnsurePermissionsCallback = () =>
         {
-            PromptAllFilesAccessPermission();
+            RequestRuntimeStoragePermissions();
         };
 
         // Wire media scanner and photo album export for newly converted DNG files
@@ -798,68 +798,7 @@ public class MainActivity : AvaloniaMainActivity<App>
 
     public void PromptAllFilesAccessPermission()
     {
-        try
-        {
-            if (Build.VERSION.SdkInt >= BuildVersionCodes.R)
-            {
-                if (!global::Android.OS.Environment.IsExternalStorageManager)
-                {
-                    var vm = MainViewModel.Instance;
-                    if (vm != null)
-                    {
-                        Avalonia.Threading.Dispatcher.UIThread.Post(async () =>
-                        {
-                            bool openSettings = await vm.ShowConfirmationModalAsync(
-                                Fujify.Localization.LocalizationManager.Tr("StoragePermissionTitle"),
-                                Fujify.Localization.LocalizationManager.Tr("StoragePermissionMessage"),
-                                confirmText: Fujify.Localization.LocalizationManager.Tr("StoragePermissionConfirm"),
-                                cancelText: Fujify.Localization.LocalizationManager.Tr("StoragePermissionCancel"));
-
-                            if (openSettings)
-                            {
-                                LaunchAllFilesAccessSettings();
-                            }
-                        });
-                    }
-                    else
-                    {
-                        LaunchAllFilesAccessSettings();
-                    }
-                }
-            }
-            else
-            {
-                RequestRuntimeStoragePermissions();
-            }
-        }
-        catch (Exception ex)
-        {
-            global::Android.Util.Log.Warn("Fujifier", $"PromptAllFilesAccessPermission error: {ex.Message}");
-        }
-    }
-
-    private void LaunchAllFilesAccessSettings()
-    {
-        try
-        {
-            var uri = global::Android.Net.Uri.Parse($"package:{PackageName}");
-            var intent = new Intent(global::Android.Provider.Settings.ActionManageAppAllFilesAccessPermission, uri);
-            intent.AddFlags(ActivityFlags.NewTask);
-            StartActivity(intent);
-        }
-        catch
-        {
-            try
-            {
-                var fallbackIntent = new Intent(global::Android.Provider.Settings.ActionManageAllFilesAccessPermission);
-                fallbackIntent.AddFlags(ActivityFlags.NewTask);
-                StartActivity(fallbackIntent);
-            }
-            catch (Exception ex)
-            {
-                global::Android.Util.Log.Error("Fujifier", $"Could not launch All Files Access settings: {ex}");
-            }
-        }
+        RequestRuntimeStoragePermissions();
     }
 
     public static void SaveConvertedPhotoToGallery(Context context, string filePath)
@@ -868,30 +807,40 @@ public class MainActivity : AvaloniaMainActivity<App>
         {
             string fileName = Path.GetFileName(filePath);
             var vm = MainViewModel.Instance;
-            bool isCustomOutput = vm != null && vm.HasCustomOutputFolder;
 
-            // If user explicitly configured a custom output folder, the file is already written there.
-            // Just scan it so Android MediaStore indexes it.
-            if (isCustomOutput && File.Exists(filePath))
+            // Determine if a subfolder is requested:
+            // Check if the staged filePath is located inside a subfolder under staging dir
+            string subfolder = string.Empty;
+            string? parentDir = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrEmpty(parentDir))
             {
-                global::Android.Media.MediaScannerConnection.ScanFile(
-                    context,
-                    new[] { filePath },
-                    new[] { "image/x-adobe-dng", "image/dng" },
-                    null);
-                global::Android.Util.Log.Info("Fujifier", $"Scanned custom output file: {filePath}");
-                return;
+                string dirName = Path.GetFileName(parentDir);
+                if (!string.IsNullOrEmpty(dirName) &&
+                    !dirName.Equals("Fujifier_Staging", StringComparison.OrdinalIgnoreCase) &&
+                    !dirName.Equals("cache", StringComparison.OrdinalIgnoreCase))
+                {
+                    subfolder = dirName;
+                }
+            }
+
+            if (string.IsNullOrEmpty(subfolder) && vm != null && vm.CreateSubfolder)
+            {
+                string preview = vm.SubfolderPreview;
+                if (!string.IsNullOrWhiteSpace(preview))
+                {
+                    subfolder = preview.Trim();
+                }
             }
 
             bool mediaStoreSaved = false;
 
-            // 1. On Android 10+ (API >= 29), insert into MediaStore under Pictures/Fujifier
+            // 1. On Android 10+ (API >= 29), insert into MediaStore under Pictures/Fujifier (or Pictures/Fujifier/<subfolder>)
             if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
             {
-                mediaStoreSaved = SaveToMediaStore(context, filePath, fileName);
+                mediaStoreSaved = SaveToMediaStore(context, filePath, fileName, subfolder);
             }
 
-            // 2. Direct POSIX copy fallback / sync to /storage/emulated/0/Pictures/Fujifier
+            // 2. Direct POSIX copy fallback / sync to /storage/emulated/0/Pictures/Fujifier/<subfolder>
             string picturesDir = global::Android.OS.Environment.GetExternalStoragePublicDirectory(
                 global::Android.OS.Environment.DirectoryPictures)?.AbsolutePath ?? "";
 
@@ -900,12 +849,14 @@ public class MainActivity : AvaloniaMainActivity<App>
             {
                 try
                 {
-                    string fujifierDir = Path.Combine(picturesDir, "Fujifier");
-                    if (!Directory.Exists(fujifierDir))
+                    string targetFolder = !string.IsNullOrEmpty(subfolder)
+                        ? Path.Combine(picturesDir, "Fujifier", subfolder)
+                        : Path.Combine(picturesDir, "Fujifier");
+                    if (!Directory.Exists(targetFolder))
                     {
-                        Directory.CreateDirectory(fujifierDir);
+                        Directory.CreateDirectory(targetFolder);
                     }
-                    targetPosixPath = Path.Combine(fujifierDir, fileName);
+                    targetPosixPath = Path.Combine(targetFolder, fileName);
                     if (!string.Equals(filePath, targetPosixPath, StringComparison.OrdinalIgnoreCase))
                     {
                         File.Copy(filePath, targetPosixPath, overwrite: true);
@@ -918,9 +869,12 @@ public class MainActivity : AvaloniaMainActivity<App>
             }
 
             // 3. Scan with MediaScannerConnection so device gallery, file managers, and Lightroom detect it
+            string scanFolder = !string.IsNullOrEmpty(subfolder)
+                ? Path.Combine(picturesDir, "Fujifier", subfolder)
+                : Path.Combine(picturesDir, "Fujifier");
             string scanPath = !string.IsNullOrEmpty(targetPosixPath) && File.Exists(targetPosixPath)
                 ? targetPosixPath
-                : Path.Combine(picturesDir, "Fujifier", fileName);
+                : Path.Combine(scanFolder, fileName);
 
             global::Android.Media.MediaScannerConnection.ScanFile(
                 context,
@@ -928,7 +882,7 @@ public class MainActivity : AvaloniaMainActivity<App>
                 new[] { "image/x-adobe-dng", "image/dng" },
                 null);
 
-            global::Android.Util.Log.Info("Fujifier", $"SaveConvertedPhotoToGallery completed: fileName={fileName}, mediaStoreSaved={mediaStoreSaved}, posixExists={File.Exists(targetPosixPath)}");
+            global::Android.Util.Log.Info("Fujifier", $"SaveConvertedPhotoToGallery completed: fileName={fileName}, subfolder={subfolder}, mediaStoreSaved={mediaStoreSaved}, posixExists={File.Exists(targetPosixPath)}");
         }
         catch (Exception ex)
         {
@@ -936,7 +890,7 @@ public class MainActivity : AvaloniaMainActivity<App>
         }
     }
 
-    private static bool SaveToMediaStore(Context context, string sourceFilePath, string fileName)
+    private static bool SaveToMediaStore(Context context, string sourceFilePath, string fileName, string subfolder = "")
     {
         try
         {
@@ -951,7 +905,10 @@ public class MainActivity : AvaloniaMainActivity<App>
 
             if (Build.VERSION.SdkInt >= BuildVersionCodes.Q)
             {
-                values.Put(global::Android.Provider.MediaStore.IMediaColumns.RelativePath, "Pictures/Fujifier");
+                string relPath = !string.IsNullOrWhiteSpace(subfolder)
+                    ? $"Pictures/Fujifier/{subfolder}"
+                    : "Pictures/Fujifier";
+                values.Put(global::Android.Provider.MediaStore.IMediaColumns.RelativePath, relPath);
                 values.Put(global::Android.Provider.MediaStore.IMediaColumns.IsPending, 1);
             }
 
