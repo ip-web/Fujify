@@ -1,7 +1,7 @@
 ; Script generated for Inno Setup 6
 ; Fujifier Installer Script
 #define MyAppName "Fujifier"
-#define MyAppVersion "2.1.0"
+#define MyAppVersion "2.0.0"
 #define MyAppPublisher "Isidore Paulin"
 #define MyAppURL "https://fujifier.cc"
 #define MyAppExeName "Fujifier.exe"
@@ -11,7 +11,7 @@
 #endif
 
 #ifndef MyOutputBaseFilename
-#define MyOutputBaseFilename "Fujifier-v2.1.0-Setup"
+#define MyOutputBaseFilename "Fujifier-v2.0.0-Setup"
 #endif
 
 #ifndef MyArchAllowed

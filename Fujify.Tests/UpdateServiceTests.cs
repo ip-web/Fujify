@@ -195,7 +195,7 @@ namespace Fujify.Tests
             var service = new UpdateService(settings);
 
             Assert.NotNull(service.CurrentVersion);
-            Assert.True(service.CurrentVersion >= new Version(2, 1, 0));
+            Assert.True(service.CurrentVersion >= new Version(2, 0, 0));
             Assert.False(string.IsNullOrWhiteSpace(service.CurrentVersionString));
         }
 

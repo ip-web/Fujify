@@ -104,7 +104,7 @@ Supported RAW formats:
 
         public static void PrintVersion()
         {
-            var version = typeof(CliRunner).Assembly.GetName().Version?.ToString(3) ?? "2.1.0";
+            var version = typeof(CliRunner).Assembly.GetName().Version?.ToString(3) ?? "2.0.0";
             Console.WriteLine($"Fujifier {version}");
         }
 

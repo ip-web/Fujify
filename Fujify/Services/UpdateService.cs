@@ -41,7 +41,7 @@ namespace Fujify.Services
         private readonly ISettingsService _settingsService;
         private readonly HttpClient _httpClient;
 
-        public static readonly Version FallbackVersion = new(2, 1, 0);
+        public static readonly Version FallbackVersion = new(2, 0, 0);
 
         public Version CurrentVersion
         {

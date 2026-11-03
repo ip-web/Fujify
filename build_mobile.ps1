@@ -98,8 +98,8 @@ if (-not $SkipAndroid) {
             }
 
             if ($signedApk) {
-                $targetRelease = Join-Path $releaseDir "Fujifier-v2.1.0-Android-$archSuffix.apk"
-                $targetDist = Join-Path $distDir "Fujifier-v2.1.0-Android-$archSuffix.apk"
+                $targetRelease = Join-Path $releaseDir "Fujifier-v2.0.0-Android-$archSuffix.apk"
+                $targetDist = Join-Path $distDir "Fujifier-v2.0.0-Android-$archSuffix.apk"
                 Copy-Item -Path $signedApk.FullName -Destination $targetRelease -Force
                 Copy-Item -Path $signedApk.FullName -Destination $targetDist -Force
                 $sizeMb = [math]::Round($signedApk.Length / 1MB, 2)
@@ -150,7 +150,7 @@ if (-not $SkipiOS) {
             Write-Warning "Native Mach-O executable 'Fujify.iOS' is not present in the app bundle. Windows builds MSIL assemblies only and requires a Mac build host (or GitHub Actions macos runner) to produce an installable iOS IPA."
         }
 
-        $targetIpa = Join-Path $releaseDir "Fujifier-v2.1.0-iOS.ipa"
+        $targetIpa = Join-Path $releaseDir "Fujifier-v2.0.0-iOS.ipa"
         if (Test-Path $targetIpa) { Remove-Item -Force $targetIpa }
 
         Add-Type -AssemblyName System.IO.Compression.FileSystem

@@ -44,9 +44,9 @@ $infoPlist = @"
     <key>CFBundleIdentifier</key>
     <string>dev.ipweb.fujifier</string>
     <key>CFBundleVersion</key>
-    <string>2.1.0</string>
+    <string>2.0.0</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.1.0</string>
+    <string>2.0.0</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
@@ -107,7 +107,7 @@ Copy-Item -Path "$repoRoot\Fujify\Assets\images\logo.ico" -Destination (Join-Pat
 Copy-Item -Path "$repoRoot\Fujify\Assets\images\logos.png" -Destination (Join-Path $resourcesDir "logo.png") -Force
 
 # Archive macOS Apple Silicon
-$macArmArchive = Join-Path $releaseDir "Fujifier-v2.1.0-macOS-AppleSilicon.zip"
+$macArmArchive = Join-Path $releaseDir "Fujifier-v2.0.0-macOS-AppleSilicon.zip"
 if (Test-Path $macArmArchive) { Remove-Item -Force $macArmArchive }
 & tar -a -cf $macArmArchive -C $distDir "Fujifier.app"
 Write-Host " Created macOS Apple Silicon Archive: $macArmArchive" -ForegroundColor Green
@@ -184,7 +184,7 @@ Copy-Item -Path "$repoRoot\Fujify\Assets\images\logo.ico" -Destination (Join-Pat
 Copy-Item -Path "$repoRoot\Fujify\Assets\images\logos.png" -Destination (Join-Path $intelResourcesDir "logo.png") -Force
 
 # Archive macOS Intel
-$macIntelArchive = Join-Path $releaseDir "Fujifier-v2.1.0-macOS-Intel.zip"
+$macIntelArchive = Join-Path $releaseDir "Fujifier-v2.0.0-macOS-Intel.zip"
 if (Test-Path $macIntelArchive) { Remove-Item -Force $macIntelArchive }
 & tar -a -cf $macIntelArchive -C $distDir "Fujifier-Intel.app"
 Write-Host " Created macOS Intel Archive: $macIntelArchive" -ForegroundColor Green

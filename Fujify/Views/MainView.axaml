@@ -2359,7 +2359,7 @@
                         <StackPanel HorizontalAlignment="Center" Spacing="6">
                             <Image Source="/Assets/images/logoXL.png" Width="52" Height="52" HorizontalAlignment="Center"/>
                             <TextBlock Text="Fujifier" FontSize="19" FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}" HorizontalAlignment="Center"/>
-                            <TextBlock Text="Version 2.1.0 (Cross-Platform)" FontSize="11" 
+                            <TextBlock Text="Version 2.0.0 (Cross-Platform)" FontSize="11" 
                                        Foreground="{DynamicResource AppTextSecondaryBrush}" HorizontalAlignment="Center"/>
                         </StackPanel>
 

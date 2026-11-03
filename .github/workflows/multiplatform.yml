@@ -72,14 +72,14 @@ jobs:
       - name: Upload macOS Apple Silicon Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Fujifier-v2.1.0-macOS-AppleSilicon
-          path: release/Fujifier-v2.1.0-macOS-AppleSilicon.zip
+          name: Fujifier-v2.0.0-macOS-AppleSilicon
+          path: release/Fujifier-v2.0.0-macOS-AppleSilicon.zip
 
       - name: Upload macOS Intel Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Fujifier-v2.1.0-macOS-Intel
-          path: release/Fujifier-v2.1.0-macOS-Intel.zip
+          name: Fujifier-v2.0.0-macOS-Intel
+          path: release/Fujifier-v2.0.0-macOS-Intel.zip
 
   # -------------------------------------------------------------
   # 3. Android App (APK & AAB)
@@ -114,16 +114,16 @@ jobs:
           dotnet build Fujify.Android/Fujify.Android.csproj -c Release -r android-arm64 -p:AndroidPackageFormat=apk
           SIGNED_APK=$(find Fujify.Android/bin/Release -name "*Signed.apk" | head -n 1)
           if [ -n "$SIGNED_APK" ]; then
-            cp "$SIGNED_APK" ./publish-android/Fujify-v2.1.0-Android-arm64.apk
+            cp "$SIGNED_APK" ./publish-android/Fujify-v2.0.0-Android-arm64.apk
           else
-            cp $(find Fujify.Android/bin/Release -name "*.apk" | head -n 1) ./publish-android/Fujify-v2.1.0-Android-arm64.apk
+            cp $(find Fujify.Android/bin/Release -name "*.apk" | head -n 1) ./publish-android/Fujify-v2.0.0-Android-arm64.apk
           fi
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: fujify-android-apk
-          path: ./publish-android/Fujify-v2.1.0-Android-arm64.apk
+          path: ./publish-android/Fujify-v2.0.0-Android-arm64.apk
 
   # -------------------------------------------------------------
   # 3. iOS App (iPhone & iPad)
@@ -190,12 +190,12 @@ jobs:
           ls -la ./publish/Payload/*.app/
           file ./publish/Payload/*.app/Fujify.iOS || true
           cd ./publish
-          zip -r -y Fujify-v2.1.0-iOS.ipa Payload
+          zip -r -y Fujify-v2.0.0-iOS.ipa Payload
           cd ..
 
       - name: Upload iOS IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: fujify-ios-ipa
-          path: ./publish/Fujify-v2.1.0-iOS.ipa
+          path: ./publish/Fujify-v2.0.0-iOS.ipa
 

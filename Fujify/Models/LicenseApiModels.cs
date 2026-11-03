@@ -81,7 +81,7 @@ namespace Fujify.Models
         public string Platform { get; set; } = "windows";
 
         [JsonPropertyName("app_version")]
-        public string AppVersion { get; set; } = "2.1.0";
+        public string AppVersion { get; set; } = "2.0.0";
     }
 
     public class LicenseActivationResponse

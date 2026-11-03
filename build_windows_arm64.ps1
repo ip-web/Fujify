@@ -5,7 +5,7 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = $PSScriptRoot
 $publishDir = Join-Path $repoRoot "publish\win-arm64"
-$distDir = Join-Path $repoRoot "dist\Fujifier-v2.1.0-Windows-ARM64"
+$distDir = Join-Path $repoRoot "dist\Fujifier-v2.0.0-Windows-ARM64"
 $releaseDir = Join-Path $repoRoot "release"
 $dotnet = "dotnet"
 
@@ -62,13 +62,13 @@ if (Test-Path $unwindSource) {
 
 # 4. Create Standalone Portable .zip
 Write-Host "Creating Portable ZIP package..." -ForegroundColor Cyan
-$portableZip = Join-Path $releaseDir "Fujifier-v2.1.0-Windows-ARM64-Portable.zip"
+$portableZip = Join-Path $releaseDir "Fujifier-v2.0.0-Windows-ARM64-Portable.zip"
 if (Test-Path $portableZip) { Remove-Item -Force $portableZip }
 if (Test-Path $distDir) { Remove-Item -Recurse -Force $distDir }
 
 New-Item -ItemType Directory -Force -Path $distDir | Out-Null
 Copy-Item -Path "$publishDir\*" -Destination $distDir -Recurse -Force
-& tar.exe -a -cf $portableZip -C (Join-Path $repoRoot "dist") "Fujifier-v2.1.0-Windows-ARM64"
+& tar.exe -a -cf $portableZip -C (Join-Path $repoRoot "dist") "Fujifier-v2.0.0-Windows-ARM64"
 Write-Host "-> Portable ZIP created: $portableZip" -ForegroundColor Green
 
 # 5. Compile Inno Setup Installer
@@ -84,10 +84,10 @@ if ($iscc) {
     Write-Host "Compiling Inno Setup ARM64 installer using $iscc..." -ForegroundColor Cyan
     & $iscc `
         /DMyAppSourceDir="publish\win-arm64" `
-        /DMyOutputBaseFilename="Fujifier-v2.1.0-Setup-ARM64" `
+        /DMyOutputBaseFilename="Fujifier-v2.0.0-Setup-ARM64" `
         /DMyArchAllowed="arm64" `
         "$repoRoot\installer.iss"
-    Write-Host "-> Installer created: $(Join-Path $releaseDir 'Fujifier-v2.1.0-Setup-ARM64.exe')" -ForegroundColor Green
+    Write-Host "-> Installer created: $(Join-Path $releaseDir 'Fujifier-v2.0.0-Setup-ARM64.exe')" -ForegroundColor Green
 } else {
     Write-Warning "ISCC.exe (Inno Setup) not found. Skipped installer build."
 }

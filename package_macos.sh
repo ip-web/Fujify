@@ -112,9 +112,9 @@ EOF
     <key>CFBundleIdentifier</key>
     <string>dev.ipweb.fujifier</string>
     <key>CFBundleVersion</key>
-    <string>2.1.0</string>
+    <string>2.0.0</string>
     <key>CFBundleShortVersionString</key>
-    <string>2.1.0</string>
+    <string>2.0.0</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleSignature</key>
@@ -144,7 +144,7 @@ EOF
     codesign --force --deep -s - "$APP_DIR" || true
 
     # Create Zip
-    local ZIP_PATH="$RELEASE_DIR/Fujifier-v2.1.0-macOS-$ARCH_NAME.zip"
+    local ZIP_PATH="$RELEASE_DIR/Fujifier-v2.0.0-macOS-$ARCH_NAME.zip"
     rm -f "$ZIP_PATH"
     (cd "$DIST_DIR" && zip -r -y "$ZIP_PATH" "$APP_NAME.app")
     echo "Created Archive: $ZIP_PATH"

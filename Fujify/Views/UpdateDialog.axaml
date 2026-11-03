@@ -39,7 +39,7 @@
                             <TextBlock x:Name="VersionBadgeText" Text="v2.2.0" FontSize="10" FontWeight="Bold" Foreground="#252332"/>
                         </Border>
                     </StackPanel>
-                    <TextBlock x:Name="CurrentVsNewText" Text="Current: v2.1.0 • Latest release is ready" 
+                    <TextBlock x:Name="CurrentVsNewText" Text="Current: v2.0.0 • Latest release is ready" 
                                FontSize="11" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                 </StackPanel>
                 <Button Grid.Column="2" Click="Later_Click"
