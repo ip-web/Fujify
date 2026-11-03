@@ -25,6 +25,30 @@ namespace Fujify.Tests
             public void Load() { }
         }
 
+        public LicensingAndTierGatingTests()
+        {
+            LicenseService.AllowDevOverrideKeys = true;
+        }
+
+        [Fact]
+        public async Task LicenseService_DevOverrideKeys_BlockedWhenDisabled()
+        {
+            var prev = LicenseService.AllowDevOverrideKeys;
+            LicenseService.AllowDevOverrideKeys = false;
+            try
+            {
+                var settings = new MockSettingsService();
+                var service = new LicenseService(settings);
+                var result = await service.ActivateLicenseKeyAsync("FUJIFIER-PRO-DEV-OVERRIDE");
+                Assert.False(result.Success);
+                Assert.False(service.IsPro);
+            }
+            finally
+            {
+                LicenseService.AllowDevOverrideKeys = true;
+            }
+        }
+
         [Fact]
         public void LicenseService_DefaultState_ShouldBeFreeTier()
         {
@@ -56,7 +80,7 @@ namespace Fujify.Tests
             }
             finally
             {
-                LicenseService.AllowDevOverrideKeys = prevAllowed;
+                LicenseService.AllowDevOverrideKeys = true;
             }
         }
 
@@ -113,6 +137,7 @@ namespace Fujify.Tests
         [Fact]
         public async Task PreferencesViewModel_ProTier_ContextMenuCanBeEnabled()
         {
+            LicenseService.AllowDevOverrideKeys = true;
             var settings = new MockSettingsService();
             var licenseService = new LicenseService(settings);
             await licenseService.ActivateLicenseKeyAsync("FUJIFIER-PRO-DEV-OVERRIDE");
@@ -165,6 +190,7 @@ namespace Fujify.Tests
         [Fact]
         public async Task PreferencesViewModel_ProTier_LosslessAndConcurrency_CanBeConfigured()
         {
+            LicenseService.AllowDevOverrideKeys = true;
             var settings = new MockSettingsService();
             var licenseService = new LicenseService(settings);
             await licenseService.ActivateLicenseKeyAsync("FUJIFIER-PRO-DEV-OVERRIDE");
@@ -183,6 +209,7 @@ namespace Fujify.Tests
         [Fact]
         public async Task LicenseActivation_ShouldAutomaticallySetLosslessDngAndHalfThreads()
         {
+            LicenseService.AllowDevOverrideKeys = true;
             var settings = new MockSettingsService();
             settings.Settings.LosslessCompression = false;
             settings.Settings.MaxConcurrentConversions = 1;
@@ -848,6 +875,7 @@ namespace Fujify.Tests
             Assert.False(prefsVm.IsPro);
 
             // Activate license via Preferences
+            LicenseService.AllowDevOverrideKeys = true;
             prefsVm.LicenseKeyInput = "FUJIFIER-DEV-PRO-OVERRIDE";
             await (prefsVm.ActivateLicenseCommand as CommunityToolkit.Mvvm.Input.IAsyncRelayCommand)!.ExecuteAsync(null);
 
@@ -1181,6 +1209,7 @@ namespace Fujify.Tests
         [Fact]
         public async Task PreferencesViewModel_WhenProActive_CanActivateDeviceIsFalse()
         {
+            LicenseService.AllowDevOverrideKeys = true;
             var settings = new MockSettingsService();
             var service = new LicenseService(settings);
             await service.ActivateLicenseKeyAsync("FUJIFIER-PRO-DEV-OVERRIDE");
@@ -1195,6 +1224,7 @@ namespace Fujify.Tests
         [Fact]
         public async Task LicenseService_ActivateCurrentDeviceAsync_UsesAccountLicenseKey()
         {
+            LicenseService.AllowDevOverrideKeys = true;
             var settings = new MockSettingsService();
             settings.Settings.AccountLicenseKey = "FUJIFIER-PRO-DEV-OVERRIDE";
 
