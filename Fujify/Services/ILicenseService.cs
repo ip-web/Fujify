@@ -18,6 +18,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -79,8 +80,11 @@ namespace Fujify.Services
         int UsedActivations { get; }
         int MaxActivations { get; }
         string SlotInfoText { get; }
+        IReadOnlyList<Fujify.Models.LicenseDeviceDto> RegisteredDevices { get; }
+        string CurrentDeviceId { get; }
 
         event EventHandler<LicenseStatus>? LicenseChanged;
+        event EventHandler? DevicesChanged;
 
         void Initialize();
         void SyncFromSettings();
@@ -92,6 +96,8 @@ namespace Fujify.Services
         Task<LicenseActivationResult> RetrieveLicenseFromAccountAsync();
         Task<LicenseActivationResult> CompleteOAuthCallbackAsync(string code, string? codeVerifier = null, string? state = null);
         Task<bool> DeactivateLicenseAsync();
+        Task<bool> DeactivateRemoteDeviceAsync(string deviceId);
+        Task<IReadOnlyList<Fujify.Models.LicenseDeviceDto>> FetchRegisteredDevicesAsync();
         Task<bool> LogoutAccountAsync();
         Task<LicenseActivationResult> VerifyCurrentLicenseAsync(bool forceNetwork = false);
         bool VerifyLicenseKey(string licenseKey, out string? email, out string? error);

@@ -27,6 +27,8 @@ namespace Fujify.Services
     {
         private readonly ISettingsService _settingsService;
 
+        public static Func<string>? PlatformDeviceNameProvider { get; set; }
+
         public DeviceIdentityService(ISettingsService? settingsService = null)
         {
             _settingsService = settingsService ?? new SettingsService();
@@ -48,16 +50,33 @@ namespace Fujify.Services
 
         public string GetDeviceName()
         {
+            if (PlatformDeviceNameProvider != null)
+            {
+                try
+                {
+                    string? custom = PlatformDeviceNameProvider();
+                    if (!string.IsNullOrWhiteSpace(custom))
+                    {
+                        return custom.Trim();
+                    }
+                }
+                catch { }
+            }
+
             try
             {
                 string machine = Environment.MachineName;
-                if (!string.IsNullOrWhiteSpace(machine))
+                if (!string.IsNullOrWhiteSpace(machine) && !machine.Equals("localhost", StringComparison.OrdinalIgnoreCase))
                 {
                     return machine;
                 }
             }
             catch { }
 
+            if (OperatingSystem.IsIOS()) return "iPhone";
+            if (OperatingSystem.IsAndroid()) return "Android Device";
+            if (OperatingSystem.IsMacOS()) return "Mac";
+            if (OperatingSystem.IsWindows()) return "Windows PC";
             return "Fujifier Device";
         }
 

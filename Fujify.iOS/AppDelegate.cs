@@ -58,6 +58,18 @@ public class AppDelegate : AvaloniaAppDelegate<App>
         // Wire native in-app OAuth authentication session (ASWebAuthenticationSession)
         LicenseService.PlatformOAuthLauncher = AuthenticateWithWebSessionAsync;
 
+        // Wire user-friendly device name (e.g. "Tom's iPhone")
+        DeviceIdentityService.PlatformDeviceNameProvider = () =>
+        {
+            try
+            {
+                string? name = UIKit.UIDevice.CurrentDevice?.Name;
+                if (!string.IsNullOrWhiteSpace(name)) return name;
+            }
+            catch { }
+            return "iPhone";
+        };
+
         // Configure persistent writable staging directory for iOS
         DialogService.PlatformStagingDirectoryResolver = () =>
         {

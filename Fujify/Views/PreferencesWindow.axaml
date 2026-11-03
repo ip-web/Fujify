@@ -429,6 +429,58 @@
                                     <Button Grid.Column="1" Content="{loc:Loc DeactivateDevice}" Command="{Binding DeactivateLicenseCommand}" Classes="secondary" IsVisible="{Binding IsPro}" Height="34" Padding="14,0" CornerRadius="17" VerticalContentAlignment="Center"/>
                                 </Grid>
 
+                                <!-- Active Devices Section (Visible when Pro) -->
+                                <Border Background="{DynamicResource AppSurfaceSecondaryBrush}" BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,2,0,0" IsVisible="{Binding IsPro}">
+                                    <StackPanel Spacing="10">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                                <TextBlock Text="{loc:Loc RegisteredDevices}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource AppAccentLightBrush}"/>
+                                                <TextBlock Text="{Binding SlotInfoText}" FontSize="10.5" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" Command="{Binding RefreshDevicesCommand}" IsEnabled="{Binding !IsLoadingDevices}"
+                                                    Classes="secondary" Height="28" Padding="10,0" CornerRadius="14" VerticalContentAlignment="Center" FontSize="11">
+                                                <StackPanel Orientation="Horizontal" Spacing="5" VerticalAlignment="Center">
+                                                    <TextBlock Text="🔄" FontSize="10" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{loc:Loc RefreshDevices}" FontSize="11" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </Grid>
+
+                                        <!-- Registered Device Items -->
+                                        <ItemsControl ItemsSource="{Binding RegisteredDevices}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="vm:LicenseDeviceItemViewModel">
+                                                    <Border Background="{DynamicResource AppBackgroundBrush}" BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1" CornerRadius="8" Padding="10,8" Margin="0,0,0,6">
+                                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                                            <!-- Platform Icon -->
+                                                            <Border Grid.Column="0" Width="30" Height="30" CornerRadius="6" Background="{DynamicResource AppSurfaceBrush}" Margin="0,0,10,0" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding PlatformIcon}" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+
+                                                            <!-- Device Details -->
+                                                            <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                                    <TextBlock Text="{Binding DeviceName}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource AppTextPrimaryBrush}"/>
+                                                                    <Border Background="#2575FC" CornerRadius="4" Padding="5,1" IsVisible="{Binding IsCurrentDevice}" VerticalAlignment="Center">
+                                                                        <TextBlock Text="{loc:Loc ThisDevice}" FontSize="8.5" FontWeight="Bold" Foreground="White"/>
+                                                                    </Border>
+                                                                </StackPanel>
+                                                                <TextBlock Text="{Binding DisplaySubtitle}" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                                            </StackPanel>
+
+                                                            <!-- Deactivate Button -->
+                                                            <Button Grid.Column="2" Content="{loc:Loc Deactivate}"
+                                                                    Command="{Binding $parent[ItemsControl].((vm:PreferencesViewModel)DataContext).DeactivateDeviceCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    Classes="secondary" Height="26" Padding="10,0" CornerRadius="13" FontSize="10.5" VerticalContentAlignment="Center"/>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+
                                 <!-- Connected Account Section (Visible when user is signed in) -->
                                 <Border Background="{DynamicResource AppSurfaceSecondaryBrush}" BorderBrush="{DynamicResource AppEdgeBrush}" BorderThickness="1" CornerRadius="10" Padding="12" Margin="0,2,0,0" IsVisible="{Binding IsAccountLoggedIn}">
                                     <Grid ColumnDefinitions="*,Auto,Auto">

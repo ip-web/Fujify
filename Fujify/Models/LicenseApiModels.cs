@@ -124,6 +124,9 @@ namespace Fujify.Models
         [JsonPropertyName("features")]
         public List<string>? Features { get; set; }
 
+        [JsonPropertyName("devices")]
+        public List<LicenseDeviceDto>? Devices { get; set; }
+
         [JsonPropertyName("code")]
         public string? Code { get; set; }
 
@@ -160,6 +163,17 @@ namespace Fujify.Models
         [JsonPropertyName("server_time")]
         public string? ServerTime { get; set; }
 
+        [JsonConverter(typeof(FlexibleIntConverter))]
+        [JsonPropertyName("max_activations")]
+        public int MaxActivations { get; set; } = 3;
+
+        [JsonConverter(typeof(FlexibleIntConverter))]
+        [JsonPropertyName("used_activations")]
+        public int UsedActivations { get; set; } = 0;
+
+        [JsonPropertyName("devices")]
+        public List<LicenseDeviceDto>? Devices { get; set; }
+
         [JsonPropertyName("code")]
         public string? Code { get; set; }
 
@@ -183,6 +197,13 @@ namespace Fujify.Models
 
         [JsonPropertyName("message")]
         public string? Message { get; set; }
+
+        [JsonConverter(typeof(FlexibleIntConverter))]
+        [JsonPropertyName("used_activations")]
+        public int UsedActivations { get; set; } = 0;
+
+        [JsonPropertyName("devices")]
+        public List<LicenseDeviceDto>? Devices { get; set; }
 
         [JsonPropertyName("code")]
         public string? Code { get; set; }
@@ -297,8 +318,69 @@ namespace Fujify.Models
         [JsonPropertyName("licenses")]
         public List<UserLicenseDto>? Licenses { get; set; }
 
+        [JsonPropertyName("devices")]
+        public List<LicenseDeviceDto>? Devices { get; set; }
+
         [JsonPropertyName("code")]
         public string? Code { get; set; }
+        
+        [JsonPropertyName("message")]
+        public string? Message { get; set; }
+    }
+
+    public class LicenseDeviceDto
+    {
+        [JsonConverter(typeof(FlexibleIntConverter))]
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+
+        [JsonConverter(typeof(FlexibleIntConverter))]
+        [JsonPropertyName("license_id")]
+        public int LicenseId { get; set; }
+
+        [JsonPropertyName("device_id")]
+        public string DeviceId { get; set; } = string.Empty;
+
+        [JsonPropertyName("device_name")]
+        public string DeviceName { get; set; } = string.Empty;
+
+        [JsonPropertyName("platform")]
+        public string Platform { get; set; } = "desktop";
+
+        [JsonPropertyName("app_version")]
+        public string? AppVersion { get; set; }
+
+        [JsonPropertyName("last_check_in")]
+        public string? LastCheckIn { get; set; }
+
+        [JsonPropertyName("created_at")]
+        public string? CreatedAt { get; set; }
+    }
+
+    public class LicenseDevicesRequest
+    {
+        [JsonPropertyName("license_key")]
+        public string? LicenseKey { get; set; }
+    }
+
+    public class LicenseDevicesResponse
+    {
+        [JsonPropertyName("success")]
+        public bool Success { get; set; }
+
+        [JsonPropertyName("license_key")]
+        public string? LicenseKey { get; set; }
+
+        [JsonConverter(typeof(FlexibleIntConverter))]
+        [JsonPropertyName("max_activations")]
+        public int MaxActivations { get; set; } = 3;
+
+        [JsonConverter(typeof(FlexibleIntConverter))]
+        [JsonPropertyName("used_activations")]
+        public int UsedActivations { get; set; } = 0;
+
+        [JsonPropertyName("devices")]
+        public List<LicenseDeviceDto>? Devices { get; set; }
 
         [JsonPropertyName("message")]
         public string? Message { get; set; }

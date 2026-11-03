@@ -23,9 +23,12 @@ namespace Fujify.Tests
             public int UsedActivations => 0;
             public int MaxActivations => 3;
             public string SlotInfoText => "0 of 3 devices";
+            public IReadOnlyList<Fujify.Models.LicenseDeviceDto> RegisteredDevices => Array.Empty<Fujify.Models.LicenseDeviceDto>();
+            public string CurrentDeviceId => "mock-device-id";
 
 #pragma warning disable CS0067
             public event EventHandler<LicenseStatus>? LicenseChanged;
+            public event EventHandler? DevicesChanged;
 #pragma warning restore CS0067
 
             public void Initialize() { }
@@ -38,6 +41,8 @@ namespace Fujify.Tests
             public Task<LicenseActivationResult> RetrieveLicenseFromAccountAsync() => Task.FromResult(new LicenseActivationResult(true));
             public Task<LicenseActivationResult> CompleteOAuthCallbackAsync(string code, string? codeVerifier = null, string? state = null) => Task.FromResult(new LicenseActivationResult(true));
             public Task<bool> DeactivateLicenseAsync() => Task.FromResult(true);
+            public Task<bool> DeactivateRemoteDeviceAsync(string deviceId) => Task.FromResult(true);
+            public Task<IReadOnlyList<Fujify.Models.LicenseDeviceDto>> FetchRegisteredDevicesAsync() => Task.FromResult<IReadOnlyList<Fujify.Models.LicenseDeviceDto>>(Array.Empty<Fujify.Models.LicenseDeviceDto>());
             public Task<bool> LogoutAccountAsync() => Task.FromResult(true);
             public Task<LicenseActivationResult> VerifyCurrentLicenseAsync(bool forceNetwork = false) => Task.FromResult(new LicenseActivationResult(true));
             public bool VerifyLicenseKey(string licenseKey, out string? email, out string? error) { email = null; error = null; return true; }

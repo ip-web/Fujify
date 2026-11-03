@@ -18,6 +18,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
@@ -67,6 +68,11 @@ namespace Fujify.Services
         public int UsedActivations => _currentStatus.UsedActivations;
         public int MaxActivations => _currentStatus.MaxActivations;
         public string SlotInfoText => $"{UsedActivations} of {MaxActivations} device slots active";
+
+        private readonly List<LicenseDeviceDto> _registeredDevices = new();
+        public IReadOnlyList<LicenseDeviceDto> RegisteredDevices => _registeredDevices;
+        public string CurrentDeviceId => _deviceIdentity.GetOrCreateDeviceId();
+        public event EventHandler? DevicesChanged;
 
         public static ILicenseService? Instance { get; set; }
         public static event EventHandler<LicenseStatus>? AnyLicenseChanged;
@@ -128,12 +134,14 @@ namespace Fujify.Services
                 if (IsDevOverrideKey(storedKey))
                 {
                     SetProState(storedKey, "pro-developer@fujifier.net", LicenseSource.LicenseKey, 1, 3);
+                    PopulateLocalDevDevice();
                     return;
                 }
 
                 if (VerifyLegacyRsaKey(storedKey, out var rsaEmail))
                 {
                     SetProState(storedKey, rsaEmail ?? storedEmail, LicenseSource.LicenseKey, 1, 3);
+                    PopulateLocalDevDevice();
                     return;
                 }
             }
@@ -196,6 +204,7 @@ namespace Fujify.Services
             {
                 SetProState(cleanKey, "pro-developer@fujifier.net", LicenseSource.LicenseKey, 1, 3);
                 SaveLicenseSettings(cleanKey, "pro-developer@fujifier.net", 1, 3);
+                PopulateLocalDevDevice();
                 NotifyLicenseChanged();
                 return new LicenseActivationResult(true, null, _currentStatus);
             }
@@ -205,6 +214,7 @@ namespace Fujify.Services
             {
                 SetProState(cleanKey, rsaEmail, LicenseSource.LicenseKey, 1, 3);
                 SaveLicenseSettings(cleanKey, rsaEmail, 1, 3);
+                PopulateLocalDevDevice();
                 NotifyLicenseChanged();
                 return new LicenseActivationResult(true, null, _currentStatus);
             }
@@ -261,6 +271,11 @@ namespace Fujify.Services
 
                 SetProState(cleanKey, _settingsService.Settings.LicenseeEmail, LicenseSource.LicenseKey, used, max, offlineExpiry);
                 SaveLicenseSettings(cleanKey, _settingsService.Settings.LicenseeEmail, used, max, res.OfflineToken, offlineExpiry);
+
+                if (res.Devices != null)
+                {
+                    UpdateRegisteredDevices(res.Devices);
+                }
 
                 NotifyLicenseChanged();
                 return new LicenseActivationResult(true, null, _currentStatus);
@@ -702,6 +717,11 @@ namespace Fujify.Services
                     _settingsService.Save();
                 }
 
+                if (meRes.Devices != null)
+                {
+                    UpdateRegisteredDevices(meRes.Devices);
+                }
+
                 UserLicenseDto? activeLicense = null;
                 if (meRes.Licenses != null && meRes.Licenses.Count > 0)
                 {
@@ -816,6 +836,145 @@ namespace Fujify.Services
             return true;
         }
 
+        public async Task<bool> DeactivateRemoteDeviceAsync(string deviceId)
+        {
+            if (string.IsNullOrWhiteSpace(deviceId)) return false;
+
+            // If it's this device, perform full local deactivation
+            if (string.Equals(deviceId, CurrentDeviceId, StringComparison.OrdinalIgnoreCase))
+            {
+                return await DeactivateLicenseAsync();
+            }
+
+            string? key = _currentStatus.LicenseKey ?? _settingsService.Settings.LicenseKey;
+            if (string.IsNullOrWhiteSpace(key)) return false;
+
+            // If dev override key or legacy RSA, simply remove from local collection
+            if (IsDevOverrideKey(key) || VerifyLegacyRsaKey(key, out _))
+            {
+                _registeredDevices.RemoveAll(d => string.Equals(d.DeviceId, deviceId, StringComparison.OrdinalIgnoreCase));
+                _currentStatus.UsedActivations = Math.Max(1, _registeredDevices.Count);
+                _settingsService.Settings.UsedActivations = _currentStatus.UsedActivations;
+                _settingsService.Save();
+                DevicesChanged?.Invoke(this, EventArgs.Empty);
+                NotifyLicenseChanged();
+                return true;
+            }
+
+            try
+            {
+                var deactReq = new LicenseDeactivationRequest
+                {
+                    LicenseKey = key,
+                    DeviceId = deviceId
+                };
+
+                string url = $"{GetApiBaseUrl()}/license/deactivate";
+                using var request = new HttpRequestMessage(HttpMethod.Post, url);
+                request.Content = new StringContent(JsonSerializer.Serialize(deactReq), Encoding.UTF8, "application/json");
+
+                if (!string.IsNullOrWhiteSpace(_settingsService.Settings.AccessToken))
+                {
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _settingsService.Settings.AccessToken);
+                }
+
+                using var response = await _httpClient.SendAsync(request);
+                string responseJson = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var res = JsonSerializer.Deserialize<LicenseDeactivationResponse>(responseJson, JsonOptions);
+                    if (res != null && res.Success)
+                    {
+                        if (res.Devices != null)
+                        {
+                            UpdateRegisteredDevices(res.Devices);
+                        }
+                        else
+                        {
+                            _registeredDevices.RemoveAll(d => string.Equals(d.DeviceId, deviceId, StringComparison.OrdinalIgnoreCase));
+                            DevicesChanged?.Invoke(this, EventArgs.Empty);
+                        }
+
+                        int newUsed = res.UsedActivations > 0 ? res.UsedActivations : _registeredDevices.Count;
+                        _currentStatus.UsedActivations = newUsed;
+                        _settingsService.Settings.UsedActivations = newUsed;
+                        _settingsService.Save();
+
+                        NotifyLicenseChanged();
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[LicenseService] DeactivateRemoteDeviceAsync error: {ex.Message}");
+            }
+
+            return false;
+        }
+
+        public async Task<IReadOnlyList<LicenseDeviceDto>> FetchRegisteredDevicesAsync()
+        {
+            string? key = _currentStatus.LicenseKey ?? _settingsService.Settings.LicenseKey;
+
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                UpdateRegisteredDevices(null);
+                return _registeredDevices;
+            }
+
+            if (IsDevOverrideKey(key) || VerifyLegacyRsaKey(key, out _))
+            {
+                PopulateLocalDevDevice();
+                return _registeredDevices;
+            }
+
+            try
+            {
+                string url = $"{GetApiBaseUrl()}/license/devices";
+                using var request = new HttpRequestMessage(HttpMethod.Post, url);
+                var payload = new LicenseDevicesRequest { LicenseKey = key };
+                request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+                if (!string.IsNullOrWhiteSpace(_settingsService.Settings.AccessToken))
+                {
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _settingsService.Settings.AccessToken);
+                }
+
+                using var response = await _httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    string responseJson = await response.Content.ReadAsStringAsync();
+                    var res = JsonSerializer.Deserialize<LicenseDevicesResponse>(responseJson, JsonOptions);
+                    if (res != null && res.Success)
+                    {
+                        if (res.UsedActivations > 0)
+                        {
+                            _currentStatus.UsedActivations = res.UsedActivations;
+                            _settingsService.Settings.UsedActivations = res.UsedActivations;
+                        }
+                        if (res.MaxActivations > 0)
+                        {
+                            _currentStatus.MaxActivations = res.MaxActivations;
+                            _settingsService.Settings.MaxActivations = res.MaxActivations;
+                        }
+                        _settingsService.Save();
+
+                        UpdateRegisteredDevices(res.Devices ?? new List<LicenseDeviceDto>());
+                        NotifyLicenseChanged();
+                        return _registeredDevices;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[LicenseService] FetchRegisteredDevicesAsync error: {ex.Message}");
+            }
+
+            return _registeredDevices;
+        }
+
         public Task<bool> LogoutAccountAsync()
         {
             _settingsService.Settings.AccessToken = null;
@@ -873,6 +1032,21 @@ namespace Fujify.Services
                     var verRes = JsonSerializer.Deserialize<LicenseVerificationResponse>(responseJson, JsonOptions);
                     if (verRes != null && verRes.Valid)
                     {
+                        if (verRes.Devices != null)
+                        {
+                            UpdateRegisteredDevices(verRes.Devices);
+                        }
+                        if (verRes.UsedActivations > 0)
+                        {
+                            _currentStatus.UsedActivations = verRes.UsedActivations;
+                            _settingsService.Settings.UsedActivations = verRes.UsedActivations;
+                        }
+                        if (verRes.MaxActivations > 0)
+                        {
+                            _currentStatus.MaxActivations = verRes.MaxActivations;
+                            _settingsService.Settings.MaxActivations = verRes.MaxActivations;
+                        }
+
                         if (!string.IsNullOrWhiteSpace(verRes.OfflineExpires) && DateTime.TryParse(verRes.OfflineExpires, out var newExpiry))
                         {
                             _settingsService.Settings.OfflineToken = verRes.OfflineToken ?? _settingsService.Settings.OfflineToken;
@@ -992,6 +1166,32 @@ namespace Fujify.Services
             }
         }
 
+        private void UpdateRegisteredDevices(IEnumerable<LicenseDeviceDto>? devices)
+        {
+            _registeredDevices.Clear();
+            if (devices != null)
+            {
+                _registeredDevices.AddRange(devices);
+            }
+            DevicesChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void PopulateLocalDevDevice()
+        {
+            UpdateRegisteredDevices(new[]
+            {
+                new LicenseDeviceDto
+                {
+                    Id = 1,
+                    DeviceId = CurrentDeviceId,
+                    DeviceName = _deviceIdentity.GetDeviceName(),
+                    Platform = _deviceIdentity.GetPlatform(),
+                    AppVersion = "2.0.0",
+                    LastCheckIn = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")
+                }
+            });
+        }
+
         private void SetProState(string? key, string? email, LicenseSource source, int used = 1, int max = 3, DateTime? expiry = null)
         {
             _currentStatus.Tier = LicenseTier.Pro;
@@ -1016,6 +1216,7 @@ namespace Fujify.Services
             _currentStatus.ExpirationDate = null;
             _currentStatus.IsAccountBound = IsAccountLoggedIn;
             _currentStatus.AccountEmail = AccountEmail;
+            UpdateRegisteredDevices(null);
         }
 
         private void SaveLicenseSettings(string key, string? email, int used, int max, string? offlineToken = null, DateTime? offlineExpiry = null)

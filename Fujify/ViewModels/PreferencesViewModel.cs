@@ -18,7 +18,9 @@
  */
 
 using System;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia.Threading;
@@ -74,6 +76,15 @@ namespace Fujify.ViewModels
         private string _licenseMessageText = string.Empty;
         private string _licenseMessageColor = "#A0A0AC";
         private bool _hasLicenseMessage = false;
+
+        public ObservableCollection<LicenseDeviceItemViewModel> RegisteredDevices { get; } = new();
+        public bool HasRegisteredDevices => RegisteredDevices.Count > 0;
+        private bool _isLoadingDevices;
+        public bool IsLoadingDevices
+        {
+            get => _isLoadingDevices;
+            set => SetProperty(ref _isLoadingDevices, value);
+        }
 
         public int TotalThreads => Environment.ProcessorCount;
         public int DefaultConcurrency => Math.Max(1, TotalThreads / 2);
@@ -638,6 +649,8 @@ namespace Fujify.ViewModels
         public ICommand UpgradeToProCommand { get; }
         public ICommand ActivateLicenseCommand { get; }
         public ICommand DeactivateLicenseCommand { get; }
+        public ICommand RefreshDevicesCommand { get; }
+        public ICommand DeactivateDeviceCommand { get; }
         public ICommand CheckForUpdatesCommand { get; }
         public ICommand AccountLoginCommand { get; }
         public ICommand ForgotPasswordCommand { get; }
@@ -703,6 +716,11 @@ namespace Fujify.ViewModels
                 {
                     _losslessCompression = true;
                     _maxConcurrentConversions = DefaultConcurrency;
+                    _ = RefreshDevicesAsync();
+                }
+                else
+                {
+                    UpdateRegisteredDevicesCollection();
                 }
                 OnPropertyChanged(nameof(IsPro));
                 OnPropertyChanged(nameof(LicenseStatusText));
@@ -716,6 +734,8 @@ namespace Fujify.ViewModels
                 OnPropertyChanged(nameof(AccountDisplayName));
                 OnPropertyChanged(nameof(SlotInfoText));
             };
+
+            _licenseService.DevicesChanged += (s, e) => UpdateRegisteredDevicesCollection();
 
             _language = LocalizationManager.NormalizeLanguageCode(settings.Language);
             _themeMode = string.IsNullOrEmpty(settings.ThemeMode)
@@ -960,7 +980,17 @@ namespace Fujify.ViewModels
 
             DeactivateLicenseCommand = new AsyncRelayCommand(async () =>
             {
-                LicenseMessageText = "Deactivating license and releasing device slot...";
+                var dialogService = _dialogService ?? new DialogService(_settingsService, _licenseService);
+                bool confirmed = await dialogService.ShowConfirmationAsync(
+                    OwnerWindow,
+                    LocalizationManager.Tr("ConfirmDeactivateDeviceTitle"),
+                    LocalizationManager.TrFormat("ConfirmDeactivateDeviceMessage", _licenseService.RegisteredDevices.FirstOrDefault(d => string.Equals(d.DeviceId, _licenseService.CurrentDeviceId, StringComparison.OrdinalIgnoreCase))?.DeviceName ?? "this device"),
+                    LocalizationManager.Tr("Deactivate"),
+                    LocalizationManager.Tr("Cancel"));
+
+                if (!confirmed) return;
+
+                LicenseMessageText = LocalizationManager.Tr("DeactivatingDevice");
                 LicenseMessageColor = "#A0A0AC";
                 HasLicenseMessage = true;
 
@@ -970,10 +1000,14 @@ namespace Fujify.ViewModels
                 _settingsService.Settings.LosslessCompression = false;
                 _settingsService.Settings.MaxConcurrentConversions = 1;
                 _settingsService.Save();
+                UpdateRegisteredDevicesCollection();
                 LicenseMessageText = "License deactivated. Device slot freed on fujifier.cc.";
                 LicenseMessageColor = "#A0A0AC";
                 HasLicenseMessage = true;
             });
+
+            RefreshDevicesCommand = new AsyncRelayCommand(RefreshDevicesAsync);
+            DeactivateDeviceCommand = new AsyncRelayCommand<LicenseDeviceItemViewModel>(DeactivateDeviceAsync);
 
             CheckForUpdatesCommand = new AsyncRelayCommand(async () =>
             {
@@ -1020,6 +1054,12 @@ namespace Fujify.ViewModels
                     IsCheckingForUpdate = false;
                 }
             });
+
+            UpdateRegisteredDevicesCollection();
+            if (_licenseService.IsPro)
+            {
+                _ = RefreshDevicesAsync();
+            }
         }
 
         private void Save()
@@ -1091,7 +1131,106 @@ namespace Fujify.ViewModels
             if (saved <= 0 || saved > TotalThreads) saved = DefaultConcurrency;
             _maxConcurrentConversions = saved;
 
+            UpdateRegisteredDevicesCollection();
+            if (_licenseService.IsPro)
+            {
+                _ = RefreshDevicesAsync();
+            }
+
             OnPropertyChanged(string.Empty);
+        }
+
+        private void UpdateRegisteredDevicesCollection()
+        {
+            if (Avalonia.Application.Current == null || Dispatcher.UIThread.CheckAccess())
+            {
+                ApplyRegisteredDevices();
+            }
+            else
+            {
+                Dispatcher.UIThread.Post(ApplyRegisteredDevices);
+            }
+
+            void ApplyRegisteredDevices()
+            {
+                RegisteredDevices.Clear();
+                string curId = _licenseService.CurrentDeviceId;
+                foreach (var d in _licenseService.RegisteredDevices)
+                {
+                    RegisteredDevices.Add(new LicenseDeviceItemViewModel(d, string.Equals(d.DeviceId, curId, StringComparison.OrdinalIgnoreCase)));
+                }
+                OnPropertyChanged(nameof(HasRegisteredDevices));
+                OnPropertyChanged(nameof(SlotInfoText));
+                OnPropertyChanged(nameof(LicenseDescriptionText));
+            }
+        }
+
+        public async Task RefreshDevicesAsync()
+        {
+            if (IsLoadingDevices) return;
+            if (!_licenseService.IsPro)
+            {
+                UpdateRegisteredDevicesCollection();
+                return;
+            }
+
+            IsLoadingDevices = true;
+            try
+            {
+                await _licenseService.FetchRegisteredDevicesAsync();
+                UpdateRegisteredDevicesCollection();
+            }
+            finally
+            {
+                IsLoadingDevices = false;
+            }
+        }
+
+        private async Task DeactivateDeviceAsync(LicenseDeviceItemViewModel? deviceItem)
+        {
+            if (deviceItem == null) return;
+
+            var dialogService = _dialogService ?? new DialogService(_settingsService, _licenseService);
+            bool confirmed = await dialogService.ShowConfirmationAsync(
+                OwnerWindow,
+                LocalizationManager.Tr("ConfirmDeactivateDeviceTitle"),
+                LocalizationManager.TrFormat("ConfirmDeactivateDeviceMessage", deviceItem.DeviceName),
+                LocalizationManager.Tr("Deactivate"),
+                LocalizationManager.Tr("Cancel"));
+
+            if (!confirmed) return;
+
+            LicenseMessageText = LocalizationManager.Tr("DeactivatingDevice");
+            LicenseMessageColor = "#A0A0AC";
+            HasLicenseMessage = true;
+
+            bool success = await _licenseService.DeactivateRemoteDeviceAsync(deviceItem.DeviceId);
+            if (success)
+            {
+                if (deviceItem.IsCurrentDevice)
+                {
+                    _losslessCompression = false;
+                    _maxConcurrentConversions = 1;
+                    _settingsService.Settings.LosslessCompression = false;
+                    _settingsService.Settings.MaxConcurrentConversions = 1;
+                    _settingsService.Save();
+                }
+
+                string msg = LocalizationManager.TrFormat("DeviceDeactivatedSuccess", deviceItem.DeviceName);
+                LicenseMessageText = $"✔ {msg}";
+                LicenseMessageColor = "#01D701";
+                HasLicenseMessage = true;
+                UpdateRegisteredDevicesCollection();
+                await ShowResultDialogAsync(LocalizationManager.Tr("ConfirmDeactivateDeviceTitle"), msg, isSuccess: true);
+            }
+            else
+            {
+                string errorMsg = "Failed to deactivate device on server. Please check your internet connection.";
+                LicenseMessageText = errorMsg;
+                LicenseMessageColor = "#E74C3C";
+                HasLicenseMessage = true;
+                await ShowResultDialogAsync("Deactivation Failed", errorMsg, isSuccess: false);
+            }
         }
 
         private async Task InstallLightroomPresetsAsync()

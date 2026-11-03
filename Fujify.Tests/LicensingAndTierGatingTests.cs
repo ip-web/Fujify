@@ -992,5 +992,162 @@ namespace Fujify.Tests
             Assert.Contains("No account found", vm.LicenseMessageText);
             Assert.Equal("#E74C3C", vm.LicenseMessageColor);
         }
+
+        [Fact]
+        public void DeviceIdentityService_PlatformDeviceNameProvider_ReturnsCustomDeviceName()
+        {
+            var settings = new MockSettingsService();
+            var identity = new DeviceIdentityService(settings);
+
+            DeviceIdentityService.PlatformDeviceNameProvider = () => "Tom's iPhone 15 Pro";
+            try
+            {
+                string name = identity.GetDeviceName();
+                Assert.Equal("Tom's iPhone 15 Pro", name);
+            }
+            finally
+            {
+                DeviceIdentityService.PlatformDeviceNameProvider = null;
+            }
+        }
+
+        [Theory]
+        [InlineData("ios", "📱", "iOS")]
+        [InlineData("iphone", "📱", "iOS")]
+        [InlineData("android", "🤖", "Android")]
+        [InlineData("macos", "💻", "macOS")]
+        [InlineData("windows", "💻", "Windows")]
+        [InlineData("linux", "🐧", "Linux")]
+        public void LicenseDeviceItemViewModel_PlatformIconAndDisplay(string platform, string expectedIcon, string expectedDisplay)
+        {
+            var dto = new LicenseDeviceDto
+            {
+                Id = 1,
+                DeviceId = "test-device-123",
+                DeviceName = "My Camera Tablet",
+                Platform = platform,
+                AppVersion = "2.1.0",
+                LastCheckIn = "2026-11-03 04:00:00"
+            };
+
+            var vm = new LicenseDeviceItemViewModel(dto, isCurrentDevice: false);
+
+            Assert.Equal("My Camera Tablet", vm.DeviceName);
+            Assert.Equal(expectedIcon, vm.PlatformIcon);
+            Assert.Equal(expectedDisplay, vm.PlatformDisplay);
+            Assert.False(vm.IsCurrentDevice);
+            Assert.Contains("v2.1.0", vm.DisplaySubtitle);
+        }
+
+        [Fact]
+        public void LicenseDeviceItemViewModel_CurrentDevice_ShowsActiveNow()
+        {
+            var dto = new LicenseDeviceDto
+            {
+                Id = 1,
+                DeviceId = "current-id",
+                DeviceName = "Tom's MacBook",
+                Platform = "macos",
+                AppVersion = "2.0.0"
+            };
+
+            var vm = new LicenseDeviceItemViewModel(dto, isCurrentDevice: true);
+
+            Assert.True(vm.IsCurrentDevice);
+            Assert.Equal("Active now", vm.FormattedLastSeen);
+            Assert.Contains("Active now", vm.DisplaySubtitle);
+        }
+
+        [Fact]
+        public async Task LicenseService_FetchRegisteredDevicesAsync_OnlineApi_ParsesDevices()
+        {
+            var settings = new MockSettingsService();
+            settings.Settings.LicenseKey = "FUJI-TEST-1111-2222";
+
+            var handler = new MockHttpMessageHandler(req =>
+            {
+                if (req.RequestUri!.PathAndQuery.Contains("/license/devices"))
+                {
+                    var responseObj = new
+                    {
+                        success = true,
+                        license_key = "FUJI-TEST-1111-2222",
+                        max_activations = 3,
+                        used_activations = 2,
+                        devices = new[]
+                        {
+                            new { id = 10, license_id = 5, device_id = "device-1", device_name = "Tom's iPhone", platform = "ios", app_version = "2.0.0", last_check_in = "2026-11-03 02:00:00" },
+                            new { id = 11, license_id = 5, device_id = "device-2", device_name = "Studio PC", platform = "windows", app_version = "2.0.0", last_check_in = "2026-11-03 03:00:00" }
+                        }
+                    };
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(responseObj))
+                    };
+                }
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            });
+
+            var httpClient = new HttpClient(handler);
+            var service = new LicenseService(settings, httpClient);
+
+            var devices = await service.FetchRegisteredDevicesAsync();
+
+            Assert.Equal(2, devices.Count);
+            Assert.Equal("Tom's iPhone", devices[0].DeviceName);
+            Assert.Equal("ios", devices[0].Platform);
+            Assert.Equal("Studio PC", devices[1].DeviceName);
+            Assert.Equal(2, service.UsedActivations);
+        }
+
+        [Fact]
+        public async Task LicenseService_DeactivateRemoteDeviceAsync_CallsApiAndUpdatesCollection()
+        {
+            var settings = new MockSettingsService();
+            settings.Settings.LicenseKey = "FUJI-TEST-1111-2222";
+
+            bool deactivateCalled = false;
+            var handler = new MockHttpMessageHandler(req =>
+            {
+                if (req.RequestUri!.PathAndQuery.Contains("/license/verify"))
+                {
+                    var verObj = new { valid = true, status = "active", plan_type = "lifetime" };
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(verObj))
+                    };
+                }
+                if (req.RequestUri!.PathAndQuery.Contains("/license/deactivate"))
+                {
+                    deactivateCalled = true;
+                    var responseObj = new
+                    {
+                        success = true,
+                        message = "Device slot released successfully.",
+                        used_activations = 1,
+                        devices = new[]
+                        {
+                            new { id = 10, license_id = 5, device_id = "device-1", device_name = "Tom's iPhone", platform = "ios", app_version = "2.0.0", last_check_in = "2026-11-03 02:00:00" }
+                        }
+                    };
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(responseObj))
+                    };
+                }
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            });
+
+            var httpClient = new HttpClient(handler);
+            var service = new LicenseService(settings, httpClient);
+
+            bool success = await service.DeactivateRemoteDeviceAsync("device-2");
+
+            Assert.True(success);
+            Assert.True(deactivateCalled);
+            Assert.Single(service.RegisteredDevices);
+            Assert.Equal("device-1", service.RegisteredDevices[0].DeviceId);
+            Assert.Equal(1, service.UsedActivations);
+        }
     }
 }

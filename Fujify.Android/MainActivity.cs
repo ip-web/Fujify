@@ -67,6 +67,37 @@ public class MainActivity : AvaloniaMainActivity
         EnableHighRefreshRate();
         RequestRuntimeStoragePermissions();
 
+        Fujify.Services.DeviceIdentityService.PlatformDeviceNameProvider = () =>
+        {
+            try
+            {
+                var resolver = ApplicationContext?.ContentResolver;
+                if (resolver != null)
+                {
+                    string? name = global::Android.Provider.Settings.Global.GetString(resolver, "device_name");
+                    if (!string.IsNullOrWhiteSpace(name)) return name;
+                }
+            }
+            catch { }
+
+            try
+            {
+                string model = global::Android.OS.Build.Model ?? "";
+                string manufacturer = global::Android.OS.Build.Manufacturer ?? "";
+                if (!string.IsNullOrWhiteSpace(model))
+                {
+                    if (!string.IsNullOrWhiteSpace(manufacturer) && !model.StartsWith(manufacturer, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return $"{manufacturer} {model}";
+                    }
+                    return model;
+                }
+            }
+            catch { }
+
+            return "Android Device";
+        };
+
         if (OperatingSystem.IsAndroidVersionAtLeast(33))
         {
             try
