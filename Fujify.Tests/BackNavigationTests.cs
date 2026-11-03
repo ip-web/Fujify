@@ -90,3 +90,4 @@ namespace Fujify.Tests
         }
     }
 }
+
