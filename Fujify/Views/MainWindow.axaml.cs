@@ -25,6 +25,8 @@ namespace Fujify.Views
 {
     public partial class MainWindow : Window
     {
+        private const uint WM_ACTIVATE = 0x0006;
+        private const uint WM_NCACTIVATE = 0x0086;
         private const uint WM_NCHITTEST = 0x0084;
         private const int HTCLIENT = 1;
 
@@ -41,7 +43,13 @@ namespace Fujify.Views
         private const int WS_SYSMENU = 0x00080000;
 
         private const int DWMWA_TRANSITIONS_FORCEDISABLED = 3;
+        private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
         private const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
+        private const int DWMWA_BORDER_COLOR = 34;
+        private const int DWMWA_CAPTION_COLOR = 35;
+        private const int DWMWA_TEXT_COLOR = 36;
+        private const uint DWMWA_COLOR_NONE = 0xFFFFFFFE;
+        private const uint DWMWA_COLOR_DEFAULT = 0xFFFFFFFF;
         private const int DWMWCP_ROUND = 2;
 
         [StructLayout(LayoutKind.Sequential)]
@@ -86,6 +94,9 @@ namespace Fujify.Views
         [DllImport("dwmapi.dll")]
         private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
 
+        [DllImport("dwmapi.dll", EntryPoint = "DwmSetWindowAttribute")]
+        private static extern int DwmSetWindowAttributeUint(IntPtr hwnd, int attr, ref uint attrValue, int attrSize);
+
         private static int GetWindowStyle(IntPtr hWnd)
         {
             return IntPtr.Size == 8 ? (int)GetWindowLongPtr64(hWnd, GWL_STYLE) : GetWindowLong32(hWnd, GWL_STYLE);
@@ -113,6 +124,14 @@ namespace Fujify.Views
             if (OperatingSystem.IsWindows())
             {
                 Win32Properties.AddWndProcHookCallback(this, WndProcHook);
+                ActualThemeVariantChanged += (s, e) =>
+                {
+                    var handle = TryGetPlatformHandle()?.Handle;
+                    if (handle.HasValue && handle.Value != IntPtr.Zero)
+                    {
+                        EnsureDwmTransitionsEnabled(handle.Value);
+                    }
+                };
             }
         }
 
@@ -140,6 +159,15 @@ namespace Fujify.Views
 
                 int cornerPreference = DWMWCP_ROUND;
                 DwmSetWindowAttribute(hWnd, DWMWA_WINDOW_CORNER_PREFERENCE, ref cornerPreference, sizeof(int));
+
+                int darkMode = (ActualThemeVariant == Avalonia.Styling.ThemeVariant.Light) ? 0 : 1;
+                DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref darkMode, sizeof(int));
+
+                uint captionColor = DWMWA_COLOR_NONE;
+                DwmSetWindowAttributeUint(hWnd, DWMWA_CAPTION_COLOR, ref captionColor, sizeof(uint));
+
+                uint borderColor = DWMWA_COLOR_NONE;
+                DwmSetWindowAttributeUint(hWnd, DWMWA_BORDER_COLOR, ref borderColor, sizeof(uint));
 
                 int currentStyle = GetWindowStyle(hWnd);
                 int desired = WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU;
@@ -208,7 +236,11 @@ namespace Fujify.Views
 
         private IntPtr WndProcHook(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
-            if (msg == WM_NCHITTEST)
+            if (msg == WM_NCACTIVATE || msg == WM_ACTIVATE)
+            {
+                EnsureDwmTransitionsEnabled(hWnd);
+            }
+            else if (msg == WM_NCHITTEST)
             {
                 int screenX = unchecked((short)(long)lParam);
                 int screenY = unchecked((short)((long)lParam >> 16));
