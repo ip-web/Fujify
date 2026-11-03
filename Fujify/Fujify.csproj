@@ -31,13 +31,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="12.1.2" />
-    <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
-    <PackageReference Include="Avalonia.Desktop" Version="12.1.2" Condition="'$(TargetPlatformIdentifier)' == ''" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.2" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.2" />
-    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" Condition="'$(Configuration)' == 'Debug'" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="SkiaSharp" Version="3.119.4" />
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" />
+    <PackageReference Include="Avalonia.Desktop" Condition="'$(TargetPlatformIdentifier)' == ''" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Fonts.Inter" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="SkiaSharp" />
   </ItemGroup>
 </Project>

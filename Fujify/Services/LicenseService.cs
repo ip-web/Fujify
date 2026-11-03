@@ -74,7 +74,17 @@ namespace Fujify.Services
         public string SlotInfoText => $"{UsedActivations} of {MaxActivations} device slots active";
 
         private readonly List<LicenseDeviceDto> _registeredDevices = new();
-        public IReadOnlyList<LicenseDeviceDto> RegisteredDevices => _registeredDevices;
+        private readonly object _devicesLock = new();
+        public IReadOnlyList<LicenseDeviceDto> RegisteredDevices
+        {
+            get
+            {
+                lock (_devicesLock)
+                {
+                    return _registeredDevices.ToArray();
+                }
+            }
+        }
         public string CurrentDeviceId => _deviceIdentity.GetOrCreateDeviceId();
         public event EventHandler? DevicesChanged;
 
@@ -92,6 +102,11 @@ namespace Fujify.Services
 
         private string? _pendingCodeVerifier;
         private string? _pendingExpectedState;
+        internal string? PendingExpectedState
+        {
+            get => _pendingExpectedState;
+            set => _pendingExpectedState = value;
+        }
 
         public event EventHandler<LicenseStatus>? LicenseChanged;
 
@@ -917,8 +932,11 @@ namespace Fujify.Services
             // If dev override key or legacy RSA, simply remove from local collection
             if (!string.IsNullOrWhiteSpace(key) && (IsDevOverrideKey(key) || VerifyLegacyRsaKey(key, out _)))
             {
-                _registeredDevices.RemoveAll(d => string.Equals(d.DeviceId, deviceId, StringComparison.OrdinalIgnoreCase));
-                _currentStatus.UsedActivations = Math.Max(1, _registeredDevices.Count);
+                lock (_devicesLock)
+                {
+                    _registeredDevices.RemoveAll(d => string.Equals(d.DeviceId, deviceId, StringComparison.OrdinalIgnoreCase));
+                    _currentStatus.UsedActivations = Math.Max(1, _registeredDevices.Count);
+                }
                 _settingsService.Settings.UsedActivations = _currentStatus.UsedActivations;
                 _settingsService.Save();
                 DevicesChanged?.Invoke(this, EventArgs.Empty);
@@ -957,11 +975,18 @@ namespace Fujify.Services
                         }
                         else
                         {
-                            _registeredDevices.RemoveAll(d => string.Equals(d.DeviceId, deviceId, StringComparison.OrdinalIgnoreCase));
+                            lock (_devicesLock)
+                            {
+                                _registeredDevices.RemoveAll(d => string.Equals(d.DeviceId, deviceId, StringComparison.OrdinalIgnoreCase));
+                            }
                             DevicesChanged?.Invoke(this, EventArgs.Empty);
                         }
 
-                        int newUsed = res.UsedActivations > 0 ? res.UsedActivations : _registeredDevices.Count;
+                        int newUsed;
+                        lock (_devicesLock)
+                        {
+                            newUsed = res.UsedActivations > 0 ? res.UsedActivations : _registeredDevices.Count;
+                        }
                         _currentStatus.UsedActivations = newUsed;
                         _settingsService.Settings.UsedActivations = newUsed;
                         _settingsService.Save();
@@ -986,13 +1011,19 @@ namespace Fujify.Services
             if (string.IsNullOrWhiteSpace(key) && !IsAccountLoggedIn)
             {
                 UpdateRegisteredDevices(null);
-                return _registeredDevices;
+                lock (_devicesLock)
+                {
+                    return _registeredDevices.ToArray();
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(key) && (IsDevOverrideKey(key) || VerifyLegacyRsaKey(key, out _)))
             {
                 PopulateLocalDevDevice();
-                return _registeredDevices;
+                lock (_devicesLock)
+                {
+                    return _registeredDevices.ToArray();
+                }
             }
 
             try
@@ -1038,7 +1069,10 @@ namespace Fujify.Services
                         _settingsService.Save();
 
                         UpdateRegisteredDevices(res.Devices ?? new List<LicenseDeviceDto>());
-                        return _registeredDevices;
+                        lock (_devicesLock)
+                        {
+                            return _registeredDevices.ToArray();
+                        }
                     }
                 }
             }
@@ -1047,7 +1081,10 @@ namespace Fujify.Services
                 Debug.WriteLine($"[LicenseService] FetchRegisteredDevicesAsync error: {ex.Message}");
             }
 
-            return _registeredDevices;
+            lock (_devicesLock)
+            {
+                return _registeredDevices.ToArray();
+            }
         }
 
         public Task<bool> LogoutAccountAsync()
@@ -1249,10 +1286,13 @@ namespace Fujify.Services
 
         private void UpdateRegisteredDevices(IEnumerable<LicenseDeviceDto>? devices)
         {
-            _registeredDevices.Clear();
-            if (devices != null)
+            lock (_devicesLock)
             {
-                _registeredDevices.AddRange(devices);
+                _registeredDevices.Clear();
+                if (devices != null)
+                {
+                    _registeredDevices.AddRange(devices);
+                }
             }
             DevicesChanged?.Invoke(this, EventArgs.Empty);
         }

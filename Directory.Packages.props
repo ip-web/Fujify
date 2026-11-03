@@ -1,0 +1,33 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <NoWarn>$(NoWarn);NU1507</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Avalonia UI -->
+    <PackageVersion Include="Avalonia" Version="12.1.2" />
+    <PackageVersion Include="Avalonia.Controls.DataGrid" Version="12.1.2" />
+    <PackageVersion Include="Avalonia.Desktop" Version="12.1.2" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="12.1.2" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="12.1.2" />
+    <PackageVersion Include="Avalonia.Android" Version="12.1.2" />
+    <PackageVersion Include="Avalonia.iOS" Version="12.1.2" />
+    <PackageVersion Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" />
+
+    <!-- MVVM & Graphics -->
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageVersion Include="SkiaSharp" Version="3.119.4" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Android" Version="3.119.4" />
+
+    <!-- Mobile Ads -->
+    <PackageVersion Include="Xamarin.GooglePlayServices.Ads.Lite" Version="124.0.0.9" />
+    <PackageVersion Include="Cats.Google.iOS.AdMob" Version="12.14.0" />
+
+    <!-- Testing -->
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+</Project>

@@ -1262,5 +1262,27 @@ namespace Fujify.Tests
             Assert.Contains("/account", service.AccountDashboardUrl);
             Assert.Contains("fujifier.cc", service.AccountDashboardUrl);
         }
+        [Fact]
+        public async Task LicenseService_CompleteOAuthCallbackAsync_StateMismatchOrMissing_ShouldReject()
+        {
+            var settings = new MockSettingsService();
+            var service = new LicenseService(settings);
+            service.PendingExpectedState = "secure-random-state-xyz";
+
+            // 1. Empty code
+            var resEmptyCode = await service.CompleteOAuthCallbackAsync("");
+            Assert.False(resEmptyCode.Success);
+            Assert.Equal("Authorization code is required.", resEmptyCode.ErrorMessage);
+
+            // 2. Mismatched state
+            var resMismatch = await service.CompleteOAuthCallbackAsync("test-code-123", state: "wrong-state");
+            Assert.False(resMismatch.Success);
+            Assert.Contains("Security state mismatch", resMismatch.ErrorMessage);
+
+            // 3. Null state when expected state is set
+            var resNullState = await service.CompleteOAuthCallbackAsync("test-code-123", state: null);
+            Assert.False(resNullState.Success);
+            Assert.Contains("Security state mismatch", resNullState.ErrorMessage);
+        }
     }
 }

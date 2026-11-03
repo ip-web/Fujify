@@ -1175,7 +1175,7 @@ namespace Fujify
             return $"{fl.ToString("0.#", CultureInfo.InvariantCulture)} mm";
         }
 
-        private static string? ReadLensSpecification(Stream stream, long tiffBase, ushort type, uint count, uint valueOrOffset, bool isLittleEndian)
+        internal static string? ReadLensSpecification(Stream stream, long tiffBase, ushort type, uint count, uint valueOrOffset, bool isLittleEndian)
         {
             if (type != 5 || count < 4) return null;
             if (tiffBase + valueOrOffset + 32 > stream.Length) return null;

@@ -17,9 +17,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Avalonia.Android" Version="12.1.2" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Android" Version="3.119.4" />
-    <PackageReference Include="Xamarin.GooglePlayServices.Ads.Lite" Version="124.0.0.9" />
+    <PackageReference Include="Avalonia.Android" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Android" />
+    <PackageReference Include="Xamarin.GooglePlayServices.Ads.Lite" />
   </ItemGroup>
 
   <ItemGroup>

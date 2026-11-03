@@ -704,5 +704,40 @@ namespace Fujify.Tests
                 if (File.Exists(outDng)) File.Delete(outDng);
             }
         }
+        [Fact]
+        public void ReadLensSpecification_UnderFrenchCulture_FormatsWithDotSeparator()
+        {
+            var originalCulture = System.Globalization.CultureInfo.CurrentCulture;
+            try
+            {
+                System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("fr-FR");
+
+                // 32-byte EXIF LensSpecification:
+                // minFocal: 185 / 10 = 18.5
+                // maxFocal: 555 / 10 = 55.5
+                // minF: 28 / 10 = 2.8
+                // maxF: 40 / 10 = 4.0
+                byte[] data = new byte[32];
+                BitConverter.GetBytes(185u).CopyTo(data, 0);
+                BitConverter.GetBytes(10u).CopyTo(data, 4);
+                BitConverter.GetBytes(555u).CopyTo(data, 8);
+                BitConverter.GetBytes(10u).CopyTo(data, 12);
+                BitConverter.GetBytes(28u).CopyTo(data, 16);
+                BitConverter.GetBytes(10u).CopyTo(data, 20);
+                BitConverter.GetBytes(40u).CopyTo(data, 24);
+                BitConverter.GetBytes(10u).CopyTo(data, 28);
+
+                using var stream = new MemoryStream(data);
+                string? result = RawMetadataReader.ReadLensSpecification(stream, 0, 5, 4, 0, true);
+
+                Assert.NotNull(result);
+                Assert.Equal("18.5-55.5mm f/2.8-4", result);
+                Assert.DoesNotContain(",", result);
+            }
+            finally
+            {
+                System.Globalization.CultureInfo.CurrentCulture = originalCulture;
+            }
+        }
     }
 }
