@@ -53,6 +53,7 @@ namespace Fujify.Services
 
         private const string RsaPublicKeyXml = @"<RSAKeyValue><Modulus>xNCFZILhKeCCfY0Vk7/cFywefj5rUmDPXrYciIbQ3jC5GgVNpdUsag/noI1tncmttOiwiqXZFO6K1VbYCbXbWujHA8iOfdYLU3JITwZ+6fKw5jJAuE9pptqpx0s47SZzieki6XrcX7mQ5o6eo+RXIhlfdeTveXmX71ndzCA6EAQBjpvOVE/7IYEtzkEVxwg2+SBAHeLTmjCygwWdePFhr9CRuVCQ+6AEvyA0ZRiHjyorowt8WM2KVaNLEALZMh7hxXQBcuh8qffVTS89MG1+N8NOurFRtQAG3ZCHp5YrMh/cpTdIrgB0jhwqPv0ZiGhQ9ORZNECzjQ/TUhtveX9mBQ==</Modulus><Exponent>AQAB</Exponent></RSAKeyValue>";
 
+        private static readonly HttpClient _sharedHttpClient = new();
         private readonly ISettingsService _settingsService;
         private readonly DeviceIdentityService _deviceIdentity;
         private readonly HttpClient _httpClient;
@@ -99,7 +100,7 @@ namespace Fujify.Services
             Instance ??= this;
             _settingsService = settingsService ?? new SettingsService();
             _deviceIdentity = new DeviceIdentityService(_settingsService);
-            _httpClient = httpClient ?? new HttpClient();
+            _httpClient = httpClient ?? _sharedHttpClient;
 
             if (_httpClient.DefaultRequestHeaders.UserAgent.Count == 0)
             {

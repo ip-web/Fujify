@@ -96,11 +96,15 @@ namespace Fujify.Common
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
-                    Process.Start("open", $"\"{path}\"");
+                    var psi = new ProcessStartInfo("open") { UseShellExecute = false };
+                    psi.ArgumentList.Add(path);
+                    Process.Start(psi);
                 }
                 else
                 {
-                    Process.Start("xdg-open", $"\"{path}\"");
+                    var psi = new ProcessStartInfo("xdg-open") { UseShellExecute = false };
+                    psi.ArgumentList.Add(path);
+                    Process.Start(psi);
                 }
             }
             catch (Exception ex)
@@ -135,7 +139,9 @@ namespace Fujify.Common
                 }
                 else
                 {
-                    Process.Start("xdg-open", $"\"{filePath}\"");
+                    var psi = new ProcessStartInfo("xdg-open") { UseShellExecute = false };
+                    psi.ArgumentList.Add(filePath);
+                    Process.Start(psi);
                 }
             }
             catch (Exception ex)
@@ -291,7 +297,7 @@ namespace Fujify.Common
                     var topLevel = Avalonia.Controls.TopLevel.GetTopLevel(singleView.MainView);
                     if (topLevel?.Launcher != null)
                     {
-                        topLevel.Launcher.LaunchUriAsync(new Uri(url));
+                        _ = topLevel.Launcher.LaunchUriAsync(new Uri(url));
                         return;
                     }
                 }
@@ -300,7 +306,7 @@ namespace Fujify.Common
                     var topLevel = Avalonia.Controls.TopLevel.GetTopLevel(desktop.MainWindow);
                     if (topLevel?.Launcher != null)
                     {
-                        topLevel.Launcher.LaunchUriAsync(new Uri(url));
+                        _ = topLevel.Launcher.LaunchUriAsync(new Uri(url));
                         return;
                     }
                 }
@@ -312,11 +318,15 @@ namespace Fujify.Common
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 {
-                    Process.Start("open", url);
+                    var psi = new ProcessStartInfo("open") { UseShellExecute = false };
+                    psi.ArgumentList.Add(url);
+                    Process.Start(psi);
                 }
                 else
                 {
-                    Process.Start("xdg-open", url);
+                    var psi = new ProcessStartInfo("xdg-open") { UseShellExecute = false };
+                    psi.ArgumentList.Add(url);
+                    Process.Start(psi);
                 }
             }
             catch (Exception ex)

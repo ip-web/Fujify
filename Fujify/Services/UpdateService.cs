@@ -38,6 +38,7 @@ namespace Fujify.Services
         public const string PrimaryRepo = "ip-web/Fujify";
         public const string FallbackRepo = "ip-web/Fujifier";
 
+        private static readonly HttpClient _sharedHttpClient = new();
         private readonly ISettingsService _settingsService;
         private readonly HttpClient _httpClient;
 
@@ -61,7 +62,7 @@ namespace Fujify.Services
         public UpdateService(ISettingsService? settingsService = null, HttpClient? httpClient = null)
         {
             _settingsService = settingsService ?? new SettingsService();
-            _httpClient = httpClient ?? new HttpClient();
+            _httpClient = httpClient ?? _sharedHttpClient;
 
             if (_httpClient.DefaultRequestHeaders.UserAgent.Count == 0)
             {

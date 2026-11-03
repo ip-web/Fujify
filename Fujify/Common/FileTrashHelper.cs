@@ -133,14 +133,15 @@ namespace Fujify.Common
             try
             {
                 string fullPath = Path.GetFullPath(filePath);
-                string escaped = fullPath.Replace("\"", "\\\"");
-                var psi = new ProcessStartInfo("osascript", $"-e \"tell application \\\"Finder\\\" to delete POSIX file \\\"{escaped}\\\"\"")
+                var psi = new ProcessStartInfo("osascript")
                 {
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
+                psi.ArgumentList.Add("-e");
+                psi.ArgumentList.Add($"tell application \"Finder\" to delete POSIX file \"{fullPath.Replace("\"", "\\\"")}\"");
 
                 using var proc = Process.Start(psi);
                 if (proc != null)
@@ -187,13 +188,15 @@ namespace Fujify.Common
             try
             {
                 string fullPath = Path.GetFullPath(filePath);
-                var psi = new ProcessStartInfo("gio", $"trash \"{fullPath}\"")
+                var psi = new ProcessStartInfo("gio")
                 {
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
                     CreateNoWindow = true
                 };
+                psi.ArgumentList.Add("trash");
+                psi.ArgumentList.Add(fullPath);
 
                 using var proc = Process.Start(psi);
                 if (proc != null)
