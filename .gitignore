@@ -15,6 +15,7 @@ Fujifier-*.html
 *.keystore
 *.jks
 keyandroid.txt
+admob_ids.txt
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
