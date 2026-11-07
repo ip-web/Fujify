@@ -303,5 +303,243 @@ namespace Fujify.Tests
         }
 
         #endregion
+
+        #region 5. Conversion Failure Progress Indicator & Logging Tests
+
+        [Fact]
+        public void OverallStatusText_WhenAllPhotosSucceed_DisplaysAllConvertedSuccessfully()
+        {
+            var vm = new MainViewModel();
+            vm.Files.Add(new FileItem { FilePath = "C:\\test\\photo1.dng", Status = "✔" });
+            vm.Files.Add(new FileItem { FilePath = "C:\\test\\photo2.dng", Status = "✔" });
+            vm.Files.Add(new FileItem { FilePath = "C:\\test\\photo3.dng", Status = "✔" });
+
+            Assert.Contains("All 3 photos converted successfully", vm.OverallStatusText);
+            Assert.Equal("#01D701", vm.OverallStatusDotColor);
+            Assert.Equal("3 / 3 completed", vm.ProgressSummaryText);
+        }
+
+        [Fact]
+        public void OverallStatusText_WhenSomePhotosFail_DisplaysActualSuccessAndFailureCount()
+        {
+            var vm = new MainViewModel();
+            vm.Files.Add(new FileItem { FilePath = "C:\\test\\photo1.dng", Status = "✔" });
+            vm.Files.Add(new FileItem { FilePath = "C:\\test\\photo2.dng", Status = "✔" });
+            vm.Files.Add(new FileItem { FilePath = "C:\\test\\photo3.dng", Status = "Error: Invalid header" });
+
+            Assert.Contains("2 of 3 photos converted (1 failed)", vm.OverallStatusText);
+            Assert.Equal("#F39C12", vm.OverallStatusDotColor);
+            Assert.Contains("2 / 3 completed (1 failed)", vm.ProgressSummaryText);
+        }
+
+        [Fact]
+        public void OverallStatusText_WhenAllPhotosFail_DisplaysAllFailed()
+        {
+            var vm = new MainViewModel();
+            vm.Files.Add(new FileItem { FilePath = "C:\\test\\photo1.dng", Status = "Error: Timeout" });
+            vm.Files.Add(new FileItem { FilePath = "C:\\test\\photo2.dng", Status = "Error: Corrupted" });
+
+            Assert.Contains("Conversion failed (2 failed)", vm.OverallStatusText);
+            Assert.Equal("#E74C3C", vm.OverallStatusDotColor);
+            Assert.Contains("0 / 2 completed (2 failed)", vm.ProgressSummaryText);
+        }
+
+        [Fact]
+        public void ConversionLogService_GenerateLogContent_ContainsFileCameraAndErrorMessage()
+        {
+            var failures = new System.Collections.Generic.List<FailedConversionEntry>
+            {
+                new FailedConversionEntry(
+                    "D:\\Photos\\IMG_0042.CR3",
+                    "Canon EOS R5",
+                    "RF 24-70mm F2.8L IS USM",
+                    "Capture One (RAF)",
+                    "Fujifilm X-T5",
+                    "No valid donor container matching dimensions (8192x5464)",
+                    "   at Fujify.Services.RafConverterService.ConvertToRafAsync()",
+                    DateTime.Now),
+                new FailedConversionEntry(
+                    "D:\\Photos\\DSC_0987.ARW",
+                    "Sony ILCE-7M3",
+                    "FE 50mm F1.8",
+                    "Lightroom (DNG)",
+                    "Fujifilm X-T5",
+                    "Corrupt RAW payload",
+                    null,
+                    DateTime.Now)
+            };
+
+            string log = ConversionLogService.GenerateLogContent(failures, 10, 8, TimeSpan.FromSeconds(15.2));
+
+            Assert.Contains("FUJIFY - FAILED CONVERSIONS REPORT", log);
+            Assert.Contains("Total Processed    : 10", log);
+            Assert.Contains("Succeeded          : 8", log);
+            Assert.Contains("Failed             : 2", log);
+            Assert.Contains("D:\\Photos\\IMG_0042.CR3", log);
+            Assert.Contains("Canon EOS R5", log);
+            Assert.Contains("RF 24-70mm F2.8L IS USM", log);
+            Assert.Contains("No valid donor container matching dimensions (8192x5464)", log);
+            Assert.Contains("D:\\Photos\\DSC_0987.ARW", log);
+            Assert.Contains("Sony ILCE-7M3", log);
+            Assert.Contains("Corrupt RAW payload", log);
+        }
+
+        [Fact]
+        public void ConversionLogService_WriteFailureLog_WritesToOutputDirectoryWhenEnabled()
+        {
+            string tempDir = Path.Combine(Path.GetTempPath(), "FujifyLogTest_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDir);
+            try
+            {
+                var failures = new System.Collections.Generic.List<FailedConversionEntry>
+                {
+                    new FailedConversionEntry(
+                        "C:\\raw\\sample.nef",
+                        "Nikon Z 6",
+                        "NIKKOR Z 24-70mm f/4 S",
+                        "Lightroom (DNG)",
+                        "Fujifilm X-T5",
+                        "Decoding failed",
+                        null,
+                        DateTime.Now)
+                };
+
+                string? writtenPath = ConversionLogService.WriteFailureLog(
+                    failures,
+                    1,
+                    0,
+                    TimeSpan.FromSeconds(2.0),
+                    tempDir,
+                    exportToDirectory: true);
+
+                Assert.NotNull(writtenPath);
+                Assert.True(File.Exists(writtenPath));
+                Assert.StartsWith(tempDir, writtenPath);
+
+                string content = File.ReadAllText(writtenPath);
+                Assert.Contains("sample.nef", content);
+                Assert.Contains("Nikon Z 6", content);
+                Assert.Contains("Decoding failed", content);
+
+                // Latest log in app data should also exist
+                Assert.True(ConversionLogService.HasLatestFailureLog());
+            }
+            finally
+            {
+                try { Directory.Delete(tempDir, true); } catch { }
+                ConversionLogService.ClearLatestFailureLog();
+            }
+        }
+
+        [Fact]
+        public void MainViewModel_HasFailureLog_IsFalseWhenNoErrorsOccur()
+        {
+            var mockSettings = new MockSettingsService();
+            var vm = new ViewModels.MainViewModel(settingsService: mockSettings);
+
+            // Initially no log
+            Assert.False(vm.HasFailureLog);
+
+            // Setting LastFailureLogPath to a non-existent or null file keeps HasFailureLog false
+            vm.LastFailureLogPath = null;
+            Assert.False(vm.HasFailureLog);
+
+            // Even if an old stale log file exists in AppData, if the current batch had no failure, HasFailureLog must be false
+            string tempLog = Path.Combine(Path.GetTempPath(), $"failure_test_{Guid.NewGuid():N}.log");
+            try
+            {
+                File.WriteAllText(tempLog, "dummy log");
+                vm.LastFailureLogPath = tempLog;
+                Assert.True(vm.HasFailureLog);
+
+                // When cleared upon successful batch completion
+                vm.LastFailureLogPath = null;
+                Assert.False(vm.HasFailureLog);
+            }
+            finally
+            {
+                try { File.Delete(tempLog); } catch { }
+            }
+        }
+
+        [Fact]
+        public void PreferencesViewModel_ExportFailedConversionsLog_PersistsToSettings()
+        {
+            var mockSettings = new MockSettingsService();
+            var vm = new PreferencesViewModel(mockSettings);
+
+            Assert.False(vm.ExportFailedConversionsLog);
+            vm.ExportFailedConversionsLog = true;
+
+            Assert.True(mockSettings.Settings.ExportFailedConversionsLog);
+            Assert.True(mockSettings.WasSaved);
+            Assert.NotNull(vm.OpenLatestFailureLogCommand);
+        }
+
+        #endregion
+
+        #region 8. Process and Stop Button Dynamic Transformation Tests
+
+        [Fact]
+        public void ProcessButton_InitialState_IsProcessWithSparkleIcon()
+        {
+            var mockSettings = new MockSettingsService();
+            var vm = new MainViewModel(settingsService: mockSettings);
+
+            Assert.Equal("Process", vm.ProcessButtonContent);
+            Assert.Equal(MainViewModel.SparkleIconData, vm.ProcessButtonIcon);
+            Assert.False(vm.IsProcessing);
+            Assert.False(vm.CanProcessOrStop);
+            Assert.NotNull(vm.ProcessCommand);
+            Assert.NotNull(vm.StopCommand);
+        }
+
+        [Fact]
+        public void ProcessButton_WhenPendingFilesPresent_CanProcessOrStopIsTrue()
+        {
+            var mockSettings = new MockSettingsService();
+            var vm = new MainViewModel(settingsService: mockSettings);
+
+            vm.Files.Add(new FileItem { FilePath = "dummy.arw", Status = "Pending" });
+
+            Assert.True(vm.CanProcessOrStop);
+            Assert.Equal("Process", vm.ProcessButtonContent);
+            Assert.Equal(MainViewModel.SparkleIconData, vm.ProcessButtonIcon);
+            Assert.Equal("Process batch with Fujifilm simulation profiles", vm.ProcessButtonTooltip);
+        }
+
+        [Fact]
+        public void ExecuteStop_SignalsCancellationAndTransformsButton()
+        {
+            var mockSettings = new MockSettingsService();
+            var vm = new MainViewModel(settingsService: mockSettings);
+
+            vm.Files.Add(new FileItem { FilePath = "test.arw", Status = "Pending" });
+
+            // Set IsProcessing via reflection
+            var isProcessingProp = typeof(MainViewModel).GetProperty("IsProcessing");
+            isProcessingProp?.SetValue(vm, true);
+
+            Assert.True(vm.IsProcessing);
+            Assert.Equal("Stop", vm.ProcessButtonContent);
+            Assert.Equal(MainViewModel.StopIconData, vm.ProcessButtonIcon);
+            Assert.Equal("Stop processing batch", vm.ProcessButtonTooltip);
+
+            // Execute stop
+            vm.ExecuteStop();
+
+            Assert.Equal("Stopping...", vm.ProcessButtonContent);
+            Assert.False(vm.CanProcessOrStop);
+        }
+
+        #endregion
+
+        private class MockSettingsService : ISettingsService
+        {
+            public AppSettings Settings { get; set; } = new();
+            public bool WasSaved { get; private set; }
+            public void Save() => WasSaved = true;
+            public void Load() { }
+        }
     }
 }

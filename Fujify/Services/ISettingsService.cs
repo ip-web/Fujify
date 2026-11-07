@@ -59,6 +59,7 @@ namespace Fujify.Services
         public bool AutoOpenOutputFolder { get; set; } = false;
         public bool LosslessCompression { get; set; } = true;
         public bool EnableWindowsContextMenu { get; set; } = false;
+        public bool ExportFailedConversionsLog { get; set; } = false;
         public string? LicenseKey { get; set; }
         public string? LicenseeEmail { get; set; }
         public string? LicenseSignature { get; set; }
@@ -77,6 +78,11 @@ namespace Fujify.Services
         public bool IsQuickSettingsExpanded { get; set; } = true;
         public string? SkippedVersion { get; set; }
         public System.DateTime? LastUpdateCheck { get; set; }
+
+        // Capture One (RAF) Experimental Mode
+        public bool EnableCaptureOneMode { get; set; } = false;
+        public string? RafContainerPath { get; set; }
+        public string ConversionTargetMode { get; set; } = "Lightroom"; // "Lightroom" (DNG) or "CaptureOne" (RAF)
     }
 
     public interface ISettingsService

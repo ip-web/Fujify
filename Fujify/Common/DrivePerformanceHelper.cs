@@ -134,7 +134,7 @@ namespace Fujify.Common
         }
 
         /// <summary>
-        /// Gets optimal concurrency for heavy RAW to DNG conversion.
+        /// Gets optimal concurrency for heavy RAW to DNG / RAF conversion.
         /// </summary>
         public static int GetOptimalConversionConcurrency(string? sampleFilePath, int configuredConcurrency, bool isPro)
         {

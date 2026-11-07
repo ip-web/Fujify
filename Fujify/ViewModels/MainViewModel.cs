@@ -41,6 +41,7 @@ namespace Fujify.ViewModels
     public class MainViewModel : ViewModelBase
     {
         private readonly IRawConverterService _rawConverterService;
+        private readonly IRafConverterService _rafConverterService;
         private readonly IMetadataService _metadataService;
         private readonly IThumbnailService _thumbnailService;
         private readonly IDialogService _dialogService;
@@ -82,9 +83,11 @@ namespace Fujify.ViewModels
             ISettingsService? settingsService = null,
             ILicenseService? licenseService = null,
             IUpdateService? updateService = null,
-            IAdService? adService = null)
+            IAdService? adService = null,
+            IRafConverterService? rafConverterService = null)
         {
             _rawConverterService = rawConverterService ?? new RawConverterService();
+            _rafConverterService = rafConverterService ?? new RafConverterService();
             _metadataService = metadataService ?? new MetadataService();
             _thumbnailService = thumbnailService ?? new ThumbnailService();
             _settingsService = settingsService ?? new SettingsService();
@@ -110,6 +113,7 @@ namespace Fujify.ViewModels
                     OnPropertyChanged(nameof(LicenseService));
                     (ClearCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
                     (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+                    (StopCommand as RelayCommand)?.NotifyCanExecuteChanged();
 
                     if (OperatingSystem.IsWindows())
                     {
@@ -128,7 +132,13 @@ namespace Fujify.ViewModels
             _licenseService.LicenseChanged += (s, status) => OnLicenseUpdated(status);
             Services.LicenseService.AnyLicenseChanged += (s, status) => OnLicenseUpdated(status);
 
-            ProcessCommand = new AsyncRelayCommand(ExecuteProcessOrStopAsync);
+            ProcessCommand = new AsyncRelayCommand(
+                ExecuteProcessOrStopAsync,
+                () => CanProcessOrStop,
+                AsyncRelayCommandOptions.AllowConcurrentExecutions);
+            StopCommand = new RelayCommand(
+                ExecuteStop,
+                () => IsProcessing && !_isStopping);
             ClearCommand = new AsyncRelayCommand(ExecuteClearAsync, () => CanClear);
             BrowseFolderCommand = new AsyncRelayCommand(ExecuteBrowseFolderAsync);
             AddFilesCommand = new AsyncRelayCommand(ExecuteAddFilesAsync);
@@ -163,6 +173,8 @@ namespace Fujify.ViewModels
             OpenUpdateCommand = new AsyncRelayCommand(ExecuteOpenUpdateAsync);
             ReportBugCommand = new RelayCommand(ExecuteReportBug);
             ToggleQuickSettingsCommand = new RelayCommand(() => IsQuickSettingsExpanded = !IsQuickSettingsExpanded);
+            SelectLightroomModeCommand = new RelayCommand(() => ConversionTargetMode = "Lightroom");
+            SelectCaptureOneModeCommand = new RelayCommand(() => ConversionTargetMode = "CaptureOne");
             _isQuickSettingsExpanded = _settingsService.Settings.IsQuickSettingsExpanded;
 
             SelectInspectorSettingsTabCommand = new RelayCommand(() => InspectorTabIndex = 0);
@@ -264,14 +276,29 @@ namespace Fujify.ViewModels
             ConfirmModalActionCommand = new RelayCommand(() => ResolveConfirmation(true));
             CancelModalActionCommand = new RelayCommand(() => ResolveConfirmation(false));
 
+            ViewFailureLogCommand = new RelayCommand(() =>
+            {
+                string? logPath = LastFailureLogPath;
+                if (string.IsNullOrEmpty(logPath) || !File.Exists(logPath))
+                {
+                    logPath = ConversionLogService.GetLatestFailureLogPath();
+                }
+                if (!string.IsNullOrEmpty(logPath) && File.Exists(logPath))
+                {
+                    CrossPlatformLauncher.OpenPath(logPath);
+                }
+            });
+
             LocalizationManager.Instance.LanguageChanged += (s, e) =>
             {
                 OnPropertyChanged(nameof(Loc));
                 OnPropertyChanged(nameof(OverallStatusText));
+                OnPropertyChanged(nameof(OverallStatusDotColor));
                 OnPropertyChanged(nameof(ProgressSummaryText));
                 OnPropertyChanged(nameof(OutputDestinationSummary));
                 OnPropertyChanged(nameof(FormattedOutputFolderPath));
                 OnPropertyChanged(nameof(ProcessButtonContent));
+                OnPropertyChanged(nameof(ProcessButtonTooltip));
                 OnPropertyChanged(nameof(QuickSettingsSummary));
                 OnPropertyChanged(nameof(SuffixPreview));
                 OnPropertyChanged(nameof(SubfolderPreview));
@@ -344,6 +371,7 @@ namespace Fujify.ViewModels
         public ICommand SetGridViewCommand { get; }
         public ICommand ShowPropertiesCommand { get; }
         public ICommand OpenOutputFolderCommand { get; }
+        public ICommand ViewFailureLogCommand { get; }
         public ICommand ClearOutputFolderCommand { get; }
         public ICommand OpenWithCommand { get; }
         public ICommand ResetStatusCommand { get; }
@@ -364,6 +392,8 @@ namespace Fujify.ViewModels
         public IRelayCommand ToggleSelectAllCommand { get; }
         public IRelayCommand DeleteSelectedMultiSelectCommand { get; }
         public IRelayCommand ToggleFileSelectionCommand { get; }
+        public ICommand SelectLightroomModeCommand { get; }
+        public ICommand SelectCaptureOneModeCommand { get; }
 
         private bool _isMultiSelectMode;
         public bool IsMultiSelectMode
@@ -779,8 +809,52 @@ namespace Fujify.ViewModels
         }
 
         public string SuffixPreview => AppendSuffix && !string.IsNullOrWhiteSpace(Suffix)
-            ? $"DSC0001{Suffix.Trim()}.dng"
-            : "DSC0001.dng";
+            ? $"DSC0001{Suffix.Trim()}{(IsCaptureOneModeSelected ? ".raf" : ".dng")}"
+            : (IsCaptureOneModeSelected ? "DSC0001.raf" : "DSC0001.dng");
+
+        public bool IsCaptureOneModeUnlocked => _settingsService.Settings.EnableCaptureOneMode;
+
+        public string ConversionTargetMode
+        {
+            get => _settingsService.Settings.ConversionTargetMode ?? "Lightroom";
+            set
+            {
+                if (_settingsService.Settings.ConversionTargetMode != value)
+                {
+                    _settingsService.Settings.ConversionTargetMode = value;
+                    _settingsService.Save();
+                    OnPropertyChanged(nameof(ConversionTargetMode));
+                    OnPropertyChanged(nameof(IsLightroomModeSelected));
+                    OnPropertyChanged(nameof(IsCaptureOneModeSelected));
+                    OnPropertyChanged(nameof(ConversionModeSummaryText));
+                    OnPropertyChanged(nameof(OutputExtensionBadge));
+                    OnPropertyChanged(nameof(SuffixPreview));
+                    OnPropertyChanged(nameof(QuickSettingsSummary));
+                }
+            }
+        }
+
+        public bool IsLightroomModeSelected => !IsCaptureOneModeSelected;
+
+        public bool IsCaptureOneModeSelected => IsCaptureOneModeUnlocked &&
+            string.Equals(ConversionTargetMode, "CaptureOne", StringComparison.OrdinalIgnoreCase);
+
+        public string ConversionModeSummaryText => IsCaptureOneModeSelected
+            ? LocalizationManager.Tr("ConversionModeCaptureOne")
+            : LocalizationManager.Tr("ConversionModeLightroom");
+
+        public string OutputExtensionBadge => IsCaptureOneModeSelected ? ".RAF" : ".DNG";
+
+        public void RefreshCaptureOneModeState()
+        {
+            OnPropertyChanged(nameof(IsCaptureOneModeUnlocked));
+            OnPropertyChanged(nameof(IsLightroomModeSelected));
+            OnPropertyChanged(nameof(IsCaptureOneModeSelected));
+            OnPropertyChanged(nameof(ConversionModeSummaryText));
+            OnPropertyChanged(nameof(OutputExtensionBadge));
+            OnPropertyChanged(nameof(SuffixPreview));
+            OnPropertyChanged(nameof(QuickSettingsSummary));
+        }
 
         public string SuffixLabelContent => $"Add Suffix ({(string.IsNullOrWhiteSpace(Suffix) ? "-fujified" : Suffix.Trim())})";
 
@@ -999,10 +1073,21 @@ namespace Fujify.ViewModels
                 }
                 int pendingCount = Files.Count(f => f.Status == "Pending");
                 int successCount = Files.Count(f => f.Status == "✔");
-                if (successCount > 0 && pendingCount == 0)
+                int errorCount = Files.Count(f => f.IsError || (f.Status != null && f.Status.StartsWith("Error", StringComparison.OrdinalIgnoreCase)));
+
+                if (pendingCount == 0 && (successCount > 0 || errorCount > 0))
                 {
-                    return LocalizationManager.TrFormat("AllPhotosConvertedSuccess", Files.Count);
+                    if (errorCount == 0)
+                    {
+                        return LocalizationManager.TrFormat("AllPhotosConvertedSuccess", successCount);
+                    }
+                    if (successCount > 0)
+                    {
+                        return LocalizationManager.TrFormat("PhotosConvertedWithFailures", successCount, Files.Count, errorCount);
+                    }
+                    return LocalizationManager.TrFormat("AllPhotosConversionFailed", errorCount);
                 }
+
                 if (Files.Count == 1)
                 {
                     return LocalizationManager.TrFormat("PhotoInQueueSingle", Files.Count, pendingCount);
@@ -1011,14 +1096,39 @@ namespace Fujify.ViewModels
             }
         }
 
+        public string OverallStatusDotColor
+        {
+            get
+            {
+                if (IsProcessing) return "#31A8FF";
+                if (!HasFiles) return "#A5D5B7";
+                int pendingCount = Files.Count(f => f.Status == "Pending");
+                int errorCount = Files.Count(f => f.IsError || (f.Status != null && f.Status.StartsWith("Error", StringComparison.OrdinalIgnoreCase)));
+                int successCount = Files.Count(f => f.Status == "✔");
+
+                if (pendingCount == 0 && (successCount > 0 || errorCount > 0))
+                {
+                    if (errorCount > 0 && successCount == 0) return "#E74C3C";
+                    if (errorCount > 0) return "#F39C12";
+                    return "#01D701";
+                }
+                return "#A5D5B7";
+            }
+        }
+
         public string ProgressSummaryText
         {
             get
             {
                 if (!HasFiles) return string.Empty;
-                if (IsProcessing || ProgressValue > 0)
+                int done = Files.Count(f => f.Status == "✔");
+                int errorCount = Files.Count(f => f.IsError || (f.Status != null && f.Status.StartsWith("Error", StringComparison.OrdinalIgnoreCase)));
+                int pendingCount = Files.Count(f => f.Status == "Pending");
+
+                if (IsProcessing || ProgressValue > 0 || (Files.Count > 0 && pendingCount < Files.Count))
                 {
-                    int done = Files.Count(f => f.Status == "✔");
+                    if (errorCount > 0)
+                        return $"{done} / {Files.Count} completed ({errorCount} failed)";
                     return $"{done} / {Files.Count} completed";
                 }
                 long totalBytes = Files.Sum(f => f.FileSizeBytes);
@@ -1035,6 +1145,21 @@ namespace Fujify.ViewModels
                 return $"{Files.Count} items";
             }
         }
+
+        private string? _lastFailureLogPath;
+        public string? LastFailureLogPath
+        {
+            get => _lastFailureLogPath;
+            set
+            {
+                if (SetProperty(ref _lastFailureLogPath, value))
+                {
+                    OnPropertyChanged(nameof(HasFailureLog));
+                }
+            }
+        }
+
+        public bool HasFailureLog => !string.IsNullOrEmpty(LastFailureLogPath) && File.Exists(LastFailureLogPath);
 
         public void RefreshSettings()
         {
@@ -1951,6 +2076,9 @@ namespace Fujify.ViewModels
                     OnPropertyChanged(nameof(CanClear));
                     OnPropertyChanged(nameof(CanProcessOrStop));
                     OnPropertyChanged(nameof(ProcessButtonContent));
+                    OnPropertyChanged(nameof(ProcessButtonIcon));
+                    OnPropertyChanged(nameof(ProcessButtonTooltip));
+                    OnPropertyChanged(nameof(ProcessButtonForegroundBrush));
                     OnPropertyChanged(nameof(OverallStatusText));
                     OnPropertyChanged(nameof(ProgressSummaryText));
                     OnPropertyChanged(nameof(ActiveStep));
@@ -1960,6 +2088,7 @@ namespace Fujify.ViewModels
                     OnPropertyChanged(nameof(IsStep4Current));
                     (ClearCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
                     (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+                    (StopCommand as RelayCommand)?.NotifyCanExecuteChanged();
                 }
             }
         }
@@ -2023,7 +2152,7 @@ namespace Fujify.ViewModels
             {
                 if (IsProcessing)
                 {
-                    return _processingCts != null && !_processingCts.IsCancellationRequested;
+                    return _processingCts != null && !_processingCts.IsCancellationRequested && !_isStopping;
                 }
                 return CanProcess;
             }
@@ -2038,6 +2167,20 @@ namespace Fujify.ViewModels
                 return LocalizationManager.Tr("Process");
             }
         }
+
+        public const string SparkleIconData = "M 10 1 L 12.5 7.5 L 19 10 L 12.5 12.5 L 10 19 L 7.5 12.5 L 1 10 L 7.5 7.5 Z M 17 13 L 18.2 16.2 L 21.5 17.5 L 18.2 18.8 L 17 22 L 15.8 18.8 L 12.5 17.5 L 15.8 16.2 Z";
+        public const string StopIconData = "M 5 5 H 19 V 19 H 5 Z";
+
+        public string ProcessButtonIcon => IsProcessing ? StopIconData : SparkleIconData;
+
+        public string ProcessButtonTooltip => IsProcessing
+            ? LocalizationManager.Tr("TooltipStopBatch")
+            : LocalizationManager.Tr("TooltipProcessBatch");
+
+        private static readonly IBrush StopForegroundBrush = new SolidColorBrush(Color.Parse("#FFFFFFFF"));
+        private static readonly IBrush PrimaryForegroundBrush = new SolidColorBrush(Color.Parse("#FF252332"));
+
+        public IBrush ProcessButtonForegroundBrush => IsProcessing ? StopForegroundBrush : PrimaryForegroundBrush;
 
         public double ProgressValue
         {
@@ -2063,6 +2206,7 @@ namespace Fujify.ViewModels
         #region Commands
 
         public ICommand ProcessCommand { get; }
+        public IRelayCommand StopCommand { get; }
         public ICommand ClearCommand { get; }
         public ICommand BrowseFolderCommand { get; }
         public ICommand AddFilesCommand { get; }
@@ -2305,17 +2449,27 @@ namespace Fujify.ViewModels
             }
         }
 
+        public void ExecuteStop()
+        {
+            if (IsProcessing && !_isStopping)
+            {
+                _isStopping = true;
+                _processingCts?.Cancel();
+                OnPropertyChanged(nameof(ProcessButtonContent));
+                OnPropertyChanged(nameof(ProcessButtonIcon));
+                OnPropertyChanged(nameof(ProcessButtonTooltip));
+                OnPropertyChanged(nameof(ProcessButtonForegroundBrush));
+                OnPropertyChanged(nameof(CanProcessOrStop));
+                (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+                (StopCommand as RelayCommand)?.NotifyCanExecuteChanged();
+            }
+        }
+
         private async Task ExecuteProcessOrStopAsync()
         {
             if (IsProcessing)
             {
-                if (!_isStopping)
-                {
-                    _isStopping = true;
-                    _processingCts?.Cancel();
-                    OnPropertyChanged(nameof(ProcessButtonContent));
-                    OnPropertyChanged(nameof(CanProcessOrStop));
-                }
+                ExecuteStop();
                 return;
             }
 
@@ -2330,6 +2484,7 @@ namespace Fujify.ViewModels
             {
                 await _dialogService.ShowMessageAsync(OwnerWindow, "Warning", "No files to process.");
                 OnPropertyChanged(nameof(ProcessButtonContent));
+                OnPropertyChanged(nameof(ProcessButtonTooltip));
                 return;
             }
 
@@ -2338,12 +2493,33 @@ namespace Fujify.ViewModels
 
         public async Task ProcessFilesAsync(List<string> files)
         {
+            if (IsCaptureOneModeSelected)
+            {
+                bool hasNonRafFiles = files.Any(f => !f.EndsWith(".raf", StringComparison.OrdinalIgnoreCase));
+                if (hasNonRafFiles)
+                {
+                    string? containerPath = _settingsService.Settings.RafContainerPath;
+                    if (!_rafConverterService.HasValidContainer(containerPath))
+                    {
+                        await _dialogService.ShowMessageAsync(
+                            OwnerWindow,
+                            LocalizationManager.Tr("EnableCaptureOneModeTitle"),
+                            LocalizationManager.Tr("MissingRafContainerError"),
+                            isSuccess: false);
+                        return;
+                    }
+                }
+            }
+
             _processingCts = new CancellationTokenSource();
             var token = _processingCts.Token;
 
             ProgressValue = 0;
             IsProgressVisible = true;
             IsProcessing = true;
+            LastFailureLogPath = null;
+            OnPropertyChanged(nameof(LastFailureLogPath));
+            OnPropertyChanged(nameof(HasFailureLog));
             lock (_recentlyConvertedDngFiles)
             {
                 _recentlyConvertedDngFiles.Clear();
@@ -2382,6 +2558,7 @@ namespace Fujify.ViewModels
 
             bool cancelled = false;
             Exception? error = null;
+            var failedEntries = new System.Collections.Concurrent.ConcurrentBag<FailedConversionEntry>();
 
             try
             {
@@ -2421,8 +2598,23 @@ namespace Fujify.ViewModels
                     }
                     catch (Exception ex)
                     {
-                        UpdateFileStatus(filePath, $"Error: {ex.Message}");
+                        UpdateFileStatus(filePath, $"Error: {ex.Message}", ex.ToString());
                         hasProcessingErrors = true;
+                        var fileItem = Files.FirstOrDefault(f => string.Equals(f.FilePath, filePath, StringComparison.OrdinalIgnoreCase));
+                        string camera = !string.IsNullOrWhiteSpace(fileItem?.CameraMakeAndModel)
+                            ? fileItem.CameraMakeAndModel
+                            : (RawMetadataReader.TryGetCameraMakeAndModel(filePath) ?? "Unknown Camera");
+                        string lens = fileItem?.Lens ?? string.Empty;
+                        failedEntries.Add(new FailedConversionEntry(
+                            filePath,
+                            camera,
+                            lens,
+                            IsCaptureOneModeSelected ? "Capture One (RAF)" : "Lightroom (DNG)",
+                            TargetCameraModel,
+                            ex.Message,
+                            ex.ToString(),
+                            DateTime.Now
+                        ));
                     }
                     finally
                     {
@@ -2447,15 +2639,28 @@ namespace Fujify.ViewModels
                 _isStopping = false;
                 IsProcessing = false;
                 OnPropertyChanged(nameof(ProcessButtonContent));
+                OnPropertyChanged(nameof(ProcessButtonIcon));
+                OnPropertyChanged(nameof(ProcessButtonTooltip));
+                OnPropertyChanged(nameof(ProcessButtonForegroundBrush));
+                (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+                (StopCommand as RelayCommand)?.NotifyCanExecuteChanged();
             }
 
             if (cancelled)
             {
-                await _dialogService.ShowMessageAsync(OwnerWindow, string.Empty, "Processing was cancelled.");
                 foreach (var item in Files.Where(f => f.Status == "Processing"))
                 {
                     item.Status = "Pending";
                 }
+                IsProgressVisible = false;
+                OnPropertyChanged(nameof(CanProcess));
+                OnPropertyChanged(nameof(CanProcessOrStop));
+                OnPropertyChanged(nameof(OverallStatusText));
+                OnPropertyChanged(nameof(OverallStatusDotColor));
+                OnPropertyChanged(nameof(ProgressSummaryText));
+                (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+                (StopCommand as RelayCommand)?.NotifyCanExecuteChanged();
+                await _dialogService.ShowMessageAsync(OwnerWindow, string.Empty, LocalizationManager.Tr("ProcessingCancelled"));
             }
             else if (error != null)
             {
@@ -2489,6 +2694,46 @@ namespace Fujify.ViewModels
                 }
 
                 batchStopwatch.Stop();
+
+                if (failedEntries.Count > 0)
+                {
+                    var failuresList = failedEntries.OrderBy(e => e.Timestamp).ToList();
+                    string? targetLogDir = null;
+                    if (!string.IsNullOrEmpty(currentOutputFolder) && Directory.Exists(currentOutputFolder))
+                    {
+                        targetLogDir = currentOutputFolder;
+                    }
+                    else if (!string.IsNullOrEmpty(OutputFolderPath) && Directory.Exists(OutputFolderPath))
+                    {
+                        targetLogDir = OutputFolderPath;
+                    }
+                    else if (Files.Count > 0)
+                    {
+                        targetLogDir = Path.GetDirectoryName(Files[0].FilePath);
+                    }
+
+                    LastFailureLogPath = ConversionLogService.WriteFailureLog(
+                        failuresList,
+                        totalFiles,
+                        successCount,
+                        batchStopwatch.Elapsed,
+                        targetLogDir,
+                        _settingsService.Settings.ExportFailedConversionsLog);
+
+                    OnPropertyChanged(nameof(LastFailureLogPath));
+                    OnPropertyChanged(nameof(HasFailureLog));
+                }
+                else
+                {
+                    LastFailureLogPath = null;
+                    ConversionLogService.ClearLatestFailureLog();
+                    OnPropertyChanged(nameof(LastFailureLogPath));
+                    OnPropertyChanged(nameof(HasFailureLog));
+                }
+
+                OnPropertyChanged(nameof(OverallStatusText));
+                OnPropertyChanged(nameof(OverallStatusDotColor));
+                OnPropertyChanged(nameof(ProgressSummaryText));
 
                 if (_settingsService.Settings.AutoOpenOutputFolder)
                 {
@@ -2612,6 +2857,9 @@ namespace Fujify.ViewModels
                 throw new ArgumentException("Invalid file path.", nameof(filePath));
             }
 
+            bool isCaptureOneMode = IsCaptureOneModeUnlocked && IsCaptureOneModeSelected;
+            string targetExt = isCaptureOneMode ? ".raf" : ".dng";
+            bool isOriginallyTarget = filePath.EndsWith(targetExt, StringComparison.OrdinalIgnoreCase);
             bool isOriginallyDng = filePath.EndsWith(".dng", StringComparison.OrdinalIgnoreCase);
             string baseFileName = Path.GetFileNameWithoutExtension(filePath);
             bool appendSuffix = _settingsService.Settings.AppendSuffix && !string.IsNullOrWhiteSpace(_settingsService.Settings.Suffix);
@@ -2623,12 +2871,13 @@ namespace Fujify.ViewModels
             string initialDestFilePath = OutputLocationHelper.ComputeInitialDestinationFilePath(
                 filePath,
                 outputFolder,
-                _settingsService.Settings);
+                _settingsService.Settings,
+                targetExt);
 
             string inputDir = Path.GetDirectoryName(filePath) ?? string.Empty;
             string outputDir = Path.GetDirectoryName(initialDestFilePath) ?? string.Empty;
             bool isSameFolder = string.Equals(Path.GetFullPath(inputDir), Path.GetFullPath(outputDir), StringComparison.OrdinalIgnoreCase);
-            bool isExactSameFilePath = isOriginallyDng && string.Equals(Path.GetFullPath(filePath), Path.GetFullPath(initialDestFilePath), StringComparison.OrdinalIgnoreCase);
+            bool isExactSameFilePath = isOriginallyTarget && string.Equals(Path.GetFullPath(filePath), Path.GetFullPath(initialDestFilePath), StringComparison.OrdinalIgnoreCase);
 
             bool fileAlreadyExists;
             lock (reservedOutputPaths)
@@ -2636,7 +2885,7 @@ namespace Fujify.ViewModels
                 fileAlreadyExists = File.Exists(initialDestFilePath) || reservedOutputPaths.Contains(initialDestFilePath);
             }
 
-            bool destinationConflict = !isExactSameFilePath && !(isOriginallyDng && isSameFolder && createBackup) && fileAlreadyExists;
+            bool destinationConflict = !isExactSameFilePath && !(isOriginallyTarget && isSameFolder && createBackup) && fileAlreadyExists;
             string finalDestFilePath = initialDestFilePath;
 
             // Check for file conflict in the destination prior to conversion
@@ -2701,6 +2950,109 @@ namespace Fujify.ViewModels
                 {
                     reservedOutputPaths.Add(initialDestFilePath);
                 }
+            }
+
+            if (isCaptureOneMode)
+            {
+                // If the input file is ALREADY a Fujifilm RAF file, bypass full conversion/repacking
+                if (filePath.EndsWith(".raf", StringComparison.OrdinalIgnoreCase))
+                {
+                    bool isBayer = _rafConverterService.IsBayerSensor(filePath);
+                    string targetModel = isBayer ? "GFX50S II" : "X-T5";
+                    string statusMsg = isBayer ? "Bayer RAF → GFX50S II" : "X-Trans RAF → X-T5";
+                    UpdateFileStatus(filePath, statusMsg);
+
+                    string? patchDestDir = Path.GetDirectoryName(finalDestFilePath);
+                    if (!string.IsNullOrEmpty(patchDestDir) && !Directory.Exists(patchDestDir))
+                    {
+                        Directory.CreateDirectory(patchDestDir);
+                    }
+
+                    string sourceForPatch = filePath;
+                    if (isExactSameFilePath && createBackup && isSameFolder)
+                    {
+                        string origBaseName = Path.GetFileNameWithoutExtension(filePath);
+                        string origBackup = Path.Combine(inputDir, $"{origBaseName}ORIG.RAF");
+                        if (File.Exists(origBackup)) File.Delete(origBackup);
+                        File.Move(filePath, origBackup);
+                        sourceForPatch = origBackup;
+                    }
+
+                    var patchResult = await _rafConverterService.PatchModelAsync(
+                        sourceForPatch,
+                        finalDestFilePath,
+                        targetModel,
+                        ct);
+
+                    if (!patchResult.Success)
+                    {
+                        string err = patchResult.ErrorMessage ?? "RAF model patch failed";
+                        UpdateFileStatus(filePath, err);
+                        throw new InvalidOperationException(err);
+                    }
+
+                    if (!createBackup && !string.Equals(Path.GetFullPath(sourceForPatch), Path.GetFullPath(finalDestFilePath), StringComparison.OrdinalIgnoreCase))
+                    {
+                        FileTrashHelper.SendToTrash(sourceForPatch);
+                    }
+
+                    UpdateFileStatus(filePath, "✔");
+                    lock (_recentlyConvertedDngFiles)
+                    {
+                        _recentlyConvertedDngFiles.Add(finalDestFilePath);
+                    }
+                    PlatformFileCreatedCallback?.Invoke(finalDestFilePath);
+                    return;
+                }
+
+                string? containerPath = _settingsService.Settings.RafContainerPath;
+                if (!_rafConverterService.HasValidContainer(containerPath))
+                {
+                    string err = LocalizationManager.Tr("MissingRafContainerError");
+                    UpdateFileStatus(filePath, err);
+                    throw new InvalidOperationException(err);
+                }
+
+                string? destDir = Path.GetDirectoryName(finalDestFilePath);
+                if (!string.IsNullOrEmpty(destDir) && !Directory.Exists(destDir))
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(destDir);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new UnauthorizedAccessException($"Cannot create output directory '{destDir}': {ex.Message}.", ex);
+                    }
+                }
+
+                UpdateFileStatus(filePath, LocalizationManager.Tr("ConvertingToRaf"));
+                var convResult = await _rafConverterService.ConvertToRafAsync(
+                    filePath,
+                    finalDestFilePath,
+                    containerPath!,
+                    null,
+                    ct);
+
+                if (!convResult.Success || string.IsNullOrEmpty(convResult.OutputRafPath))
+                {
+                    string err = convResult.ErrorMessage ?? "Conversion to RAF failed";
+                    UpdateFileStatus(filePath, err);
+                    throw new InvalidOperationException(err);
+                }
+
+                if (!createBackup)
+                {
+                    FileTrashHelper.SendToTrash(filePath);
+                }
+
+                UpdateFileStatus(filePath, "✔");
+                lock (_recentlyConvertedDngFiles)
+                {
+                    _recentlyConvertedDngFiles.Add(finalDestFilePath);
+                }
+                PlatformFileCreatedCallback?.Invoke(finalDestFilePath);
+                return;
             }
 
             string? dngFilePath = filePath;
@@ -2859,7 +3211,7 @@ namespace Fujify.ViewModels
             }
         }
 
-        public void UpdateFileStatus(string filePath, string status)
+        public void UpdateFileStatus(string filePath, string status, string? errorMessage = null)
         {
             Dispatcher.UIThread.Post(() =>
             {
@@ -2867,8 +3219,17 @@ namespace Fujify.ViewModels
                 if (fileItem != null)
                 {
                     fileItem.Status = status;
+                    if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        fileItem.ErrorMessage = errorMessage;
+                    }
+                    OnPropertyChanged(nameof(CanProcess));
+                    OnPropertyChanged(nameof(CanProcessOrStop));
                     OnPropertyChanged(nameof(OverallStatusText));
+                    OnPropertyChanged(nameof(OverallStatusDotColor));
                     OnPropertyChanged(nameof(ProgressSummaryText));
+                    (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+                    (StopCommand as RelayCommand)?.NotifyCanExecuteChanged();
                 }
             });
         }
@@ -2989,20 +3350,36 @@ namespace Fujify.ViewModels
                 foreach (var item in list.OfType<FileItem>())
                 {
                     item.Status = "Pending";
+                    item.ErrorMessage = null;
                 }
             }
             else if (param is FileItem single)
             {
                 single.Status = "Pending";
+                single.ErrorMessage = null;
             }
             else if (SelectedFile != null)
             {
                 SelectedFile.Status = "Pending";
+                SelectedFile.ErrorMessage = null;
+            }
+
+            int pendingCount = Files.Count(f => f.Status == "Pending");
+            if (pendingCount == Files.Count)
+            {
+                ProgressValue = 0;
+                IsProgressVisible = false;
             }
 
             OnPropertyChanged(nameof(CanProcess));
             OnPropertyChanged(nameof(CanProcessOrStop));
             OnPropertyChanged(nameof(OverallStatusText));
+            OnPropertyChanged(nameof(OverallStatusDotColor));
+            OnPropertyChanged(nameof(ProgressSummaryText));
+            OnPropertyChanged(nameof(ProcessButtonContent));
+            OnPropertyChanged(nameof(ProcessButtonTooltip));
+            (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+            (StopCommand as RelayCommand)?.NotifyCanExecuteChanged();
         }
 
         public void RemoveFiles(IEnumerable<FileItem> items)
@@ -3023,7 +3400,13 @@ namespace Fujify.ViewModels
             OnPropertyChanged(nameof(CanProcess));
             OnPropertyChanged(nameof(CanProcessOrStop));
             OnPropertyChanged(nameof(OverallStatusText));
+            OnPropertyChanged(nameof(OverallStatusDotColor));
             OnPropertyChanged(nameof(ProgressSummaryText));
+            OnPropertyChanged(nameof(ProcessButtonContent));
+            OnPropertyChanged(nameof(ProcessButtonTooltip));
+            (ProcessCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
+            (StopCommand as RelayCommand)?.NotifyCanExecuteChanged();
+            (ClearCommand as AsyncRelayCommand)?.NotifyCanExecuteChanged();
         }
 
         private async Task ExecuteOpenPreferencesAsync()

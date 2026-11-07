@@ -145,9 +145,9 @@ Fujifier natively supports RAW files from all major camera manufacturers:
 
 | Manufacturer | Supported Extensions |
 |:---|:---|
-| **Sony** | `.arw`, `.srf`, `.sr2` |
+| **Sony** | `.arw`, `.srf`, `.sr2` *(Lossless L/M/S, Compressed, and Uncompressed)* |
 | **Canon** | `.cr2`, `.cr3`, `.crw` |
-| **Nikon** | `.nef`, `.nrw` |
+| **Nikon** | `.nef`, `.nrw` *(Standard Uncompressed and Lossless Compressed)* |
 | **Fujifilm** | `.raf` *(unlocks newer simulations on older bodies)* |
 | **Panasonic Lumix** | `.rw2` |
 | **Olympus / OM System** | `.orf` |
@@ -156,9 +156,23 @@ Fujifier natively supports RAW files from all major camera manufacturers:
 | **Leica / Universal** | `.dng` |
 | **Other Formats** | `.erf`, `.kdc`, `.dcs`, `.dcr`, `.iiq`, `.mos`, `.mef`, `.mrw` |
 
+> [!WARNING]
+> **Nikon Compressed RAW Compatibility Note:**  
+> - **Fully Supported:** Standard Nikon NEF formats (**Uncompressed**, **12-bit Lossless Compressed**, and **14-bit Lossless Compressed**).
+> - **Incompatible:** Nikon **High Efficiency (HE)** and **High Efficiency\* (HE\*)** raw compression modes (available on the Nikon Z 8, Z 9, Z f, Z 6III, and Z 50 II). These modes use intoPIX TicoRAW, a proprietary patented codec that open-source decoders cannot legally decode.
+> - **Recommended Camera Setting:** In your camera's **Photo Shooting Menu** $\rightarrow$ **RAW recording**, select **Lossless compression**. Lossless NEF files retain 100% sensor quality and convert with full speed and fidelity.
+
 ---
 
 ## ❓ Frequently Asked Questions (FAQ)
+
+<details>
+<summary><strong>Q: Why did my Nikon Z8/Z9/Zf/Z6III NEF file fail with "NEF compression not supported"?</strong></summary>
+
+Nikon Z series cameras (Z 9, Z 8, Z f, Z 6III, Z 50 II) introduced "High Efficiency" (HE) and "High Efficiency*" (HE*) RAW compression. This technology is based on intoPIX TicoRAW, which is protected by commercial patents and is not supported by open-source decoders.
+
+To convert your Nikon shots with Fujifier, configure your camera to shoot in **Lossless compression** RAW mode. Lossless compressed NEF files preserve maximum sensor image quality and convert at high speed (~5 ms per photo).
+</details>
 
 <details>
 <summary><strong>Q: Does this work with Capture One or other RAW editors?</strong></summary>

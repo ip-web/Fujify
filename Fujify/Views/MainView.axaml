@@ -404,7 +404,7 @@
                                             ToolTip.Tip="{loc:Loc TooltipFoldSidebar}">
                                         <StackPanel VerticalAlignment="Center" Spacing="2">
                                             <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                                <Ellipse Width="6" Height="6" Fill="#A5D5B7" VerticalAlignment="Center"/>
+                                                <Ellipse Width="6" Height="6" Fill="{Binding OverallStatusDotColor}" VerticalAlignment="Center"/>
                                                 <TextBlock Text="{Binding OverallStatusText}" FontSize="11" FontWeight="SemiBold"
                                                            Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
                                             </StackPanel>
@@ -428,9 +428,12 @@
                                         </StackPanel>
                                     </Button>
 
-                                    <!-- Process Action Button -->
+                                    <!-- Process / Stop Action Button -->
                                     <Button Grid.Column="2" Content="{Binding ProcessButtonContent}" Command="{Binding ProcessCommand}"
-                                            IsEnabled="{Binding CanProcessOrStop}" Classes="primary"
+                                            IsEnabled="{Binding CanProcessOrStop}"
+                                            Classes.primary="{Binding !IsProcessing}"
+                                            Classes.stop-btn="{Binding IsProcessing}"
+                                            ToolTip.Tip="{Binding ProcessButtonTooltip}"
                                             Height="40" Padding="16,0" FontSize="12" FontWeight="SemiBold" CornerRadius="20"
                                             VerticalAlignment="Center"/>
                                 </Grid>
@@ -537,6 +540,92 @@
                                 <Panel>
                                     <!-- TAB 1: SETTINGS VIEW -->
                                     <StackPanel IsVisible="{Binding IsInspectorSettingsTab}" Spacing="14">
+                                        <!-- Mode Selector (Lightroom / Capture One) -->
+                                        <StackPanel Spacing="6" IsVisible="{Binding IsCaptureOneModeUnlocked}" Margin="0,0,0,2">
+                                            <TextBlock Text="{loc:Loc ConversionTargetModeTitle}" FontSize="10" FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                            <Grid ColumnDefinitions="*,*">
+                                                <!-- Lightroom (DNG) Mode Button -->
+                                                <Button Grid.Column="0" Command="{Binding SelectLightroomModeCommand}"
+                                                        Margin="0,0,3,0" Padding="6,5" Height="42"
+                                                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                                        VerticalAlignment="Stretch" VerticalContentAlignment="Stretch"
+                                                        Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                        BorderThickness="1.5"
+                                                        CornerRadius="8"
+                                                        Classes.active-lr="{Binding IsLightroomModeSelected}">
+                                                    <Button.Styles>
+                                                        <Style Selector="Button">
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource AppEdgeBrush}"/>
+                                                        </Style>
+                                                        <Style Selector="Button.active-lr">
+                                                            <Setter Property="BorderBrush" Value="#31A8FF"/>
+                                                            <Setter Property="Background" Value="#1A1C3252"/>
+                                                        </Style>
+                                                        <Style Selector="Button:pointerover /template/ ContentPresenter">
+                                                            <Setter Property="Background" Value="#2231A8FF"/>
+                                                        </Style>
+                                                    </Button.Styles>
+                                                    <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
+                                                        <Border Grid.Column="0" Width="26" Height="26" CornerRadius="6"
+                                                                Background="#001F3F" BorderBrush="#31A8FF" BorderThickness="1.2"
+                                                                Margin="0,0,7,0" VerticalAlignment="Center">
+                                                            <TextBlock Text="Lr" FontWeight="Bold" FontSize="11.5" Foreground="#31A8FF"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0"/>
+                                                        </Border>
+                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="0">
+                                                            <TextBlock Text="Lightroom" FontSize="11" FontWeight="SemiBold"
+                                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Text=".DNG" FontSize="9" FontWeight="SemiBold"
+                                                                       Foreground="#31A8FF" Opacity="0.9"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Button>
+
+                                                <!-- Capture One (RAF) Mode Button -->
+                                                <Button Grid.Column="1" Command="{Binding SelectCaptureOneModeCommand}"
+                                                        Margin="3,0,0,0" Padding="6,5" Height="42"
+                                                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                                        VerticalAlignment="Stretch" VerticalContentAlignment="Stretch"
+                                                        Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                        BorderThickness="1.5"
+                                                        CornerRadius="8"
+                                                        Classes.active-c1="{Binding IsCaptureOneModeSelected}">
+                                                    <Button.Styles>
+                                                        <Style Selector="Button">
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource AppEdgeBrush}"/>
+                                                        </Style>
+                                                        <Style Selector="Button.active-c1">
+                                                            <Setter Property="BorderBrush" Value="#FFFFFF"/>
+                                                            <Setter Property="Background" Value="#22FFFFFF"/>
+                                                        </Style>
+                                                        <Style Selector="Button:pointerover /template/ ContentPresenter">
+                                                            <Setter Property="Background" Value="#1FFFFFFF"/>
+                                                        </Style>
+                                                    </Button.Styles>
+                                                    <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
+                                                        <Border Grid.Column="0" Width="26" Height="26" CornerRadius="6"
+                                                                Background="#000000" BorderBrush="#FFFFFF" BorderThickness="1.2"
+                                                                Margin="0,0,7,0" VerticalAlignment="Center">
+                                                            <Viewbox Width="15" Height="15" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                <Canvas Width="38" Height="40">
+                                                                    <Path Fill="#FFFFFF"
+                                                                          Data="F0 M3.456 19.994c0 9.229 7.214 16.737 16.079 16.737h.004c6.555 0 12.2-4.108 14.701-9.98h3.377c-2.67 7.711-9.764 13.241-18.082 13.241C8.94 39.992.32 31.022.32 19.994S8.94-.008 19.535-.008c8.337 0 15.45 5.558 18.101 13.302h-3.373c-2.486-5.9-8.15-10.037-14.728-10.037-8.865 0-16.079 7.509-16.079 16.737m6.693.01c0 5.383 4.21 9.766 9.385 9.766 5.171 0 9.382-4.383 9.382-9.766s-4.207-9.766-9.382-9.766-9.385 4.383-9.385 9.766m-3.09 0c0-7.162 5.595-12.987 12.475-12.987S32.01 12.842 32.01 20.004 26.415 32.99 19.534 32.99c-6.88 0-12.475-5.825-12.475-12.987"/>
+                                                                </Canvas>
+                                                            </Viewbox>
+                                                        </Border>
+                                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="0">
+                                                            <TextBlock Text="Capture One" FontSize="11" FontWeight="SemiBold"
+                                                                       Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                            <TextBlock Text=".RAF" FontSize="9" FontWeight="SemiBold"
+                                                                       Foreground="#FFFFFF" Opacity="0.85"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Button>
+                                            </Grid>
+                                        </StackPanel>
+
+                                        <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" Margin="0,2" IsVisible="{Binding IsCaptureOneModeUnlocked}"/>
                                         <!-- Output Destination Section -->
                                         <StackPanel Spacing="8" IsVisible="{Binding !IsMobile}">
                                             <TextBlock Text="{loc:Loc OutputDestination}" FontSize="10" FontWeight="SemiBold"
@@ -1449,6 +1538,93 @@
 
                                             <!-- TAB 1: SETTINGS VIEW -->
                                             <StackPanel IsVisible="{Binding IsInspectorSettingsTab}" Spacing="10">
+                                                <!-- Mode Selector (Lightroom / Capture One) -->
+                                                <StackPanel Spacing="6" IsVisible="{Binding IsCaptureOneModeUnlocked}" Margin="0,0,0,2">
+                                                    <TextBlock Text="{loc:Loc ConversionTargetModeTitle}" FontSize="10" FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource AppTextSecondaryBrush}"/>
+                                                    <Grid ColumnDefinitions="*,*">
+                                                        <!-- Lightroom (DNG) Mode Button -->
+                                                        <Button Grid.Column="0" Command="{Binding SelectLightroomModeCommand}"
+                                                                Margin="0,0,3,0" Padding="6,5" Height="42"
+                                                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                                                VerticalAlignment="Stretch" VerticalContentAlignment="Stretch"
+                                                                Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                                BorderThickness="1.5"
+                                                                CornerRadius="8"
+                                                                Classes.active-lr="{Binding IsLightroomModeSelected}">
+                                                            <Button.Styles>
+                                                                <Style Selector="Button">
+                                                                    <Setter Property="BorderBrush" Value="{DynamicResource AppEdgeBrush}"/>
+                                                                </Style>
+                                                                <Style Selector="Button.active-lr">
+                                                                    <Setter Property="BorderBrush" Value="#31A8FF"/>
+                                                                    <Setter Property="Background" Value="#1A1C3252"/>
+                                                                </Style>
+                                                                <Style Selector="Button:pointerover /template/ ContentPresenter">
+                                                                    <Setter Property="Background" Value="#2231A8FF"/>
+                                                                </Style>
+                                                            </Button.Styles>
+                                                            <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
+                                                                <Border Grid.Column="0" Width="26" Height="26" CornerRadius="6"
+                                                                        Background="#001F3F" BorderBrush="#31A8FF" BorderThickness="1.2"
+                                                                        Margin="0,0,7,0" VerticalAlignment="Center">
+                                                                    <TextBlock Text="Lr" FontWeight="Bold" FontSize="11.5" Foreground="#31A8FF"
+                                                                               HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0"/>
+                                                                </Border>
+                                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="0">
+                                                                    <TextBlock Text="Lightroom" FontSize="11" FontWeight="SemiBold"
+                                                                               Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                                    <TextBlock Text=".DNG" FontSize="9" FontWeight="SemiBold"
+                                                                               Foreground="#31A8FF" Opacity="0.9"/>
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Button>
+
+                                                        <!-- Capture One (RAF) Mode Button -->
+                                                        <Button Grid.Column="1" Command="{Binding SelectCaptureOneModeCommand}"
+                                                                Margin="3,0,0,0" Padding="6,5" Height="42"
+                                                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                                                VerticalAlignment="Stretch" VerticalContentAlignment="Stretch"
+                                                                Background="{DynamicResource AppSurfaceSecondaryBrush}"
+                                                                BorderThickness="1.5"
+                                                                CornerRadius="8"
+                                                                Classes.active-c1="{Binding IsCaptureOneModeSelected}">
+                                                            <Button.Styles>
+                                                                <Style Selector="Button">
+                                                                    <Setter Property="BorderBrush" Value="{DynamicResource AppEdgeBrush}"/>
+                                                                </Style>
+                                                                <Style Selector="Button.active-c1">
+                                                                    <Setter Property="BorderBrush" Value="#FFFFFF"/>
+                                                                    <Setter Property="Background" Value="#22FFFFFF"/>
+                                                                </Style>
+                                                                <Style Selector="Button:pointerover /template/ ContentPresenter">
+                                                                    <Setter Property="Background" Value="#1FFFFFFF"/>
+                                                                </Style>
+                                                            </Button.Styles>
+                                                            <Grid ColumnDefinitions="Auto,*" VerticalAlignment="Center">
+                                                                <Border Grid.Column="0" Width="26" Height="26" CornerRadius="6"
+                                                                        Background="#000000" BorderBrush="#FFFFFF" BorderThickness="1.2"
+                                                                        Margin="0,0,7,0" VerticalAlignment="Center">
+                                                                    <Viewbox Width="15" Height="15" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                                        <Canvas Width="38" Height="40">
+                                                                            <Path Fill="#FFFFFF"
+                                                                                  Data="F0 M3.456 19.994c0 9.229 7.214 16.737 16.079 16.737h.004c6.555 0 12.2-4.108 14.701-9.98h3.377c-2.67 7.711-9.764 13.241-18.082 13.241C8.94 39.992.32 31.022.32 19.994S8.94-.008 19.535-.008c8.337 0 15.45 5.558 18.101 13.302h-3.373c-2.486-5.9-8.15-10.037-14.728-10.037-8.865 0-16.079 7.509-16.079 16.737m6.693.01c0 5.383 4.21 9.766 9.385 9.766 5.171 0 9.382-4.383 9.382-9.766s-4.207-9.766-9.382-9.766-9.385 4.383-9.385 9.766m-3.09 0c0-7.162 5.595-12.987 12.475-12.987S32.01 12.842 32.01 20.004 26.415 32.99 19.534 32.99c-6.88 0-12.475-5.825-12.475-12.987"/>
+                                                                        </Canvas>
+                                                                    </Viewbox>
+                                                                </Border>
+                                                                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="0">
+                                                                    <TextBlock Text="Capture One" FontSize="11" FontWeight="SemiBold"
+                                                                               Foreground="{DynamicResource AppTextPrimaryBrush}" TextTrimming="CharacterEllipsis"/>
+                                                                    <TextBlock Text=".RAF" FontSize="9" FontWeight="SemiBold"
+                                                                               Foreground="#FFFFFF" Opacity="0.85"/>
+                                                                </StackPanel>
+                                                            </Grid>
+                                                        </Button>
+                                                    </Grid>
+                                                </StackPanel>
+
+                                                <Separator Height="1" Background="{DynamicResource AppEdgeBrush}" Margin="0,2" IsVisible="{Binding IsCaptureOneModeUnlocked}"/>
+
                                                 <!-- Output Destination Section -->
                                                 <StackPanel Spacing="6">
                                                     <TextBlock Text="{loc:Loc OutputDestination}" FontSize="10" FontWeight="SemiBold"
@@ -1702,7 +1878,7 @@
                         <Grid ColumnDefinitions="Auto,*,Auto" VerticalAlignment="Center">
                             <!-- Left: Glowing Status Indicator Dot & Details -->
                             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                                <Ellipse Width="6" Height="6" Fill="#A5D5B7" VerticalAlignment="Center"/>
+                                <Ellipse Width="6" Height="6" Fill="{Binding OverallStatusDotColor}" VerticalAlignment="Center"/>
                                 <StackPanel Spacing="3" VerticalAlignment="Center">
                                     <TextBlock Text="{Binding OverallStatusText}" FontSize="11" FontWeight="SemiBold"
                                                Foreground="{DynamicResource AppTextPrimaryBrush}"/>
@@ -1724,17 +1900,19 @@
                                 <TextBlock Text="{loc:Loc ProtectedFilesNotice}" FontSize="10"
                                            Foreground="{DynamicResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
 
-                                <!-- Studio Process Batch Action Button with centered text and sparkle icon -->
+                                <!-- Studio Process / Stop Batch Action Button with centered text and sparkle / stop icon -->
                                 <Button Command="{Binding ProcessCommand}"
-                                        IsEnabled="{Binding CanProcessOrStop}" Classes="primary"
+                                        IsEnabled="{Binding CanProcessOrStop}"
+                                        Classes.primary="{Binding !IsProcessing}"
+                                        Classes.stop-btn="{Binding IsProcessing}"
                                         Height="42" Padding="20,0" CornerRadius="21"
-                                        VerticalAlignment="Center" ToolTip.Tip="{loc:Loc TooltipProcessBatch}">
+                                        VerticalAlignment="Center" ToolTip.Tip="{Binding ProcessButtonTooltip}">
                                     <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" HorizontalAlignment="Center">
                                         <TextBlock Text="{Binding ProcessButtonContent}" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource AppPrimaryBtnFgBrush}" VerticalAlignment="Center"/>
-                                        <PathIcon Data="M 10 1 L 12.5 7.5 L 19 10 L 12.5 12.5 L 10 19 L 7.5 12.5 L 1 10 L 7.5 7.5 Z M 17 13 L 18.2 16.2 L 21.5 17.5 L 18.2 18.8 L 17 22 L 15.8 18.8 L 12.5 17.5 L 15.8 16.2 Z"
+                                                   Foreground="{Binding ProcessButtonForegroundBrush}" VerticalAlignment="Center"/>
+                                        <PathIcon Data="{Binding ProcessButtonIcon}"
                                                   Width="13" Height="13"
-                                                  Foreground="{DynamicResource AppPrimaryBtnFgBrush}" VerticalAlignment="Center"/>
+                                                  Foreground="{Binding ProcessButtonForegroundBrush}" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -2460,6 +2638,12 @@
                                     <TextBlock Text="• Canon PowerShot Pro70" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                                 </StackPanel>
 
+                                <TextBlock Text="{loc:Loc UnsupportedRawFormats}" FontSize="10.5" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AppDangerBrush}" Margin="0,3,0,0"/>
+                                <StackPanel Margin="6,0,0,0" Spacing="2">
+                                    <TextBlock Text="{loc:Loc NikonHighEfficiencyWarning}" FontSize="10" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap" LineHeight="14"/>
+                                </StackPanel>
+
                                 <Separator Margin="0,2" Background="{DynamicResource AppEdgeBrush}"/>
 
                                 <TextBlock Text="{loc:Loc PartiallyWorkingCameras}" FontSize="10.5" FontWeight="SemiBold"
@@ -2670,18 +2854,24 @@
                             <!-- Open Output Folder (Desktop only) -->
                             <Button Content="{loc:Loc OpenOutputFolder}" Command="{Binding OpenOutputFolderCommand}"
                                     IsVisible="{Binding CanOpenOutputFolder}" Classes="primary"
-                                    Height="36" CornerRadius="18" HorizontalAlignment="Stretch"
+                                    Height="38" Padding="14,0" CornerRadius="19" HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
+
+                            <!-- View Error Log (Visible when failure log exists) -->
+                            <Button Content="{loc:Loc ViewErrorLog}" Command="{Binding ViewFailureLogCommand}"
+                                    IsVisible="{Binding HasFailureLog}" Classes="secondary"
+                                    Height="38" Padding="14,0" CornerRadius="19" HorizontalAlignment="Stretch"
                                     HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
 
                             <Grid ColumnDefinitions="*,*">
                                 <!-- Clear Queue -->
                                 <Button Grid.Column="0" Content="{loc:Loc ClearQueue}" Command="{Binding ClearQueueAndCloseModalCommand}"
-                                        Classes="secondary" Height="36" CornerRadius="18" HorizontalAlignment="Stretch" Margin="0,0,4,0"
+                                        Classes="secondary" Height="38" Padding="14,0" CornerRadius="19" HorizontalAlignment="Stretch" Margin="0,0,4,0"
                                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
 
                                 <!-- Done -->
                                 <Button Grid.Column="1" Content="{loc:Loc Done}" Command="{Binding CloseModalCommand}"
-                                        Classes="secondary" Height="36" CornerRadius="18" HorizontalAlignment="Stretch" Margin="4,0,0,0"
+                                        Classes="secondary" Height="38" Padding="14,0" CornerRadius="19" HorizontalAlignment="Stretch" Margin="4,0,0,0"
                                         HorizontalContentAlignment="Center" VerticalContentAlignment="Center"/>
                             </Grid>
                         </StackPanel>

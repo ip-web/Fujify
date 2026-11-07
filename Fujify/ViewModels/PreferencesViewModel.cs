@@ -18,6 +18,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -61,6 +62,9 @@ namespace Fujify.ViewModels
         private bool _isWindowsContextMenuEnabled;
         private string _themeMode = "Automatic";
         private bool _checkForUpdatesOnStartup = true;
+        private bool _enableCaptureOneMode;
+        private string? _rafContainerPath;
+        private bool _exportFailedConversionsLog;
 
         private bool _isCheckingForUpdate;
         private string _updateStatusMessage = string.Empty;
@@ -270,6 +274,70 @@ namespace Fujify.ViewModels
         public bool IsOpenInLightroomSupported => OperatingSystem.IsAndroid() || OperatingSystem.IsIOS();
 
         public bool IsSubfolderOptionSupported => true;
+
+        public bool EnableCaptureOneMode
+        {
+            get => _enableCaptureOneMode;
+            set
+            {
+                if (SetProperty(ref _enableCaptureOneMode, value))
+                {
+                    _settingsService.Settings.EnableCaptureOneMode = value;
+                    _settingsService.Save();
+                    OnPropertyChanged(nameof(ShowCaptureOneContainerSettings));
+                    if (MainViewModel.Instance != null)
+                    {
+                        MainViewModel.Instance.RefreshCaptureOneModeState();
+                    }
+                }
+            }
+        }
+
+        public bool ShowCaptureOneContainerSettings => EnableCaptureOneMode;
+
+        public ObservableCollection<RafContainerItemViewModel> RafContainers { get; } = new();
+        public bool HasRafContainers => RafContainers.Count > 0;
+
+        public string RafContainerPath
+        {
+            get => _rafContainerPath ?? string.Empty;
+            set
+            {
+                if (SetProperty(ref _rafContainerPath, value))
+                {
+                    LoadContainersFromSetting(value);
+                    _settingsService.Settings.RafContainerPath = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+                    _settingsService.Save();
+                    OnPropertyChanged(nameof(HasRafContainerPath));
+                    OnPropertyChanged(nameof(HasRafContainers));
+                    OnPropertyChanged(nameof(RafContainerCountText));
+                    OnPropertyChanged(nameof(RafContainerStatusText));
+                }
+            }
+        }
+
+        public bool HasRafContainerPath => !string.IsNullOrWhiteSpace(_rafContainerPath) || HasRafContainers;
+
+        public string RafContainerCountText => RafContainers.Count switch
+        {
+            0 => string.Empty,
+            1 => LocalizationManager.Tr("RafContainerCountSingle"),
+            _ => LocalizationManager.TrFormat("RafContainerCountMultiple", RafContainers.Count)
+        };
+
+        public string RafContainerStatusText
+        {
+            get
+            {
+                if (RafContainers.Count == 0)
+                {
+                    return LocalizationManager.Tr("NoRafContainerConfigured");
+                }
+                return RafContainers.Count == 1
+                    ? LocalizationManager.TrFormat("RafContainerConfigured", RafContainers[0].DisplayText)
+                    : $"{RafContainers.Count} donor containers configured";
+            }
+        }
 
         public bool IsWindows => OperatingSystem.IsWindows();
 
@@ -555,6 +623,21 @@ namespace Fujify.ViewModels
             set => SetProperty(ref _autoOpenInLightroom, value);
         }
 
+        public bool ExportFailedConversionsLog
+        {
+            get => _exportFailedConversionsLog;
+            set
+            {
+                if (SetProperty(ref _exportFailedConversionsLog, value))
+                {
+                    _settingsService.Settings.ExportFailedConversionsLog = value;
+                    _settingsService.Save();
+                }
+            }
+        }
+
+        public bool HasLatestFailureLog => ConversionLogService.HasLatestFailureLog();
+
         public bool SkipThumbnailGeneration
         {
             get => _skipThumbnailGeneration;
@@ -664,6 +747,12 @@ namespace Fujify.ViewModels
         public ICommand SetAccountTabCommand { get; }
         public ICommand OpenAccountDashboardCommand { get; }
         public ICommand ActivateThisDeviceCommand { get; }
+        public ICommand BrowseRafContainerFileCommand { get; }
+        public ICommand BrowseRafContainerFolderCommand { get; }
+        public ICommand ClearRafContainerCommand { get; }
+        public ICommand OpenPixlsUsCommand { get; }
+        public ICommand OpenDngLabDbCommand { get; }
+        public ICommand OpenLatestFailureLogCommand { get; }
 
         public Action<bool>? CloseAction { get; set; }
 
@@ -776,6 +865,26 @@ namespace Fujify.ViewModels
             int saved = settings.MaxConcurrentConversions;
             if (saved <= 0 || saved > TotalThreads) saved = DefaultConcurrency;
             _maxConcurrentConversions = saved;
+
+            _enableCaptureOneMode = settings.EnableCaptureOneMode;
+            _rafContainerPath = settings.RafContainerPath;
+            LoadContainersFromSetting(settings.RafContainerPath);
+            _exportFailedConversionsLog = settings.ExportFailedConversionsLog;
+            _exportFailedConversionsLog = settings.ExportFailedConversionsLog;
+
+            BrowseRafContainerFileCommand = new AsyncRelayCommand(ExecuteBrowseRafContainerFileAsync);
+            BrowseRafContainerFolderCommand = new AsyncRelayCommand(ExecuteBrowseRafContainerFolderAsync);
+            ClearRafContainerCommand = new RelayCommand(ClearAllContainers);
+            OpenPixlsUsCommand = new RelayCommand(() => CrossPlatformLauncher.OpenUrl("https://raw.pixls.us/"));
+            OpenDngLabDbCommand = new RelayCommand(() => CrossPlatformLauncher.OpenUrl("https://rawdb.dnglab.org/"));
+            OpenLatestFailureLogCommand = new RelayCommand(() =>
+            {
+                string logPath = ConversionLogService.GetLatestFailureLogPath();
+                if (File.Exists(logPath))
+                {
+                    CrossPlatformLauncher.OpenPath(logPath);
+                }
+            });
 
             SaveCommand = new RelayCommand(Save);
             CancelCommand = new RelayCommand(() =>
@@ -1134,7 +1243,14 @@ namespace Fujify.ViewModels
             s.SubfolderSuffix = _subfolderSuffix;
             s.SubfolderCustomName = string.IsNullOrWhiteSpace(_subfolderCustomName) ? "Fujified" : _subfolderCustomName.Trim();
             s.AutoOpenOutputFolder = _autoOpenOutputFolder;
+            s.ExportFailedConversionsLog = _exportFailedConversionsLog;
             s.CheckForUpdatesOnStartup = _checkForUpdatesOnStartup;
+            s.EnableCaptureOneMode = _enableCaptureOneMode;
+            if (RafContainers.Count > 0)
+            {
+                _rafContainerPath = string.Join(";", RafContainers.Select(c => c.FilePath));
+            }
+            s.RafContainerPath = string.IsNullOrWhiteSpace(_rafContainerPath) ? null : _rafContainerPath.Trim();
 
             if (OperatingSystem.IsWindows())
             {
@@ -1183,6 +1299,11 @@ namespace Fujify.ViewModels
             int saved = settings.MaxConcurrentConversions;
             if (saved <= 0 || saved > TotalThreads) saved = DefaultConcurrency;
             _maxConcurrentConversions = saved;
+
+            _enableCaptureOneMode = settings.EnableCaptureOneMode;
+            _rafContainerPath = settings.RafContainerPath;
+            LoadContainersFromSetting(settings.RafContainerPath);
+            _exportFailedConversionsLog = settings.ExportFailedConversionsLog;
 
             UpdateRegisteredDevicesCollection();
             if (_licenseService.IsPro || _licenseService.IsAccountLoggedIn)
@@ -1426,6 +1547,225 @@ namespace Fujify.ViewModels
             }
         }
 
+        private void LoadContainersFromSetting(string? setting)
+        {
+            RafContainers.Clear();
+            if (string.IsNullOrWhiteSpace(setting))
+            {
+                OnPropertyChanged(nameof(HasRafContainers));
+                OnPropertyChanged(nameof(HasRafContainerPath));
+                OnPropertyChanged(nameof(RafContainerCountText));
+                OnPropertyChanged(nameof(RafContainerStatusText));
+                return;
+            }
+
+            var parts = setting.Split(new[] { ';', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            foreach (var part in parts)
+            {
+                AddContainerPathInternal(part, save: false);
+            }
+            OnPropertyChanged(nameof(HasRafContainers));
+            OnPropertyChanged(nameof(HasRafContainerPath));
+            OnPropertyChanged(nameof(RafContainerCountText));
+            OnPropertyChanged(nameof(RafContainerStatusText));
+        }
+
+        private void AddContainerPathInternal(string path, bool save = true)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return;
+            string cleanPath = path.Trim('\"', '\'', ' ');
+            if (string.IsNullOrWhiteSpace(cleanPath)) return;
+
+            if (Directory.Exists(cleanPath))
+            {
+                var rafFiles = Directory.GetFiles(cleanPath, "*.*", SearchOption.TopDirectoryOnly)
+                    .Where(f => f.EndsWith(".raf", StringComparison.OrdinalIgnoreCase))
+                    .ToArray();
+
+                foreach (var file in rafFiles)
+                {
+                    AddSingleContainerFile(file);
+                }
+                if (rafFiles.Length == 0)
+                {
+                    AddSingleContainerFile(cleanPath);
+                }
+            }
+            else
+            {
+                AddSingleContainerFile(cleanPath);
+            }
+
+            if (save)
+            {
+                SyncContainersToSetting();
+            }
+        }
+
+        private void AddSingleContainerFile(string filePath)
+        {
+            if (RafContainers.Any(c => string.Equals(c.FilePath, filePath, StringComparison.OrdinalIgnoreCase)))
+                return;
+
+            string camera = "Fujifilm";
+            if (File.Exists(filePath))
+            {
+                var inspection = RafConverterService.InspectContainerStatic(filePath);
+                if (!string.IsNullOrWhiteSpace(inspection.CameraModel))
+                {
+                    camera = inspection.Width > 0 && inspection.Height > 0
+                        ? $"{inspection.CameraModel} ({inspection.Width} × {inspection.Height})"
+                        : inspection.CameraModel;
+                }
+                else
+                {
+                    camera = RawMetadataReader.TryGetCameraMakeAndModel(filePath) ?? "Fujifilm Camera";
+                }
+            }
+            else if (Directory.Exists(filePath))
+            {
+                camera = "Folder";
+            }
+
+            RafContainers.Add(new RafContainerItemViewModel(filePath, camera, RemoveContainerItem));
+        }
+
+        private void RemoveContainerItem(RafContainerItemViewModel item)
+        {
+            RafContainers.Remove(item);
+            SyncContainersToSetting();
+        }
+
+        private void ClearAllContainers()
+        {
+            RafContainers.Clear();
+            SyncContainersToSetting();
+        }
+
+        private void SyncContainersToSetting()
+        {
+            _rafContainerPath = RafContainers.Count > 0 ? string.Join(";", RafContainers.Select(c => c.FilePath)) : string.Empty;
+            _settingsService.Settings.RafContainerPath = string.IsNullOrWhiteSpace(_rafContainerPath) ? null : _rafContainerPath.Trim();
+            _settingsService.Save();
+            OnPropertyChanged(nameof(RafContainerPath));
+            OnPropertyChanged(nameof(HasRafContainerPath));
+            OnPropertyChanged(nameof(HasRafContainers));
+            OnPropertyChanged(nameof(RafContainerCountText));
+            OnPropertyChanged(nameof(RafContainerStatusText));
+        }
+
+        private async Task ExecuteBrowseRafContainerFileAsync()
+        {
+            var dialogService = _dialogService ?? new DialogService(_settingsService, _licenseService);
+            var files = await dialogService.ShowOpenFileDialogAsync(OwnerWindow, LocalizationManager.Tr("RafContainerFilePickerTitle"), allowMultiple: true);
+            if (files != null && files.Count > 0)
+            {
+                await AddContainerPathsAsync(files);
+            }
+        }
+
+        private async Task ExecuteBrowseRafContainerFolderAsync()
+        {
+            var dialogService = _dialogService ?? new DialogService(_settingsService, _licenseService);
+            var folder = await dialogService.ShowFolderBrowserDialogAsync(OwnerWindow, LocalizationManager.Tr("RafContainerFolderPickerTitle"));
+            if (!string.IsNullOrWhiteSpace(folder) && Directory.Exists(folder))
+            {
+                var rafFiles = Directory.GetFiles(folder, "*.*", SearchOption.TopDirectoryOnly)
+                    .Where(f => f.EndsWith(".raf", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                if (rafFiles.Count == 0)
+                {
+                    await ShowResultDialogAsync(
+                        LocalizationManager.Tr("RafContainerNoneFoundTitle"),
+                        LocalizationManager.Tr("RafContainerNoneFoundMessage"),
+                        isSuccess: false);
+                    return;
+                }
+
+                await AddContainerPathsAsync(rafFiles);
+            }
+        }
+
+        private async Task AddContainerPathsAsync(IEnumerable<string> paths)
+        {
+            var skippedXTrans = new List<string>();
+            var skippedInvalid = new List<string>();
+            int addedCount = 0;
+
+            foreach (var path in paths)
+            {
+                if (string.IsNullOrWhiteSpace(path)) continue;
+                string cleanPath = path.Trim('\"', '\'', ' ');
+                if (!File.Exists(cleanPath)) continue;
+
+                // Inspect binary file data directly (checking CFA Meta Directory for X-Trans 6x6 pattern vs Bayer)
+                var inspection = RafConverterService.InspectContainerStatic(cleanPath);
+
+                if (inspection.SensorType == RafSensorType.XTrans)
+                {
+                    string desc = !string.IsNullOrWhiteSpace(inspection.CameraModel)
+                        ? $"{Path.GetFileName(cleanPath)} ({inspection.CameraModel})"
+                        : Path.GetFileName(cleanPath);
+                    skippedXTrans.Add(desc);
+                    continue;
+                }
+
+                if (!inspection.IsValid || inspection.SensorType != RafSensorType.Bayer)
+                {
+                    skippedInvalid.Add(Path.GetFileName(cleanPath));
+                    continue;
+                }
+
+                if (RafContainers.Any(c => string.Equals(c.FilePath, cleanPath, StringComparison.OrdinalIgnoreCase)))
+                {
+                    continue;
+                }
+
+                string cameraDisplay = !string.IsNullOrWhiteSpace(inspection.CameraModel)
+                    ? (inspection.Width > 0 && inspection.Height > 0
+                        ? $"{inspection.CameraModel} ({inspection.Width} × {inspection.Height})"
+                        : inspection.CameraModel)
+                    : (RawMetadataReader.TryGetCameraMakeAndModel(cleanPath) ?? "Fujifilm Bayer");
+
+                RafContainers.Add(new RafContainerItemViewModel(cleanPath, cameraDisplay, RemoveContainerItem));
+                addedCount++;
+            }
+
+            if (addedCount > 0)
+            {
+                SyncContainersToSetting();
+            }
+
+            if (skippedXTrans.Count > 0)
+            {
+                string skippedList = string.Join("\n• ", skippedXTrans.Take(5)) +
+                    (skippedXTrans.Count > 5 ? $"\n...and {skippedXTrans.Count - 5} more" : "");
+
+                if (addedCount == 0)
+                {
+                    await ShowResultDialogAsync(
+                        LocalizationManager.Tr("RafContainerXTransRejectedTitle"),
+                        LocalizationManager.TrFormat("RafContainerXTransRejectedMessage", skippedList),
+                        isSuccess: false);
+                }
+                else
+                {
+                    await ShowResultDialogAsync(
+                        LocalizationManager.Tr("RafContainerPartialSkippedTitle"),
+                        LocalizationManager.TrFormat("RafContainerPartialSkippedMessage", addedCount, skippedList),
+                        isSuccess: true);
+                }
+            }
+            else if (skippedInvalid.Count > 0 && addedCount == 0)
+            {
+                await ShowResultDialogAsync(
+                    LocalizationManager.Tr("RafContainerInvalidTitle"),
+                    LocalizationManager.Tr("RafContainerInvalidMessage"),
+                    isSuccess: false);
+            }
+        }
+
         private async Task ShowResultDialogAsync(string title, string message, bool isSuccess)
         {
             try
@@ -1458,6 +1798,25 @@ namespace Fujify.ViewModels
             {
                 System.Diagnostics.Debug.WriteLine($"[PreferencesViewModel] Failed to display result dialog: {ex.Message}");
             }
+        }
+    }
+
+    public class RafContainerItemViewModel : ViewModelBase
+    {
+        public string FilePath { get; }
+        public string FileName => Path.GetFileName(FilePath);
+        public string CameraModel { get; }
+        public string DisplayText => string.IsNullOrWhiteSpace(CameraModel)
+            ? FileName
+            : $"{FileName} - {CameraModel}";
+
+        public ICommand RemoveCommand { get; }
+
+        public RafContainerItemViewModel(string filePath, string cameraModel, Action<RafContainerItemViewModel> onRemove)
+        {
+            FilePath = filePath;
+            CameraModel = cameraModel;
+            RemoveCommand = new RelayCommand(() => onRemove(this));
         }
     }
 }

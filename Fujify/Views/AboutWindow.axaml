@@ -3,7 +3,7 @@
         xmlns:loc="using:Fujify.Localization"
         x:Class="Fujify.Views.AboutWindow"
         Title="{loc:Loc AboutFujifier}"
-        Width="440" Height="470"
+        Width="440" Height="520"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
         ExtendClientAreaToDecorationsHint="True"
@@ -85,8 +85,14 @@
                             <TextBlock Text="• Canon PowerShot Pro70" FontSize="9.5" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                         </StackPanel>
 
+                        <TextBlock Text="{loc:Loc UnsupportedRawFormats}" FontSize="10" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource AppDangerBrush}" Margin="0,3,0,0"/>
+                        <StackPanel Margin="6,0,0,0" Spacing="2">
+                            <TextBlock Text="{loc:Loc NikonHighEfficiencyWarning}" FontSize="9.5" Foreground="{DynamicResource AppTextSecondaryBrush}" TextWrapping="Wrap" LineHeight="14"/>
+                        </StackPanel>
+
                         <TextBlock Text="{loc:Loc PartiallyWorkingCameras}" FontSize="10" FontWeight="SemiBold"
-                                   Foreground="{DynamicResource AppAccentLightBrush}" Margin="0,2,0,0"/>
+                                   Foreground="{DynamicResource AppAccentLightBrush}" Margin="0,3,0,0"/>
                         <StackPanel Margin="6,0,0,0" Spacing="2">
                             <TextBlock Text="• Hasselblad Flash sync" FontSize="9.5" Foreground="{DynamicResource AppTextSecondaryBrush}"/>
                         </StackPanel>

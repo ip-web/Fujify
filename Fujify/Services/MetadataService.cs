@@ -516,9 +516,10 @@ namespace Fujify.Services
             }
         }
 
-        private static (string Command, string? PrefixArgs)? FindExifToolRunner()
+        public static (string Command, string? PrefixArgs)? FindExifToolRunner()
         {
             string binaryName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "exiftool.exe" : "exiftool";
+            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
 
             // On Linux / macOS: check standard system paths and system PATH first so the latest version is used
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -551,9 +552,36 @@ namespace Fujify.Services
                 }
             }
 
-            // Check local libs directory (e.g. bundled binary or fallback wrapper)
-            string localPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "libs", binaryName);
-            if (File.Exists(localPath)) return (localPath, null);
+            // Check arch-specific dirs and local libs directory
+            var candidates = new System.Collections.Generic.List<string>();
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                {
+                    candidates.Add(Path.Combine(baseDir, "libs", "win-arm64", binaryName));
+                }
+                candidates.Add(Path.Combine(baseDir, "libs", "win-x64", binaryName));
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                if (RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
+                {
+                    candidates.Add(Path.Combine(baseDir, "libs", "osx-arm64", binaryName));
+                }
+                candidates.Add(Path.Combine(baseDir, "libs", "osx-x64", binaryName));
+            }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+            {
+                candidates.Add(Path.Combine(baseDir, "libs", "linux-x64", binaryName));
+            }
+
+            candidates.Add(Path.Combine(baseDir, "libs", binaryName));
+            candidates.Add(Path.Combine(baseDir, binaryName));
+
+            foreach (var candidate in candidates)
+            {
+                if (File.Exists(candidate)) return (candidate, (string?)null);
+            }
 
             // On Windows: check system PATH as fallback
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -574,6 +602,12 @@ namespace Fujify.Services
             }
 
             return null;
+        }
+
+        public static string? GetExifToolPath()
+        {
+            var runner = FindExifToolRunner();
+            return runner?.Command;
         }
 
         private static string ExtractExifValue(string exifOutput, params string[] tagNames)

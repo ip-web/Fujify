@@ -117,7 +117,7 @@ pub unsafe extern "C" fn dnglab_convert_file(
             Ok(_) => 0,
             Err(e) => {
                 let err_str = e.to_string();
-                if err_str.contains("Unknown camera") {
+                if err_str.contains("Unknown camera") || err_str.contains("Couldn't find a decoder") {
                     drop(writer);
                     let _ = std::fs::remove_file(&out_path);
                     if let Some(norm) = try_create_temp_with_normalized_camera(&in_path, &err_str) {
@@ -138,6 +138,16 @@ pub unsafe extern "C" fn dnglab_convert_file(
                 } else {
                     drop(writer);
                     let _ = std::fs::remove_file(&out_path);
+                }
+
+                if err_str.contains("HighEfficency") {
+                    set_error(error_msg_buf, error_msg_buf_len, "Nikon High Efficiency (HE/HE*) raw compression uses the proprietary intoPIX TicoRAW codec. Open-source decoders cannot decode it. Please set your camera to 'Lossless compression' RAW.");
+                    return -7;
+                }
+
+                if err_str.contains("arw6") {
+                    set_error(error_msg_buf, error_msg_buf_len, "Sony ARW6 wavelet compression is an experimental format not supported by open-source decoders. Standard Sony Compressed and Lossless Compressed RAW modes are fully supported.");
+                    return -7;
                 }
 
                 if err_str.contains("PowerShot Pro70") || err_str.contains("PowerShot Pr070") {
@@ -243,11 +253,12 @@ fn try_create_temp_with_normalized_camera(path: &std::path::Path, err_str: &str)
         }
     }
 
-    // 3. Konica Minolta MRW: DYNAX 5D -> DYNAX 7D, MAXXUM 5D -> MAXXUM 7D, ALPHA-5 DIGITAL -> ALPHA-7 DIGITAL
-    let pairs: [(&[u8], &[u8]); 3] = [
+    // 3. Konica Minolta MRW: DYNAX 5D -> DYNAX 7D, MAXXUM 5D -> MAXXUM 7D, ALPHA-5 DIGITAL -> ALPHA-7 DIGITAL, ALPHA SWEET DIGITAL
+    let pairs: [(&[u8], &[u8]); 4] = [
         (b"DYNAX 5D", b"DYNAX 7D"),
         (b"MAXXUM 5D", b"MAXXUM 7D"),
         (b"ALPHA-5 DIGITAL", b"ALPHA-7 DIGITAL"),
+        (b"ALPHA SWEET DIGITAL", b"ALPHA-7 DIGITAL    "),
     ];
 
     for (target, replacement) in pairs {
@@ -258,6 +269,166 @@ fn try_create_temp_with_normalized_camera(path: &std::path::Path, err_str: &str)
                     modified = true;
                     is_5d = true;
                 }
+            }
+        }
+    }
+
+    // 4. PENTAX K2000 -> PENTAX K-m
+    let k2000_target = b"PENTAX K2000";
+    let km_replacement = b"PENTAX K-m  ";
+    if err_str.contains("K2000") || data.windows(k2000_target.len()).any(|w| w == k2000_target) {
+        for i in 0..data.len().saturating_sub(k2000_target.len()) {
+            if &data[i..i + k2000_target.len()] == k2000_target {
+                data[i..i + k2000_target.len()].copy_from_slice(km_replacement);
+                modified = true;
+            }
+        }
+    }
+
+    // 5. SAMSUNG TECHWIN GX-1L -> PENTAX *ist D
+    let samsung_techwin = b"SAMSUNG TECHWIN";
+    let pentax_pad = b"PENTAX\0        ";
+    if err_str.contains("SAMSUNG TECHWIN") || data.windows(samsung_techwin.len()).any(|w| w == samsung_techwin) {
+        for i in 0..data.len().saturating_sub(samsung_techwin.len()) {
+            if &data[i..i + samsung_techwin.len()] == samsung_techwin {
+                data[i..i + samsung_techwin.len()].copy_from_slice(pentax_pad);
+                modified = true;
+            }
+        }
+        let gx1l_target = b"GX-1L";
+        let istd_repl = b"*istD";
+        for i in 0..data.len().saturating_sub(gx1l_target.len()) {
+            if &data[i..i + gx1l_target.len()] == gx1l_target {
+                data[i..i + gx1l_target.len()].copy_from_slice(istd_repl);
+                modified = true;
+            }
+        }
+    }
+
+    // 6. HASSELBLAD Lunar -> SONY NEX-7
+    let hasselblad_target = b"HASSELBLAD";
+    let sony_replacement = b"SONY\0     ";
+    if err_str.contains("Lunar") || (err_str.contains("HASSELBLAD") && data.windows(b"Lunar".len()).any(|w| w == b"Lunar")) {
+        for i in 0..data.len().saturating_sub(hasselblad_target.len()) {
+            if &data[i..i + hasselblad_target.len()] == hasselblad_target {
+                data[i..i + hasselblad_target.len()].copy_from_slice(sony_replacement);
+                modified = true;
+            }
+        }
+        let lunar_target = b"Lunar";
+        let nex7_repl = b"NEX-7";
+        for i in 0..data.len().saturating_sub(lunar_target.len()) {
+            if &data[i..i + lunar_target.len()] == lunar_target {
+                data[i..i + lunar_target.len()].copy_from_slice(nex7_repl);
+                modified = true;
+            }
+        }
+    }
+
+    // 7. SONY ILME-FX2 -> ILME-FX3
+    let fx2_target = b"ILME-FX2";
+    let fx3_repl = b"ILME-FX3";
+    if err_str.contains("ILME-FX2") || data.windows(fx2_target.len()).any(|w| w == fx2_target) {
+        for i in 0..data.len().saturating_sub(fx2_target.len()) {
+            if &data[i..i + fx2_target.len()] == fx2_target {
+                data[i..i + fx2_target.len()].copy_from_slice(fx3_repl);
+                modified = true;
+            }
+        }
+    }
+
+    // 8. Panasonic DMC-GM1S -> DMC-GM1\0
+    let gm1s_target = b"DMC-GM1S";
+    let gm1_repl = b"DMC-GM1\0";
+    if err_str.contains("DMC-GM1S") || data.windows(gm1s_target.len()).any(|w| w == gm1s_target) {
+        for i in 0..data.len().saturating_sub(gm1s_target.len()) {
+            if &data[i..i + gm1s_target.len()] == gm1s_target {
+                data[i..i + gm1s_target.len()].copy_from_slice(gm1_repl);
+                modified = true;
+            }
+        }
+    }
+
+    // 9. Panasonic DC-FZ45 -> DMC-FZ45
+    let fz45_null = b"DC-FZ45\0";
+    let fz45_repl = b"DMC-FZ45";
+    if err_str.contains("FZ45") || data.windows(fz45_null.len()).any(|w| w == fz45_null) {
+        for i in 0..data.len().saturating_sub(fz45_null.len()) {
+            if &data[i..i + fz45_null.len()] == fz45_null {
+                data[i..i + fz45_null.len()].copy_from_slice(fz45_repl);
+                modified = true;
+            }
+        }
+    }
+
+    // 10. Nikon 1 S1 -> NIKON 1 J2 (identical 10.1MP CX sensor)
+    let s1_target = b"NIKON 1 S1";
+    let s1_repl = b"NIKON 1 J2";
+    if err_str.contains("NIKON 1 S1") || data.windows(s1_target.len()).any(|w| w == s1_target) {
+        for i in 0..data.len().saturating_sub(s1_target.len()) {
+            if &data[i..i + s1_target.len()] == s1_target {
+                data[i..i + s1_target.len()].copy_from_slice(s1_repl);
+                modified = true;
+            }
+        }
+    }
+
+    // 11. Nikon 1 J4 -> NIKON 1 V3 (identical 18.4MP CX sensor)
+    let j4_target = b"NIKON 1 J4";
+    let j4_repl = b"NIKON 1 V3";
+    if err_str.contains("NIKON 1 J4") || data.windows(j4_target.len()).any(|w| w == j4_target) {
+        for i in 0..data.len().saturating_sub(j4_target.len()) {
+            if &data[i..i + j4_target.len()] == j4_target {
+                data[i..i + j4_target.len()].copy_from_slice(j4_repl);
+                modified = true;
+            }
+        }
+    }
+
+    // 12. Nikon D1H -> NIKON D1\0 (identical 2.7MP CCD sensor)
+    let d1h_target = b"NIKON D1H";
+    let d1h_repl = b"NIKON D1\0";
+    if err_str.contains("NIKON D1H") || data.windows(d1h_target.len()).any(|w| w == d1h_target) {
+        for i in 0..data.len().saturating_sub(d1h_target.len()) {
+            if &data[i..i + d1h_target.len()] == d1h_target {
+                data[i..i + d1h_target.len()].copy_from_slice(d1h_repl);
+                modified = true;
+            }
+        }
+    }
+
+    // 13. Nikon COOLPIX P7700 -> COOLPIX P7800 (identical 12.2MP BSI CMOS sensor)
+    let p7700_target = b"COOLPIX P7700";
+    let p7700_repl = b"COOLPIX P7800";
+    if err_str.contains("P7700") || data.windows(p7700_target.len()).any(|w| w == p7700_target) {
+        for i in 0..data.len().saturating_sub(p7700_target.len()) {
+            if &data[i..i + p7700_target.len()] == p7700_target {
+                data[i..i + p7700_target.len()].copy_from_slice(p7700_repl);
+                modified = true;
+            }
+        }
+    }
+
+    // 14. Minolta DiMAGE 5 -> DiMAGE 7 (identical MRW sensor pipeline)
+    let dimage5_target = b"DiMAGE 5";
+    let dimage5_repl = b"DiMAGE 7";
+    if err_str.contains("DiMAGE 5") || data.windows(dimage5_target.len()).any(|w| w == dimage5_target) {
+        for i in 0..data.len().saturating_sub(dimage5_target.len()) {
+            if &data[i..i + dimage5_target.len()] == dimage5_target {
+                data[i..i + dimage5_target.len()].copy_from_slice(dimage5_repl);
+                modified = true;
+            }
+        }
+    }
+
+    // 15. Samsung Galaxy NX EK-GN120 -> NX300 (identical 20.3MP APS-C sensor)
+    let gn120_target = b"EK-GN120";
+    let gn120_repl = b"NX300\0\0";
+    if err_str.contains("EK-GN120") || data.windows(gn120_target.len()).any(|w| w == gn120_target) {
+        for i in 0..data.len().saturating_sub(gn120_target.len()) {
+            if &data[i..i + gn120_target.len()] == gn120_target {
+                data[i..i + gn120_target.len()].copy_from_slice(gn120_repl);
+                modified = true;
             }
         }
     }

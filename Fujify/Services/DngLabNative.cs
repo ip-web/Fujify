@@ -34,180 +34,17 @@ namespace Fujify.Services
     public static class DngLabNative
     {
         private const string LibraryName = "dnglab_ffi";
-        private static bool _resolverRegistered;
         private static readonly object _initLock = new();
         private static bool? _isAvailable;
 
         static DngLabNative()
         {
-            RegisterLibraryResolver();
-        }
-
-        private static void RegisterLibraryResolver()
-        {
-            lock (_initLock)
-            {
-                if (_resolverRegistered) return;
-                try
-                {
-                    NativeLibrary.SetDllImportResolver(typeof(DngLabNative).Assembly, DllImportResolver);
-                    _resolverRegistered = true;
-                }
-                catch
-                {
-                    // Resolver might already be set or not supported
-                }
-            }
+            NativeLibraryResolver.EnsureRegistered();
         }
 
         private static IntPtr DllImportResolver(string libraryName, System.Reflection.Assembly assembly, DllImportSearchPath? searchPath)
         {
-            if (libraryName != LibraryName) return IntPtr.Zero;
-
-            // 1. Direct try via standard dynamic linker (e.g. system search path, Android app native library dir)
-            if (NativeLibrary.TryLoad(LibraryName, assembly, searchPath, out IntPtr directHandle))
-            {
-                return directHandle;
-            }
-
-            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            string osExt;
-            string prefix = "";
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                osExt = ".dll";
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || OperatingSystem.IsIOS() || OperatingSystem.IsMacCatalyst())
-            {
-                osExt = ".dylib";
-                prefix = "lib";
-            }
-            else
-            {
-                osExt = ".so";
-                prefix = "lib";
-            }
-
-            string fileName = $"{prefix}{LibraryName}{osExt}";
-
-            if (NativeLibrary.TryLoad(fileName, assembly, searchPath, out directHandle))
-            {
-                return directHandle;
-            }
-
-            // 2. Android native library directory (when running on Android)
-            try
-            {
-                var appType = Type.GetType("Android.App.Application, Mono.Android");
-                var contextProp = appType?.GetProperty("Context", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-                var context = contextProp?.GetValue(null);
-                if (context != null)
-                {
-                    var appInfoProp = context.GetType().GetProperty("ApplicationInfo");
-                    var appInfo = appInfoProp?.GetValue(context);
-                    if (appInfo != null)
-                    {
-                        var nativeLibDirProp = appInfo.GetType().GetProperty("NativeLibraryDir");
-                        var nativeLibDir = nativeLibDirProp?.GetValue(appInfo) as string;
-                        if (!string.IsNullOrEmpty(nativeLibDir))
-                        {
-                            string androidLibPath = Path.Combine(nativeLibDir, fileName);
-                            if (File.Exists(androidLibPath) && NativeLibrary.TryLoad(androidLibPath, out IntPtr androidHandle))
-                            {
-                                return androidHandle;
-                            }
-                        }
-                    }
-                }
-            }
-            catch
-            {
-                // Fall through to file system candidate search
-            }
-
-            // 3. Candidate locations (including iOS / macOS Frameworks and app bundle)
-            var searchPaths = new System.Collections.Generic.List<string>
-            {
-                Path.Combine(baseDir, fileName),
-                Path.Combine(baseDir, "Frameworks", fileName),
-                Path.Combine(baseDir, "Frameworks", $"{LibraryName}.framework", LibraryName),
-                Path.Combine(baseDir, "libs", fileName),
-                Path.Combine(baseDir, "runtimes", RuntimeInformation.RuntimeIdentifier, "native", fileName)
-            };
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                string arch = RuntimeInformation.ProcessArchitecture switch
-                {
-                    Architecture.Arm64 => "win-arm64",
-                    Architecture.X64 => "win-x64",
-                    Architecture.X86 => "win-x86",
-                    _ => ""
-                };
-                if (!string.IsNullOrEmpty(arch))
-                {
-                    searchPaths.Add(Path.Combine(baseDir, "libs", arch, fileName));
-                    searchPaths.Add(Path.Combine(baseDir, "runtimes", arch, "native", fileName));
-                    searchPaths.Add(Path.Combine(baseDir, "..", "..", "..", "Fujify", "libs", arch, fileName));
-                }
-            }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) || OperatingSystem.IsIOS() || OperatingSystem.IsMacCatalyst())
-            {
-                // macOS app bundle: Contents/Frameworks, Contents/Resources
-                searchPaths.Add(Path.Combine(baseDir, "..", "Frameworks", fileName));
-                searchPaths.Add(Path.Combine(baseDir, "..", "Frameworks", $"{LibraryName}.framework", LibraryName));
-                searchPaths.Add(Path.Combine(baseDir, "..", "Resources", fileName));
-                searchPaths.Add(Path.Combine(baseDir, "..", "Resources", "libs", fileName));
-                // Standard macOS Homebrew / system paths
-                searchPaths.Add(Path.Combine("/opt/homebrew/lib", fileName));
-                searchPaths.Add(Path.Combine("/usr/local/lib", fileName));
-                searchPaths.Add(Path.Combine("/usr/lib", fileName));
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                searchPaths.Add(Path.Combine("/usr/lib", fileName));
-                searchPaths.Add(Path.Combine("/usr/local/lib", fileName));
-            }
-
-            // User library folders on Unix-like OSes
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                string userHome = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                if (!string.IsNullOrEmpty(userHome))
-                {
-                    searchPaths.Add(Path.Combine(userHome, ".local", "lib", fileName));
-                    searchPaths.Add(Path.Combine(userHome, "lib", fileName));
-                }
-            }
-
-            // Developer / source tree fallbacks
-            searchPaths.Add(Path.Combine(baseDir, "..", "..", "..", "Fujify", "libs", fileName));
-            searchPaths.Add(Path.Combine(baseDir, "..", "..", "..", "Fujify", "libs", RuntimeInformation.RuntimeIdentifier, fileName));
-            searchPaths.Add(Path.Combine(baseDir, "..", "..", "..", "native", "dnglab_ffi", "target", "release", fileName));
-            searchPaths.Add(Path.Combine(baseDir, "..", "..", "..", "..", "native", "dnglab_ffi", "target", "release", fileName));
-
-            foreach (var path in searchPaths)
-            {
-                if (File.Exists(path))
-                {
-                    // Pre-load companion libraries (e.g. libunwind.dll on Windows ARM64) in the same directory
-                    string companionDir = Path.GetDirectoryName(path) ?? "";
-                    string unwindPath = Path.Combine(companionDir, "libunwind.dll");
-                    if (File.Exists(unwindPath))
-                    {
-                        NativeLibrary.TryLoad(unwindPath, assembly, searchPath, out _);
-                    }
-
-                    if (NativeLibrary.TryLoad(path, out IntPtr handle))
-                    {
-                        return handle;
-                    }
-                }
-            }
-
-            return IntPtr.Zero;
+            return NativeLibraryResolver.DllImportResolver(libraryName, assembly, searchPath);
         }
 
         [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl)]
@@ -311,37 +148,41 @@ namespace Fujify.Services
 
                 // Upstream rawler/dnglab has mismatched Make strings or missing model aliases for certain cameras
                 // (e.g. Pentax K200D/K20D where camera writes 'PENTAX Corporation', Leaf Aptus where camera writes 'Creo/Leaf',
-                // and Konica Minolta DYNAX/MAXXUM 5D which shares identical hardware/sensor with DYNAX 7D).
-                if (errorMsg.Contains("Unknown camera", StringComparison.OrdinalIgnoreCase))
+                // Konica Minolta DYNAX/MAXXUM 5D / ALPHA SWEET DIGITAL, Pentax K2000, Samsung GX-1L, Hasselblad Lunar, Sony FX2, etc.).
+                if (errorMsg.Contains("Unknown camera", StringComparison.OrdinalIgnoreCase) ||
+                    errorMsg.Contains("Couldn't find a decoder", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (errorMsg.Contains("PENTAX Corporation", StringComparison.OrdinalIgnoreCase) ||
-                        errorMsg.Contains("Creo/Leaf", StringComparison.OrdinalIgnoreCase) ||
-                        errorMsg.Contains("DYNAX 5D", StringComparison.OrdinalIgnoreCase) ||
-                        errorMsg.Contains("MAXXUM 5D", StringComparison.OrdinalIgnoreCase) ||
-                        errorMsg.Contains("ALPHA-5 DIGITAL", StringComparison.OrdinalIgnoreCase))
+                    var (tempWithFixedMake, is5d) = TryCreateTempWithNormalizedCamera(inputPath, errorMsg);
+                    if (tempWithFixedMake != null)
                     {
-                        var (tempWithFixedMake, is5d) = TryCreateTempWithNormalizedCamera(inputPath, errorMsg);
-                        if (tempWithFixedMake != null)
+                        try
                         {
-                            try
+                            byte[] retryErrorBuf = new byte[2048];
+                            int retryResult = dnglab_convert_file(tempWithFixedMake, outputPath, embedRaw, retryErrorBuf, (UIntPtr)retryErrorBuf.Length);
+                            if (retryResult == 0)
                             {
-                                byte[] retryErrorBuf = new byte[2048];
-                                int retryResult = dnglab_convert_file(tempWithFixedMake, outputPath, embedRaw, retryErrorBuf, (UIntPtr)retryErrorBuf.Length);
-                                if (retryResult == 0)
+                                if (is5d && File.Exists(outputPath))
                                 {
-                                    if (is5d && File.Exists(outputPath))
-                                    {
-                                        RestoreMinolta5DModelName(outputPath);
-                                    }
-                                    return (true, null);
+                                    RestoreMinolta5DModelName(outputPath);
                                 }
-                            }
-                            finally
-                            {
-                                try { if (File.Exists(tempWithFixedMake)) File.Delete(tempWithFixedMake); } catch { }
+                                return (true, null);
                             }
                         }
+                        finally
+                        {
+                            try { if (File.Exists(tempWithFixedMake)) File.Delete(tempWithFixedMake); } catch { }
+                        }
                     }
+                }
+
+                if (errorMsg.Contains("HighEfficency", StringComparison.OrdinalIgnoreCase))
+                {
+                    return (false, "Nikon High Efficiency (HE/HE*) raw compression uses the proprietary intoPIX TicoRAW codec. Open-source decoders cannot decode it. Please set your camera to 'Lossless compression' RAW.");
+                }
+
+                if (errorMsg.Contains("arw6", StringComparison.OrdinalIgnoreCase))
+                {
+                    return (false, "Sony ARW6 wavelet compression is an experimental format not supported by open-source decoders. Standard Sony Compressed and Lossless Compressed RAW modes are fully supported.");
                 }
 
                 if (errorMsg.Contains("PowerShot Pro70", StringComparison.OrdinalIgnoreCase) ||
@@ -418,7 +259,8 @@ namespace Fujify.Services
                 [
                     ("DYNAX 5D", "DYNAX 7D"),
                     ("MAXXUM 5D", "MAXXUM 7D"),
-                    ("ALPHA-5 DIGITAL", "ALPHA-7 DIGITAL")
+                    ("ALPHA-5 DIGITAL", "ALPHA-7 DIGITAL"),
+                    ("ALPHA SWEET DIGITAL", "ALPHA-7 DIGITAL    ")
                 ];
 
                 foreach (var (tgtStr, repStr) in pairs)
@@ -434,6 +276,181 @@ namespace Fujify.Services
                             modified = true;
                             is5d = true;
                         }
+                    }
+                }
+
+                // 4. PENTAX K2000 -> PENTAX K-m
+                if (errorMsg.Contains("K2000", StringComparison.OrdinalIgnoreCase))
+                {
+                    byte[] target = Encoding.ASCII.GetBytes("PENTAX K2000");
+                    byte[] replacement = Encoding.ASCII.GetBytes("PENTAX K-m  ");
+                    int idx = FindBytes(data, target);
+                    if (idx >= 0)
+                    {
+                        Array.Copy(replacement, 0, data, idx, replacement.Length);
+                        modified = true;
+                    }
+                }
+
+                // 5. SAMSUNG TECHWIN GX-1L -> PENTAX *ist D
+                if (errorMsg.Contains("SAMSUNG TECHWIN", StringComparison.OrdinalIgnoreCase))
+                {
+                    byte[] targetMake = Encoding.ASCII.GetBytes("SAMSUNG TECHWIN");
+                    byte[] replMake = Encoding.ASCII.GetBytes("PENTAX\0        ");
+                    int idxMake = FindBytes(data, targetMake);
+                    if (idxMake >= 0)
+                    {
+                        Array.Copy(replMake, 0, data, idxMake, replMake.Length);
+                        modified = true;
+                    }
+
+                    byte[] targetModel = Encoding.ASCII.GetBytes("GX-1L");
+                    byte[] replModel = Encoding.ASCII.GetBytes("*istD");
+                    int idxModel = FindBytes(data, targetModel);
+                    if (idxModel >= 0)
+                    {
+                        Array.Copy(replModel, 0, data, idxModel, replModel.Length);
+                        modified = true;
+                    }
+                }
+
+                // 6. HASSELBLAD Lunar -> SONY NEX-7
+                if (errorMsg.Contains("Lunar", StringComparison.OrdinalIgnoreCase) ||
+                    (errorMsg.Contains("HASSELBLAD", StringComparison.OrdinalIgnoreCase) && FindBytes(data, Encoding.ASCII.GetBytes("Lunar")) >= 0))
+                {
+                    byte[] targetMake = Encoding.ASCII.GetBytes("HASSELBLAD");
+                    byte[] replMake = Encoding.ASCII.GetBytes("SONY\0     ");
+                    int idxMake = FindBytes(data, targetMake);
+                    if (idxMake >= 0)
+                    {
+                        Array.Copy(replMake, 0, data, idxMake, replMake.Length);
+                        modified = true;
+                    }
+
+                    byte[] targetModel = Encoding.ASCII.GetBytes("Lunar");
+                    byte[] replModel = Encoding.ASCII.GetBytes("NEX-7");
+                    int idxModel = FindBytes(data, targetModel);
+                    if (idxModel >= 0)
+                    {
+                        Array.Copy(replModel, 0, data, idxModel, replModel.Length);
+                        modified = true;
+                    }
+                }
+
+                // 7. SONY ILME-FX2 -> ILME-FX3
+                if (errorMsg.Contains("ILME-FX2", StringComparison.OrdinalIgnoreCase))
+                {
+                    byte[] target = Encoding.ASCII.GetBytes("ILME-FX2");
+                    byte[] replacement = Encoding.ASCII.GetBytes("ILME-FX3");
+                    int idx = FindBytes(data, target);
+                    if (idx >= 0)
+                    {
+                        Array.Copy(replacement, 0, data, idx, replacement.Length);
+                        modified = true;
+                    }
+                }
+
+                // 8. Panasonic DMC-GM1S -> DMC-GM1\0
+                if (errorMsg.Contains("DMC-GM1S", StringComparison.OrdinalIgnoreCase))
+                {
+                    byte[] target = Encoding.ASCII.GetBytes("DMC-GM1S");
+                    byte[] replacement = Encoding.ASCII.GetBytes("DMC-GM1\0");
+                    int idx = FindBytes(data, target);
+                    if (idx >= 0)
+                    {
+                        Array.Copy(replacement, 0, data, idx, replacement.Length);
+                        modified = true;
+                    }
+                }
+
+                // 9. Panasonic DC-FZ45 -> DMC-FZ45
+                if (errorMsg.Contains("FZ45", StringComparison.OrdinalIgnoreCase))
+                {
+                    byte[] target = Encoding.ASCII.GetBytes("DC-FZ45\0");
+                    byte[] replacement = Encoding.ASCII.GetBytes("DMC-FZ45");
+                    int idx = FindBytes(data, target);
+                    if (idx >= 0)
+                    {
+                        Array.Copy(replacement, 0, data, idx, replacement.Length);
+                        modified = true;
+                    }
+                }
+
+                // 10. Nikon 1 S1 -> NIKON 1 J2 (identical 10.1MP CX sensor)
+                if (errorMsg.Contains("NIKON 1 S1", StringComparison.OrdinalIgnoreCase))
+                {
+                    byte[] target = Encoding.ASCII.GetBytes("NIKON 1 S1");
+                    byte[] replacement = Encoding.ASCII.GetBytes("NIKON 1 J2");
+                    int idx = FindBytes(data, target);
+                    if (idx >= 0)
+                    {
+                        Array.Copy(replacement, 0, data, idx, replacement.Length);
+                        modified = true;
+                    }
+                }
+
+                // 11. Nikon 1 J4 -> NIKON 1 V3 (identical 18.4MP CX sensor)
+                if (errorMsg.Contains("NIKON 1 J4", StringComparison.OrdinalIgnoreCase))
+                {
+                    byte[] target = Encoding.ASCII.GetBytes("NIKON 1 J4");
+                    byte[] replacement = Encoding.ASCII.GetBytes("NIKON 1 V3");
+                    int idx = FindBytes(data, target);
+                    if (idx >= 0)
+                    {
+                        Array.Copy(replacement, 0, data, idx, replacement.Length);
+                        modified = true;
+                    }
+                }
+
+                // 12. Nikon D1H -> NIKON D1\0 (identical 2.7MP CCD sensor)
+                if (errorMsg.Contains("NIKON D1H", StringComparison.OrdinalIgnoreCase))
+                {
+                    byte[] target = Encoding.ASCII.GetBytes("NIKON D1H");
+                    byte[] replacement = Encoding.ASCII.GetBytes("NIKON D1\0");
+                    int idx = FindBytes(data, target);
+                    if (idx >= 0)
+                    {
+                        Array.Copy(replacement, 0, data, idx, replacement.Length);
+                        modified = true;
+                    }
+                }
+
+                // 13. Nikon COOLPIX P7700 -> COOLPIX P7800 (identical 12.2MP BSI CMOS sensor)
+                if (errorMsg.Contains("P7700", StringComparison.OrdinalIgnoreCase))
+                {
+                    byte[] target = Encoding.ASCII.GetBytes("COOLPIX P7700");
+                    byte[] replacement = Encoding.ASCII.GetBytes("COOLPIX P7800");
+                    int idx = FindBytes(data, target);
+                    if (idx >= 0)
+                    {
+                        Array.Copy(replacement, 0, data, idx, replacement.Length);
+                        modified = true;
+                    }
+                }
+
+                // 14. Minolta DiMAGE 5 -> DiMAGE 7 (identical MRW sensor pipeline)
+                if (errorMsg.Contains("DiMAGE 5", StringComparison.OrdinalIgnoreCase))
+                {
+                    byte[] target = Encoding.ASCII.GetBytes("DiMAGE 5");
+                    byte[] replacement = Encoding.ASCII.GetBytes("DiMAGE 7");
+                    int idx = FindBytes(data, target);
+                    if (idx >= 0)
+                    {
+                        Array.Copy(replacement, 0, data, idx, replacement.Length);
+                        modified = true;
+                    }
+                }
+
+                // 15. Samsung Galaxy NX EK-GN120 -> NX300 (identical 20.3MP APS-C sensor)
+                if (errorMsg.Contains("EK-GN120", StringComparison.OrdinalIgnoreCase))
+                {
+                    byte[] target = Encoding.ASCII.GetBytes("EK-GN120");
+                    byte[] replacement = Encoding.ASCII.GetBytes("NX300\0\0");
+                    int idx = FindBytes(data, target);
+                    if (idx >= 0)
+                    {
+                        Array.Copy(replacement, 0, data, idx, replacement.Length);
+                        modified = true;
                     }
                 }
 

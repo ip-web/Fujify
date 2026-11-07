@@ -30,6 +30,7 @@ namespace Fujify.Models
     {
         private string _filePath = string.Empty;
         private string _status = "Pending";
+        private string? _errorMessage;
         private Bitmap? _thumbnail;
         private string _cameraMakeAndModel = string.Empty;
 
@@ -107,6 +108,21 @@ namespace Fujify.Models
         }
 
         public string StatusIcon => IsCompleted ? "✓" : (IsError ? "✕" : (IsActive ? "⚡" : "⏳"));
+
+        public string? ErrorMessage
+        {
+            get => _errorMessage;
+            set
+            {
+                if (_errorMessage != value)
+                {
+                    _errorMessage = value;
+                    OnPropertyChanged(nameof(ErrorMessage));
+                    OnPropertyChanged(nameof(HasErrorMessage));
+                }
+            }
+        }
+        public bool HasErrorMessage => !string.IsNullOrEmpty(_errorMessage);
 
         public Bitmap? Thumbnail
         {

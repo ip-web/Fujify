@@ -77,7 +77,8 @@ namespace Fujify.Services
         public static string ComputeInitialDestinationFilePath(
             string sourceFilePath,
             string? customOutputFolder,
-            AppSettings settings)
+            AppSettings settings,
+            string extension = ".dng")
         {
             string baseFileName = Path.GetFileNameWithoutExtension(sourceFilePath);
             if (settings.AppendSuffix && !string.IsNullOrWhiteSpace(settings.Suffix))
@@ -93,7 +94,8 @@ namespace Fujify.Services
                 settings.SubfolderSuffix,
                 settings.SubfolderCustomName);
 
-            return Path.Combine(targetDir, baseFileName + ".dng");
+            string ext = string.IsNullOrWhiteSpace(extension) ? ".dng" : (extension.StartsWith(".") ? extension : "." + extension);
+            return Path.Combine(targetDir, baseFileName + ext);
         }
     }
 }

@@ -378,6 +378,57 @@
             <Setter Property="Opacity" Value="0.6"/>
         </Style>
 
+        <!-- Studio Stop / Cancel Action Button (Vibrant Red Pill with Darker Red Hover and White Text/Icon) -->
+        <Style Selector="Button.stop-btn">
+            <Setter Property="Background" Value="#E74C3C"/>
+            <Setter Property="Foreground" Value="#FFFFFFFF"/>
+            <Setter Property="BorderBrush" Value="#FFFF6B5B"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="22"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="18,10"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.stop-btn /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#E74C3C"/>
+            <Setter Property="Foreground" Value="#FFFFFFFF"/>
+            <Setter Property="BorderBrush" Value="#FFFF6B5B"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="22"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.18" Easing="CubicEaseOut"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.18" Easing="CubicEaseOut"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.stop-btn:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#C0392B"/>
+            <Setter Property="Foreground" Value="#FFFFFFFF"/>
+            <Setter Property="BorderBrush" Value="#FF7B6E"/>
+        </Style>
+        <Style Selector="Button.stop-btn:pointerover">
+            <Setter Property="Background" Value="#C0392B"/>
+            <Setter Property="Foreground" Value="#FFFFFFFF"/>
+            <Setter Property="BorderBrush" Value="#FF7B6E"/>
+        </Style>
+        <Style Selector="Button.stop-btn:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#962D22"/>
+            <Setter Property="Foreground" Value="#FFFFFFFF"/>
+        </Style>
+        <Style Selector="Button.stop-btn:disabled /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#80E74C3C"/>
+            <Setter Property="Foreground" Value="#B3FFFFFF"/>
+            <Setter Property="Opacity" Value="0.6"/>
+        </Style>
+        <Style Selector="Button.stop-btn TextBlock">
+            <Setter Property="Foreground" Value="#FFFFFFFF"/>
+        </Style>
+        <Style Selector="Button.stop-btn PathIcon">
+            <Setter Property="Foreground" Value="#FFFFFFFF"/>
+        </Style>
+
         <!-- Studio Secondary Action Button (Translucent Pill) -->
         <Style Selector="Button.secondary">
             <Setter Property="Background" Value="{DynamicResource AppGlassPillBrush}"/>
@@ -410,6 +461,27 @@
         <Style Selector="Button.secondary:pressed /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="#0DFFFFFF"/>
             <Setter Property="Foreground" Value="#FFFFFFFF"/>
+        </Style>
+
+        <!-- Hyperlink Button -->
+        <Style Selector="Button.hyperlink">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="{DynamicResource AppAccentBrush}"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+        <Style Selector="Button.hyperlink /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="Button.hyperlink:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.hyperlink:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Opacity" Value="0.7"/>
         </Style>
 
         <!-- Accent Button -->

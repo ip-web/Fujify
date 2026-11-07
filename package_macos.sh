@@ -31,9 +31,40 @@ file "$UNIVERSAL_DIR/libdnglab_ffi.dylib"
 
 cd "$REPO_ROOT"
 
+# 1b. Build native raw2raf for both aarch64 and x86_64
+echo "=== Building native raw2raf dylib & binary for macOS ==="
+if [ ! -d "$REPO_ROOT/tools/Raw2Raf" ]; then
+    mkdir -p "$REPO_ROOT/tools"
+    git clone --depth 1 https://github.com/ip-web/Raw2Raf.git "$REPO_ROOT/tools/Raw2Raf" || true
+fi
+if [ -d "$REPO_ROOT/tools/Raw2Raf" ]; then
+    cd "$REPO_ROOT/tools/Raw2Raf"
+    echo "Building raw2raf for aarch64-apple-darwin..."
+    cargo build --release --target aarch64-apple-darwin || true
+    echo "Building raw2raf for x86_64-apple-darwin..."
+    cargo build --release --target x86_64-apple-darwin || true
+
+    if [ -f "target/aarch64-apple-darwin/release/libraw2raf_ffi.dylib" ] && [ -f "target/x86_64-apple-darwin/release/libraw2raf_ffi.dylib" ]; then
+        lipo -create -output "$UNIVERSAL_DIR/libraw2raf_ffi.dylib" \
+          target/aarch64-apple-darwin/release/libraw2raf_ffi.dylib \
+          target/x86_64-apple-darwin/release/libraw2raf_ffi.dylib || true
+    fi
+
+    if [ -f "target/aarch64-apple-darwin/release/raw2raf" ] && [ -f "target/x86_64-apple-darwin/release/raw2raf" ]; then
+        lipo -create -output "$UNIVERSAL_DIR/raw2raf" \
+          target/aarch64-apple-darwin/release/raw2raf \
+          target/x86_64-apple-darwin/release/raw2raf || true
+        chmod +x "$UNIVERSAL_DIR/raw2raf" || true
+    fi
+    cd "$REPO_ROOT"
+fi
+
 # Copy universal dylib to project libs so dotnet publish includes it
 mkdir -p "$REPO_ROOT/Fujify/libs"
 cp "$UNIVERSAL_DIR/libdnglab_ffi.dylib" "$REPO_ROOT/Fujify/libs/libdnglab_ffi.dylib"
+if [ -f "$UNIVERSAL_DIR/libraw2raf_ffi.dylib" ]; then
+    cp "$UNIVERSAL_DIR/libraw2raf_ffi.dylib" "$REPO_ROOT/Fujify/libs/libraw2raf_ffi.dylib"
+fi
 
 # 2. Publish .NET projects
 echo "=== Publishing .NET for osx-arm64 ==="
@@ -63,9 +94,22 @@ package_app() {
     cp "$UNIVERSAL_DIR/libdnglab_ffi.dylib" "$APP_DIR/Contents/MacOS/libs/libdnglab_ffi.dylib"
     cp "$UNIVERSAL_DIR/libdnglab_ffi.dylib" "$APP_DIR/Contents/Frameworks/libdnglab_ffi.dylib"
 
+    if [ -f "$UNIVERSAL_DIR/libraw2raf_ffi.dylib" ]; then
+        cp "$UNIVERSAL_DIR/libraw2raf_ffi.dylib" "$APP_DIR/Contents/MacOS/libraw2raf_ffi.dylib"
+        cp "$UNIVERSAL_DIR/libraw2raf_ffi.dylib" "$APP_DIR/Contents/MacOS/libs/libraw2raf_ffi.dylib"
+        cp "$UNIVERSAL_DIR/libraw2raf_ffi.dylib" "$APP_DIR/Contents/Frameworks/libraw2raf_ffi.dylib"
+    fi
+    if [ -f "$UNIVERSAL_DIR/raw2raf" ]; then
+        cp "$UNIVERSAL_DIR/raw2raf" "$APP_DIR/Contents/MacOS/libs/raw2raf"
+        chmod +x "$APP_DIR/Contents/MacOS/libs/raw2raf" || true
+    fi
+
     # Cleanup Windows DLLs and Linux files
     rm -f "$APP_DIR/Contents/MacOS/libs/dnglab_ffi.dll"
+    rm -f "$APP_DIR/Contents/MacOS/libs/raw2raf_ffi.dll"
+    rm -f "$APP_DIR/Contents/MacOS/libs/raw2raf.exe"
     rm -rf "$APP_DIR/Contents/MacOS/libs/linux-x64"
+    rm -rf "$APP_DIR/Contents/MacOS/libs/win-x64"
 
     # dnglab CLI fallback if present
     if [ "$RID" = "osx-arm64" ]; then

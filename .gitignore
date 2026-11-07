@@ -385,3 +385,7 @@ Fujify/settings.json
 
 *.CR2
 *.cr2
+tools/
+test_files/
+*.aab
+bundle/

@@ -250,14 +250,64 @@ namespace Fujify.Tests
             vm.Files.Add(file1);
             vm.Files.Add(file2);
 
+            // Initially with Done and Error, cannot process
+            Assert.False(vm.CanProcess);
+            Assert.False(vm.ProcessCommand.CanExecute(null));
+
             // Reset to pending via single item command parameter (as in Grid View context menu)
             vm.ResetStatusCommand.Execute(file1);
             Assert.Equal("Pending", file1.Status);
+            Assert.True(vm.CanProcess);
+            Assert.True(vm.ProcessCommand.CanExecute(null));
 
             // Remove single item via command parameter (as in Grid View context menu)
             vm.RemoveFileCommand.Execute(file2);
             Assert.Single(vm.Files);
             Assert.Equal(file1, vm.Files[0]);
+        }
+
+        [Fact]
+        public void MainViewModel_ResetStatusCommand_ReEnablesProcessButton_AfterConversionCompleted()
+        {
+            var settings = new MockSettingsService();
+            var vm = new ViewModels.MainViewModel(settingsService: settings);
+            var file1 = new Models.FileItem { FilePath = "C:\\test\\photo1.arw", Status = "✔" };
+            var file2 = new Models.FileItem { FilePath = "C:\\test\\photo2.arw", Status = "Error: Conversion failed", ErrorMessage = "Failed" };
+
+            vm.Files.Add(file1);
+            vm.Files.Add(file2);
+
+            // Conversion completed: 0 pending files, Process button should be disabled
+            Assert.False(vm.CanProcess);
+            Assert.False(vm.CanProcessOrStop);
+            Assert.False(vm.ProcessCommand.CanExecute(null));
+
+            bool canExecuteChangedFired = false;
+            vm.ProcessCommand.CanExecuteChanged += (s, e) => canExecuteChangedFired = true;
+
+            // Reset file2 (failed) back to Pending
+            vm.ResetStatusCommand.Execute(file2);
+
+            Assert.Equal("Pending", file2.Status);
+            Assert.Null(file2.ErrorMessage);
+            Assert.True(vm.CanProcess, "CanProcess should become true after resetting file to Pending");
+            Assert.True(vm.CanProcessOrStop, "CanProcessOrStop should become true after resetting file to Pending");
+            Assert.True(vm.ProcessCommand.CanExecute(null), "ProcessCommand.CanExecute must be true so user can start conversion again");
+            Assert.True(canExecuteChangedFired, "ProcessCommand.CanExecuteChanged must fire to update UI button enabled state");
+
+            // Reset multiple items at once via list parameter
+            canExecuteChangedFired = false;
+            file1.Status = "✔";
+            file2.Status = "✔";
+            Assert.False(vm.ProcessCommand.CanExecute(null));
+
+            vm.ResetStatusCommand.Execute(new System.Collections.ArrayList { file1, file2 });
+
+            Assert.Equal("Pending", file1.Status);
+            Assert.Equal("Pending", file2.Status);
+            Assert.True(vm.CanProcess);
+            Assert.True(vm.ProcessCommand.CanExecute(null));
+            Assert.True(canExecuteChangedFired);
         }
 
         [Theory]
